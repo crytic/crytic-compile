@@ -4,8 +4,8 @@ import json
 import os
 import logging
 from pkg_resources import require
-from cryticparser import cryticparser, defaults_flag_in_config
-from crytic_compile import CryticCompile
+from .cryticparser import cryticparser, defaults_flag_in_config
+from .crytic_compile import CryticCompile
 
 logging.basicConfig()
 logger = logging.getLogger("CryticCompile")
