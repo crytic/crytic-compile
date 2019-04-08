@@ -135,7 +135,7 @@ class CryticCompile:
                 embark_json['plugins'][plugin_name] = {'flags':""}
                 write_embark_json = True
             if write_embark_json:
-                process = subprocess.Popen(['npm','install', plugin_name])
+                process = subprocess.Popen(['npm','install', 'git://github.com/crytic/embark-contract-info#dev-improve-output'])
                 _, stderr = process.communicate()
                 with open('embark.json', 'w') as outfile:
                     json.dump(embark_json, outfile, indent=2)
