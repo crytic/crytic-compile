@@ -233,7 +233,7 @@ class CryticCompile:
 
         for path, info in targets_json["sources"].items():
             self._filenames.add(path)
-            self._abis[path] = info['AST']
+            self._asts[path] = info['AST']
 
     def _run_solc(self, filename, solc, solc_disable_warnings, solc_arguments, solc_compact_ast):
         if not os.path.isfile(filename):
@@ -263,15 +263,11 @@ class CryticCompile:
             cmd += ['--allow-paths', '.']
 
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
         stdout, stderr = process.communicate()
         stdout, stderr = stdout.decode(), stderr.decode()  # convert bytestrings to unicode strings
 
         if stderr and (not solc_disable_warnings):
-            stderr = stderr.split('\n')
-            stderr = '\n'.join(stderr)
             logger.info('Compilation warnings/errors on %s:\n%s', filename, stderr)
-
 
         return json.loads(stdout)
 

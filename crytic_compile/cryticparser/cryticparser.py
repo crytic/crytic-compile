@@ -17,7 +17,7 @@ def init_solc(parser):
                             action='store',
                             default=defaults_flag_in_config['solc_args'])
 
-    group_solc.add_argument('--disable-solc-warnings',
+    group_solc.add_argument('--solc-disable-warnings',
                             help='Disable solc warnings',
                             action='store_true',
                             default=defaults_flag_in_config['disable_solc_warnings'])

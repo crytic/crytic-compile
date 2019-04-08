@@ -7,7 +7,7 @@ from pkg_resources import require
 from .cryticparser import cryticparser, defaults_flag_in_config
 from .crytic_compile import CryticCompile
 
-logging.basicConfig()
+#logging.basicConfig()
 logger = logging.getLogger("CryticCompile")
 
 def parse_args():
