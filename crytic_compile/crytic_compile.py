@@ -141,7 +141,7 @@ class CryticCompile:
                     json.dump(embark_json, outfile, indent=2)
         else:
             if (not 'plugins' in embark_json) or (not plugin_name in embark_json['plugins']):
-                raise InvalidInput('embark-contract-info plugin was found in embark.json. Please install the plugin (see https://github.com/crytic/crytic-input/wiki/Usage#embark), or use --embark-overwrite-config.')
+                raise InvalidInput('embark-contract-info plugin was found in embark.json. Please install the plugin (see https://github.com/crytic/crytic-compile/wiki/Usage#embark), or use --embark-overwrite-config.')
 
 
         if not embark_ignore_compile:
