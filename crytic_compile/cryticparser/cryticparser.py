@@ -20,12 +20,7 @@ def init_solc(parser):
     group_solc.add_argument('--solc-disable-warnings',
                             help='Disable solc warnings',
                             action='store_true',
-                            default=defaults_flag_in_config['disable_solc_warnings'])
-
-    group_solc.add_argument('--solc-ast',
-                            help='Provide the ast solc file',
-                            action='store_true',
-                            default=False)
+                            default=defaults_flag_in_config['solc_disable_warnings'])
 
 
 def init_truffle(parser):

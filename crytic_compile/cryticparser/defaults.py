@@ -2,8 +2,7 @@
 defaults_flag_in_config = {
     'solc': 'solc',
     'solc_args': None,
-    'disable_solc_warnings': False,
-    'legacy_ast': False,
+    'solc_disable_warnings': False,
     'truffle_version': None,
     'truffle_ignore_compile': False,
     'truffle_build_directory': 'build/contracts',
