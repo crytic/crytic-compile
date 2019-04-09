@@ -93,10 +93,16 @@ class CryticCompile:
         path = os.path.join(export_dir, "contracts.json")
 
         with open(path, 'w') as f:
+            contracts = dict()
+            for contract_name in self.contracts_name:
+                contracts[contract_name] = {
+                    'abi': self.ast(contract_name),
+                    'bin': self.init_bytecode(contract_name),
+                    'bin-runtime': self.runtime_bytecode(contract_name)
+                }
+
             output = {'asts' : self._asts,
-                      'abis': self._abis,
-                      'init_bytecodes': self._init_bytecodes,
-                      'runtime_bytecodes': self._runtime_bytecodes}
+                      'contracts': contracts}
 
             json.dump(output, f)
 
@@ -159,11 +165,15 @@ class CryticCompile:
             self._asts = targets_loaded['asts']
             for f in self._abis:
                 self._filenames.add(f)
-            self._abis = targets_loaded['abis']
-            for k in self._abis:
-                self._contracts_name.add(k)
-            self._init_bytecodes = targets_loaded['init_bytecodes']
-            self._runtime_bytecodes = targets_loaded['runtime_bytecodes']
+
+            for contract_name, info in targets_loaded['contracts'].items():
+                self._contracts_name.add(contract_name)
+                if 'abi' in info:
+                    self._abis[contract_name] = info['abi']
+                if 'bin' in info:
+                    self._init_bytecodes[contract_name] = info['bin']
+                if 'bin-runtime' in info:
+                    self._runtime_bytecodes[contract_name] = info['bin-runtime']
 
 
     def _init_from_truffle(self, target, build_directory, truffle_ignore_compile, truffle_version):

@@ -29,9 +29,13 @@ The file structure is:
 ```json
 {
     "asts": [],
-    "abis": [{"/path:contract_name":...}]
-    "init_bytecodes": [{"/path:contract_name":...}]
-    "runtime_bytecodes": [{"/path:contract_name":...}]
+    "contracts": [
+        "/path:contract_name":
+        {
+            "abi": [{"/path:contract_name":...}]
+            "bin": ..
+            "bin-runtime": ..
+        }
 }
 ```
 
