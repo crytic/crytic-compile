@@ -171,9 +171,9 @@ class CryticCompile:
                 if 'abi' in info:
                     self._abis[contract_name] = info['abi']
                 if 'bin' in info:
-                    self._init_bytecodes[contract_name] = info['bin']
+                    self._init_bytecodes[contract_name] = info['bin'].replace('0x', '')
                 if 'bin-runtime' in info:
-                    self._runtime_bytecodes[contract_name] = info['bin-runtime']
+                    self._runtime_bytecodes[contract_name] = info['bin-runtime'].replace('0x', '')
 
 
     def _init_from_truffle(self, target, build_directory, truffle_ignore_compile, truffle_version):
@@ -237,7 +237,7 @@ class CryticCompile:
 
         for contract_name, info in targets_json["contracts"].items():
             self._contracts_name.add(contract_name)
-            self._abis[contract_name] = info['abi']
+            self._abis[contract_name] = json.loads(info['abi'])
             self._init_bytecodes[contract_name] = info['bin']
             self._runtime_bytecodes[contract_name] = info['bin-runtime']
 
