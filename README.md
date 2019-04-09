@@ -32,8 +32,8 @@ The file structure is:
     "contracts": [
         "/path:contract_name":
         {
-            "abi": [{"/path:contract_name":...}]
-            "bin": ..
+            "abi": [],
+            "bin": ..,
             "bin-runtime": ..
         }
 }
