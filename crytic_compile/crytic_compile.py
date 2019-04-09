@@ -96,7 +96,7 @@ class CryticCompile:
             contracts = dict()
             for contract_name in self.contracts_name:
                 contracts[contract_name] = {
-                    'abi': self.ast(contract_name),
+                    'abi': self.abi(contract_name),
                     'bin': self.init_bytecode(contract_name),
                     'bin-runtime': self.runtime_bytecode(contract_name)
                 }
