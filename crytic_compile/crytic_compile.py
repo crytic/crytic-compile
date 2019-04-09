@@ -219,8 +219,8 @@ class CryticCompile:
                 contract_name = target_loaded['ast']['absolutePath'] + ':' + target_loaded['contractName']
                 self._contracts_name.add(contract_name)
                 self._abis[contract_name] = target_loaded['abi']
-                self._init_bytecodes[contract_name] = target_loaded['bytecode']
-                self._runtime_bytecodes[contract_name] = target_loaded['deployedBytecode']
+                self._init_bytecodes[contract_name] = target_loaded['bytecode'].replace('0x', '')
+                self._runtime_bytecodes[contract_name] = target_loaded['deployedBytecode'].replace('0x', '')
 
     def _init_from_solc(self, target, **kwargs):
         self._type = Type.SOLC
