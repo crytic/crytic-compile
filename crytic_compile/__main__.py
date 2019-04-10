@@ -22,6 +22,18 @@ def parse_args():
                         dest='config_file',
                         default='crytic.config.json')
 
+    parser.add_argument('--export-format',
+                        help='Export json with non crytic-compile format (default None. Accepted: solc, truffle)',
+                        action='store',
+                        dest='export_format',
+                        default=None)
+
+    parser.add_argument('--export-dir',
+                        help='Export directory (default: crytic-export',
+                        action='store',
+                        dest='export_dir',
+                        default='crytic-export')
+
 #    parser.add_argument('--version',
 #                        help='displays the current version',
 #                        version=require('crytic-compile')[0].version,
@@ -54,7 +66,7 @@ def main():
     args = parse_args()
     try:
         cryticCompile = CryticCompile(**vars(args))
-        cryticCompile.export()
+        cryticCompile.export(**vars(args))
     except InvalidInput as e:
         logger.error(e)
 

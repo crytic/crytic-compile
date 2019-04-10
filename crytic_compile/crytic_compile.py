@@ -38,7 +38,6 @@ class CryticCompile:
                 embark_ignore_compile (bool): do not run embark build (default False)
                 embark_overwrite_config (bool): overwrite original config file (default false)
         '''
-
         # ASTS are indexed by path
         self._asts = {}
         # ABI and bytecode are indexed by path:contract_name
@@ -85,11 +84,29 @@ class CryticCompile:
     def ast(self, path):
         return self._asts.get(path, None)
 
-    def export(self):
-        export_dir = "crytic-export"
+    def export(self, **kwargs):
+        """
+            Export to json.
+            The json format can be crytic-compile, solc or truffle.
+            solc format is --combined-json bin-runtime,bin,srcmap,srcmap-runtime,abi,ast,compact-format
+            Keyword Args:
+                export_format (str): export format (default None). Accepted: None, 'solc', 'truffle'
+                export_dir (str): export dir (default crytic-export)
+        """
+        export_format = kwargs.get('export_format', None)
+        if export_format is None or export_format=="crytic-compile":
+            self._export_standard(**kwargs)
+        elif export_format == "solc":
+            self._export_solc(**kwargs)
+        elif export_format == "truffle":
+            self._export_truffle(**kwargs)
+        else:
+            raise Exception('Export format unknown')
+
+    def _export_standard(self, **kwargs):
+        export_dir = kwargs.get('export_dir', 'crytic-export')
         if not os.path.exists(export_dir):
             os.makedirs(export_dir)
-
         path = os.path.join(export_dir, "contracts.json")
 
         with open(path, 'w') as f:
@@ -105,6 +122,54 @@ class CryticCompile:
                       'contracts': contracts}
 
             json.dump(output, f)
+
+    def _export_solc(self, **kwargs):
+        export_dir = kwargs.get('export_dir', 'crytic-export')
+        if not os.path.exists(export_dir):
+            os.makedirs(export_dir)
+        path = os.path.join(export_dir, "combined_solc.json")
+
+        with open(path, 'w') as f:
+            contracts = dict()
+            for contract_name in self.contracts_name:
+                abi = str(self.abi(contract_name))
+                abi = abi.replace('\'', '\"')
+                abi = abi.replace('True', 'true')
+                abi = abi.replace('False', 'false')
+                abi = abi.replace(' ', '')
+                contracts[contract_name] = {
+                    'srcmap': '',
+                    'srcmap-runtime': '',
+                    'abi': abi,
+                    'bin': self.init_bytecode(contract_name),
+                    'bin-runtime': self.runtime_bytecode(contract_name)
+                }
+
+            sources = {contract_name : {"AST": ast} for (contract_name, ast) in self._asts.items()}
+
+            output = {'sources' : sources,
+                      'contracts': contracts}
+
+            json.dump(output, f)
+
+    def _export_truffle(self, **kwargs):
+        export_dir = kwargs.get('export_dir', 'crytic-export')
+        if not os.path.exists(export_dir):
+            os.makedirs(export_dir)
+
+        for contract_name in self.contracts_name:
+            base_name = contract_name[contract_name.rfind(':')+1:]
+            filename = contract_name[:contract_name.rfind(':')]
+            with open(os.path.join(export_dir, base_name + '.json'), 'w') as f:
+                output = {
+                    "contractName": base_name,
+                    "abi": self.abi(contract_name),
+                    "bytecode": "0x" + self.init_bytecode(contract_name),
+                    "deployedBytecode": "0x" + self.runtime_bytecode(contract_name),
+                    "ast": self.ast(filename)
+                }
+                json.dump(output, f)
+
 
     def _run(self, target, **kwargs):
 
