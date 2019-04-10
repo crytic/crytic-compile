@@ -146,8 +146,10 @@ class CryticCompile:
                 }
 
             sources = {contract_name : {"AST": ast} for (contract_name, ast) in self._asts.items()}
+            sourceList = [contract_name.split(":")[0] for contract_name in self.contracts_name ]
 
             output = {'sources' : sources,
+                      'sourceList' : sourceList,
                       'contracts': contracts}
 
             json.dump(output, f)
