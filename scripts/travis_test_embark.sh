@@ -18,7 +18,7 @@ npm install
 crytic-compile . --embark-overwrite-config
 
 DIFF=$(diff crytic-export/contracts.json ../../tests/expected/embark-demo.json)
-if [ $DIFF != "" ]
+if [ "$DIFF" != "" ]
 then  
     echo "Embark test failed"
     exit -1

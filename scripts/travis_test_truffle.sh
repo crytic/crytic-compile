@@ -15,7 +15,7 @@ truffle unbox metacoin
 crytic-compile .
 
 DIFF=$(diff crytic-export/contracts.json ../tests/expected/truffle-metacoin.json)
-if [ $DIFF != "" ]
+if [ "$DIFF" != "" ]
 then  
     echo "Truffle test failed"
     exit -1

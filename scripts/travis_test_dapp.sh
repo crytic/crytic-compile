@@ -16,7 +16,7 @@ dapp init
 crytic-compile .
 
 DIFF=$(diff crytic-export/contracts.json ../tests/expected/dapp-demo.json)
-if [ $DIFF != "" ]
+if [ "$DIFF" != "" ]
 then  
     echo "Dapp test failed"
     exit -1
