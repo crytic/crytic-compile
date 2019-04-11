@@ -4,6 +4,7 @@ import logging
 import subprocess
 
 from .types import Type
+from ..utils.naming import extract_filename, extract_name, combine_filename_name
 
 logger = logging.getLogger("CryticCompile")
 
@@ -15,14 +16,18 @@ def compile(crytic_compile, target, **kwargs):
     solc_arguments = kwargs.get('solc_arguments', '')
     solc_compact_ast = kwargs.get('solc_compact_ast', True)
 
-    targets_json = _run_solc(target,
-                                  solc,
-                                  solc_disable_warnings,
-                                  solc_arguments,
-                                  solc_compact_ast)
+    targets_json = _run_solc(crytic_compile,
+                             target,
+                             solc,
+                             solc_disable_warnings,
+                             solc_arguments,
+                             solc_compact_ast)
 
-    for contract_name, info in targets_json["contracts"].items():
+    for original_contract_name, info in targets_json["contracts"].items():
+        contract_name = extract_name(original_contract_name)
+        contract_filename = extract_filename(original_contract_name)
         crytic_compile.contracts_name.add(contract_name)
+        crytic_compile.contracts_filenames[contract_name] = contract_filename
         crytic_compile.abis[contract_name] = json.loads(info['abi'])
         crytic_compile.init_bytecodes[contract_name] = info['bin']
         crytic_compile.runtime_bytecodes[contract_name] = info['bin-runtime']
@@ -46,7 +51,8 @@ def export(crytic_compile, **kwargs):
             abi = abi.replace('True', 'true')
             abi = abi.replace('False', 'false')
             abi = abi.replace(' ', '')
-            contracts[contract_name] = {
+            exported_name = combine_filename_name(crytic_compile.contracts_filenames[contract_name], contract_name)
+            contracts[exported_name] = {
                 'srcmap': '',
                 'srcmap-runtime': '',
                 'abi': abi,
@@ -54,7 +60,7 @@ def export(crytic_compile, **kwargs):
                 'bin-runtime': crytic_compile.runtime_bytecode(contract_name)
             }
 
-        sources = {contract_name : {"AST": ast} for (contract_name, ast) in crytic_compile.asts.items()}
+        sources = {filename : {"AST": ast} for (filename, ast) in crytic_compile.asts.items()}
         sourceList = crytic_compile.filenames
 
         output = {'sources' : sources,

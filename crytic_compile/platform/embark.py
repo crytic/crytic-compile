@@ -3,13 +3,15 @@ import json
 import logging
 import subprocess
 
+from ..utils.naming import extract_filename, extract_name
+
 from .types import Type
 from .exceptions import InvalidInput
 logger = logging.getLogger("CryticCompile")
 
 
 def compile(crytic_compile, target, **kwargs):
-    embark_ignore_compile = kwargs.get('embark_ignore_compile', False),
+    embark_ignore_compile = kwargs.get('embark_ignore_compile', False)
     embark_overwrite_config = kwargs.get('embark_overwrite_config', False)
     crytic_compile._type = Type.EMBARK
     plugin_name = '@trailofbits/embark-contract-info'
@@ -51,9 +53,11 @@ def compile(crytic_compile, target, **kwargs):
         for f in crytic_compile._abis:
             crytic_compile._filenames.add(f)
 
-        for contract_name, info in targets_loaded['contracts'].items():
+        for original_contract_name, info in targets_loaded['contracts'].items():
+            contract_name = extract_name(original_contract_name)
+            contract_filename = extract_filename(original_contract_name)
+            crytic_compile.contracts_filenames[contract_name] = contract_filename
             crytic_compile.contracts_name.add(contract_name)
-
 
 
             if 'abi' in info:

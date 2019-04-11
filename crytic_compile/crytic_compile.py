@@ -5,6 +5,7 @@ import logging
 from .platform.solc import compile as compile_solc, export as export_solc
 from .platform.truffle import compile as compile_truffle, export as export_truffle
 from .platform.embark import compile as compile_embark
+from .utils.naming import combine_filename_name
 
 logger = logging.getLogger("CryticCompile")
 logging.basicConfig()
@@ -39,9 +40,11 @@ class CryticCompile:
         self._runtime_bytecodes = {}
         self._init_bytecodes = {}
 
-        self._contracts_name = set()
-        self._filenames = set()
-        self._contracts_filenames = {}
+        # cryticcompile store the name and the filename of the contract separately
+        # but the exported json follow the format: /path:Contract, to follow standard format
+        self._contracts_name = set() # set containing all the contract name
+        self._filenames = set() # set containing all the filenames
+        self._contracts_filenames = {} # mapping from contract name to filename
 
         self._type = None
 
@@ -123,7 +126,8 @@ class CryticCompile:
         with open(path, 'w') as f:
             contracts = dict()
             for contract_name in self.contracts_name:
-                contracts[contract_name] = {
+                exported_name = combine_filename_name(self.contracts_filenames[contract_name], contract_name)
+                contracts[exported_name] = {
                     'abi': self.abi(contract_name),
                     'bin': self.init_bytecode(contract_name),
                     'bin-runtime': self.runtime_bytecode(contract_name)

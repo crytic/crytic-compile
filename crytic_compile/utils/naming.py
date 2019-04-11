@@ -15,3 +15,5 @@ def extract_filename(name):
         return name
     return name[:name.rfind(':')]
 
+def combine_filename_name(filename, name):
+    return filename + ":" + name

@@ -10,8 +10,8 @@ logger = logging.getLogger("CryticCompile")
 
 
 def compile(crytic_compile, target, **kwargs):
-    build_directory = kwargs.get('truffle_build_directory', 'build/targets'),
-    truffle_ignore_compile = kwargs.get('truffle_ignore_compile', False),
+    build_directory = kwargs.get('truffle_build_directory', 'build/targets')
+    truffle_ignore_compile = kwargs.get('truffle_ignore_compile', False)
     truffle_version = kwargs.get('truffle_version', None)
     crytic_compile.type = Type.TRUFFLE
     # Truffle on windows has naming conflicts where it will invoke truffle.js directly instead
@@ -66,11 +66,10 @@ def export(crytic_compile, **kwargs):
         os.makedirs(export_dir)
 
     for contract_name in crytic_compile.contracts_name:
-        base_name = contract_name[contract_name.rfind(':') + 1:]
-        filename = contract_name[:contract_name.rfind(':')]
-        with open(os.path.join(export_dir, base_name + '.json'), 'w') as f:
+        filename = crytic_compile.contracts_filenames[contract_name]
+        with open(os.path.join(export_dir, contract_name  + '.json'), 'w') as f:
             output = {
-                "contractName": base_name,
+                "contractName": contract_name ,
                 "abi": crytic_compile.abi(contract_name),
                 "bytecode": "0x" + crytic_compile.init_bytecode(contract_name),
                 "deployedBytecode": "0x" + crytic_compile.runtime_bytecode(contract_name),
