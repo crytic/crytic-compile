@@ -3,8 +3,9 @@ import json
 import logging
 
 from .platform.solc import compile as compile_solc, export as export_solc
-from .platform.truffle import compile as compile_truffle, export as export_truffle
-from .platform.embark import compile as compile_embark
+from .platform.truffle import is_truffle, compile as compile_truffle, export as export_truffle
+from .platform.embark import is_embark, compile as compile_embark
+from .platform.dapp import is_dapp, compile as compile_dapp#, export as export_truffle
 from .utils.naming import combine_filename_name
 
 logger = logging.getLogger("CryticCompile")
@@ -139,21 +140,33 @@ class CryticCompile:
             json.dump(output, f)
 
 
+
     def _run(self, target, **kwargs):
 
         truffle_ignore = kwargs.get('truffle_ignore', False)
         embark_ignore = kwargs.get('embark_ignore', False)
+        dapp_ignore = kwargs.get('dapp_ignore', False)
 
-        # truffle directory
-        if not truffle_ignore and (os.path.isfile(os.path.join(target, 'truffle.js')) or
-                                     os.path.isfile(os.path.join(target, 'truffle-config.js'))):
-            compile_truffle(self, target, **kwargs)
-        # embark directory
-        elif not embark_ignore and os.path.isfile(os.path.join(target, 'embark.json')):
-            compile_embark(self, target, **kwargs)
-        # .json or .sol provided
+        compilation_force_framework = kwargs.get('compilation_force_framework', None)
+        if compilation_force_framework:
+            if compilation_force_framework == 'truffle':
+                compile_truffle(self, target, **kwargs)
+            elif compilation_force_framework == 'embark':
+                compile_embark(self, target, **kwargs)
+            elif compilation_force_framework == 'dapp':
+                compile_dapp(self, target, **kwargs)
         else:
-            compile_solc(self, target, **kwargs)
+            # truffle directory
+            if not truffle_ignore and is_truffle(target):
+                compile_truffle(self, target, **kwargs)
+            # embark directory
+            elif not embark_ignore and is_embark(target):
+                compile_embark(self, target, **kwargs)
+            elif not dapp_ignore and is_dapp(target):
+                compile_dapp(self, target, **kwargs)
+            # .json or .sol provided
+            else:
+                compile_solc(self, target, **kwargs)
 
 
 

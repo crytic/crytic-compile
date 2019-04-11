@@ -66,3 +66,6 @@ def compile(crytic_compile, target, **kwargs):
                 crytic_compile.init_bytecodes[contract_name] = info['bin'].replace('0x', '')
             if 'bin-runtime' in info:
                 crytic_compile.runtime_bytecodes[contract_name] = info['bin-runtime'].replace('0x', '')
+
+def is_embark(target):
+    return os.path.isfile(os.path.join(target, 'embark.json'))
