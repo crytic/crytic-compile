@@ -5,7 +5,8 @@ import os
 import logging
 from pkg_resources import require
 from .cryticparser import cryticparser, defaults_flag_in_config
-from .crytic_compile import CryticCompile, InvalidInput
+from .crytic_compile import CryticCompile
+from .platform import InvalidInput
 
 #logging.basicConfig()
 logger = logging.getLogger("CryticCompile")
@@ -34,10 +35,10 @@ def parse_args():
                         dest='export_dir',
                         default='crytic-export')
 
-#    parser.add_argument('--version',
-#                        help='displays the current version',
-#                        version=require('crytic-compile')[0].version,
-#                        action='version')
+    parser.add_argument('--version',
+                        help='displays the current version',
+                        version=require('crytic-compile')[0].version,
+                        action='version')
 
     cryticparser.init(parser)
     if len(sys.argv) == 1:
