@@ -1,6 +1,7 @@
 import os
 import json
 import logging
+import re
 
 from .platform.solc import compile as compile_solc, export as export_solc
 from .platform.truffle import is_truffle, compile as compile_truffle, export as export_truffle
@@ -165,3 +166,24 @@ class CryticCompile:
             # .json or .sol provided
             else:
                 compile_solc(self, target, **kwargs)
+
+        remove_metadata = kwargs.get('compilation_remove_metadata', False)
+        if remove_metadata:
+            self._remove_metadata()
+
+    def _remove_metadata(self):
+        '''
+            Init bytecode contains metadata that needs to be removed
+            see http://solidity.readthedocs.io/en/v0.4.24/metadata.html#encoding-of-the-metadata-hash-in-the-bytecode
+        '''
+        self._init_bytecodes = {key: re.sub(
+                    r'a165627a7a72305820.{64}0029',
+                    r'',
+                    bytecode
+                ) for (key, bytecode) in self._init_bytecodes.items()}
+
+        self._runtime_bytecodes = {key: re.sub(
+            r'a165627a7a72305820.{64}0029',
+            r'',
+            bytecode
+        ) for (key, bytecode) in self._runtime_bytecodes.items()}

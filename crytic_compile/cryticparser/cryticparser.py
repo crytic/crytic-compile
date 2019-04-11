@@ -8,6 +8,11 @@ def init(parser):
                             action='store',
                             default=defaults_flag_in_config['compilation_force_framework'])
 
+    group_solc.add_argument('--compilation-remove-metadata',
+                            help='Remote the metadata from the bytecodes',
+                            action='store_true',
+                            default=defaults_flag_in_config['compilation_remove_metadata'])
+
     init_solc(parser)
     init_truffle(parser)
     init_embark(parser)

@@ -1,6 +1,7 @@
 # Those are the flags shared by the command line and the config file
 defaults_flag_in_config = {
     'compilation_force_framework': None,
+    'compilation_remove_metadata': False,
     'solc': 'solc',
     'solc_args': None,
     'solc_disable_warnings': False,

@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 
-crytic-compile tests/contract.sol
+cp tests/contract.sol /tmp
+cd /tmp
+crytic-compile contract.sol --compilation-remove-metadata
 
-DIFF=$(diff crytic-export/contracts.json tests/expected/solc-demo.json)
+cd -
+DIFF=$(diff /tmp/crytic-export/contracts.json tests/expected/solc-demo.json)
 if [ "$DIFF" != "" ]
 then  
     echo "solc test failed"

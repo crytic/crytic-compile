@@ -2,9 +2,8 @@
 
 ### Test dapp integration
 
-mkdir test_dapp
-cd test_dapp
-
+mkdir /tmp/dapp
+cd /tmp/dapp
 
 curl https://nixos.org/nix/install | sh
 . "$HOME/.nix-profile/etc/profile.d/nix.sh"
@@ -15,7 +14,9 @@ dapp init
 
 crytic-compile .
 
-DIFF=$(diff crytic-export/contracts.json ../tests/expected/dapp-demo.json)
+cd - 
+
+DIFF=$(diff /tmp/dapp/crytic-export/contracts.json tests/expected/dapp-demo.json)
 if [ "$DIFF" != "" ]
 then  
     echo "Dapp test failed"
