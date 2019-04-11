@@ -2,7 +2,8 @@
 
 ### Test truffle integration
 
-cd /tmp
+mkdir /tmp/truffle
+cd /tmp/truffle
 
 curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.34.0/install.sh | bash
 source ~/.nvm/nvm.sh
@@ -15,7 +16,7 @@ crytic-compile . --compilation-remove-metadata
 
 cd -
 
-DIFF=$(diff /tmp/crytic-export/contracts.json tests/expected/truffle-metacoin.json)
+DIFF=$(diff /tmp/truffle/crytic-export/contracts.json tests/expected/truffle-metacoin.json)
 if [ "$DIFF" != "" ]
 then  
     echo "Truffle test failed"
