@@ -1,4 +1,7 @@
 # Crytic-compile
+[![Build Status](https://travis-ci.com/crytic/crytic-compile.svg?branch=master)](https://travis-ci.com/crytic/crytic-compile)
+[![Slack Status](https://empireslacking.herokuapp.com/badge.svg)](https://empireslacking.herokuapp.com)
+
 
 [WORK IN PROGRESS]
 
