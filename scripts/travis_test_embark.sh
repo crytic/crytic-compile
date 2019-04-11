@@ -21,6 +21,7 @@ DIFF=$(diff crytic-export/contracts.json ../../tests/expected/embark-demo.json)
 if [ "$DIFF" != "" ]
 then  
     echo "Embark test failed"
+    echo $DIFF
     exit -1
 fi
 

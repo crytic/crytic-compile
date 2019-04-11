@@ -49,7 +49,7 @@ class CryticCompile:
 
         self._type = None
 
-        self._run(target, **kwargs)
+        self._compile(target, **kwargs)
 
     @property
     def contracts_name(self):
@@ -139,9 +139,7 @@ class CryticCompile:
 
             json.dump(output, f)
 
-
-
-    def _run(self, target, **kwargs):
+    def _compile(self, target, **kwargs):
 
         truffle_ignore = kwargs.get('truffle_ignore', False)
         embark_ignore = kwargs.get('embark_ignore', False)
@@ -167,11 +165,3 @@ class CryticCompile:
             # .json or .sol provided
             else:
                 compile_solc(self, target, **kwargs)
-
-
-
-
-
-
-
-

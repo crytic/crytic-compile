@@ -19,6 +19,7 @@ DIFF=$(diff crytic-export/contracts.json ../tests/expected/dapp-demo.json)
 if [ "$DIFF" != "" ]
 then  
     echo "Dapp test failed"
+    echo $DIFF
     exit -1
 fi
 

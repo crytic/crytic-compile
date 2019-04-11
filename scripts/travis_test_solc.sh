@@ -6,6 +6,7 @@ DIFF=$(diff crytic-export/contracts.json tests/expected/solc-demo.json)
 if [ "$DIFF" != "" ]
 then  
     echo "solc test failed"
+    echo $DIFF
     exit -1
 fi
 

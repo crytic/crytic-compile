@@ -18,6 +18,7 @@ DIFF=$(diff crytic-export/contracts.json ../tests/expected/truffle-metacoin.json
 if [ "$DIFF" != "" ]
 then  
     echo "Truffle test failed"
+    echo $DIFF
     exit -1
 fi
 
