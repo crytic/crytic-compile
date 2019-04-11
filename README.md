@@ -9,6 +9,7 @@ Library to help smart contract compilation. It includes support for:
 - Direct solc compilation
 - [Truffle](https://truffleframework.com/)
 - [Embark](https://embark.status.im/)
+- [Dapp](https://dapp.tools/dapp/)
 
 The plugin is used in Crytic tools, including:
 - [Slither](https://github.com/crytic/slither)

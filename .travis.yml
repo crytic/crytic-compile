@@ -8,6 +8,7 @@ env:
   - TEST_SUITE=scripts/travis_test_solc.sh
   - TEST_SUITE=scripts/travis_test_truffle.sh
   - TEST_SUITE=scripts/travis_test_embark.sh
+  - TEST_SUITE=scripts/travis_test_dapp.sh
 branches:
   only:
   - master

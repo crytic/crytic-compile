@@ -76,3 +76,8 @@ def export(crytic_compile, **kwargs):
                 "ast": crytic_compile.ast(filename)
             }
             json.dump(output, f)
+
+
+def is_truffle(target):
+    return (os.path.isfile(os.path.join(target, 'truffle.js')) or
+     os.path.isfile(os.path.join(target, 'truffle-config.js')))
