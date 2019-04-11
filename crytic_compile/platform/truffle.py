@@ -9,7 +9,10 @@ from .exceptions import InvalidInput
 logger = logging.getLogger("CryticCompile")
 
 
-def compile(crytic_compile, target, build_directory, truffle_ignore_compile, truffle_version):
+def compile(crytic_compile, target, **kwargs):
+    build_directory = kwargs.get('truffle_build_directory', 'build/targets'),
+    truffle_ignore_compile = kwargs.get('truffle_ignore_compile', False),
+    truffle_version = kwargs.get('truffle_version', None)
     crytic_compile.type = Type.TRUFFLE
     # Truffle on windows has naming conflicts where it will invoke truffle.js directly instead
     # of truffle.cmd (unless in powershell or git bash). The cleanest solution is to explicitly call

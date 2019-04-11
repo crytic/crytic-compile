@@ -143,18 +143,13 @@ class CryticCompile:
         # truffle directory
         if not truffle_ignore and (os.path.isfile(os.path.join(target, 'truffle.js')) or
                                      os.path.isfile(os.path.join(target, 'truffle-config.js'))):
-            compile_truffle(self, target,
-                            kwargs.get('truffle_build_directory', 'build/targets'),
-                            kwargs.get('truffle_ignore_compile', False),
-                            kwargs.get('truffle_version', None))
+            compile_truffle(self, target, **kwargs)
         # embark directory
         elif not embark_ignore and os.path.isfile(os.path.join(target, 'embark.json')):
-            compile_embark(self, target,
-                           kwargs.get('embark_ignore_compile', False),
-                           kwargs.get('embark_overwrite_config', False))
+            compile_embark(self, target, **kwargs)
         # .json or .sol provided
         else:
-            compile_solc(self, **kwargs)
+            compile_solc(self, target, **kwargs)
 
 
 

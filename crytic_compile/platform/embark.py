@@ -8,7 +8,9 @@ from .exceptions import InvalidInput
 logger = logging.getLogger("CryticCompile")
 
 
-def compile(crytic_compile, target, embark_ignore_compile, embark_overwrite_config):
+def compile(crytic_compile, target, **kwargs):
+    embark_ignore_compile = kwargs.get('embark_ignore_compile', False),
+    embark_overwrite_config = kwargs.get('embark_overwrite_config', False)
     crytic_compile._type = Type.EMBARK
     plugin_name = '@trailofbits/embark-contract-info'
     with open('embark.json') as f:
