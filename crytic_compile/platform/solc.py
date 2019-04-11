@@ -61,7 +61,7 @@ def export(crytic_compile, **kwargs):
             }
 
         sources = {filename : {"AST": ast} for (filename, ast) in crytic_compile.asts.items()}
-        sourceList = crytic_compile.filenames
+        sourceList = list(crytic_compile.filenames)
 
         output = {'sources' : sources,
                   'sourceList' : sourceList,
