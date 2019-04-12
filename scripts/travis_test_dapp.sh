@@ -12,7 +12,7 @@ nix-env -f $HOME/.dapp/dapptools -iA dapp seth solc hevm ethsign
 
 dapp init
 
-crytic-compile .
+crytic-compile . --compile-remove-metadata
 if [ $? -ne 0 ]
 then
     echo "dapp test failed"

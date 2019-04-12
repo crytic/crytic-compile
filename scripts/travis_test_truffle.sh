@@ -12,7 +12,7 @@ nvm use --lts
 
 npm install -g truffle
 truffle unbox metacoin
-crytic-compile . --compilation-remove-metadata
+crytic-compile . --compile-remove-metadata
 
 if [ $? -ne 0 ]
 then

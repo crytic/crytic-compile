@@ -12,7 +12,7 @@ nvm use --lts
 
 npm i -g etherlime
 etherlime init
-crytic-compile . --compilation-remove-metadata
+crytic-compile . --compile-remove-metadata
 
 if [ $? -ne 0 ]
 then
