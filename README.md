@@ -10,6 +10,7 @@ Library to help smart contract compilation. It includes support for:
 - [Truffle](https://truffleframework.com/)
 - [Embark](https://embark.status.im/)
 - [Dapp](https://dapp.tools/dapp/)
+- [Etherlime](https://github.com/LimeChain/etherlime)
 
 The plugin is used in Crytic tools, including:
 - [Slither](https://github.com/crytic/slither)

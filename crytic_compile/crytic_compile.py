@@ -2,11 +2,14 @@ import os
 import json
 import logging
 import re
+import subprocess
 
 from .platform.solc import compile as compile_solc, export as export_solc
 from .platform.truffle import is_truffle, compile as compile_truffle, export as export_truffle
 from .platform.embark import is_embark, compile as compile_embark
-from .platform.dapp import is_dapp, compile as compile_dapp#, export as export_truffle
+from .platform.dapp import is_dapp, compile as compile_dapp
+from .platform.etherlime import is_etherlime, compile as compile_etherlime
+
 from .utils.naming import combine_filename_name
 
 logger = logging.getLogger("CryticCompile")
@@ -145,15 +148,28 @@ class CryticCompile:
         truffle_ignore = kwargs.get('truffle_ignore', False)
         embark_ignore = kwargs.get('embark_ignore', False)
         dapp_ignore = kwargs.get('dapp_ignore', False)
+        etherlime_ignore = kwargs.get('etherlime_ignore', False)
 
-        compilation_force_framework = kwargs.get('compilation_force_framework', None)
-        if compilation_force_framework:
-            if compilation_force_framework == 'truffle':
+        custom_build = kwargs.get('compile_custom_build', False)
+
+        if custom_build:
+            truffle_ignore = True
+            embark_ignore = True
+            dapp_ignore = True
+            etherlime_ignore = True
+
+            self._run_custom_build(custom_build)
+
+        compile_force_framework = kwargs.get('compile_force_framework', None)
+        if compile_force_framework:
+            if compile_force_framework == 'truffle':
                 compile_truffle(self, target, **kwargs)
-            elif compilation_force_framework == 'embark':
+            elif compile_force_framework == 'embark':
                 compile_embark(self, target, **kwargs)
-            elif compilation_force_framework == 'dapp':
+            elif compile_force_framework == 'dapp':
                 compile_dapp(self, target, **kwargs)
+            elif compile_force_framework == 'etherlime':
+                compile_etherlime(self, target, **kwargs)
         else:
             # truffle directory
             if not truffle_ignore and is_truffle(target):
@@ -161,15 +177,31 @@ class CryticCompile:
             # embark directory
             elif not embark_ignore and is_embark(target):
                 compile_embark(self, target, **kwargs)
+            # dap directory
             elif not dapp_ignore and is_dapp(target):
                 compile_dapp(self, target, **kwargs)
+            #etherlime directory
+            elif not etherlime_ignore and is_etherlime(target):
+                compile_etherlime(self, target, **kwargs)
             # .json or .sol provided
             else:
                 compile_solc(self, target, **kwargs)
 
-        remove_metadata = kwargs.get('compilation_remove_metadata', False)
+        remove_metadata = kwargs.get('compile_remove_metadata', False)
         if remove_metadata:
             self._remove_metadata()
+
+    def _run_custom_build(self, custom_build):
+        cmd = custom_build.split(' ')
+
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = process.communicate()
+        stdout, stderr = stdout.decode(), stderr.decode()  # convert bytestrings to unicode strings
+
+        logger.info(stdout)
+        if stderr:
+            logger.error('Custom build error: \n%s', stderr)
+
 
     def _remove_metadata(self):
         '''

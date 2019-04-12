@@ -5,4 +5,5 @@ class Type(Enum):
     TRUFFLE = 2
     EMBARK = 3
     DAPP = 4
+    ETHERLIME = 5
 
