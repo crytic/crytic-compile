@@ -1,7 +1,8 @@
 # Those are the flags shared by the command line and the config file
 defaults_flag_in_config = {
-    'compilation_force_framework': None,
-    'compilation_remove_metadata': False,
+    'compile_force_framework': None,
+    'compile_remove_metadata': False,
+    'compile_custom_build': None,
     'solc': 'solc',
     'solc_args': None,
     'solc_disable_warnings': False,
@@ -11,4 +12,6 @@ defaults_flag_in_config = {
     'embark_ignore_compile': False,
     'embark_overwrite_config': False,
     'dapp_ignore_compile': False,
+    'etherlime_ignore_compile': False,
+    'etherlime_compile_arguments': None,
 }

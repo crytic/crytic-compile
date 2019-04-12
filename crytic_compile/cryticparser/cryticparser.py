@@ -2,21 +2,27 @@ from . import defaults_flag_in_config
 
 def init(parser):
 
-    group_solc = parser.add_argument_group('Compilation options')
+    group_solc = parser.add_argument_group('Compile options')
     group_solc.add_argument('--compile-force-framework',
-                            help='Force the compilation to a given framework (truffle, embark, dapp)',
+                            help='Force the compile to a given framework (truffle, embark, dapp)',
                             action='store',
-                            default=defaults_flag_in_config['compilation_force_framework'])
+                            default=defaults_flag_in_config['compile_force_framework'])
 
-    group_solc.add_argument('--compilation-remove-metadata',
+    group_solc.add_argument('--compile-remove-metadata',
                             help='Remote the metadata from the bytecodes',
                             action='store_true',
-                            default=defaults_flag_in_config['compilation_remove_metadata'])
+                            default=defaults_flag_in_config['compile_remove_metadata'])
+
+    group_solc.add_argument('--compile-custom-build',
+                            help='Replace platform specific build command',
+                            action='store',
+                            default=defaults_flag_in_config['compile_custom_build'])
 
     init_solc(parser)
     init_truffle(parser)
     init_embark(parser)
     init_dapp(parser)
+    init_etherlime(parser)
 
 def init_solc(parser):
     group_solc = parser.add_argument_group('Solc options')
@@ -76,4 +82,18 @@ def init_dapp(parser):
                             action='store_true',
                             dest='dapp_ignore_compile',
                             default=defaults_flag_in_config['dapp_ignore_compile'])
+
+def init_etherlime(parser):
+    group_etherlime = parser.add_argument_group('Etherlime options')
+    group_etherlime.add_argument('--etherlime-ignore-compile',
+                                 help='Do not run etherlime compile',
+                                 action='store_true',
+                                 dest='etherlime_ignore_compile',
+                                 default=defaults_flag_in_config['etherlime_ignore_compile'])
+
+    group_etherlime.add_argument('--etherlime-compile-arguments',
+                                 help='Add arbitrary arguments to etherlime compile (note: [dir] is the the directory provided to crytic-compile)',
+                                 action='store_true',
+                                 dest='etherlime_compile_arguments',
+                                 default=defaults_flag_in_config['etherlime_compile_arguments'])
 

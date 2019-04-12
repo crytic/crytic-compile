@@ -15,7 +15,7 @@ embark demo
 cd -
 cd /tmp/embark_demo
 npm install
-crytic-compile . --embark-overwrite-config
+crytic-compile . --embark-overwrite-config --compile-remove-metadata
 cd -
 
 DIFF=$(diff /tmp/embark_demo/crytic-export/contracts.json ../../tests/expected/embark-demo.json)

@@ -2,7 +2,7 @@
 
 cp tests/contract.sol /tmp
 cd /tmp
-crytic-compile contract.sol --compilation-remove-metadata
+crytic-compile contract.sol --compile-remove-metadata
 
 cd -
 DIFF=$(diff /tmp/crytic-export/contracts.json tests/expected/solc-demo.json)
