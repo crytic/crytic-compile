@@ -6,8 +6,8 @@ import platform
 import glob
 from .types import Type
 from .exceptions import InvalidInput
-logger = logging.getLogger("CryticCompile")
 
+logger = logging.getLogger("CryticCompile")
 
 def compile(crytic_compile, target, **kwargs):
     build_directory = kwargs.get('truffle_build_directory', 'build/targets')
@@ -40,7 +40,6 @@ def compile(crytic_compile, target, **kwargs):
         stdout, stderr = stdout.decode(), stderr.decode()  # convert bytestrings to unicode strings
 
         logger.info(stdout)
-
         if stderr:
             logger.error(stderr)
     if not os.path.isdir(os.path.join(target, build_directory)):

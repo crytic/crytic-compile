@@ -8,8 +8,10 @@ from .cryticparser import cryticparser, defaults_flag_in_config
 from .crytic_compile import CryticCompile
 from .platform import InvalidInput
 
-#logging.basicConfig()
+logging.basicConfig()
 logger = logging.getLogger("CryticCompile")
+logger.setLevel(logging.INFO)
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description='crytic-compile. For usage information, see https://github.com/crytic/crytic-compile/wiki/Usage',
