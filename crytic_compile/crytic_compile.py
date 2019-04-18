@@ -126,8 +126,8 @@ class CryticCompile:
         return new_names
 
     def _update_bytecode_with_libraries(self, bytecode, libraries):
-        libraries = self._convert_libraries_names(libraries)
         if libraries:
+            libraries = self._convert_libraries_names(libraries)
             for library_found in re.findall(r'__.{36}__', bytecode):
                 if library_found in libraries:
                     bytecode = re.sub(
