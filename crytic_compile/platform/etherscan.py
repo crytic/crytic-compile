@@ -73,8 +73,9 @@ def compile(crytic_compile, target, **kwargs):
 
     solc_compact_ast = True
 
-    if compiler_version in [f'0.4.{x}' for x in range(0,12)] or\
-        compiler_version.starswith('0.3'):
+
+    if compiler_version in [f'0.4.{x}' for x in range(0, 12)] or\
+        compiler_version.startswith('0.3'):
         solc_compact_ast = False
 
     targets_json = _run_solc(crytic_compile,
