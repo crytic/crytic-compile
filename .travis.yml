@@ -10,6 +10,7 @@ env:
   - TEST_SUITE=scripts/travis_test_embark.sh
   - TEST_SUITE=scripts/travis_test_dapp.sh
   - TEST_SUITE=scripts/travis_test_etherlime.sh
+  - TEST_SUITE=scripts/travis_test_etherscan.sh
 branches:
   only:
   - master

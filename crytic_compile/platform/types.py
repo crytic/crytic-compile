@@ -6,4 +6,5 @@ class Type(Enum):
     EMBARK = 3
     DAPP = 4
     ETHERLIME = 5
+    ETHERSCAN = 6
 

@@ -36,6 +36,8 @@ def compile(crytic_compile, target, **kwargs):
         crytic_compile.filenames.add(path)
         crytic_compile.asts[path] = info['AST']
 
+def is_solc(target):
+    return os.path.isfile(target) and target.endswith('.sol')
 
 def export(crytic_compile, **kwargs):
     export_dir = kwargs.get('export_dir', 'crytic-export')
@@ -70,7 +72,7 @@ def export(crytic_compile, **kwargs):
         json.dump(output, f)
 
 
-def _run_solc(crytic_compile, filename, solc, solc_disable_warnings, solc_arguments, solc_compact_ast):
+def _run_solc(crytic_compile, filename, solc, solc_disable_warnings, solc_arguments, solc_compact_ast, env=None):
     if not os.path.isfile(filename):
         logger.error('{} does not exist (are you in the correct directory?)'.format(filename))
         exit(-1)
@@ -97,7 +99,10 @@ def _run_solc(crytic_compile, filename, solc, solc_disable_warnings, solc_argume
     if '--allow-paths' not in cmd:
         cmd += ['--allow-paths', '.']
 
-    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if env:
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
+    else:
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = process.communicate()
     stdout, stderr = stdout.decode(), stderr.decode()  # convert bytestrings to unicode strings
 

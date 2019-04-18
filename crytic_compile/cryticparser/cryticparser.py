@@ -4,7 +4,7 @@ def init(parser):
 
     group_solc = parser.add_argument_group('Compile options')
     group_solc.add_argument('--compile-force-framework',
-                            help='Force the compile to a given framework (truffle, embark, dapp)',
+                            help='Force the compile to a given framework (truffle, embark, dapp, etherlime, etherscan)',
                             action='store',
                             default=defaults_flag_in_config['compile_force_framework'])
 

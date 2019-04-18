@@ -4,11 +4,12 @@ import logging
 import re
 import subprocess
 
-from .platform.solc import compile as compile_solc, export as export_solc
+from .platform.solc import compile as compile_solc, export as export_solc, is_solc
 from .platform.truffle import is_truffle, compile as compile_truffle, export as export_truffle
 from .platform.embark import is_embark, compile as compile_embark
 from .platform.dapp import is_dapp, compile as compile_dapp
 from .platform.etherlime import is_etherlime, compile as compile_etherlime
+from .platform.etherscan import is_etherscan, compile as compile_etherscan
 
 from .utils.naming import combine_filename_name
 
@@ -16,6 +17,9 @@ logger = logging.getLogger("CryticCompile")
 logging.basicConfig()
 
 
+def is_supported(target):
+    supported = [is_solc, is_truffle, is_embark, is_dapp, is_etherlime, is_etherscan]
+    return any(f(target) for f in supported)
 
 class CryticCompile:
 
@@ -149,6 +153,7 @@ class CryticCompile:
         embark_ignore = kwargs.get('embark_ignore', False)
         dapp_ignore = kwargs.get('dapp_ignore', False)
         etherlime_ignore = kwargs.get('etherlime_ignore', False)
+        etherscan_ignore = kwargs.get('etherscan_ignore', False)
 
         custom_build = kwargs.get('compile_custom_build', False)
 
@@ -157,6 +162,7 @@ class CryticCompile:
             embark_ignore = True
             dapp_ignore = True
             etherlime_ignore = True
+            etherscan_ignore = True
 
             self._run_custom_build(custom_build)
 
@@ -170,6 +176,8 @@ class CryticCompile:
                 compile_dapp(self, target, **kwargs)
             elif compile_force_framework == 'etherlime':
                 compile_etherlime(self, target, **kwargs)
+            elif compile_force_framework == 'etherscan':
+                compile_etherscan(self, target, **kwargs)
         else:
             # truffle directory
             if not truffle_ignore and is_truffle(target):
@@ -183,6 +191,8 @@ class CryticCompile:
             #etherlime directory
             elif not etherlime_ignore and is_etherlime(target):
                 compile_etherlime(self, target, **kwargs)
+            elif not etherscan_ignore and is_etherscan(target):
+                compile_etherscan(self, target, **kwargs)
             # .json or .sol provided
             else:
                 compile_solc(self, target, **kwargs)
