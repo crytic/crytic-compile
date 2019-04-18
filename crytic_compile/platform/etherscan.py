@@ -69,14 +69,20 @@ def compile(crytic_compile, target, **kwargs):
     solc_arguments = None
     if optimizaiton_used:
         optimized_run = int(optimized_run)
-        solc_arguments = f'--optimized --optimize-runs{optimized_run}'
+        solc_arguments = f'--optimize --optimize-runs {optimized_run}'
+
+    solc_compact_ast = True
+
+    if compiler_version in [f'0.4.{x}' for x in range(0,12)] or\
+        compiler_version.starswith('0.3'):
+        solc_compact_ast = False
 
     targets_json = _run_solc(crytic_compile,
                              filename,
                              solc='solc',
-                             solc_disable_warnings=True,
+                             solc_disable_warnings=False,
                              solc_arguments=solc_arguments,
-                             solc_compact_ast=True,
+                             solc_compact_ast=solc_compact_ast,
                              env=dict(os.environ, SOLC_VERSION=compiler_version))
 
     for original_contract_name, info in targets_json["contracts"].items():

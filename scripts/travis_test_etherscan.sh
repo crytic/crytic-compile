@@ -6,7 +6,9 @@ mkdir /tmp/etherscan
 cd /tmp/etherscan
 
 docker pull trailofbits/solc-select
-rm /usr/bin/solc -f
+mkdir /tmp/bin
+export PREFIX=/tmp/bin
+export PATH=/tmp/bin:$PATH
 docker run --read-only -i --rm --entrypoint='/bin/sh' trailofbits/solc-select:latest -c 'cat /usr/bin/install.sh' | bash
 
 crytic-compile 0x7F37f78cBD74481E593F9C737776F7113d76B315 --compile-remove-metadata

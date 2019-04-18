@@ -3,6 +3,7 @@ import json
 import logging
 import re
 import subprocess
+import sha3
 
 from .platform.solc import compile as compile_solc, export as export_solc, is_solc
 from .platform.truffle import is_truffle, compile as compile_truffle, export as export_truffle
@@ -48,6 +49,7 @@ class CryticCompile:
         self._abis = {}
         self._runtime_bytecodes = {}
         self._init_bytecodes = {}
+        self._hashes = {}
 
         # cryticcompile store the name and the filename of the contract separately
         # but the exported json follow the format: /path:Contract, to follow standard format
@@ -106,6 +108,24 @@ class CryticCompile:
 
     def ast(self, path):
         return self._asts.get(path, None)
+
+    def hashes(self, name):
+        if not name in self._hashes:
+            self._compute_hashes(name)
+        return self._hashes[name]
+
+    def _compute_hashes(self, name):
+        self._hashes[name] = {}
+        for sig in self.abi(name):
+            if 'type' in sig:
+                if sig['type'] == 'function':
+                    sig_name = sig['name']
+                    arguments = ','.join([x['type'] for x in sig['inputs']])
+                    sig = f'{sig_name}({arguments})'
+                    s = sha3.keccak_256()
+                    s.update(sig.encode('utf-8'))
+                    self._hashes[name][sig] = int("0x" + s.hexdigest()[:8], 16)
+
 
     def export(self, **kwargs):
         """
