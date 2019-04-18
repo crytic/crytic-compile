@@ -5,6 +5,7 @@ import os
 import re
 
 from .types import Type
+from .exceptions import  InvalidCompilation
 from .solc import _run_solc
 from ..utils.naming import extract_filename, extract_name, combine_filename_name
 
@@ -35,18 +36,21 @@ def compile(crytic_compile, target, **kwargs):
         html = response.read()
 
     info = json.loads(html)
+    print(etherscan_url)
 
     if not 'message' in info :
         logger.error('Incorrect etherscan request')
-        raise Exception('Incorrect etherscan request ' + etherscan_url)
+        raise InvalidCompilation('Incorrect etherscan request ' + etherscan_url)
 
+    print(info['message'])
+    print(info['message'] != 'OK')
     if info['message'] != 'OK':
         logger.error('Contract has no public source code')
-        raise Exception('Contract has no public source code:' + etherscan_url)
+        raise InvalidCompilation('Contract has no public source code: ' + etherscan_url)
 
     if not 'result' in info:
         logger.error('Contract has no public source code')
-        raise Exception('Contract has no public source code:' + etherscan_url)
+        raise InvalidCompilation('Contract has no public source code: ' + etherscan_url)
 
     result = info['result'][0]
     source_code = result['SourceCode']

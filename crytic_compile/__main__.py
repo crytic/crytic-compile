@@ -6,7 +6,7 @@ import logging
 from pkg_resources import require
 from .cryticparser import cryticparser, defaults_flag_in_config
 from .crytic_compile import CryticCompile
-from .platform import InvalidInput
+from .platform import InvalidCompilation
 
 logging.basicConfig()
 logger = logging.getLogger("CryticCompile")
@@ -70,7 +70,7 @@ def main():
     try:
         cryticCompile = CryticCompile(**vars(args))
         cryticCompile.export(**vars(args))
-    except InvalidInput as e:
+    except InvalidCompilation as e:
         logger.error(e)
 
 

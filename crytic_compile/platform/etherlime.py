@@ -5,7 +5,7 @@ import subprocess
 import platform
 import glob
 from .types import Type
-from .exceptions import InvalidInput
+from .exceptions import InvalidCompilation
 logger = logging.getLogger("CryticCompile")
 
 
@@ -34,7 +34,7 @@ def compile(crytic_compile, target, **kwargs):
 
     # similar to truffle
     if not os.path.isdir(os.path.join(target, build_directory)):
-        raise InvalidInput('No truffle build directory found, did you run `truffle compile`?')
+        raise InvalidCompilation('No truffle build directory found, did you run `truffle compile`?')
     filenames = glob.glob(os.path.join(target, build_directory, '*.json'))
 
     for filename in filenames:

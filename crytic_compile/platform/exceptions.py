@@ -1,2 +1,2 @@
-class InvalidInput(Exception):
+class InvalidCompilation(Exception):
     pass

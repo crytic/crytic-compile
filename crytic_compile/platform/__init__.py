@@ -1,2 +1,2 @@
 from .types import Type
-from. exceptions import InvalidInput
+from. exceptions import InvalidCompilation

@@ -6,7 +6,7 @@ import subprocess
 from ..utils.naming import extract_filename, extract_name
 
 from .types import Type
-from .exceptions import InvalidInput
+from .exceptions import InvalidCompilation
 logger = logging.getLogger("CryticCompile")
 
 
@@ -33,7 +33,7 @@ def compile(crytic_compile, target, **kwargs):
                 json.dump(embark_json, outfile, indent=2)
     else:
         if (not 'plugins' in embark_json) or (not plugin_name in embark_json['plugins']):
-            raise InvalidInput(
+            raise InvalidCompilation(
                 'embark-contract-info plugin was found in embark.json. Please install the plugin (see https://github.com/crytic/crytic-compile/wiki/Usage#embark), or use --embark-overwrite-config.')
 
     if not embark_ignore_compile:
@@ -45,7 +45,7 @@ def compile(crytic_compile, target, **kwargs):
             logger.error("%s" % stderr.decode())
     infile = os.path.join(target, 'crytic-export', 'contracts.json')
     if not os.path.isfile(infile):
-        raise InvalidInput(
+        raise InvalidCompilation(
             'Embark did not generate the AST file. Is Embark installed (npm install -g embark)? Is embark-contract-info installed? (npm install -g embark).')
     with open(infile, 'r') as f:
         targets_loaded = json.load(f)
