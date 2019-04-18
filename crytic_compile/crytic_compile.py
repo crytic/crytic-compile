@@ -100,11 +100,50 @@ class CryticCompile:
     def abi(self, name):
         return self._abis.get(name, None)
 
-    def runtime_bytecode(self, name):
-        return self._runtime_bytecodes.get(name, None)
+    def _convert_libraries_names(self, libraries):
+        """
+        :param libraries:
+        :return:
+        """
+        new_names = {}
+        for (lib, addr) in libraries.items():
+            # Prior solidity 0.5
+            # libraries were on the format __filename:contract_name_____
+            # From solidity 0.5,
+            # libraries are on the format __$kecckack(filename:contract_name)[34]$__
+            # https://solidity.readthedocs.io/en/v0.5.7/050-breaking-changes.html#command-line-and-json-interfaces
 
-    def init_bytecode(self, name):
-        return self._init_bytecodes.get(name, None)
+            lib_4 = '__' + lib
+            lib_4 = lib_4 + '_'* (40-len(lib_4))
+
+            s = sha3.keccak_256()
+            s.update(lib.encode('utf-8'))
+            lib_5 = "__$" + s.hexdigest()[:34] + "$__"
+
+            new_names[lib] = addr
+            new_names[lib_4] = addr
+            new_names[lib_5] = addr
+        return new_names
+
+    def _update_bytecode_with_libraries(self, bytecode, libraries):
+        libraries = self._convert_libraries_names(libraries)
+        if libraries:
+            for library_found in re.findall(r'__.{36}__', bytecode):
+                if library_found in libraries:
+                    bytecode = re.sub(
+                        library_found,
+                        libraries[library_found],
+                        bytecode
+                    )
+        return bytecode
+
+    def runtime_bytecode(self, name, libraries=None):
+        runtime = self._runtime_bytecodes.get(name, None)
+        return self._update_bytecode_with_libraries(runtime, libraries)
+
+    def init_bytecode(self, name, libraries=None):
+        init = self._init_bytecodes.get(name, None)
+        return self._update_bytecode_with_libraries(init, libraries)
 
     def ast(self, path):
         return self._asts.get(path, None)

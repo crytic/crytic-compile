@@ -10,7 +10,7 @@ from .exceptions import InvalidCompilation
 logger = logging.getLogger("CryticCompile")
 
 def compile(crytic_compile, target, **kwargs):
-    build_directory = kwargs.get('truffle_build_directory', 'build/targets')
+    build_directory = kwargs.get('truffle_build_directory', os.path.join('build', 'contracts'))
     truffle_ignore_compile = kwargs.get('truffle_ignore_compile', False)
     truffle_version = kwargs.get('truffle_version', None)
     crytic_compile.type = Type.TRUFFLE
