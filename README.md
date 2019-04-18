@@ -11,6 +11,7 @@ Library to help smart contract compilation. It includes support for:
 - [Embark](https://embark.status.im/)
 - [Dapp](https://dapp.tools/dapp/)
 - [Etherlime](https://github.com/LimeChain/etherlime)
+- [Etherscan](https://etherscan.io/)
 
 The plugin is used in Crytic tools, including:
 - [Slither](https://github.com/crytic/slither)
