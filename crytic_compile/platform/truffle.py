@@ -53,7 +53,7 @@ def compile(crytic_compile, target, **kwargs):
             crytic_compile.filenames.add(target_loaded['ast']['absolutePath'])
             contract_name = target_loaded['contractName']
             crytic_compile.contracts_filenames[contract_name] = target_loaded['ast']['absolutePath']
-            crytic_compile.contracts_name.add(contract_name)
+            crytic_compile.contracts_names.add(contract_name)
             crytic_compile.abis[contract_name] = target_loaded['abi']
             crytic_compile.init_bytecodes[contract_name] = target_loaded['bytecode'].replace('0x', '')
             crytic_compile.runtime_bytecodes[contract_name] = target_loaded['deployedBytecode'].replace('0x', '')
@@ -64,7 +64,7 @@ def export(crytic_compile, **kwargs):
     if not os.path.exists(export_dir):
         os.makedirs(export_dir)
 
-    for contract_name in crytic_compile.contracts_name:
+    for contract_name in crytic_compile.contracts_names:
         filename = crytic_compile.contracts_filenames[contract_name]
         with open(os.path.join(export_dir, contract_name  + '.json'), 'w') as f:
             output = {

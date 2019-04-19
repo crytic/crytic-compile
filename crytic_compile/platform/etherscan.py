@@ -89,7 +89,7 @@ def compile(crytic_compile, target, **kwargs):
     for original_contract_name, info in targets_json["contracts"].items():
         contract_name = extract_name(original_contract_name)
         contract_filename = extract_filename(original_contract_name)
-        crytic_compile.contracts_name.add(contract_name)
+        crytic_compile.contracts_names.add(contract_name)
         crytic_compile.contracts_filenames[contract_name] = contract_filename
         crytic_compile.abis[contract_name] = json.loads(info['abi'])
         crytic_compile.init_bytecodes[contract_name] = info['bin']

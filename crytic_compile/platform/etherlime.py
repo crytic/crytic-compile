@@ -44,7 +44,7 @@ def compile(crytic_compile, target, **kwargs):
             crytic_compile.filenames.add(target_loaded['ast']['absolutePath'])
             contract_name = target_loaded['contractName']
             crytic_compile.contracts_filenames[contract_name] = target_loaded['ast']['absolutePath']
-            crytic_compile.contracts_name.add(contract_name)
+            crytic_compile.contracts_names.add(contract_name)
             crytic_compile.abis[contract_name] = target_loaded['abi']
             crytic_compile.init_bytecodes[contract_name] = target_loaded['bytecode'].replace('0x', '')
             crytic_compile.runtime_bytecodes[contract_name] = target_loaded['deployedBytecode'].replace('0x', '')

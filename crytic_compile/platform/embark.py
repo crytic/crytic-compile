@@ -57,7 +57,7 @@ def compile(crytic_compile, target, **kwargs):
             contract_name = extract_name(original_contract_name)
             contract_filename = extract_filename(original_contract_name)
             crytic_compile.contracts_filenames[contract_name] = contract_filename
-            crytic_compile.contracts_name.add(contract_name)
+            crytic_compile.contracts_names.add(contract_name)
 
 
             if 'abi' in info:

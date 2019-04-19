@@ -54,16 +54,28 @@ class CryticCompile:
         # cryticcompile store the name and the filename of the contract separately
         # but the exported json follow the format: /path:Contract, to follow standard format
         self._contracts_name = set() # set containing all the contract name
+        self._contracts_name_without_libraries = None # set containing all the contract name without the libraries
         self._filenames = set() # set containing all the filenames
         self._contracts_filenames = {} # mapping from contract name to filename
+        self._libraries = {}
 
         self._type = None
 
         self._compile(target, **kwargs)
 
     @property
-    def contracts_name(self):
+    def contracts_names(self):
         return self._contracts_name
+
+    @property
+    def contracts_names_without_libraries(self):
+        if self._contracts_name_without_libraries is None:
+            libraries = []
+            for c in self._contracts_name:
+                libraries += self.libraries_names(c)
+            libraries = set(libraries)
+            self._contracts_name_without_libraries = set([l for l in self._contracts_name if not l in libraries])
+        return self._contracts_name_without_libraries
 
     @property
     def filenames(self):
@@ -123,7 +135,7 @@ class CryticCompile:
             new_names[lib_4] = addr
             new_names[lib_5] = addr
 
-            if lib in self.contracts_name:
+            if lib in self.contracts_names:
                 lib_with_filename = self.contracts_filenames[lib] + ':' + lib
 
                 lib_4 = '__' + lib_with_filename + '_' * (38 - len(lib_with_filename))
@@ -147,7 +159,7 @@ class CryticCompile:
         :param lib_name:
         :return: contract name (None if not found)
         """
-        for name in self.contracts_name:
+        for name in self.contracts_names:
             if name == lib_name:
                 return name
 
@@ -181,15 +193,18 @@ class CryticCompile:
 
         return None
 
-    def libraries(self, name):
+    def libraries_names(self, name):
         """
-        Return the libraries of the contract
+        Return the name of the libraries used by the contract
         :param name: contract
         :return: list of libraries name
         """
-        init = re.findall(r'__.{36}__', self.init_bytecode(name))
-        runtime = re.findall(r'__.{36}__', self.runtime_bytecode(name))
-        return [self._library_name_lookup(x) for x in set(init+runtime)]
+        if name not in self._libraries:
+            init = re.findall(r'__.{36}__', self.init_bytecode(name))
+            runtime = re.findall(r'__.{36}__', self.runtime_bytecode(name))
+            self._libraries[name] = [self._library_name_lookup(x) for x in set(init+runtime)]
+        return self._libraries[name]
+
 
     def _update_bytecode_with_libraries(self, bytecode, libraries):
         if libraries:
@@ -259,7 +274,7 @@ class CryticCompile:
 
         with open(path, 'w') as f:
             contracts = dict()
-            for contract_name in self.contracts_name:
+            for contract_name in self.contracts_names:
                 exported_name = combine_filename_name(self.contracts_filenames[contract_name], contract_name)
                 contracts[exported_name] = {
                     'abi': self.abi(contract_name),
