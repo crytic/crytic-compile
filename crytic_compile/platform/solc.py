@@ -5,6 +5,7 @@ import subprocess
 
 from .types import Type
 from ..utils.naming import extract_filename, extract_name, combine_filename_name
+from .exceptions import InvalidCompilation
 
 logger = logging.getLogger("CryticCompile")
 
@@ -80,7 +81,7 @@ def _run_solc(crytic_compile, filename, solc, solc_disable_warnings, solc_argume
         exit(-1)
 
     if not filename.endswith('.sol'):
-        raise Exception('Incorrect file format')
+        raise InvalidCompilation('Incorrect file format')
 
     options = 'abi,ast,bin,bin-runtime'
     if solc_compact_ast:
@@ -114,4 +115,8 @@ def _run_solc(crytic_compile, filename, solc, solc_disable_warnings, solc_argume
     if stderr and (not solc_disable_warnings):
         logger.info('Compilation warnings/errors on %s:\n%s', filename, stderr)
 
-    return json.loads(stdout)
+    try:
+        ret = json.loads(stdout)
+        return ret
+    except json.decoder.JSONDecodeError:
+        raise InvalidCompilation(f'Invalid solc compilation {stderr}')
