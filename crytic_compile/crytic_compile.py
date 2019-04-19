@@ -138,6 +138,8 @@ class CryticCompile:
             if lib in self.contracts_names:
                 lib_with_filename = self.contracts_filenames[lib] + ':' + lib
 
+                lib_with_filename = lib_with_filename[0:36]
+
                 lib_4 = '__' + lib_with_filename + '_' * (38 - len(lib_with_filename))
 
                 s = sha3.keccak_256()
@@ -149,7 +151,7 @@ class CryticCompile:
                 new_names[lib_5] = addr
         return new_names
 
-    def _library_name_lookup(self, lib_name):
+    def _library_name_lookup(self, lib_name, original_contract):
         """
         Convert a library name to the contract
         The library can be:
@@ -159,6 +161,7 @@ class CryticCompile:
         :param lib_name:
         :return: contract name (None if not found)
         """
+
         for name in self.contracts_names:
             if name == lib_name:
                 return name
@@ -166,6 +169,7 @@ class CryticCompile:
             # Some platform use only the contract name
             # Some use fimename:contract_name
             name_with_filename = self.contracts_filenames[name] + ':' + name
+            name_with_filename = name_with_filename[0:36]
 
             # Solidity 0.4
             if '__' + name + '_' * (38-len(name)) == lib_name:
@@ -191,6 +195,12 @@ class CryticCompile:
             if  v5_name == lib_name:
                 return name
 
+        # handle specific case of colission for Solidity <0.4
+        # We can only detect that the second contract is meant to be the library
+        # if there is only two contracts in the codebase
+        if len(self._contracts_name) == 2:
+            return next((c for c in self._contracts_name if c != original_contract), None)
+
         return None
 
     def libraries_names(self, name):
@@ -199,10 +209,11 @@ class CryticCompile:
         :param name: contract
         :return: list of libraries name
         """
+
         if name not in self._libraries:
             init = re.findall(r'__.{36}__', self.init_bytecode(name))
             runtime = re.findall(r'__.{36}__', self.runtime_bytecode(name))
-            self._libraries[name] = [self._library_name_lookup(x) for x in set(init+runtime)]
+            self._libraries[name] = [self._library_name_lookup(x, name) for x in set(init+runtime)]
         return self._libraries[name]
 
 
