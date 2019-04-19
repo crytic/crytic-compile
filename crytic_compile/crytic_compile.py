@@ -102,7 +102,7 @@ class CryticCompile:
 
     def _convert_libraries_names(self, libraries):
         """
-        :param libraries:
+        :param libraries: list(name, addr). Name can be the library name, or filename:library_name
         :return:
         """
         new_names = {}
@@ -113,8 +113,7 @@ class CryticCompile:
             # libraries are on the format __$kecckack(filename:contract_name)[34]$__
             # https://solidity.readthedocs.io/en/v0.5.7/050-breaking-changes.html#command-line-and-json-interfaces
 
-            lib_4 = '__' + lib
-            lib_4 = lib_4 + '_'* (40-len(lib_4))
+            lib_4 = '__' + lib + '_'* (38-len(lib))
 
             s = sha3.keccak_256()
             s.update(lib.encode('utf-8'))
@@ -123,7 +122,74 @@ class CryticCompile:
             new_names[lib] = addr
             new_names[lib_4] = addr
             new_names[lib_5] = addr
+
+            if lib in self.contracts_name:
+                lib_with_filename = self.contracts_filenames[lib] + ':' + lib
+
+                lib_4 = '__' + lib_with_filename + '_' * (38 - len(lib_with_filename))
+
+                s = sha3.keccak_256()
+                s.update(lib_with_filename.encode('utf-8'))
+                lib_5 = "__$" + s.hexdigest()[:34] + "$__"
+
+                new_names[lib_with_filename] = addr
+                new_names[lib_4] = addr
+                new_names[lib_5] = addr
         return new_names
+
+    def _library_name_lookup(self, lib_name):
+        """
+        Convert a library name to the contract
+        The library can be:
+        - the original contract name
+        - __X__ following Solidity 0.4 format
+        - __$..$__ following Solidity 0.5 format
+        :param lib_name:
+        :return: contract name (None if not found)
+        """
+        for name in self.contracts_name:
+            if name == lib_name:
+                return name
+
+            # Some platform use only the contract name
+            # Some use fimename:contract_name
+            name_with_filename = self.contracts_filenames[name] + ':' + name
+
+            # Solidity 0.4
+            if '__' + name + '_' * (38-len(name)) == lib_name:
+                return name
+
+            # Solidity 0.4 with filename
+            if '__' + name_with_filename+ '_' * (38-len(name_with_filename)) == lib_name:
+                return name
+
+            # Solidity 0.5
+            s = sha3.keccak_256()
+            s.update(name.encode('utf-8'))
+            v5_name = "__$" + s.hexdigest()[:34] + "$__"
+
+            if  v5_name == lib_name:
+                return name
+
+            # Solidity 0.5 with filename
+            s = sha3.keccak_256()
+            s.update(name_with_filename .encode('utf-8'))
+            v5_name = "__$" + s.hexdigest()[:34] + "$__"
+
+            if  v5_name == lib_name:
+                return name
+
+        return None
+
+    def libraries(self, name):
+        """
+        Return the libraries of the contract
+        :param name: contract
+        :return: list of libraries name
+        """
+        init = re.findall(r'__.{36}__', self.init_bytecode(name))
+        runtime = re.findall(r'__.{36}__', self.runtime_bytecode(name))
+        return [self._library_name_lookup(x) for x in set(init+runtime)]
 
     def _update_bytecode_with_libraries(self, bytecode, libraries):
         if libraries:
@@ -131,8 +197,8 @@ class CryticCompile:
             for library_found in re.findall(r'__.{36}__', bytecode):
                 if library_found in libraries:
                     bytecode = re.sub(
-                        library_found,
-                        libraries[library_found],
+                        re.escape(library_found),
+                        '{:040x}'.format(libraries[library_found]),
                         bytecode
                     )
         return bytecode

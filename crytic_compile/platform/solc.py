@@ -15,13 +15,15 @@ def compile(crytic_compile, target, **kwargs):
     solc_disable_warnings = kwargs.get('solc_disable_warnings', False)
     solc_arguments = kwargs.get('solc_arguments', '')
     solc_compact_ast = kwargs.get('solc_compact_ast', True)
+    solc_remaps = kwargs.get('solc_remaps', None)
 
     targets_json = _run_solc(crytic_compile,
                              target,
                              solc,
                              solc_disable_warnings,
                              solc_arguments,
-                             solc_compact_ast)
+                             solc_compact_ast,
+                             solc_remaps=solc_remaps)
 
     for original_contract_name, info in targets_json["contracts"].items():
         contract_name = extract_name(original_contract_name)
@@ -72,7 +74,7 @@ def export(crytic_compile, **kwargs):
         json.dump(output, f)
 
 
-def _run_solc(crytic_compile, filename, solc, solc_disable_warnings, solc_arguments, solc_compact_ast, env=None):
+def _run_solc(crytic_compile, filename, solc, solc_disable_warnings, solc_arguments, solc_compact_ast, solc_remaps=None, env=None):
     if not os.path.isfile(filename):
         logger.error('{} does not exist (are you in the correct directory?)'.format(filename))
         exit(-1)
@@ -83,7 +85,10 @@ def _run_solc(crytic_compile, filename, solc, solc_disable_warnings, solc_argume
     options = 'abi,ast,bin,bin-runtime'
     if solc_compact_ast:
         options += ',compact-format'
-    cmd = [solc, filename, '--combined-json', options]
+    cmd = [solc]
+    if solc_remaps:
+        cmd += solc_remaps
+    cmd += [filename, '--combined-json', options]
     if solc_arguments:
         # To parse, we first split the string on each '--'
         solc_args = solc_arguments.split('--')

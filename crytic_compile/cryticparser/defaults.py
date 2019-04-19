@@ -4,6 +4,7 @@ defaults_flag_in_config = {
     'compile_remove_metadata': False,
     'compile_custom_build': None,
     'solc': 'solc',
+    'solc_remaps': None,
     'solc_args': None,
     'solc_disable_warnings': False,
     'truffle_version': None,
