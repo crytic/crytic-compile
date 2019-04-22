@@ -40,9 +40,12 @@ The file structure is:
         "/path:contract_name":
         {
             "abi": [],
-            "bin": ..,
-            "bin-runtime": ..
+            "bin": "..",
+            "bin-runtime": "..",
+            "srcmap": "..",
+            "srcmap-runtime": ".."
         }
+    ]
 }
 ```
 
