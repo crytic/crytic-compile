@@ -34,6 +34,8 @@ def compile(crytic_compile, target, **kwargs):
         crytic_compile.abis[contract_name] = json.loads(info['abi'])
         crytic_compile.init_bytecodes[contract_name] = info['bin']
         crytic_compile.runtime_bytecodes[contract_name] = info['bin-runtime']
+        crytic_compile.srcmaps[contract_name] = info['srcmap'].split(';')
+        crytic_compile.srcmaps_runtime[contract_name] = info['srcmap-runtime'].split(';')
 
     for path, info in targets_json["sources"].items():
         crytic_compile.filenames.add(path)
@@ -58,8 +60,8 @@ def export(crytic_compile, **kwargs):
             abi = abi.replace(' ', '')
             exported_name = combine_filename_name(crytic_compile.contracts_filenames[contract_name], contract_name)
             contracts[exported_name] = {
-                'srcmap': '',
-                'srcmap-runtime': '',
+                'srcmap': ';'.join(crytic_compile.srcmap(contract_name)),
+                'srcmap-runtime': ';'.join(crytic_compile.srcmap_runtime(contract_name)),
                 'abi': abi,
                 'bin': crytic_compile.init_bytecode(contract_name),
                 'bin-runtime': crytic_compile.runtime_bytecode(contract_name)
@@ -83,7 +85,7 @@ def _run_solc(crytic_compile, filename, solc, solc_disable_warnings, solc_argume
     if not filename.endswith('.sol'):
         raise InvalidCompilation('Incorrect file format')
 
-    options = 'abi,ast,bin,bin-runtime'
+    options = 'abi,ast,bin,bin-runtime,srcmap,srcmap-runtime,hashes'
     if solc_compact_ast:
         options += ',compact-format'
     cmd = [solc]

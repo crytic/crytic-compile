@@ -50,6 +50,8 @@ class CryticCompile:
         self._runtime_bytecodes = {}
         self._init_bytecodes = {}
         self._hashes = {}
+        self._srcmaps = {}
+        self._srcmaps_runtime = {}
 
         # cryticcompile store the name and the filename of the contract separately
         # but the exported json follow the format: /path:Contract, to follow standard format
@@ -85,6 +87,9 @@ class CryticCompile:
     def contracts_filenames(self):
         return self._contracts_filenames
 
+    def filename_of_contract(self, name):
+        return self._contracts_filenames[name]
+
     @property
     def abis(self):
         return self._abis
@@ -100,6 +105,20 @@ class CryticCompile:
     @property
     def init_bytecodes(self):
         return self._init_bytecodes
+
+    @property
+    def srcmaps(self):
+        return self._srcmaps
+
+    @property
+    def srcmaps_runtime(self):
+        return self._srcmaps_runtime
+
+    def srcmap(self, name):
+        return self._srcmaps.get(name, [])
+
+    def srcmap_runtime(self, name):
+        return self._srcmaps_runtime.get(name, [])
 
     @property
     def type(self):
