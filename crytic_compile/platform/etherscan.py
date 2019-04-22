@@ -94,9 +94,9 @@ def compile(crytic_compile, target, **kwargs):
         crytic_compile.contracts_names.add(contract_name)
         crytic_compile.contracts_filenames[contract_name] = contract_filename
         crytic_compile.abis[contract_name] = json.loads(info['abi'])
-        crytic_compile.init_bytecodes[contract_name] = info['bin']
-        crytic_compile.runtime_bytecodes[contract_name] = info['bin-runtime']
-        crytic_compile.srcmaps[contract_name] = info['srcmap'].split(';')
+        crytic_compile.bytecodes_init[contract_name] = info['bin']
+        crytic_compile.bytecodes_runtime[contract_name] = info['bin-runtime']
+        crytic_compile.srcmaps_init[contract_name] = info['srcmap'].split(';')
         crytic_compile.srcmaps_runtime[contract_name] = info['srcmap-runtime'].split(';')
 
     for path, info in targets_json["sources"].items():

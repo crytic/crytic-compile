@@ -55,9 +55,9 @@ def compile(crytic_compile, target, **kwargs):
             crytic_compile.contracts_filenames[contract_name] = target_loaded['ast']['absolutePath']
             crytic_compile.contracts_names.add(contract_name)
             crytic_compile.abis[contract_name] = target_loaded['abi']
-            crytic_compile.init_bytecodes[contract_name] = target_loaded['bytecode'].replace('0x', '')
-            crytic_compile.runtime_bytecodes[contract_name] = target_loaded['deployedBytecode'].replace('0x', '')
-            crytic_compile.srcmaps[contract_name] = target_loaded['sourceMap'].split(';')
+            crytic_compile.bytecodes_init[contract_name] = target_loaded['bytecode'].replace('0x', '')
+            crytic_compile.bytecodes_runtime[contract_name] = target_loaded['deployedBytecode'].replace('0x', '')
+            crytic_compile.srcmaps_init[contract_name] = target_loaded['sourceMap'].split(';')
             crytic_compile.srcmaps_runtime[contract_name] = target_loaded['deployedSourceMap'].split(';')
 
 
@@ -72,8 +72,8 @@ def export(crytic_compile, **kwargs):
             output = {
                 "contractName": contract_name ,
                 "abi": crytic_compile.abi(contract_name),
-                "bytecode": "0x" + crytic_compile.init_bytecode(contract_name),
-                "deployedBytecode": "0x" + crytic_compile.runtime_bytecode(contract_name),
+                "bytecode": "0x" + crytic_compile.bytecode_init(contract_name),
+                "deployedBytecode": "0x" + crytic_compile.bytecode_runtime(contract_name),
                 "ast": crytic_compile.ast(filename)
             }
             json.dump(output, f)

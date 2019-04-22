@@ -63,11 +63,11 @@ def compile(crytic_compile, target, **kwargs):
             if 'abi' in info:
                 crytic_compile.abis[contract_name] = info['abi']
             if 'bin' in info:
-                crytic_compile.init_bytecodes[contract_name] = info['bin'].replace('0x', '')
+                crytic_compile.bytecodes_init[contract_name] = info['bin'].replace('0x', '')
             if 'bin-runtime' in info:
-                crytic_compile.runtime_bytecodes[contract_name] = info['bin-runtime'].replace('0x', '')
+                crytic_compile.bytecodes_runtime[contract_name] = info['bin-runtime'].replace('0x', '')
             if 'srcmap' in info:
-                crytic_compile.srcmaps[contract_name] = info['srcmap'].split(';')
+                crytic_compile.srcmaps_init[contract_name] = info['srcmap'].split(';')
             if 'srcmap-runtime' in info:
                 crytic_compile.srcmaps_runtime[contract_name] = info['srcmap-runtime'].split(';')
 

@@ -99,22 +99,22 @@ class CryticCompile:
         return self._asts
 
     @property
-    def runtime_bytecodes(self):
+    def bytecodes_runtime(self):
         return self._runtime_bytecodes
 
     @property
-    def init_bytecodes(self):
+    def bytecodes_init(self):
         return self._init_bytecodes
 
     @property
-    def srcmaps(self):
+    def srcmaps_init(self):
         return self._srcmaps
 
     @property
     def srcmaps_runtime(self):
         return self._srcmaps_runtime
 
-    def srcmap(self, name):
+    def srcmap_init(self, name):
         return self._srcmaps.get(name, [])
 
     def srcmap_runtime(self, name):
@@ -230,8 +230,8 @@ class CryticCompile:
         """
 
         if name not in self._libraries:
-            init = re.findall(r'__.{36}__', self.init_bytecode(name))
-            runtime = re.findall(r'__.{36}__', self.runtime_bytecode(name))
+            init = re.findall(r'__.{36}__', self.bytecode_init(name))
+            runtime = re.findall(r'__.{36}__', self.bytecode_runtime(name))
             self._libraries[name] = [self._library_name_lookup(x, name) for x in set(init+runtime)]
         return self._libraries[name]
 
@@ -248,11 +248,11 @@ class CryticCompile:
                     )
         return bytecode
 
-    def runtime_bytecode(self, name, libraries=None):
+    def bytecode_runtime(self, name, libraries=None):
         runtime = self._runtime_bytecodes.get(name, None)
         return self._update_bytecode_with_libraries(runtime, libraries)
 
-    def init_bytecode(self, name, libraries=None):
+    def bytecode_init(self, name, libraries=None):
         init = self._init_bytecodes.get(name, None)
         return self._update_bytecode_with_libraries(init, libraries)
 
@@ -308,9 +308,9 @@ class CryticCompile:
                 exported_name = combine_filename_name(self.contracts_filenames[contract_name], contract_name)
                 contracts[exported_name] = {
                     'abi': self.abi(contract_name),
-                    'bin': self.init_bytecode(contract_name),
-                    'bin-runtime': self.runtime_bytecode(contract_name),
-                    'srcmap': ";".join(self.srcmap(contract_name)),
+                    'bin': self.bytecode_init(contract_name),
+                    'bin-runtime': self.bytecode_runtime(contract_name),
+                    'srcmap': ";".join(self.srcmap_init(contract_name)),
                     'srcmap-runtime': ";".join(self.srcmap_runtime(contract_name))
                 }
 

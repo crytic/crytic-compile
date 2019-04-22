@@ -34,9 +34,9 @@ def compile(crytic_compile, target, **kwargs):
         crytic_compile.contracts_names.add(contract_name)
         crytic_compile.contracts_filenames[contract_name] = contract_filename
         crytic_compile.abis[contract_name] = json.loads(info['abi'])
-        crytic_compile.init_bytecodes[contract_name] = info['bin']
-        crytic_compile.runtime_bytecodes[contract_name] = info['bin-runtime']
-        crytic_compile.srcmaps[contract_name] = info['srcmap'].split(';')
+        crytic_compile.bytecodes_init[contract_name] = info['bin']
+        crytic_compile.bytecodes_runtime[contract_name] = info['bin-runtime']
+        crytic_compile.srcmaps_init[contract_name] = info['srcmap'].split(';')
         crytic_compile.srcmaps_runtime[contract_name] = info['srcmap-runtime'].split(';')
 
     for path, info in targets_json["sources"].items():
@@ -62,11 +62,11 @@ def export(crytic_compile, **kwargs):
             abi = abi.replace(' ', '')
             exported_name = combine_filename_name(crytic_compile.contracts_filenames[contract_name], contract_name)
             contracts[exported_name] = {
-                'srcmap': ';'.join(crytic_compile.srcmap(contract_name)),
+                'srcmap': ';'.join(crytic_compile.srcmap_init(contract_name)),
                 'srcmap-runtime': ';'.join(crytic_compile.srcmap_runtime(contract_name)),
                 'abi': abi,
-                'bin': crytic_compile.init_bytecode(contract_name),
-                'bin-runtime': crytic_compile.runtime_bytecode(contract_name)
+                'bin': crytic_compile.bytecode_init(contract_name),
+                'bin-runtime': crytic_compile.bytecode_runtime(contract_name)
             }
 
         sources = {filename : {"AST": ast} for (filename, ast) in crytic_compile.asts.items()}
