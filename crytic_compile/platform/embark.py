@@ -53,6 +53,11 @@ def compile(crytic_compile, target, **kwargs):
         for f in crytic_compile._abis:
             crytic_compile._filenames.add(f)
 
+        if not 'contracts' in targets_loaded:
+            logger.error(f'Incorrect json file generated. Are you using {plugin_name} >= 1.1.0?')
+            raise InvalidCompilation(f'Incorrect json file generated. Are you using {plugin_name} >= 1.1.0?')
+
+
         for original_contract_name, info in targets_loaded['contracts'].items():
             contract_name = extract_name(original_contract_name)
             contract_filename = extract_filename(original_contract_name)

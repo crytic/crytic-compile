@@ -9,7 +9,7 @@ def init(parser):
                             default=defaults_flag_in_config['compile_force_framework'])
 
     group_solc.add_argument('--compile-remove-metadata',
-                            help='Remote the metadata from the bytecodes',
+                            help='Remove the metadata from the bytecodes',
                             action='store_true',
                             default=defaults_flag_in_config['compile_remove_metadata'])
 
@@ -32,7 +32,7 @@ def init_solc(parser):
                             default=defaults_flag_in_config['solc'])
 
     group_solc.add_argument('--solc-remaps',
-                            help='Add remapping".',
+                            help='Add remapping',
                             action='store',
                             default=defaults_flag_in_config['solc_remaps'])
 
