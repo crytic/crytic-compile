@@ -309,7 +309,9 @@ class CryticCompile:
                 contracts[exported_name] = {
                     'abi': self.abi(contract_name),
                     'bin': self.init_bytecode(contract_name),
-                    'bin-runtime': self.runtime_bytecode(contract_name)
+                    'bin-runtime': self.runtime_bytecode(contract_name),
+                    'srcmap': ";".join(self.srcmap(contract_name)),
+                    'srcmap-runtime': ";".join(self.srcmap_runtime(contract_name))
                 }
 
             output = {'asts' : self._asts,

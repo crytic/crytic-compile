@@ -66,6 +66,10 @@ def compile(crytic_compile, target, **kwargs):
                 crytic_compile.init_bytecodes[contract_name] = info['bin'].replace('0x', '')
             if 'bin-runtime' in info:
                 crytic_compile.runtime_bytecodes[contract_name] = info['bin-runtime'].replace('0x', '')
+            if 'srcmap' in info:
+                crytic_compile.srcmap[contract_name] = info['srcmap'].split(';')
+            if 'srcmap-runtime' in info:
+                crytic_compile.srcmap_runtime[contract_name] = info['srcmap-runtime'].split(';')
 
 def is_embark(target):
     return os.path.isfile(os.path.join(target, 'embark.json'))

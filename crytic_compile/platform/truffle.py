@@ -57,6 +57,8 @@ def compile(crytic_compile, target, **kwargs):
             crytic_compile.abis[contract_name] = target_loaded['abi']
             crytic_compile.init_bytecodes[contract_name] = target_loaded['bytecode'].replace('0x', '')
             crytic_compile.runtime_bytecodes[contract_name] = target_loaded['deployedBytecode'].replace('0x', '')
+            crytic_compile.scrmap[contract_name] = target_loaded['srcMap'].split(';')
+            crytic_compile.scrmap_runtime[contract_name] = target_loaded['deployedSourceMap'].split(';')
 
 
 def export(crytic_compile, **kwargs):
