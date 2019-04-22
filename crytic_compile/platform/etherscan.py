@@ -25,6 +25,8 @@ supported_network = {
 def compile(crytic_compile, target, **kwargs):
     crytic_compile.type = Type.ETHERSCAN
 
+    solc = kwargs.get('solc', 'solc')
+
     if target.startswith(tuple(supported_network)):
         prefix = supported_network[target[:target.find(':')+1]]
         addr = target[target.find(':')+1:]
@@ -80,7 +82,7 @@ def compile(crytic_compile, target, **kwargs):
 
     targets_json = _run_solc(crytic_compile,
                              filename,
-                             solc='solc',
+                             solc=solc,
                              solc_disable_warnings=False,
                              solc_arguments=solc_arguments,
                              solc_compact_ast=solc_compact_ast,

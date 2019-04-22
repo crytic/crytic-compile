@@ -48,8 +48,8 @@ def compile(crytic_compile, target, **kwargs):
             crytic_compile.abis[contract_name] = target_loaded['abi']
             crytic_compile.init_bytecodes[contract_name] = target_loaded['bytecode'].replace('0x', '')
             crytic_compile.runtime_bytecodes[contract_name] = target_loaded['deployedBytecode'].replace('0x', '')
-            crytic_compile.scrmap[contract_name] = target_loaded['srcMap'].split(';')
-            crytic_compile.scrmap_runtime[contract_name] = target_loaded['deployedSourceMap'].split(';')
+            crytic_compile.srcmaps[contract_name] = target_loaded['sourceMap'].split(';')
+            crytic_compile.srcmaps_runtime[contract_name] = target_loaded['deployedSourceMap'].split(';')
 
 def is_etherlime(target):
     if os.path.isfile(os.path.join(target, 'package.json')):

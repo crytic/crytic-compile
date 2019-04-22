@@ -5,11 +5,10 @@
 mkdir /tmp/etherscan
 cd /tmp/etherscan
 
-docker pull trailofbits/solc-select
-sudo rm /usr/bin/solc
-docker run --read-only -i --rm --entrypoint='/bin/sh' trailofbits/solc-select:latest -c 'cat /usr/bin/install.sh' | bash
+wget -O solc-0.4.25 https://github.com/ethereum/solidity/releases/download/v0.4.25/solc-static-linux
+chmod +x solc-0.4.25
 
-crytic-compile 0x7F37f78cBD74481E593F9C737776F7113d76B315 --compile-remove-metadata
+crytic-compile 0x7F37f78cBD74481E593F9C737776F7113d76B315 --compile-remove-metadata --solc "./solc-0.4.25"
 
 if [ $? -ne 0 ]
 then
@@ -17,7 +16,7 @@ then
     exit -1
 fi
 
-crytic-compile rinkeby:0xFe05820C5A92D9bc906D4A46F662dbeba794d3b7 --compile-remove-metadata
+crytic-compile rinkeby:0xFe05820C5A92D9bc906D4A46F662dbeba794d3b7 --compile-remove-metadata --solc "./solc-0.4.25"
 
 if [ $? -ne 0 ]
 then
