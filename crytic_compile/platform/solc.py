@@ -105,6 +105,9 @@ def _run_solc(crytic_compile, filename, solc, solc_disable_warnings, solc_argume
         # Flat the list of list
         solc_args = [item for sublist in solc_args for item in sublist]
         cmd += solc_args
+
+    additional_kwargs = {'cwd': working_dir} if working_dir else {}
+
     # Add . as default allowed path
     if '--allow-paths' not in cmd:
         relative_filepath = filename
@@ -118,9 +121,9 @@ def _run_solc(crytic_compile, filename, solc, solc_disable_warnings, solc_argume
         cmd += ['--allow-paths', '.', relative_filepath]
 
     if env:
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env, **additional_kwargs)
     else:
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **additional_kwargs)
     stdout, stderr = process.communicate()
     stdout, stderr = stdout.decode(), stderr.decode()  # convert bytestrings to unicode strings
 
