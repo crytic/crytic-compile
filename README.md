@@ -11,6 +11,8 @@ Library to help smart contract compilation. It includes support for:
 - [Etherlime](https://github.com/LimeChain/etherlime)
 - [Etherscan](https://etherscan.io/)
 
+See the [Configuration](https://github.com/crytic/crytic-compile/wiki/Configuration) documentation for advanced usages.
+
 The plugin is used in Crytic tools, including:
 - [Slither](https://github.com/crytic/slither)
 - [Echidna](https://github.com/crytic/echidna)
