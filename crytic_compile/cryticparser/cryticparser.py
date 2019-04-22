@@ -47,6 +47,10 @@ def init_solc(parser):
                             action='store_true',
                             default=defaults_flag_in_config['solc_disable_warnings'])
 
+    group_solc.add_argument('--solc-working-dir',
+                            help='Change the default working directory',
+                            action='store',
+                            default=defaults_flag_in_config['solc_working_dir'])
 
 def init_truffle(parser):
     group_truffle = parser.add_argument_group('Truffle options')

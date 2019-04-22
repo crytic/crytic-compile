@@ -17,6 +17,7 @@ def compile(crytic_compile, target, **kwargs):
     solc_arguments = kwargs.get('solc_arguments', '')
     solc_compact_ast = kwargs.get('solc_compact_ast', True)
     solc_remaps = kwargs.get('solc_remaps', None)
+    solc_working_dir = kwargs.get('solc_working_dir', None)
 
     targets_json = _run_solc(crytic_compile,
                              target,
@@ -24,7 +25,8 @@ def compile(crytic_compile, target, **kwargs):
                              solc_disable_warnings,
                              solc_arguments,
                              solc_compact_ast,
-                             solc_remaps=solc_remaps)
+                             solc_remaps=solc_remaps,
+                             working_dir=solc_working_dir)
 
     for original_contract_name, info in targets_json["contracts"].items():
         contract_name = extract_name(original_contract_name)
@@ -77,7 +79,7 @@ def export(crytic_compile, **kwargs):
         json.dump(output, f)
 
 
-def _run_solc(crytic_compile, filename, solc, solc_disable_warnings, solc_arguments, solc_compact_ast, solc_remaps=None, env=None):
+def _run_solc(crytic_compile, filename, solc, solc_disable_warnings, solc_arguments, solc_compact_ast, solc_remaps=None, env=None, working_dir=None):
     if not os.path.isfile(filename):
         logger.error('{} does not exist (are you in the correct directory?)'.format(filename))
         exit(-1)
@@ -105,7 +107,15 @@ def _run_solc(crytic_compile, filename, solc, solc_disable_warnings, solc_argume
         cmd += solc_args
     # Add . as default allowed path
     if '--allow-paths' not in cmd:
-        cmd += ['--allow-paths', '.']
+        relative_filepath = filename
+
+        if not working_dir:
+            working_dir = os.getcwd()
+
+        if relative_filepath.startswith(working_dir):
+            relative_filepath = relative_filepath[len(working_dir) + 1:]
+
+        cmd += ['--allow-paths', '.', relative_filepath]
 
     if env:
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
