@@ -36,16 +36,15 @@ The file structure is:
 ```json
 {
     "asts": [],
-    "contracts": [
-        "/path:contract_name":
-        {
+    "contracts": {
+        "/path:contract_name": {
             "abi": [],
             "bin": "..",
             "bin-runtime": "..",
             "srcmap": "..",
             "srcmap-runtime": ".."
         }
-    ]
+    }
 }
 ```
 
