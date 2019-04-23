@@ -90,9 +90,18 @@ class CryticCompile:
     @property
     def contracts_filenames(self):
         """
+        Return a dict contract_name -> Filename namedtuple (absolute, used)
         :return: dict(name -> utils.namings.Filename)
         """
         return self._contracts_filenames
+
+    @property
+    def contracts_absolute_filenames(self):
+        """
+        Return a dict (contract_name -> absolute filename)
+        :return:
+        """
+        return {k: f.absolute for (k,f) in self._contracts_filenames.items()}
 
     def filename_of_contract(self, name):
         """
@@ -135,6 +144,14 @@ class CryticCompile:
         :return: dict (absolute filename -> AST)
         """
         return self._asts
+
+    def ast(self, path):
+        if path not in self._asts:
+            try:
+                path = self.find_absolute_filename_from_used_filename(path)
+            except ValueError:
+                pass
+        return self._asts.get(path, None)
 
     @property
     def bytecodes_runtime(self):
@@ -193,7 +210,7 @@ class CryticCompile:
             new_names[lib_5] = addr
 
             if lib in self.contracts_names:
-                lib_with_filename = self.contracts_filenames[lib] + ':' + lib
+                lib_with_filename = self.contracts_filenames[lib].absolute + ':' + lib
 
                 lib_with_filename = lib_with_filename[0:36]
 
@@ -225,16 +242,24 @@ class CryticCompile:
 
             # Some platform use only the contract name
             # Some use fimename:contract_name
-            name_with_filename = self.contracts_filenames[name] + ':' + name
-            name_with_filename = name_with_filename[0:36]
+            name_with_absolute_filename = self.contracts_filenames[name].absolute + ':' + name
+            name_with_absolute_filename = name_with_absolute_filename[0:36]
+
+            name_with_used_filename = self.contracts_filenames[name].used + ':' + name
+            name_with_used_filename = name_with_used_filename[0:36]
 
             # Solidity 0.4
             if '__' + name + '_' * (38-len(name)) == lib_name:
                 return name
 
             # Solidity 0.4 with filename
-            if '__' + name_with_filename+ '_' * (38-len(name_with_filename)) == lib_name:
+            if '__' + name_with_absolute_filename+ '_' * (38-len(name_with_absolute_filename)) == lib_name:
                 return name
+
+            # Solidity 0.4 with filename
+            if '__' + name_with_used_filename+ '_' * (38-len(name_with_used_filename)) == lib_name:
+                return name
+
 
             # Solidity 0.5
             s = sha3.keccak_256()
@@ -246,10 +271,17 @@ class CryticCompile:
 
             # Solidity 0.5 with filename
             s = sha3.keccak_256()
-            s.update(name_with_filename .encode('utf-8'))
+            s.update(name_with_absolute_filename .encode('utf-8'))
             v5_name = "__$" + s.hexdigest()[:34] + "$__"
 
             if  v5_name == lib_name:
+                return name
+
+            s = sha3.keccak_256()
+            s.update(name_with_used_filename.encode('utf-8'))
+            v5_name = "__$" + s.hexdigest()[:34] + "$__"
+
+            if v5_name == lib_name:
                 return name
 
         # handle specific case of colission for Solidity <0.4
@@ -293,9 +325,6 @@ class CryticCompile:
     def bytecode_init(self, name, libraries=None):
         init = self._init_bytecodes.get(name, None)
         return self._update_bytecode_with_libraries(init, libraries)
-
-    def ast(self, path):
-        return self._asts.get(path, None)
 
     def hashes(self, name):
         if not name in self._hashes:
@@ -343,7 +372,7 @@ class CryticCompile:
         with open(path, 'w') as f:
             contracts = dict()
             for contract_name in self.contracts_names:
-                exported_name = combine_filename_name(self.contracts_filenames[contract_name], contract_name)
+                exported_name = combine_filename_name(self.contracts_filenames[contract_name].absolute, contract_name)
                 contracts[exported_name] = {
                     'abi': self.abi(contract_name),
                     'bin': self.bytecode_init(contract_name),

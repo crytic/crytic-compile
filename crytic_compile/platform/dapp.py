@@ -37,7 +37,7 @@ def compile(crytic_compile, target, **kwargs):
             crytic_compile.srcmaps_runtime[contract_name] = info['srcmap-runtime'].split(';')
 
         for path, info in targets_json["sources"].items():
-            path = contract_filename(path)
+            path = convert_filename(path)
             crytic_compile.filenames.add(path.absolute)
             crytic_compile.asts[path.absolute] = info['AST']
 
@@ -56,7 +56,7 @@ def export(crytic_compile, **kwargs):
             abi = abi.replace('True', 'true')
             abi = abi.replace('False', 'false')
             abi = abi.replace(' ', '')
-            exported_name = combine_filename_name(crytic_compile.contracts_filenames[contract_name], contract_name)
+            exported_name = combine_filename_name(crytic_compile.contracts_filenames[contract_name].used, contract_name)
             contracts[exported_name] = {
                 'srcmap': '',
                 'srcmap-runtime': '',

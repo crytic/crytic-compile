@@ -52,4 +52,4 @@ def convert_filename(used_filename):
     elif not filename.is_absolute():
         filename = Path.cwd().joinpath(filename)
 
-    return Filename(absolute=filename, used = used_filename)
+    return Filename(absolute=str(filename), used = used_filename)

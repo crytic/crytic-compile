@@ -47,8 +47,6 @@ def compile(crytic_compile, target, **kwargs):
         raise InvalidCompilation('No truffle build directory found, did you run `truffle compile`?')
     filenames = glob.glob(os.path.join(target, build_directory, '*.json'))
 
-    current_path = os.getcwd()
-
     for filename in filenames:
         with open(filename, encoding='utf8') as f:
             target_loaded = json.load(f)

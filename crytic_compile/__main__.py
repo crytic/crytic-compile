@@ -78,7 +78,8 @@ def main():
         cryticCompile.export(**vars(args))
         if args.print_filename:
             for contract in cryticCompile.contracts_names:
-                print(f'{contract} -> {cryticCompile.filename_of_contract(contract)}')
+                filename = cryticCompile.filename_of_contract(contract)
+                print(f'{contract} -> \n\tAbsolute: {filename.absolute}\n\tUsed: {filename.used}')
     except InvalidCompilation as e:
         logger.error(e)
 
