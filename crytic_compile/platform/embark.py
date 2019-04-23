@@ -4,7 +4,7 @@ import logging
 import subprocess
 
 from ..utils.naming import extract_filename, extract_name, convert_filename
-
+from ..compiler.compiler import CompilerVersion
 from .types import Type
 from .exceptions import InvalidCompilation
 logger = logging.getLogger("CryticCompile")
@@ -43,10 +43,14 @@ def compile(crytic_compile, target, **kwargs):
         if stderr:
             # Embark might return information to stderr, but compile without issue
             logger.error("%s" % stderr.decode())
-    infile = os.path.join(target, 'crytic-export', 'contracts.json')
+    infile = os.path.join(target, 'crytic-export', 'contracts-embark.json')
     if not os.path.isfile(infile):
         raise InvalidCompilation(
             'Embark did not generate the AST file. Is Embark installed (npm install -g embark)? Is embark-contract-info installed? (npm install -g embark).')
+
+
+    crytic_compile.compiler_version = _get_version(target)
+
     with open(infile, 'r') as f:
         targets_loaded = json.load(f)
         crytic_compile._asts = {convert_filename(k).absolute: ast for k,ast in targets_loaded['asts'].items()}
@@ -81,3 +85,19 @@ def compile(crytic_compile, target, **kwargs):
 
 def is_embark(target):
     return os.path.isfile(os.path.join(target, 'embark.json'))
+
+
+def _get_version(target):
+    with open(os.path.join(target, 'embark.json')) as f:
+        config = json.load(f)
+        version = '0.5.0' # default version with Embark 0.4
+        if "versions" in config:
+            if 'solc' in config['versions']:
+                version = config['versions']
+        optimized = False
+        if 'options' in config:
+            if 'solc' in config['options']:
+                if 'optimize' in config['options']['solc']:
+                    optimized = config['options']['solc']
+
+    return CompilerVersion(compiler='solc-js', version=version, optimized=optimized)

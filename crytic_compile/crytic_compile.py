@@ -17,7 +17,6 @@ from .utils.naming import combine_filename_name
 logger = logging.getLogger("CryticCompile")
 logging.basicConfig()
 
-
 def is_supported(target):
     supported = [is_solc, is_truffle, is_embark, is_dapp, is_etherlime, is_etherscan]
     return any(f(target) for f in supported)
@@ -33,7 +32,6 @@ class CryticCompile:
                 solc (str): solc binary location (default 'solc')
                 solc_disable_warnings (bool): True to disable solc warnings (default false)
                 solc_arguments (str): solc arguments (default '')
-                solc_compact_ast (bool): ast format (default true)
 
                 truffle_ignore (bool): ignore truffle.js presence (default false)
                 truffle_build_directory (str): build truffle directory (default 'build/targets')
@@ -63,6 +61,8 @@ class CryticCompile:
         self._libraries = {}
 
         self._type = None
+
+        self._compiler_version = None
 
         self._compile(target, **kwargs)
 
@@ -128,6 +128,9 @@ class CryticCompile:
         :return: absolute filename
         """
         # Note: we could memoize this function if the third party end up using it heavily
+        # If used_filename is already an absolute pathn no need to lookup
+        if used_filename in self._filenames:
+            return used_filename
         d = {f.used: f.absolute for _, f in self._contracts_filenames}
         if not used_filename in d:
             raise ValueError('f{filename} does not exist in {d}')
@@ -185,6 +188,18 @@ class CryticCompile:
 
     def abi(self, name):
         return self._abis.get(name, None)
+
+    @property
+    def compiler_version(self):
+        """
+        Return the compiler used as a namedtuple(compiler, version)
+        :return:
+        """
+        return self._compiler_version
+
+    @compiler_version.setter
+    def compiler_version(self, c):
+        self._compiler_version = c
 
     def _convert_libraries_names(self, libraries):
         """
@@ -372,17 +387,23 @@ class CryticCompile:
         with open(path, 'w') as f:
             contracts = dict()
             for contract_name in self.contracts_names:
-                exported_name = combine_filename_name(self.contracts_filenames[contract_name].absolute, contract_name)
-                contracts[exported_name] = {
+                filename = self.filename_of_contract(contract_name)
+                contracts[contract_name] = {
                     'abi': self.abi(contract_name),
                     'bin': self.bytecode_init(contract_name),
                     'bin-runtime': self.bytecode_runtime(contract_name),
                     'srcmap': ";".join(self.srcmap_init(contract_name)),
-                    'srcmap-runtime': ";".join(self.srcmap_runtime(contract_name))
+                    'srcmap-runtime': ";".join(self.srcmap_runtime(contract_name)),
+                    'filenames': {'absolute': filename.absolute, 'used': filename.used}
                 }
 
             output = {'asts' : self._asts,
-                      'contracts': contracts}
+                      'contracts': contracts,
+                      'compiler': {
+                          'compiler': self._compiler_version.compiler,
+                          'version': self._compiler_version.version,
+                          'optimized': self._compiler_version.optimized,
+                      }}
 
             json.dump(output, f)
 

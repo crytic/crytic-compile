@@ -2,10 +2,12 @@ import os
 import json
 import logging
 import subprocess
+import re
 
 from .types import Type
 from ..utils.naming import extract_filename, extract_name, combine_filename_name, convert_filename
 from .exceptions import InvalidCompilation
+from ..compiler.compiler import CompilerVersion
 
 logger = logging.getLogger("CryticCompile")
 
@@ -15,18 +17,21 @@ def compile(crytic_compile, target, **kwargs):
     solc = kwargs.get('solc', 'solc')
     solc_disable_warnings = kwargs.get('solc_disable_warnings', False)
     solc_arguments = kwargs.get('solc_arguments', '')
-    solc_compact_ast = kwargs.get('solc_compact_ast', True)
     solc_remaps = kwargs.get('solc_remaps', None)
     solc_working_dir = kwargs.get('solc_working_dir', None)
+
+    crytic_compile.compiler_version = CompilerVersion(compiler="solc",
+                                                      version=_get_version(solc),
+                                                      optimized=_is_optimized(solc_arguments))
 
     targets_json = _run_solc(crytic_compile,
                              target,
                              solc,
                              solc_disable_warnings,
                              solc_arguments,
-                             solc_compact_ast,
                              solc_remaps=solc_remaps,
                              working_dir=solc_working_dir)
+
 
     for original_contract_name, info in targets_json["contracts"].items():
         contract_name = extract_name(original_contract_name)
@@ -80,8 +85,33 @@ def export(crytic_compile, **kwargs):
 
         json.dump(output, f)
 
+def _get_version(solc):
+    cmd  = [solc, "--version"]
+    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdout, _ = process.communicate()
+    stdout = stdout.decode()  # convert bytestrings to unicode strings
+    version = re.findall('\d+\.\d+\.\d+', stdout)
+    assert len(version)
+    return version[0]
 
-def _run_solc(crytic_compile, filename, solc, solc_disable_warnings, solc_arguments, solc_compact_ast, solc_remaps=None, env=None, working_dir=None):
+def _is_optimized(solc_arguments):
+    if solc_arguments:
+        return '--optimize' in solc_arguments
+    return False
+
+def _run_solc(crytic_compile, filename, solc, solc_disable_warnings, solc_arguments, solc_remaps=None, env=None, working_dir=None):
+    """
+    Note: Ensure that crytic_compile.compiler_version is set prior calling _run_solc
+    :param crytic_compile:
+    :param filename:
+    :param solc:
+    :param solc_disable_warnings:
+    :param solc_arguments:
+    :param solc_remaps:
+    :param env:
+    :param working_dir:
+    :return:
+    """
     if not os.path.isfile(filename):
         logger.error('{} does not exist (are you in the correct directory?)'.format(filename))
         exit(-1)
@@ -89,9 +119,14 @@ def _run_solc(crytic_compile, filename, solc, solc_disable_warnings, solc_argume
     if not filename.endswith('.sol'):
         raise InvalidCompilation('Incorrect file format')
 
-    options = 'abi,ast,bin,bin-runtime,srcmap,srcmap-runtime,hashes'
-    if solc_compact_ast:
-        options += ',compact-format'
+    compiler_version = crytic_compile.compiler_version
+    assert compiler_version
+    if compiler_version.version in [f'0.4.{x}' for x in range(0, 12)] or\
+        compiler_version.version.startswith('0.3'):
+        options = 'abi,ast,bin,bin-runtime,srcmap,srcmap-runtime'
+    else:
+        options = 'abi,ast,bin,bin-runtime,srcmap,srcmap-runtime,hashes,compact-format'
+
     cmd = [solc]
     if solc_remaps:
         cmd += solc_remaps

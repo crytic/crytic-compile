@@ -8,6 +8,7 @@ from .types import Type
 from .exceptions import  InvalidCompilation
 from .solc import _run_solc
 from ..utils.naming import extract_filename, extract_name, convert_filename
+from ..compiler.compiler import CompilerVersion
 
 logger = logging.getLogger("CryticCompile")
 
@@ -63,29 +64,25 @@ def compile(crytic_compile, target, **kwargs):
     with open(filename, 'w') as f:
         f.write(source_code)
 
-    compiler_version = convert_version(result['CompilerVersion'])
+    compiler_version = re.findall('\d+\.\d+\.\d+', convert_version(result['CompilerVersion']))[0]
 
-    optimizaiton_used = True if result['OptimizationUsed'] == '1' else False
+    optimization_used = True if result['OptimizationUsed'] == '1' else False
     optimized_run = result['Runs']
 
     solc_arguments = None
-    if optimizaiton_used:
+    if optimization_used:
         optimized_run = int(optimized_run)
         solc_arguments = f'--optimize --optimize-runs {optimized_run}'
 
-    solc_compact_ast = True
-
-
-    if compiler_version in [f'0.4.{x}' for x in range(0, 12)] or\
-        compiler_version.startswith('0.3'):
-        solc_compact_ast = False
+    crytic_compile.compiler_version = CompilerVersion(compiler='solc',
+                                                      version=compiler_version,
+                                                      optimized=optimization_used)
 
     targets_json = _run_solc(crytic_compile,
                              filename,
                              solc=solc,
                              solc_disable_warnings=False,
                              solc_arguments=solc_arguments,
-                             solc_compact_ast=solc_compact_ast,
                              env=dict(os.environ, SOLC_VERSION=compiler_version))
 
     for original_contract_name, info in targets_json["contracts"].items():

@@ -2,10 +2,10 @@ import os
 import json
 import logging
 import glob
-
+import re
 
 import subprocess
-
+from ..compiler.compiler import CompilerVersion
 from .types import Type
 from ..utils.naming import extract_filename, extract_name, combine_filename_name, convert_filename
 
@@ -19,6 +19,8 @@ def compile(crytic_compile, target, **kwargs):
 
     if not dapp_ignore_compile:
         _run_dapp()
+
+    crytic_compile.compiler_version = _get_version(target)
 
     files = glob.glob(dir + '/**/*.sol.json', recursive=True)
     for file in files:
@@ -92,3 +94,23 @@ def _run_dapp():
 
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     _, _ = process.communicate()
+
+def _get_version():
+    files = glob.glob(dir + '/**/*meta.json', recursive=True)
+    version = None
+    optimized = None
+    compiler = 'solc'
+    for file in files:
+        if version is None:
+            with open(file) as f:
+                config = json.load(f)
+            if "compiler" in config:
+                if "version" in config["compiler"]:
+                    version = re.findall('\d+\.\d+\.\d+', config["compiler"]["version"])
+                    assert version
+            if "settings" in config:
+                if "optimizer" in config['settings']:
+                    if 'enabled' in config['settings']['optimized']:
+                        optimized = config['settings']['optimized']['enabled']
+
+    return CompilerVersion(compiler=compiler, version=version, optimized=optimized)

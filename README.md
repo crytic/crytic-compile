@@ -44,8 +44,17 @@ The file structure is:
             "bin": "..",
             "bin-runtime": "..",
             "srcmap": "..",
-            "srcmap-runtime": ".."
+            "srcmap-runtime": "..",
+            "filenames": {
+                "absolute": "..",
+                "used": ".."
+            }
         }
+    },
+    "compiler": {
+        "compiler": "solc",
+        "version": "x.x.x",
+        "optimized": false
     }
 }
 ```

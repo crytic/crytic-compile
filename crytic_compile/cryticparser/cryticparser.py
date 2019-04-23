@@ -36,7 +36,6 @@ def init_solc(parser):
                             action='store',
                             default=defaults_flag_in_config['solc_remaps'])
 
-
     group_solc.add_argument('--solc-args',
                             help='Add custom solc arguments. Example: --solc-args "--allow-path /tmp --evm-version byzantium".',
                             action='store',
