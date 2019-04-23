@@ -37,6 +37,12 @@ def parse_args():
                         dest='export_dir',
                         default='crytic-export')
 
+    parser.add_argument('--print-filenames',
+                        help='Print all the filenames',
+                        action='store_true',
+                        dest='print_filename',
+                        default=False)
+
     parser.add_argument('--version',
                         help='displays the current version',
                         version=require('crytic-compile')[0].version,
@@ -70,6 +76,9 @@ def main():
     try:
         cryticCompile = CryticCompile(**vars(args))
         cryticCompile.export(**vars(args))
+        if args.print_filename:
+            for contract in cryticCompile.contracts_names:
+                print(f'{contract} -> {cryticCompile.filename_of_contract(contract)}')
     except InvalidCompilation as e:
         logger.error(e)
 

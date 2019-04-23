@@ -22,6 +22,7 @@ def is_supported(target):
     supported = [is_solc, is_truffle, is_embark, is_dapp, is_etherlime, is_etherscan]
     return any(f(target) for f in supported)
 
+
 class CryticCompile:
 
     def __init__(self, target, **kwargs):
@@ -58,7 +59,7 @@ class CryticCompile:
         self._contracts_name = set() # set containing all the contract name
         self._contracts_name_without_libraries = None # set containing all the contract name without the libraries
         self._filenames = set() # set containing all the filenames
-        self._contracts_filenames = {} # mapping from contract name to filename
+        self._contracts_filenames = {}  # mapping from contract name to filename
         self._libraries = {}
 
         self._type = None

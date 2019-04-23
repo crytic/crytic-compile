@@ -3,7 +3,7 @@ import json
 import logging
 import subprocess
 
-from ..utils.naming import extract_filename, extract_name
+from ..utils.naming import extract_filename, extract_name, convert_filename
 
 from .types import Type
 from .exceptions import InvalidCompilation
@@ -49,8 +49,9 @@ def compile(crytic_compile, target, **kwargs):
             'Embark did not generate the AST file. Is Embark installed (npm install -g embark)? Is embark-contract-info installed? (npm install -g embark).')
     with open(infile, 'r') as f:
         targets_loaded = json.load(f)
-        crytic_compile._asts = targets_loaded['asts']
-        for f in crytic_compile._abis:
+        crytic_compile._asts = {convert_filename(k): ast for k,ast in targets_loaded['asts'].items()}
+
+        for f in crytic_compile._asts:
             crytic_compile._filenames.add(f)
 
         if not 'contracts' in targets_loaded:
@@ -61,6 +62,8 @@ def compile(crytic_compile, target, **kwargs):
         for original_contract_name, info in targets_loaded['contracts'].items():
             contract_name = extract_name(original_contract_name)
             contract_filename = extract_filename(original_contract_name)
+            contract_filename = convert_filename(contract_filename)
+
             crytic_compile.contracts_filenames[contract_name] = contract_filename
             crytic_compile.contracts_names.add(contract_name)
 

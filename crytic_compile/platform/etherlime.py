@@ -2,10 +2,10 @@ import os
 import json
 import logging
 import subprocess
-import platform
 import glob
 from .types import Type
 from .exceptions import InvalidCompilation
+from ..utils.naming import convert_filename
 logger = logging.getLogger("CryticCompile")
 
 
@@ -40,10 +40,12 @@ def compile(crytic_compile, target, **kwargs):
     for filename in filenames:
         with open(filename, encoding='utf8') as f:
             target_loaded = json.load(f)
-            crytic_compile.asts[target_loaded['ast']['absolutePath']] = target_loaded['ast']
-            crytic_compile.filenames.add(target_loaded['ast']['absolutePath'])
+            filename =target_loaded['ast']['absolutePath']
+            filename = convert_filename(filename)
+            crytic_compile.asts[filename] = target_loaded['ast']
+            crytic_compile.filenames.add(filename)
             contract_name = target_loaded['contractName']
-            crytic_compile.contracts_filenames[contract_name] = target_loaded['ast']['absolutePath']
+            crytic_compile.contracts_filenames[contract_name] = filename
             crytic_compile.contracts_names.add(contract_name)
             crytic_compile.abis[contract_name] = target_loaded['abi']
             crytic_compile.bytecodes_init[contract_name] = target_loaded['bytecode'].replace('0x', '')
