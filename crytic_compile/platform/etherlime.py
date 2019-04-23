@@ -42,8 +42,8 @@ def compile(crytic_compile, target, **kwargs):
             target_loaded = json.load(f)
             filename =target_loaded['ast']['absolutePath']
             filename = convert_filename(filename)
-            crytic_compile.asts[filename] = target_loaded['ast']
-            crytic_compile.filenames.add(filename)
+            crytic_compile.asts[filename.absolute] = target_loaded['ast']
+            crytic_compile.filenames.add(filename.absolute)
             contract_name = target_loaded['contractName']
             crytic_compile.contracts_filenames[contract_name] = filename
             crytic_compile.contracts_names.add(contract_name)

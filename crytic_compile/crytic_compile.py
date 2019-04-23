@@ -44,7 +44,7 @@ class CryticCompile:
                 embark_ignore_compile (bool): do not run embark build (default False)
                 embark_overwrite_config (bool): overwrite original config file (default false)
         '''
-        # ASTS are indexed by path
+        # ASTS are indexed by absolute path
         self._asts = {}
         # ABI and bytecode are indexed by path:contract_name
         self._abis = {}
@@ -58,8 +58,8 @@ class CryticCompile:
         # but the exported json follow the format: /path:Contract, to follow standard format
         self._contracts_name = set() # set containing all the contract name
         self._contracts_name_without_libraries = None # set containing all the contract name without the libraries
-        self._filenames = set() # set containing all the filenames
-        self._contracts_filenames = {}  # mapping from contract name to filename
+        self._filenames = set() # set containing all the filenames (absolute paths)
+        self._contracts_filenames = {}  # mapping from contract name to filename (naming.Filename)
         self._libraries = {}
 
         self._type = None
@@ -82,14 +82,47 @@ class CryticCompile:
 
     @property
     def filenames(self):
+        """
+        :return: list(str): (absolute) filenames
+        """
         return self._filenames
 
     @property
     def contracts_filenames(self):
+        """
+        :return: dict(name -> utils.namings.Filename)
+        """
         return self._contracts_filenames
 
     def filename_of_contract(self, name):
+        """
+        :return: utils.namings.Filename
+         """
         return self._contracts_filenames[name]
+
+    def absolute_filename_of_contract(self, name):
+        """
+        :return: Absolute filename
+         """
+        return self._contracts_filenames[name].absolute
+
+    def used_filename_of_contract(self, name):
+        """
+        :return: Used filename
+         """
+        return self._contracts_filenames[name].used
+
+    def find_absolute_filename_from_used_filename(self, used_filename):
+        """
+        Return the absolute filename based on the used one
+        :param used_filename:
+        :return: absolute filename
+        """
+        # Note: we could memoize this function if the third party end up using it heavily
+        d = {f.used: f.absolute for _, f in self._contracts_filenames}
+        if not used_filename in d:
+            raise ValueError('f{filename} does not exist in {d}')
+        return d[used_filename]
 
     @property
     def abis(self):
@@ -97,6 +130,10 @@ class CryticCompile:
 
     @property
     def asts(self):
+        """
+
+        :return: dict (absolute filename -> AST)
+        """
         return self._asts
 
     @property

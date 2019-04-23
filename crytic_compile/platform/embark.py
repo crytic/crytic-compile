@@ -49,7 +49,7 @@ def compile(crytic_compile, target, **kwargs):
             'Embark did not generate the AST file. Is Embark installed (npm install -g embark)? Is embark-contract-info installed? (npm install -g embark).')
     with open(infile, 'r') as f:
         targets_loaded = json.load(f)
-        crytic_compile._asts = {convert_filename(k): ast for k,ast in targets_loaded['asts'].items()}
+        crytic_compile._asts = {convert_filename(k).absolute: ast for k,ast in targets_loaded['asts'].items()}
 
         for f in crytic_compile._asts:
             crytic_compile._filenames.add(f)

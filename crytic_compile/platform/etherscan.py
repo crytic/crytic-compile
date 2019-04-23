@@ -102,8 +102,8 @@ def compile(crytic_compile, target, **kwargs):
 
     for path, info in targets_json["sources"].items():
         path = convert_filename(path)
-        crytic_compile.filenames.add(path)
-        crytic_compile.asts[path] = info['AST']
+        crytic_compile.filenames.add(path.absolute)
+        crytic_compile.asts[path.absolute] = info['AST']
 
 
 def is_etherscan(target):

@@ -1,7 +1,10 @@
 import platform
 from pathlib import Path, PureWindowsPath
+from collections import namedtuple
 from ..platform.exceptions import InvalidCompilation
 
+
+Filename = namedtuple('Filename', ['absolute', 'used'])
 
 def extract_name(name):
     '''
@@ -21,7 +24,15 @@ def combine_filename_name(filename, name):
     return filename + ":" + name
 
 
-def convert_filename(filename):
+def convert_filename(used_filename):
+    """
+    Convert filename.
+    The used_filename can be absolute, relative, or missing node_modules/contracts directory
+    convert_filename return a tuple(absolute,used), where absolute points to the absolute path, and used the original
+    :param used_filename:
+    :return: Filename (namedtuple)
+    """
+    filename = used_filename
     if platform.system() == 'Windows':
         elements = list(Path(filename).parts)
         if elements[0] == '/':
@@ -41,4 +52,4 @@ def convert_filename(filename):
     elif not filename.is_absolute():
         filename = Path.cwd().joinpath(filename)
 
-    return str(filename)
+    return Filename(absolute=filename, used = used_filename)
