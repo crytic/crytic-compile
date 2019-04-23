@@ -3,8 +3,6 @@
 [![Slack Status](https://empireslacking.herokuapp.com/badge.svg)](https://empireslacking.herokuapp.com)
 
 
-[WORK IN PROGRESS]
-
 Library to help smart contract compilation. It includes support for:
 - Direct solc compilation
 - [Truffle](https://truffleframework.com/)
@@ -13,9 +11,14 @@ Library to help smart contract compilation. It includes support for:
 - [Etherlime](https://github.com/LimeChain/etherlime)
 - [Etherscan](https://etherscan.io/)
 
+See the [Configuration](https://github.com/crytic/crytic-compile/wiki/Configuration) documentation for advanced usages.
+
 The plugin is used in Crytic tools, including:
 - [Slither](https://github.com/crytic/slither)
+- [Echidna](https://github.com/crytic/echidna)
+- [Manticore](https://github.com/trailofbits/manticore/)
 - [evm-cfg-builder](https://github.com/crytic/evm_cfg_builder)
+
 
 ## Installation
 
@@ -35,13 +38,15 @@ The file structure is:
 ```json
 {
     "asts": [],
-    "contracts": [
-        "/path:contract_name":
-        {
+    "contracts": {
+        "/path:contract_name": {
             "abi": [],
-            "bin": ..,
-            "bin-runtime": ..
+            "bin": "..",
+            "bin-runtime": "..",
+            "srcmap": "..",
+            "srcmap-runtime": ".."
         }
+    }
 }
 ```
 
@@ -49,4 +54,4 @@ Run `crytic-compile --help` for more options.
 
 ### As a library
 
-See the library documentation (TODO).
+See the [library documentation](https://github.com/crytic/crytic-compile/wiki/Library-Documentation).
