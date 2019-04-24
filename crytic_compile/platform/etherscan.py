@@ -88,7 +88,7 @@ def compile(crytic_compile, target, **kwargs):
     for original_contract_name, info in targets_json["contracts"].items():
         contract_name = extract_name(original_contract_name)
         contract_filename = extract_filename(original_contract_name)
-        contract_filename = convert_filename(contract_filename)
+        contract_filename = convert_filename(contract_filename, _relative_to_short)
         crytic_compile.contracts_names.add(contract_name)
         crytic_compile.contracts_filenames[contract_name] = contract_filename
         crytic_compile.abis[contract_name] = json.loads(info['abi'])
@@ -98,7 +98,7 @@ def compile(crytic_compile, target, **kwargs):
         crytic_compile.srcmaps_runtime[contract_name] = info['srcmap-runtime'].split(';')
 
     for path, info in targets_json["sources"].items():
-        path = convert_filename(path)
+        path = convert_filename(path, _relative_to_short)
         crytic_compile.filenames.add(path.absolute)
         crytic_compile.asts[path.absolute] = info['AST']
 
@@ -111,3 +111,7 @@ def is_etherscan(target):
 
 def convert_version(version):
     return version[1:version.find('+')]
+
+
+def _relative_to_short(relative):
+    return relative

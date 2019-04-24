@@ -7,6 +7,7 @@ from ..utils.naming import extract_filename, extract_name, convert_filename
 from ..compiler.compiler import CompilerVersion
 from .types import Type
 from .exceptions import InvalidCompilation
+from pathlib import Path
 logger = logging.getLogger("CryticCompile")
 
 
@@ -53,7 +54,7 @@ def compile(crytic_compile, target, **kwargs):
 
     with open(infile, 'r') as f:
         targets_loaded = json.load(f)
-        crytic_compile._asts = {convert_filename(k).absolute: ast for k,ast in targets_loaded['asts'].items()}
+        crytic_compile._asts = {convert_filename(k, _relative_to_short).absolute: ast for k,ast in targets_loaded['asts'].items()}
 
         for f in crytic_compile._asts:
             crytic_compile._filenames.add(f)
@@ -66,7 +67,7 @@ def compile(crytic_compile, target, **kwargs):
         for original_contract_name, info in targets_loaded['contracts'].items():
             contract_name = extract_name(original_contract_name)
             contract_filename = extract_filename(original_contract_name)
-            contract_filename = convert_filename(contract_filename)
+            contract_filename = convert_filename(contract_filename, _relative_to_short)
 
             crytic_compile.contracts_filenames[contract_name] = contract_filename
             crytic_compile.contracts_names.add(contract_name)
@@ -101,3 +102,14 @@ def _get_version(target):
                     optimized = config['options']['solc']
 
     return CompilerVersion(compiler='solc-js', version=version, optimized=optimized)
+
+def _relative_to_short(relative):
+    short = relative
+    try:
+        short = short.relative_to(Path('.embark', 'contracts'))
+    except ValueError:
+        try:
+            short = short.relative_to('node_modules')
+        except ValueError:
+            pass
+    return short

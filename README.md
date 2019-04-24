@@ -39,7 +39,7 @@ The file structure is:
 {
     "asts": [],
     "contracts": {
-        "/path:contract_name": {
+        "contract_name": {
             "abi": [],
             "bin": "..",
             "bin-runtime": "..",
@@ -47,7 +47,9 @@ The file structure is:
             "srcmap-runtime": "..",
             "filenames": {
                 "absolute": "..",
-                "used": ".."
+                "relative": "..",
+                "short": "..",
+                "used": "..",
             }
         }
     },
@@ -55,7 +57,8 @@ The file structure is:
         "compiler": "solc",
         "version": "x.x.x",
         "optimized": false
-    }
+    },
+    "working_dir": ".."
 }
 ```
 

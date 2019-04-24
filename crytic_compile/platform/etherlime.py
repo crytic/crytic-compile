@@ -4,6 +4,7 @@ import logging
 import subprocess
 import glob
 import re
+from pathlib import Path
 from .types import Type
 from .exceptions import InvalidCompilation
 from ..utils.naming import convert_filename
@@ -54,7 +55,7 @@ def compile(crytic_compile, target, **kwargs):
                         version = re.findall('\d+\.\d+\.\d+', target_loaded["compiler"]["version"])[0]
 
             filename =target_loaded['ast']['absolutePath']
-            filename = convert_filename(filename)
+            filename = convert_filename(filename, _relative_to_short)
             crytic_compile.asts[filename.absolute] = target_loaded['ast']
             crytic_compile.filenames.add(filename.absolute)
             contract_name = target_loaded['contractName']
@@ -83,3 +84,14 @@ def _is_optimized(compile_arguments):
     if compile_arguments:
         return '--run' in compile_arguments
     return False
+
+def _relative_to_short(relative):
+    short = relative
+    try:
+        short = short.relative_to(Path('contracts'))
+    except ValueError:
+        try:
+            short = short.relative_to('node_modules')
+        except ValueError:
+            pass
+    return short

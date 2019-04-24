@@ -8,6 +8,7 @@ import subprocess
 from ..compiler.compiler import CompilerVersion
 from .types import Type
 from ..utils.naming import extract_filename, extract_name, combine_filename_name, convert_filename
+from pathlib import Path
 
 logger = logging.getLogger("CryticCompile")
 
@@ -29,7 +30,7 @@ def compile(crytic_compile, target, **kwargs):
         for original_contract_name, info in targets_json["contracts"].items():
             contract_name = extract_name(original_contract_name)
             contract_filename = extract_filename(original_contract_name)
-            contract_filename = convert_filename(contract_filename)
+            contract_filename = convert_filename(contract_filename, _relative_to_short)
             crytic_compile.contracts_names.add(contract_name)
             crytic_compile.contracts_filenames[contract_name] = contract_filename
             crytic_compile.abis[contract_name] = json.loads(info['abi'])
@@ -39,7 +40,7 @@ def compile(crytic_compile, target, **kwargs):
             crytic_compile.srcmaps_runtime[contract_name] = info['srcmap-runtime'].split(';')
 
         for path, info in targets_json["sources"].items():
-            path = convert_filename(path)
+            path = convert_filename(path, _relative_to_short)
             crytic_compile.filenames.add(path.absolute)
             crytic_compile.asts[path.absolute] = info['AST']
 
@@ -114,3 +115,15 @@ def _get_version(target):
                         optimized = config['settings']['optimizer']['enabled']
 
     return CompilerVersion(compiler=compiler, version=version, optimized=optimized)
+
+
+def _relative_to_short(relative):
+    short = relative
+    try:
+        short = short.relative_to(Path('src'))
+    except ValueError:
+        try:
+            short = short.relative_to('lib')
+        except ValueError:
+            pass
+    return short

@@ -4,6 +4,7 @@ import logging
 import re
 import subprocess
 import sha3
+from pathlib import Path
 
 from .platform.solc import compile as compile_solc, export as export_solc, is_solc
 from .platform.truffle import is_truffle, compile as compile_truffle, export as export_truffle
@@ -33,7 +34,8 @@ class CryticCompile:
         '''
         # ASTS are indexed by absolute path
         self._asts = {}
-        # ABI and bytecode are indexed by path:contract_name
+
+        # ABI, bytecode and srcmap are indexed by contract_name
         self._abis = {}
         self._runtime_bytecodes = {}
         self._init_bytecodes = {}
@@ -41,17 +43,26 @@ class CryticCompile:
         self._srcmaps = {}
         self._srcmaps_runtime = {}
 
-        # cryticcompile store the name and the filename of the contract separately
-        # but the exported json follow the format: /path:Contract, to follow standard format
-        self._contracts_name = set() # set containing all the contract name
-        self._contracts_name_without_libraries = None # set containing all the contract name without the libraries
-        self._filenames = set() # set containing all the filenames (absolute paths)
-        self._contracts_filenames = {}  # mapping from contract name to filename (naming.Filename)
+        # set containing all the contract names
+        self._contracts_name = set()
+        # set containing all the contract name without the libraries
+        self._contracts_name_without_libraries = None
+
+        # set containing all the filenames (absolute paths)
+        self._filenames = set()
+        # mapping from contract name to filename (naming.Filename)
+        self._contracts_filenames = {}
+
+        # mapping from contract_name to libraries_names (libraries used by the contract)
         self._libraries = {}
 
+        # platform.type
         self._type = None
 
+        # compiler.compiler
         self._compiler_version = None
+
+        self._working_dir = Path.cwd()
 
         self._compile(target, **kwargs)
 
@@ -131,7 +142,7 @@ class CryticCompile:
         :return: crytic_compile.naming.Filename
         """
         d = {}
-        for _, f in self._contracts_filenames:
+        for _, f in self._contracts_filenames.items():
             d[f.absolute] = f
             d[f.relative] = f
             d[f.used] = f
@@ -488,16 +499,18 @@ class CryticCompile:
                     'srcmap-runtime': ";".join(self.srcmap_runtime(contract_name)),
                     'filenames': {'absolute': filename.absolute,
                                   'used': filename.used,
+                                  'short': filename.short,
                                   'relative': filename.used}
                 }
 
-            output = {'asts' : self._asts,
+            output = {'asts': self._asts,
                       'contracts': contracts,
                       'compiler': {
                           'compiler': self._compiler_version.compiler,
                           'version': self._compiler_version.version,
                           'optimized': self._compiler_version.optimized,
-                      }}
+                      },
+                      'working_dir': str(self._working_dir)}
 
             json.dump(output, f)
 

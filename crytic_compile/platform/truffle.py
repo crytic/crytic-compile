@@ -5,6 +5,7 @@ import platform
 import glob
 import re
 import json
+from pathlib import Path
 from .types import Type
 from .exceptions import InvalidCompilation
 from ..utils.naming import convert_filename
@@ -75,7 +76,7 @@ def compile(crytic_compile, target, **kwargs):
 
 
             filename = target_loaded['ast']['absolutePath']
-            filename = convert_filename(filename)
+            filename = convert_filename(filename, _relative_to_short)
 
             crytic_compile.asts[filename.absolute] = target_loaded['ast']
             crytic_compile.filenames.add(filename.absolute)
@@ -130,3 +131,13 @@ def _get_version(truffle_call):
 
     raise InvalidCompilation(f'Solidity version not found {stdout}')
 
+def _relative_to_short(relative):
+    short = relative
+    try:
+        short = short.relative_to(Path('contracts'))
+    except ValueError:
+        try:
+            short = short.relative_to('node_modules')
+        except ValueError:
+            pass
+    return short

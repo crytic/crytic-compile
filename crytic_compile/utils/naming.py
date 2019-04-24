@@ -4,7 +4,7 @@ from collections import namedtuple
 from ..platform.exceptions import InvalidCompilation
 
 
-Filename = namedtuple('Filename', ['absolute', 'used', 'relative'])
+Filename = namedtuple('Filename', ['absolute', 'used', 'relative', 'short'])
 
 def extract_name(name):
     '''
@@ -24,7 +24,7 @@ def combine_filename_name(filename, name):
     return filename + ":" + name
 
 
-def convert_filename(used_filename):
+def convert_filename(used_filename, relative_to_short):
     """
     Convert filename.
     The used_filename can be absolute, relative, or missing node_modules/contracts directory
@@ -52,6 +52,13 @@ def convert_filename(used_filename):
     elif not filename.is_absolute():
         filename = Path.cwd().joinpath(filename)
 
-    return Filename(absolute=str(filename),
-                    relative=str(filename.relative_to(Path.cwd())),
+    absolute = filename
+    relative = filename.relative_to(Path.cwd())
+
+    short = relative_to_short(relative)
+
+
+    return Filename(absolute=str(absolute),
+                    relative=str(relative),
+                    short=str(short),
                     used=used_filename)
