@@ -1,4 +1,5 @@
 import platform
+import os.path
 from pathlib import Path
 from collections import namedtuple
 from ..platform.exceptions import InvalidCompilation
@@ -55,7 +56,7 @@ def convert_filename(used_filename, relative_to_short, working_dir=None):
         filename = Path.cwd().joinpath(filename)
 
     absolute = filename
-    relative = filename.relative_to(Path.cwd())
+    relative = Path(os.path.relpath(filename, Path.cwd()))
 
     short = relative_to_short(relative)
 
