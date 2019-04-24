@@ -1,5 +1,5 @@
 import platform
-from pathlib import Path, PureWindowsPath
+from pathlib import Path
 from collections import namedtuple
 from ..platform.exceptions import InvalidCompilation
 
@@ -35,10 +35,10 @@ def convert_filename(used_filename, relative_to_short):
     filename = used_filename
     if platform.system() == 'Windows':
         elements = list(Path(filename).parts)
-        if elements[0] == '/':
+        if elements[0] == '/' or elements[0] == '\\':
             elements = elements[1:]  # remove '/'
             elements[0] = elements[0] + ':/'  # add :/
-        filename = PureWindowsPath(*elements)
+        filename = Path(*elements)
     else:
         filename = Path(filename)
 
