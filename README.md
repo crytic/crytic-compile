@@ -1,7 +1,7 @@
 # Crytic-compile
 [![Build Status](https://travis-ci.com/crytic/crytic-compile.svg?branch=master)](https://travis-ci.com/crytic/crytic-compile)
 [![Slack Status](https://empireslacking.herokuapp.com/badge.svg)](https://empireslacking.herokuapp.com)
-
+[![PyPI version](https://badge.fury.io/py/crytic-compile.svg)](https://badge.fury.io/py/crytic-compile)
 
 Library to help smart contract compilation. It includes support for:
 - Direct solc compilation
