@@ -47,7 +47,7 @@ def compile(crytic_compile, target, **kwargs):
 
     for path, info in targets_json["sources"].items():
         path = convert_filename(path, _relative_to_short)
-        crytic_compile.filenames.add(path.absolute)
+        crytic_compile.filenames.add(path)
         crytic_compile.asts[path.absolute] = info['AST']
 
 def is_solc(target):
@@ -77,7 +77,7 @@ def export(crytic_compile, **kwargs):
             }
 
         sources = {filename : {"AST": ast} for (filename, ast) in crytic_compile.asts.items()}
-        sourceList = list(crytic_compile.filenames)
+        sourceList = [x.absolute for x in crytic_compile.filenames]
 
         output = {'sources' : sources,
                   'sourceList' : sourceList,

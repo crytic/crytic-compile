@@ -79,7 +79,7 @@ def compile(crytic_compile, target, **kwargs):
             filename = convert_filename(filename, _relative_to_short)
 
             crytic_compile.asts[filename.absolute] = target_loaded['ast']
-            crytic_compile.filenames.add(filename.absolute)
+            crytic_compile.filenames.add(filename)
             contract_name = target_loaded['contractName']
             crytic_compile.contracts_filenames[contract_name] = filename
             crytic_compile.contracts_names.add(contract_name)

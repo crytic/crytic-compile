@@ -76,7 +76,7 @@ class CryticCompile:
     @property
     def filenames(self):
         """
-        :return: list(str): (absolute) filenames
+        :return: list(naming.Filename)
         """
         return self._filenames
 
@@ -142,12 +142,12 @@ class CryticCompile:
         :return: crytic_compile.naming.Filename
         """
         d = {}
-        for _, f in self._contracts_filenames.items():
+        for f in self._filenames:
             d[f.absolute] = f
             d[f.relative] = f
             d[f.used] = f
         if not filename in d:
-            raise ValueError('f{filename} does not exist in {d}')
+            raise ValueError(f'{filename} does not exist in {d}')
         return d[filename]
 
     # endregion
