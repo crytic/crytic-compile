@@ -54,10 +54,10 @@ def compile(crytic_compile, target, **kwargs):
 
     with open(infile, 'r') as f:
         targets_loaded = json.load(f)
-        crytic_compile._asts = {convert_filename(k, _relative_to_short).absolute: ast for k,ast in targets_loaded['asts'].items()}
-
-        for f in crytic_compile._asts:
-            crytic_compile._filenames.add(f)
+        for k, ast in targets_loaded['asts'].items():
+            filename = convert_filename(k, _relative_to_short)
+            crytic_compile.asts[filename.absolute] = ast
+            crytic_compile.filenames.add(filename)
 
         if not 'contracts' in targets_loaded:
             logger.error(f'Incorrect json file generated. Are you using {plugin_name} >= 1.1.0?')
