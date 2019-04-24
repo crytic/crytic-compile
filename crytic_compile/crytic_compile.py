@@ -29,18 +29,7 @@ class CryticCompile:
             Args:
                 target (str)
             Keyword Args:
-                solc (str): solc binary location (default 'solc')
-                solc_disable_warnings (bool): True to disable solc warnings (default false)
-                solc_arguments (str): solc arguments (default '')
-
-                truffle_ignore (bool): ignore truffle.js presence (default false)
-                truffle_build_directory (str): build truffle directory (default 'build/targets')
-                truffle_ignore_compile (bool): do not run truffle compile (default False)
-                truffle_version (str): use a specific truffle version (default None)
-
-                embark_ignore (bool): ignore embark.js presence (default false)
-                embark_ignore_compile (bool): do not run embark build (default False)
-                embark_overwrite_config (bool): overwrite original config file (default false)
+                See https://github.com/crytic/crytic-compile/wiki/Configuration
         '''
         # ASTS are indexed by absolute path
         self._asts = {}
@@ -66,19 +55,12 @@ class CryticCompile:
 
         self._compile(target, **kwargs)
 
-    @property
-    def contracts_names(self):
-        return self._contracts_name
+    ###################################################################################
+    ###################################################################################
+    # region Filenames
+    ###################################################################################
+    ###################################################################################
 
-    @property
-    def contracts_names_without_libraries(self):
-        if self._contracts_name_without_libraries is None:
-            libraries = []
-            for c in self._contracts_name:
-                libraries += self.libraries_names(c)
-            libraries = set(libraries)
-            self._contracts_name_without_libraries = set([l for l in self._contracts_name if not l in libraries])
-        return self._contracts_name_without_libraries
 
     @property
     def filenames(self):
@@ -136,9 +118,68 @@ class CryticCompile:
             raise ValueError('f{filename} does not exist in {d}')
         return d[used_filename]
 
+    def relative_filename_from_absolute_filename(self, absolute_filename):
+        d = {f.absolute: f.relative for _, f in self._contracts_filenames}
+        if not absolute_filename in d:
+            raise ValueError('f{absolute_filename} does not exist in {d}')
+        return d[absolute_filename]
+
+    def filename_lookup(self, filename):
+        """
+        Return a crytic_compile.naming.Filename from a any filename form (used/absolute/relative)
+        :param filename: str
+        :return: crytic_compile.naming.Filename
+        """
+        d = {}
+        for _, f in self._contracts_filenames:
+            d[f.absolute] = f
+            d[f.relative] = f
+            d[f.used] = f
+        if not filename in d:
+            raise ValueError('f{filename} does not exist in {d}')
+        return d[filename]
+
+    # endregion
+    ###################################################################################
+    ###################################################################################
+    # region Contract Names
+    ###################################################################################
+    ###################################################################################
+
+    @property
+    def contracts_names(self):
+        return self._contracts_name
+
+    @property
+    def contracts_names_without_libraries(self):
+        if self._contracts_name_without_libraries is None:
+            libraries = []
+            for c in self._contracts_name:
+                libraries += self.libraries_names(c)
+            libraries = set(libraries)
+            self._contracts_name_without_libraries = set([l for l in self._contracts_name if not l in libraries])
+        return self._contracts_name_without_libraries
+
+    # endregion
+    ###################################################################################
+    ###################################################################################
+    # region ABI
+    ###################################################################################
+    ###################################################################################
+
     @property
     def abis(self):
         return self._abis
+
+    def abi(self, name):
+        return self._abis.get(name, None)
+
+    # endregion
+    ###################################################################################
+    ###################################################################################
+    # region AST
+    ###################################################################################
+    ###################################################################################
 
     @property
     def asts(self):
@@ -156,6 +197,14 @@ class CryticCompile:
                 pass
         return self._asts.get(path, None)
 
+    # endregion
+    ###################################################################################
+    ###################################################################################
+    # region Bytecode
+    ###################################################################################
+    ###################################################################################
+
+
     @property
     def bytecodes_runtime(self):
         return self._runtime_bytecodes
@@ -163,6 +212,24 @@ class CryticCompile:
     @property
     def bytecodes_init(self):
         return self._init_bytecodes
+
+
+    def bytecode_runtime(self, name, libraries=None):
+        runtime = self._runtime_bytecodes.get(name, None)
+        return self._update_bytecode_with_libraries(runtime, libraries)
+
+    def bytecode_init(self, name, libraries=None):
+        init = self._init_bytecodes.get(name, None)
+        return self._update_bytecode_with_libraries(init, libraries)
+
+
+    # endregion
+    ###################################################################################
+    ###################################################################################
+    # region Source mapping
+    ###################################################################################
+    ###################################################################################
+
 
     @property
     def srcmaps_init(self):
@@ -178,6 +245,14 @@ class CryticCompile:
     def srcmap_runtime(self, name):
         return self._srcmaps_runtime.get(name, [])
 
+    # endregion
+    ###################################################################################
+    ###################################################################################
+    # region Type
+    ###################################################################################
+    ###################################################################################
+
+
     @property
     def type(self):
         return self._type
@@ -186,8 +261,13 @@ class CryticCompile:
     def type(self, t):
         self._type = t
 
-    def abi(self, name):
-        return self._abis.get(name, None)
+    # endregion
+    ###################################################################################
+    ###################################################################################
+    # region Compiler information
+    ###################################################################################
+    ###################################################################################
+
 
     @property
     def compiler_version(self):
@@ -200,6 +280,13 @@ class CryticCompile:
     @compiler_version.setter
     def compiler_version(self, c):
         self._compiler_version = c
+
+    # endregion
+    ###################################################################################
+    ###################################################################################
+    # region Libraries
+    ###################################################################################
+    ###################################################################################
 
     def _convert_libraries_names(self, libraries):
         """
@@ -333,13 +420,12 @@ class CryticCompile:
                     )
         return bytecode
 
-    def bytecode_runtime(self, name, libraries=None):
-        runtime = self._runtime_bytecodes.get(name, None)
-        return self._update_bytecode_with_libraries(runtime, libraries)
-
-    def bytecode_init(self, name, libraries=None):
-        init = self._init_bytecodes.get(name, None)
-        return self._update_bytecode_with_libraries(init, libraries)
+    # endregion
+    ###################################################################################
+    ###################################################################################
+    # region Hashes
+    ###################################################################################
+    ###################################################################################
 
     def hashes(self, name):
         if not name in self._hashes:
@@ -358,6 +444,12 @@ class CryticCompile:
                     s.update(sig.encode('utf-8'))
                     self._hashes[name][sig] = int("0x" + s.hexdigest()[:8], 16)
 
+    # endregion
+    ###################################################################################
+    ###################################################################################
+    # region Export
+    ###################################################################################
+    ###################################################################################
 
     def export(self, **kwargs):
         """
@@ -394,7 +486,9 @@ class CryticCompile:
                     'bin-runtime': self.bytecode_runtime(contract_name),
                     'srcmap': ";".join(self.srcmap_init(contract_name)),
                     'srcmap-runtime': ";".join(self.srcmap_runtime(contract_name)),
-                    'filenames': {'absolute': filename.absolute, 'used': filename.used}
+                    'filenames': {'absolute': filename.absolute,
+                                  'used': filename.used,
+                                  'relative': filename.used}
                 }
 
             output = {'asts' : self._asts,
@@ -406,6 +500,13 @@ class CryticCompile:
                       }}
 
             json.dump(output, f)
+
+    # endregion
+    ###################################################################################
+    ###################################################################################
+    # region Compile
+    ###################################################################################
+    ###################################################################################
 
     def _compile(self, target, **kwargs):
 
@@ -473,6 +574,13 @@ class CryticCompile:
             logger.error('Custom build error: \n%s', stderr)
 
 
+    # endregion
+    ###################################################################################
+    ###################################################################################
+    # region Metadata
+    ###################################################################################
+    ###################################################################################
+
     def _remove_metadata(self):
         '''
             Init bytecode contains metadata that needs to be removed
@@ -489,3 +597,8 @@ class CryticCompile:
             r'',
             bytecode
         ) for (key, bytecode) in self._runtime_bytecodes.items()}
+
+
+    # endregion
+    ###################################################################################
+    ###################################################################################

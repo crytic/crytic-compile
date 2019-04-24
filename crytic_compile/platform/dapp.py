@@ -95,8 +95,8 @@ def _run_dapp():
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     _, _ = process.communicate()
 
-def _get_version():
-    files = glob.glob(dir + '/**/*meta.json', recursive=True)
+def _get_version(target):
+    files = glob.glob(target + '/**/*meta.json', recursive=True)
     version = None
     optimized = None
     compiler = 'solc'
@@ -110,7 +110,7 @@ def _get_version():
                     assert version
             if "settings" in config:
                 if "optimizer" in config['settings']:
-                    if 'enabled' in config['settings']['optimized']:
-                        optimized = config['settings']['optimized']['enabled']
+                    if 'enabled' in config['settings']['optimizer']:
+                        optimized = config['settings']['optimizer']['enabled']
 
     return CompilerVersion(compiler=compiler, version=version, optimized=optimized)
