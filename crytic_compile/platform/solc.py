@@ -67,7 +67,7 @@ def export(crytic_compile, **kwargs):
             abi = abi.replace('True', 'true')
             abi = abi.replace('False', 'false')
             abi = abi.replace(' ', '')
-            exported_name = combine_filename_name(crytic_compile.contracts_filenames[contract_name].used, contract_name)
+            exported_name = combine_filename_name(crytic_compile.contracts_filenames[contract_name].absolute, contract_name)
             contracts[exported_name] = {
                 'srcmap': ';'.join(crytic_compile.srcmap_init(contract_name)),
                 'srcmap-runtime': ';'.join(crytic_compile.srcmap_runtime(contract_name)),
