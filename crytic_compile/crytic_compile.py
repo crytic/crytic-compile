@@ -323,19 +323,30 @@ class CryticCompile:
             new_names[lib_5] = addr
 
             if lib in self.contracts_names:
-                lib_with_filename = self.contracts_filenames[lib].absolute + ':' + lib
+                lib_filename = self.contracts_filenames[lib]
 
-                lib_with_filename = lib_with_filename[0:36]
+                lib_with_abs_filename = lib_filename.absolute + ':' + lib
+                lib_with_abs_filename = lib_with_abs_filename[0:36]
 
-                lib_4 = '__' + lib_with_filename + '_' * (38 - len(lib_with_filename))
+                lib_4 = '__' + lib_with_abs_filename + '_' * (38 - len(lib_with_abs_filename))
+                new_names[lib_4] = addr
+
+                lib_with_used_filename = lib_filename.used + ':' + lib
+                lib_with_used_filename = lib_with_used_filename[0:36]
+
+                lib_4 = '__' + lib_with_used_filename + '_' * (38 - len(lib_with_used_filename))
+                new_names[lib_4] = addr
 
                 s = sha3.keccak_256()
-                s.update(lib_with_filename.encode('utf-8'))
+                s.update(lib_with_abs_filename.encode('utf-8'))
                 lib_5 = "__$" + s.hexdigest()[:34] + "$__"
-
-                new_names[lib_with_filename] = addr
-                new_names[lib_4] = addr
                 new_names[lib_5] = addr
+
+                s = sha3.keccak_256()
+                s.update(lib_with_used_filename.encode('utf-8'))
+                lib_5 = "__$" + s.hexdigest()[:34] + "$__"
+                new_names[lib_5] = addr
+
         return new_names
 
     def _library_name_lookup(self, lib_name, original_contract):

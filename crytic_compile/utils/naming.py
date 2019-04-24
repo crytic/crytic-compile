@@ -24,7 +24,7 @@ def combine_filename_name(filename, name):
     return filename + ":" + name
 
 
-def convert_filename(used_filename, relative_to_short):
+def convert_filename(used_filename, relative_to_short, working_dir=None):
     """
     Convert filename.
     The used_filename can be absolute, relative, or missing node_modules/contracts directory
@@ -47,6 +47,8 @@ def convert_filename(used_filename, relative_to_short):
             filename = Path.cwd().joinpath('node_modules', filename)
         if Path('contracts').joinpath(filename).exists():
             filename = Path.cwd().joinpath('contracts', filename)
+        elif working_dir and Path(working_dir).joinpath(filename).exists():
+            filename = Path(working_dir).joinpath(filename)
         else:
             raise InvalidCompilation(f'Unknown file: {filename}')
     elif not filename.is_absolute():
