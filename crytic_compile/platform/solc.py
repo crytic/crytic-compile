@@ -140,7 +140,7 @@ def _run_solc(crytic_compile, filename, solc, solc_disable_warnings, solc_argume
         # split() removes the delimiter, so we add it again
         solc_args = [('--' + x).split(' ', 1) for x in solc_args if x]
         # Flat the list of list
-        solc_args = [item for sublist in solc_args for item in sublist]
+        solc_args = [item for sublist in solc_args for item in sublist if item]
         cmd += solc_args
 
     additional_kwargs = {'cwd': working_dir} if working_dir else {}

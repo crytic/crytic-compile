@@ -106,7 +106,7 @@ def compile(crytic_compile, target, **kwargs):
 def is_etherscan(target):
     if target.startswith(tuple(supported_network)):
         target = target[target.find(':') + 1:]
-    return re.match('0x[a-zA-Z0-9]{40}', target)
+    return re.match('^\s*0x[a-zA-Z0-9]{40}\s*$', target)
 
 
 def convert_version(version):
