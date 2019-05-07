@@ -55,14 +55,14 @@ def compile(crytic_compile, target, **kwargs):
             crytic_compile.srcmaps_runtime[contract_name] = info['srcmap-runtime'].split(';')
 
     if "sources" in targets_json:
-    for path, info in targets_json["sources"].items():
-        if skip_filename:
-            path = convert_filename(target, _relative_to_short, working_dir=solc_working_dir)
-        else:
-            path = convert_filename(path, _relative_to_short, working_dir=solc_working_dir)
-        crytic_compile.filenames.add(path)
-        crytic_compile.asts[path.absolute] = info['AST']
-    
+        for path, info in targets_json["sources"].items():
+            if skip_filename:
+                path = convert_filename(target, _relative_to_short, working_dir=solc_working_dir)
+            else:
+                path = convert_filename(path, _relative_to_short, working_dir=solc_working_dir)
+            crytic_compile.filenames.add(path)
+            crytic_compile.asts[path.absolute] = info['AST']
+
 
 def is_solc(target):
     return os.path.isfile(target) and target.endswith('.sol')
