@@ -80,6 +80,9 @@ def is_etherlime(target):
     return False
 
 
+def is_dependency(path):
+    return 'node_modules' in Path(path).parts
+
 def _is_optimized(compile_arguments):
     if compile_arguments:
         return '--run' in compile_arguments

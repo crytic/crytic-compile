@@ -116,6 +116,9 @@ def is_truffle(target):
     return (os.path.isfile(os.path.join(target, 'truffle.js')) or
      os.path.isfile(os.path.join(target, 'truffle-config.js')))
 
+def is_dependency(path):
+    return 'node_modules' in Path(path).parts
+
 def _get_version(truffle_call):
     cmd  = truffle_call + ["version"]
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)

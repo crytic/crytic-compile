@@ -90,6 +90,9 @@ def is_dapp(target):
             return "dapp build" in txt
     return False
 
+def is_dependency(path):
+    return 'lib' in Path(path).parts
+
 def _run_dapp():
     cmd = ["dapp", "build"]
 

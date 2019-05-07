@@ -87,6 +87,8 @@ def compile(crytic_compile, target, **kwargs):
 def is_embark(target):
     return os.path.isfile(os.path.join(target, 'embark.json'))
 
+def is_dependency(path):
+    return 'node_modules' in Path(path).parts
 
 def _get_version(target):
     with open(os.path.join(target, 'embark.json')) as f:

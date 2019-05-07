@@ -6,12 +6,7 @@ import subprocess
 import sha3
 from pathlib import Path
 
-from .platform.solc import compile as compile_solc, export as export_solc, is_solc
-from .platform.truffle import is_truffle, compile as compile_truffle, export as export_truffle
-from .platform.embark import is_embark, compile as compile_embark
-from .platform.dapp import is_dapp, compile as compile_dapp
-from .platform.etherlime import is_etherlime, compile as compile_etherlime
-from .platform.etherscan import is_etherscan, compile as compile_etherscan
+from .platform import solc, truffle, embark, dapp, etherlime, etherscan
 
 from .utils.naming import combine_filename_name
 
@@ -19,7 +14,12 @@ logger = logging.getLogger("CryticCompile")
 logging.basicConfig()
 
 def is_supported(target):
-    supported = [is_solc, is_truffle, is_embark, is_dapp, is_etherlime, is_etherscan]
+    supported = [solc.is_solc,
+                 truffle.is_truffle,
+                 embark.is_embark,
+                 dapp.is_dapp,
+                 etherlime.is_etherlime,
+                 etherscan.is_etherscan]
     return any(f(target) for f in supported)
 
 
@@ -58,6 +58,7 @@ class CryticCompile:
 
         # platform.type
         self._type = None
+        self._platform = None
 
         # compiler.compiler
         self._compiler_version = None
@@ -149,6 +150,9 @@ class CryticCompile:
         if not filename in d:
             raise ValueError(f'{filename} does not exist in {d}')
         return d[filename]
+
+    def is_dependency(self, filename):
+        return self._platform.is_dependency(filename)
 
     # endregion
     ###################################################################################
@@ -271,6 +275,7 @@ class CryticCompile:
     @type.setter
     def type(self, t):
         self._type = t
+
 
     # endregion
     ###################################################################################
@@ -486,9 +491,9 @@ class CryticCompile:
         if export_format is None or export_format=="crytic-compile":
             self._export_standard(**kwargs)
         elif export_format == "solc":
-            export_solc(self, **kwargs)
+            solc.export(self, **kwargs)
         elif export_format == "truffle":
-            export_truffle(self, **kwargs)
+            truffle.export(self, **kwargs)
         else:
             raise Exception('Export format unknown')
 
@@ -554,34 +559,35 @@ class CryticCompile:
         compile_force_framework = kwargs.get('compile_force_framework', None)
         if compile_force_framework:
             if compile_force_framework == 'truffle':
-                compile_truffle(self, target, **kwargs)
+                self._platform = truffle
             elif compile_force_framework == 'embark':
-                compile_embark(self, target, **kwargs)
+                self._platform = embark
             elif compile_force_framework == 'dapp':
-                compile_dapp(self, target, **kwargs)
+                self._platform = dapp
             elif compile_force_framework == 'etherlime':
-                compile_etherlime(self, target, **kwargs)
+                self._platform = etherlime
             elif compile_force_framework == 'etherscan':
-                compile_etherscan(self, target, **kwargs)
+                self._platform = etherscan
         else:
             # truffle directory
-            if not truffle_ignore and is_truffle(target):
-                compile_truffle(self, target, **kwargs)
+            if not truffle_ignore and truffle.is_truffle(target):
+                self._platform = truffle
             # embark directory
-            elif not embark_ignore and is_embark(target):
-                compile_embark(self, target, **kwargs)
+            elif not embark_ignore and embark.is_embark(target):
+                self._platform = embark
             # dap directory
-            elif not dapp_ignore and is_dapp(target):
-                compile_dapp(self, target, **kwargs)
+            elif not dapp_ignore and dapp.is_dapp(target):
+                self._platform = dapp
             #etherlime directory
-            elif not etherlime_ignore and is_etherlime(target):
-                compile_etherlime(self, target, **kwargs)
-            elif not etherscan_ignore and is_etherscan(target):
-                compile_etherscan(self, target, **kwargs)
+            elif not etherlime_ignore and etherlime.is_etherlime(target):
+                self._platform = etherlime
+            elif not etherscan_ignore and etherscan.is_etherscan(target):
+                self._platform = etherscan
             # .json or .sol provided
             else:
-                compile_solc(self, target, **kwargs)
+                self._platform = solc
 
+        self._platform.compile(self, target, **kwargs)
         remove_metadata = kwargs.get('compile_remove_metadata', False)
         if remove_metadata:
             self._remove_metadata()

@@ -67,6 +67,9 @@ def compile(crytic_compile, target, **kwargs):
 def is_solc(target):
     return os.path.isfile(target) and target.endswith('.sol')
 
+def is_dependency(_path):
+    return False
+
 def export(crytic_compile, **kwargs):
     export_dir = kwargs.get('export_dir', 'crytic-export')
     if not os.path.exists(export_dir):

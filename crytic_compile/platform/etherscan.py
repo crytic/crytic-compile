@@ -108,6 +108,8 @@ def is_etherscan(target):
         target = target[target.find(':') + 1:]
     return re.match('^\s*0x[a-zA-Z0-9]{40}\s*$', target)
 
+def is_dependency(_path):
+    return False
 
 def convert_version(version):
     return version[1:version.find('+')]
