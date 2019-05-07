@@ -32,11 +32,19 @@ def compile(crytic_compile, target, **kwargs):
                              solc_remaps=solc_remaps,
                              working_dir=solc_working_dir)
 
+    if crytic_compile.compiler_version.version in [f'0.4.{x}' for x in range(0, 10)]:
+        skip_filename = True
+    else:
+        skip_filename = False
 
     for original_contract_name, info in targets_json["contracts"].items():
         contract_name = extract_name(original_contract_name)
         contract_filename = extract_filename(original_contract_name)
-        contract_filename = convert_filename(contract_filename, _relative_to_short, working_dir=solc_working_dir)
+        # for solc < 0.4.10 we cant retrieve the filename from the ast
+        if skip_filename:
+            contract_filename = convert_filename(target, _relative_to_short, working_dir=solc_working_dir)
+        else:
+            contract_filename = convert_filename(contract_filename, _relative_to_short, working_dir=solc_working_dir)
         crytic_compile.contracts_names.add(contract_name)
         crytic_compile.contracts_filenames[contract_name] = contract_filename
         crytic_compile.abis[contract_name] = json.loads(info['abi'])
@@ -46,7 +54,10 @@ def compile(crytic_compile, target, **kwargs):
         crytic_compile.srcmaps_runtime[contract_name] = info['srcmap-runtime'].split(';')
 
     for path, info in targets_json["sources"].items():
-        path = convert_filename(path, _relative_to_short, working_dir=solc_working_dir)
+        if skip_filename:
+            path = convert_filename(target, _relative_to_short, working_dir=solc_working_dir)
+        else:
+            path = convert_filename(path, _relative_to_short, working_dir=solc_working_dir)
         crytic_compile.filenames.add(path)
         crytic_compile.asts[path.absolute] = info['AST']
 
@@ -145,17 +156,18 @@ def _run_solc(crytic_compile, filename, solc, solc_disable_warnings, solc_argume
 
     additional_kwargs = {'cwd': working_dir} if working_dir else {}
 
-    # Add . as default allowed path
-    if '--allow-paths' not in cmd:
-        relative_filepath = filename
+    if not compiler_version.version in [f'0.4.{x}' for x in range(0, 11)]:
+        # Add . as default allowed path
+        if '--allow-paths' not in cmd:
+            relative_filepath = filename
 
-        if not working_dir:
-            working_dir = os.getcwd()
+            if not working_dir:
+                working_dir = os.getcwd()
 
-        if relative_filepath.startswith(working_dir):
-            relative_filepath = relative_filepath[len(working_dir) + 1:]
+            if relative_filepath.startswith(working_dir):
+                relative_filepath = relative_filepath[len(working_dir) + 1:]
 
-        cmd += ['--allow-paths', '.', relative_filepath]
+            cmd += ['--allow-paths', '.', relative_filepath]
 
     if env:
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env, **additional_kwargs)
