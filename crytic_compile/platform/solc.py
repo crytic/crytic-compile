@@ -32,23 +32,24 @@ def compile(crytic_compile, target, **kwargs):
                              solc_remaps=solc_remaps,
                              working_dir=solc_working_dir)
 
+    if "contracts" in targets_json:
+        for original_contract_name, info in targets_json["contracts"].items():
+            contract_name = extract_name(original_contract_name)
+            contract_filename = extract_filename(original_contract_name)
+            contract_filename = convert_filename(contract_filename, _relative_to_short, working_dir=solc_working_dir)
+            crytic_compile.contracts_names.add(contract_name)
+            crytic_compile.contracts_filenames[contract_name] = contract_filename
+            crytic_compile.abis[contract_name] = json.loads(info['abi'])
+            crytic_compile.bytecodes_init[contract_name] = info['bin']
+            crytic_compile.bytecodes_runtime[contract_name] = info['bin-runtime']
+            crytic_compile.srcmaps_init[contract_name] = info['srcmap'].split(';')
+            crytic_compile.srcmaps_runtime[contract_name] = info['srcmap-runtime'].split(';')
 
-    for original_contract_name, info in targets_json["contracts"].items():
-        contract_name = extract_name(original_contract_name)
-        contract_filename = extract_filename(original_contract_name)
-        contract_filename = convert_filename(contract_filename, _relative_to_short, working_dir=solc_working_dir)
-        crytic_compile.contracts_names.add(contract_name)
-        crytic_compile.contracts_filenames[contract_name] = contract_filename
-        crytic_compile.abis[contract_name] = json.loads(info['abi'])
-        crytic_compile.bytecodes_init[contract_name] = info['bin']
-        crytic_compile.bytecodes_runtime[contract_name] = info['bin-runtime']
-        crytic_compile.srcmaps_init[contract_name] = info['srcmap'].split(';')
-        crytic_compile.srcmaps_runtime[contract_name] = info['srcmap-runtime'].split(';')
-
-    for path, info in targets_json["sources"].items():
-        path = convert_filename(path, _relative_to_short, working_dir=solc_working_dir)
-        crytic_compile.filenames.add(path)
-        crytic_compile.asts[path.absolute] = info['AST']
+    if "sources" in targets_json:
+        for path, info in targets_json["sources"].items():
+            path = convert_filename(path, _relative_to_short, working_dir=solc_working_dir)
+            crytic_compile.filenames.add(path)
+            crytic_compile.asts[path.absolute] = info['AST']
 
 def is_solc(target):
     return os.path.isfile(target) and target.endswith('.sol')
