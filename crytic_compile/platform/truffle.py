@@ -41,7 +41,7 @@ def compile(crytic_compile, target, **kwargs):
     version, compiler = _get_version(based_cmd)
 
     if not truffle_ignore_compile:
-        cmd = based_cmd + ['compile']
+        cmd = based_cmd + ['compile', '--all']
 
         logger.info("'{}' running (use --truffle-version truffle@x.x.x to use specific version)".format(' '.join(cmd)))
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)

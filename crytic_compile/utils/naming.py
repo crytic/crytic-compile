@@ -46,7 +46,7 @@ def convert_filename(used_filename, relative_to_short, working_dir=None):
     if not filename.exists():
         if Path('node_modules').joinpath(filename).exists():
             filename = Path.cwd().joinpath('node_modules', filename)
-        if Path('contracts').joinpath(filename).exists():
+        elif Path('contracts').joinpath(filename).exists():
             filename = Path.cwd().joinpath('contracts', filename)
         elif working_dir and Path(working_dir).joinpath(filename).exists():
             filename = Path(working_dir).joinpath(filename)
