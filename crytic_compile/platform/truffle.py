@@ -26,7 +26,10 @@ def compile(crytic_compile, target, **kwargs):
     truffle_base_command = ["npx", "truffle"] if platform.system() != 'Windows' else ["truffle.cmd"]
     based_cmd = truffle_base_command
     if truffle_version:
-        based_cmd = ['npx', truffle_version]
+        if truffle_version.startswith('truffle'):
+            based_cmd = ['npx', truffle_version]
+        else:
+            based_cmd = ['npx', f'truffle@{truffle_version}']
     elif os.path.isfile('package.json'):
         with open('package.json') as f:
             package = json.load(f)
@@ -127,7 +130,7 @@ def is_dependency(path):
     return 'node_modules' in Path(path).parts
 
 def _get_version(truffle_call):
-    cmd  = truffle_call + ["version"]
+    cmd = truffle_call + ["version"]
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, _ = process.communicate()
     stdout = stdout.decode()  # convert bytestrings to unicode strings
