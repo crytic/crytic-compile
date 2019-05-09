@@ -23,8 +23,8 @@ def compile(crytic_compile, target, **kwargs):
     # truffle.cmd. Reference:
     # https://truffleframework.com/docs/truffle/reference/configuration#resolving-naming-conflicts-on-windows
 
-    truffle_base_command = "truffle" if platform.system() != 'Windows' else "truffle.cmd"
-    based_cmd = [truffle_base_command]
+    truffle_base_command = ["npx", "truffle"] if platform.system() != 'Windows' else ["truffle.cmd"]
+    based_cmd = truffle_base_command
     if truffle_version:
         based_cmd = ['npx', truffle_version]
     elif os.path.isfile('package.json'):
@@ -33,6 +33,13 @@ def compile(crytic_compile, target, **kwargs):
             if 'devDependencies' in package:
                 if 'truffle' in package['devDependencies']:
                     version = package['devDependencies']['truffle']
+                    if version.startswith('^'):
+                        version = version[1:]
+                    truffle_version = 'truffle@{}'.format(version)
+                    based_cmd = ['npx', truffle_version]
+            if 'dependencies' in package:
+                if 'truffle' in package['dependencies']:
+                    version = package['dependencies']['truffle']
                     if version.startswith('^'):
                         version = version[1:]
                     truffle_version = 'truffle@{}'.format(version)
