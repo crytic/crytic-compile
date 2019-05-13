@@ -19,7 +19,7 @@ def compile(crytic_compile, target, **kwargs):
     dir = os.path.join(target, "out")
 
     if not dapp_ignore_compile:
-        _run_dapp()
+        _run_dapp(target)
 
     crytic_compile.compiler_version = _get_version(target)
 
@@ -30,7 +30,7 @@ def compile(crytic_compile, target, **kwargs):
         for original_contract_name, info in targets_json["contracts"].items():
             contract_name = extract_name(original_contract_name)
             contract_filename = extract_filename(original_contract_name)
-            contract_filename = convert_filename(contract_filename, _relative_to_short)
+            contract_filename = convert_filename(contract_filename, _relative_to_short, working_dir=target)
             crytic_compile.contracts_names.add(contract_name)
             crytic_compile.contracts_filenames[contract_name] = contract_filename
             crytic_compile.abis[contract_name] = json.loads(info['abi'])
@@ -40,7 +40,7 @@ def compile(crytic_compile, target, **kwargs):
             crytic_compile.srcmaps_runtime[contract_name] = info['srcmap-runtime'].split(';')
 
         for path, info in targets_json["sources"].items():
-            path = convert_filename(path, _relative_to_short)
+            path = convert_filename(path, _relative_to_short, working_dir=target)
             crytic_compile.filenames.add(path)
             crytic_compile.asts[path.absolute] = info['AST']
 
@@ -93,10 +93,10 @@ def is_dapp(target):
 def is_dependency(path):
     return 'lib' in Path(path).parts
 
-def _run_dapp():
+def _run_dapp(target):
     cmd = ["dapp", "build"]
 
-    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=target)
     _, _ = process.communicate()
 
 def _get_version(target):
