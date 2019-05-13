@@ -87,7 +87,7 @@ def compile(crytic_compile, target, **kwargs):
 
 
             filename = target_loaded['ast']['absolutePath']
-            filename = convert_filename(filename, _relative_to_short)
+            filename = convert_filename(filename, _relative_to_short, working_dir=target)
 
             crytic_compile.asts[filename.absolute] = target_loaded['ast']
             crytic_compile.filenames.add(filename)
