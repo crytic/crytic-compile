@@ -34,6 +34,8 @@ def compile(crytic_compile, target, **kwargs):
         etherscan_url = ethercan_base % (prefix, addr)
     else:
         etherscan_url = ethercan_base % ('', target)
+        addr = target
+        prefix = None
 
     with urllib.request.urlopen(etherscan_url) as response:
         html = response.read()
@@ -56,10 +58,16 @@ def compile(crytic_compile, target, **kwargs):
     source_code = result['SourceCode']
     contract_name = result['ContractName']
 
-    filename = os.path.join('crytic-export', contract_name + '.sol')
+    if prefix:
+        filename = os.path.join('crytic-export', 'etherscan_contracts', f'{addr}{prefix}-{contract_name}.sol')
+    else:
+        filename = os.path.join('crytic-export', 'etherscan_contracts', f'{addr}-{contract_name}.sol')
 
     if not os.path.exists('crytic-export'):
         os.makedirs('crytic-export')
+
+    if not os.path.exists(os.path.join('crytic-export', 'etherscan_contracts')):
+        os.makedirs(os.path.join('crytic-export', 'etherscan_contracts'))
 
     with open(filename, 'w') as f:
         f.write(source_code)
