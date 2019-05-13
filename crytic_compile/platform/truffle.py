@@ -54,7 +54,8 @@ def compile(crytic_compile, target, **kwargs):
         cmd = based_cmd + ['compile', '--all']
 
         logger.info("'{}' running (use --truffle-version truffle@x.x.x to use specific version)".format(' '.join(cmd)))
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=target)
 
         stdout, stderr = process.communicate()
         stdout, stderr = stdout.decode(), stderr.decode()  # convert bytestrings to unicode strings

@@ -19,7 +19,7 @@ def compile(crytic_compile, target, **kwargs):
     dir = os.path.join(target, "out")
 
     if not dapp_ignore_compile:
-        _run_dapp()
+        _run_dapp(target)
 
     crytic_compile.compiler_version = _get_version(target)
 
@@ -93,10 +93,10 @@ def is_dapp(target):
 def is_dependency(path):
     return 'lib' in Path(path).parts
 
-def _run_dapp():
+def _run_dapp(target):
     cmd = ["dapp", "build"]
 
-    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=target)
     _, _ = process.communicate()
 
 def _get_version(target):

@@ -38,7 +38,10 @@ def compile(crytic_compile, target, **kwargs):
                 'embark-contract-info plugin was found in embark.json. Please install the plugin (see https://github.com/crytic/crytic-compile/wiki/Usage#embark), or use --embark-overwrite-config.')
 
     if not embark_ignore_compile:
-        process = subprocess.Popen(['embark', 'build', '--contracts'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        process = subprocess.Popen(['embark', 'build', '--contracts'],
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE,
+                                   cwd=target)
         stdout, stderr = process.communicate()
         logger.info("%s\n" % stdout.decode())
         if stderr:
