@@ -23,35 +23,37 @@ def compile(crytic_compile, target, **kwargs):
     # truffle.cmd. Reference:
     # https://truffleframework.com/docs/truffle/reference/configuration#resolving-naming-conflicts-on-windows
 
-    truffle_base_command = ["npx", "truffle"] if platform.system() != 'Windows' else ["truffle.cmd"]
-    based_cmd = truffle_base_command
-    if truffle_version:
-        if truffle_version.startswith('truffle'):
-            based_cmd = ['npx', truffle_version]
-        else:
-            based_cmd = ['npx', f'truffle@{truffle_version}']
-    elif os.path.isfile('package.json'):
-        with open('package.json') as f:
-            package = json.load(f)
-            if 'devDependencies' in package:
-                if 'truffle' in package['devDependencies']:
-                    version = package['devDependencies']['truffle']
-                    if version.startswith('^'):
-                        version = version[1:]
-                    truffle_version = 'truffle@{}'.format(version)
-                    based_cmd = ['npx', truffle_version]
-            if 'dependencies' in package:
-                if 'truffle' in package['dependencies']:
-                    version = package['dependencies']['truffle']
-                    if version.startswith('^'):
-                        version = version[1:]
-                    truffle_version = 'truffle@{}'.format(version)
-                    based_cmd = ['npx', truffle_version]
+    if platform.system() == 'Windows':
+        base_cmd = ["truffle.cmd"]
+    else:
+        base_cmd = ["npx", "truffle"]
+        if truffle_version:
+            if truffle_version.startswith('truffle'):
+                base_cmd = ['npx', truffle_version]
+            else:
+                base_cmd = ['npx', f'truffle@{truffle_version}']
+        elif os.path.isfile(os.path.join(target, 'package.json')):
+            with open(os.path.join(target, 'package.json')) as f:
+                package = json.load(f)
+                if 'devDependencies' in package:
+                    if 'truffle' in package['devDependencies']:
+                        version = package['devDependencies']['truffle']
+                        if version.startswith('^'):
+                            version = version[1:]
+                        truffle_version = 'truffle@{}'.format(version)
+                        base_cmd = ['npx', truffle_version]
+                if 'dependencies' in package:
+                    if 'truffle' in package['dependencies']:
+                        version = package['dependencies']['truffle']
+                        if version.startswith('^'):
+                            version = version[1:]
+                        truffle_version = 'truffle@{}'.format(version)
+                        base_cmd = ['npx', truffle_version]
 
-    version, compiler = _get_version(based_cmd)
+    version, compiler = _get_version(base_cmd, cwd=target)
 
     if not truffle_ignore_compile:
-        cmd = based_cmd + ['compile', '--all']
+        cmd = base_cmd + ['compile', '--all']
 
         logger.info("'{}' running (use --truffle-version truffle@x.x.x to use specific version)".format(' '.join(cmd)))
 
@@ -130,9 +132,9 @@ def is_truffle(target):
 def is_dependency(path):
     return 'node_modules' in Path(path).parts
 
-def _get_version(truffle_call):
+def _get_version(truffle_call, cwd):
     cmd = truffle_call + ["version"]
-    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd)
     stdout, _ = process.communicate()
     stdout = stdout.decode()  # convert bytestrings to unicode strings
     stdout = stdout.split('\n')

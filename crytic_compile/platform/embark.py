@@ -16,7 +16,7 @@ def compile(crytic_compile, target, **kwargs):
     embark_overwrite_config = kwargs.get('embark_overwrite_config', False)
     crytic_compile._type = Type.EMBARK
     plugin_name = '@trailofbits/embark-contract-info'
-    with open('embark.json') as f:
+    with open(os.path.join(target, 'embark.json')) as f:
         embark_json = json.load(f)
     if embark_overwrite_config:
         write_embark_json = False
@@ -27,10 +27,9 @@ def compile(crytic_compile, target, **kwargs):
             embark_json['plugins'][plugin_name] = {'flags': ""}
             write_embark_json = True
         if write_embark_json:
-            process = subprocess.Popen(
-                ['npm', 'install', plugin_name])
+            process = subprocess.Popen(['npm', 'install', plugin_name], cwd=target)
             _, stderr = process.communicate()
-            with open('embark.json', 'w') as outfile:
+            with open(os.path.join(target, 'embark.json'), 'w') as outfile:
                 json.dump(embark_json, outfile, indent=2)
     else:
         if (not 'plugins' in embark_json) or (not plugin_name in embark_json['plugins']):
