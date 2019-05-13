@@ -16,7 +16,7 @@ def compile(crytic_compile, target, **kwargs):
     embark_overwrite_config = kwargs.get('embark_overwrite_config', False)
     crytic_compile._type = Type.EMBARK
     plugin_name = '@trailofbits/embark-contract-info'
-    with open('embark.json') as f:
+    with open(os.path.join(target, 'embark.json')) as f:
         embark_json = json.load(f)
     if embark_overwrite_config:
         write_embark_json = False
@@ -27,10 +27,9 @@ def compile(crytic_compile, target, **kwargs):
             embark_json['plugins'][plugin_name] = {'flags': ""}
             write_embark_json = True
         if write_embark_json:
-            process = subprocess.Popen(
-                ['npm', 'install', plugin_name])
+            process = subprocess.Popen(['npm', 'install', plugin_name], cwd=target)
             _, stderr = process.communicate()
-            with open('embark.json', 'w') as outfile:
+            with open(os.path.join(target, 'embark.json'), 'w') as outfile:
                 json.dump(embark_json, outfile, indent=2)
     else:
         if (not 'plugins' in embark_json) or (not plugin_name in embark_json['plugins']):
@@ -58,7 +57,7 @@ def compile(crytic_compile, target, **kwargs):
     with open(infile, 'r') as f:
         targets_loaded = json.load(f)
         for k, ast in targets_loaded['asts'].items():
-            filename = convert_filename(k, _relative_to_short)
+            filename = convert_filename(k, _relative_to_short, working_dir=target)
             crytic_compile.asts[filename.absolute] = ast
             crytic_compile.filenames.add(filename)
 
@@ -70,7 +69,7 @@ def compile(crytic_compile, target, **kwargs):
         for original_contract_name, info in targets_loaded['contracts'].items():
             contract_name = extract_name(original_contract_name)
             contract_filename = extract_filename(original_contract_name)
-            contract_filename = convert_filename(contract_filename, _relative_to_short)
+            contract_filename = convert_filename(contract_filename, _relative_to_short, working_dir=target)
 
             crytic_compile.contracts_filenames[contract_name] = contract_filename
             crytic_compile.contracts_names.add(contract_name)

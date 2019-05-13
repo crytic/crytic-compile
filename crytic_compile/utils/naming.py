@@ -31,6 +31,8 @@ def convert_filename(used_filename, relative_to_short, working_dir=None):
     The used_filename can be absolute, relative, or missing node_modules/contracts directory
     convert_filename return a tuple(absolute,used), where absolute points to the absolute path, and used the original
     :param used_filename:
+    :param relative_to_short: lambda function
+    :param working_dir:
     :return: Filename (namedtuple)
     """
     filename = used_filename
@@ -43,22 +45,43 @@ def convert_filename(used_filename, relative_to_short, working_dir=None):
     else:
         filename = Path(filename)
 
+    if working_dir is None:
+        cwd = Path.cwd()
+        working_dir = cwd
+    else:
+        working_dir = Path(working_dir)
+        if working_dir.is_absolute():
+            cwd = working_dir
+        else:
+            cwd = Path.cwd().joinpath(Path(working_dir)).resolve()
+
     if not filename.exists():
-        if Path('node_modules').joinpath(filename).exists():
-            filename = Path.cwd().joinpath('node_modules', filename)
-        elif Path('contracts').joinpath(filename).exists():
-            filename = Path.cwd().joinpath('contracts', filename)
-        elif working_dir and Path(working_dir).joinpath(filename).exists():
-            filename = Path(working_dir).joinpath(filename)
+        if cwd.joinpath(Path('node_modules'), filename).exists():
+            filename = cwd.joinpath('node_modules', filename)
+        elif cwd.joinpath(Path('contracts'), filename).exists():
+            filename = cwd.joinpath('contracts', filename)
+        elif working_dir.joinpath(filename).exists():
+            filename = working_dir.joinpath(filename)
         else:
             raise InvalidCompilation(f'Unknown file: {filename}')
     elif not filename.is_absolute():
-        filename = Path.cwd().joinpath(filename)
+        filename = cwd.joinpath(filename)
 
     absolute = filename
     relative = Path(os.path.relpath(filename, Path.cwd()))
 
-    short = relative_to_short(relative)
+    # Build the short path
+    try:
+        if working_dir.is_absolute():
+            short = absolute.relative_to(working_dir)
+        else:
+            short = relative.relative_to(working_dir)
+    except ValueError:
+        short = relative
+    except RuntimeError:
+        short = relative
+
+    short = relative_to_short(short)
 
 
     return Filename(absolute=str(absolute),
