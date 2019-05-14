@@ -66,7 +66,9 @@ def compile(crytic_compile, target, **kwargs):
         if stderr:
             logger.error(stderr)
     if not os.path.isdir(os.path.join(target, build_directory)):
-        raise InvalidCompilation('No truffle build directory found, did you run `truffle compile`?')
+        if os.path.isdir(os.path.join(target, 'node_modules')):
+            raise InvalidCompilation('External dependencies not found, please install them. (npm install)')
+        raise InvalidCompilation('`truffle compile` failed. Can you run it?' )
     filenames = glob.glob(os.path.join(target, build_directory, '*.json'))
 
     optimized = None
