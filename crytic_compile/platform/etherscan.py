@@ -69,7 +69,7 @@ def compile(crytic_compile, target, **kwargs):
     if not os.path.exists(os.path.join('crytic-export', 'etherscan_contracts')):
         os.makedirs(os.path.join('crytic-export', 'etherscan_contracts'))
 
-    with open(filename, 'w') as f:
+    with open(filename, 'w', encoding='utf8') as f:
         f.write(source_code)
 
     compiler_version = re.findall('\d+\.\d+\.\d+', convert_version(result['CompilerVersion']))[0]
