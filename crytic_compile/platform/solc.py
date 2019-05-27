@@ -24,13 +24,44 @@ def compile(crytic_compile, target, **kwargs):
                                                       version=_get_version(solc),
                                                       optimized=_is_optimized(solc_arguments))
 
-    targets_json = _run_solc(crytic_compile,
-                             target,
-                             solc,
-                             solc_disable_warnings,
-                             solc_arguments,
-                             solc_remaps=solc_remaps,
-                             working_dir=solc_working_dir)
+    # From config file, solcs is a dict (version -> path)
+    # From command line, solc is a list
+    # The guessing of version only works from config file
+    # This is to prevent too complex command line
+    solcs_path = kwargs.get('solc_solcs_bin')
+    # solcs_env is always a list. It matches solc-select list
+    solcs_env = kwargs.get('solc_solcs_select')
+
+    if solcs_path:
+        if not isinstance(solcs_path, dict):
+            solcs_path = solcs_path.split(',')
+        targets_json = _run_solcs_path(crytic_compile,
+                                       target,
+                                       solcs_path,
+                                       solc_disable_warnings,
+                                       solc_arguments,
+                                       solc_remaps=solc_remaps,
+                                       working_dir=solc_working_dir)
+
+    elif solcs_env:
+        solcs_env = solcs_env.split(',')
+        targets_json = _run_solcs_env(crytic_compile,
+                                      target,
+                                      solc,
+                                      solc_disable_warnings,
+                                      solc_arguments,
+                                      solcs_env=solcs_env,
+                                      solc_remaps=solc_remaps,
+                                      working_dir=solc_working_dir)
+
+    else:
+        targets_json = _run_solc(crytic_compile,
+                                 target,
+                                 solc,
+                                 solc_disable_warnings,
+                                 solc_arguments,
+                                 solc_remaps=solc_remaps,
+                                 working_dir=solc_working_dir)
 
     if crytic_compile.compiler_version.version in [f'0.4.{x}' for x in range(0, 10)]:
         skip_filename = True
@@ -43,9 +74,11 @@ def compile(crytic_compile, target, **kwargs):
             contract_filename = extract_filename(original_contract_name)
             # for solc < 0.4.10 we cant retrieve the filename from the ast
             if skip_filename:
-                contract_filename = convert_filename(target, _relative_to_short, working_dir=solc_working_dir)
+                contract_filename = convert_filename(target, _relative_to_short,
+                                                     working_dir=solc_working_dir)
             else:
-                contract_filename = convert_filename(contract_filename, _relative_to_short, working_dir=solc_working_dir)
+                contract_filename = convert_filename(contract_filename, _relative_to_short,
+                                                     working_dir=solc_working_dir)
             crytic_compile.contracts_names.add(contract_name)
             crytic_compile.contracts_filenames[contract_name] = contract_filename
             crytic_compile.abis[contract_name] = json.loads(info['abi'])
@@ -190,6 +223,102 @@ def _run_solc(crytic_compile, filename, solc, solc_disable_warnings, solc_argume
         return ret
     except json.decoder.JSONDecodeError:
         raise InvalidCompilation(f'Invalid solc compilation {stderr}')
+
+
+def _run_solcs_path(crytic_compile, filename, solcs_path, solc_disable_warnings, solc_arguments,
+                    solc_remaps=None, env=None, working_dir=None):
+    targets_json = None
+    if isinstance(solcs_path, dict):
+        guessed_solcs = _guess_solc(filename, working_dir)
+        for guessed_solc in guessed_solcs:
+            if not guessed_solc in solcs_path:
+                continue
+            try:
+                targets_json = _run_solc(crytic_compile,
+                                         filename,
+                                         solcs_path[guessed_solc],
+                                         solc_disable_warnings,
+                                         solc_arguments,
+                                         solc_remaps=solc_remaps,
+                                         env=env,
+                                         working_dir=working_dir)
+            except InvalidCompilation:
+                pass
+
+    if not targets_json:
+        solc_bins = solcs_path.values() if isinstance(solcs_path, dict) else solcs_path
+
+        for solc_bin in solc_bins:
+            try:
+                targets_json = _run_solc(crytic_compile,
+                                         filename,
+                                         solc_bin,
+                                         solc_disable_warnings,
+                                         solc_arguments,
+                                         solc_remaps=solc_remaps,
+                                         env=env,
+                                         working_dir=working_dir)
+            except InvalidCompilation:
+                pass
+
+    if not targets_json:
+        raise InvalidCompilation('Invalid solc compilation, none of the solc versions provided worked')
+
+    return targets_json
+
+
+def _run_solcs_env(crytic_compile, filename, solc, solc_disable_warnings, solc_arguments,
+                   solc_remaps=None, env=None, working_dir=None, solcs_env=None):
+    env = dict(os.environ) if env is None else env
+    targets_json = None
+    guessed_solcs = _guess_solc(filename, working_dir)
+    for guessed_solc in guessed_solcs:
+        if not guessed_solc in solcs_env:
+            continue
+        try:
+            env['SOLC_VERSION'] = guessed_solc
+            targets_json = _run_solc(crytic_compile,
+                                     filename,
+                                     solc,
+                                     solc_disable_warnings,
+                                     solc_arguments,
+                                     solc_remaps=solc_remaps,
+                                     env=env,
+                                     working_dir=working_dir)
+        except InvalidCompilation:
+            pass
+
+    if not targets_json:
+        solc_versions_env = solcs_env
+
+        for version_env in solc_versions_env:
+            try:
+                env['SOLC_VERSION'] = version_env
+                targets_json = _run_solc(crytic_compile,
+                                         filename,
+                                         solc,
+                                         solc_disable_warnings,
+                                         solc_arguments,
+                                         solc_remaps=solc_remaps,
+                                         env=env,
+                                         working_dir=working_dir)
+            except InvalidCompilation:
+                pass
+
+    if not targets_json:
+        raise InvalidCompilation('Invalid solc compilation, none of the solc versions provided worked')
+
+    return targets_json
+
+
+PATTERN = re.compile('pragma solidity[\^|>=|<=]?[ ]+?(\d+\.\d+\.\d+)')
+
+def _guess_solc(target, solc_working_dir):
+    if solc_working_dir:
+        target = os.path.join(solc_working_dir, target)
+    with open(target) as f:
+        buf = f.read()
+        return PATTERN.findall(buf)
 
 
 def _relative_to_short(relative):

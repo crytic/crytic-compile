@@ -8,6 +8,8 @@ defaults_flag_in_config = {
     'solc_args': None,
     'solc_disable_warnings': False,
     'solc_working_dir': None,
+    'solc_solcs_select': None,
+    'solc_solcs_bin': None,
     'truffle_version': None,
     'truffle_ignore_compile': False,
     'truffle_build_directory': 'build/contracts',
