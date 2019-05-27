@@ -51,15 +51,15 @@ def init_solc(parser):
                             action='store',
                             default=defaults_flag_in_config['solc_working_dir'])
 
-    group_solc.add_argument('--solc-solcs-env',
+    group_solc.add_argument('--solc-solcs-select',
                             help='Specify different solc version to try (env config). Depends on solc-select    ',
                             action='store',
-                            default=defaults_flag_in_config['solc_solcs_env'])
+                            default=defaults_flag_in_config['solc_solcs_select'])
 
-    group_solc.add_argument('--solc-solcs-path',
+    group_solc.add_argument('--solc-solcs-bin',
                             help='Specify different solc version to try (path config). Example: --solc-solcs-path solc-0.4.24,solc-0.5.3',
                             action='store',
-                            default=defaults_flag_in_config['solc_solcs_path'])
+                            default=defaults_flag_in_config['solc_solcs_bin'])
 
 def init_truffle(parser):
     group_truffle = parser.add_argument_group('Truffle options')

@@ -28,9 +28,9 @@ def compile(crytic_compile, target, **kwargs):
     # From command line, solc is a list
     # The guessing of version only works from config file
     # This is to prevent too complex command line
-    solcs_path = kwargs.get('solc_solcs_path')
+    solcs_path = kwargs.get('solc_solcs_bin')
     # solcs_env is always a list. It matches solc-select list
-    solcs_env = kwargs.get('solc_solcs_env')
+    solcs_env = kwargs.get('solc_solcs_select')
 
     if solcs_path:
         if not isinstance(solcs_path, dict):
