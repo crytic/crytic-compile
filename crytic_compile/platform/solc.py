@@ -21,7 +21,7 @@ def compile(crytic_compile, target, **kwargs):
     solc_working_dir = kwargs.get('solc_working_dir', None)
 
     crytic_compile.compiler_version = CompilerVersion(compiler="solc",
-                                                      version=_get_version(solc),
+                                                      version=get_version(solc),
                                                       optimized=_is_optimized(solc_arguments))
 
     # From config file, solcs is a dict (version -> path)
@@ -135,7 +135,7 @@ def export(crytic_compile, **kwargs):
 
         json.dump(output, f)
 
-def _get_version(solc):
+def get_version(solc):
     cmd  = [solc, "--version"]
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, _ = process.communicate()
