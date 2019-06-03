@@ -76,7 +76,7 @@ def is_etherlime(target):
         with open('package.json') as f:
             package = json.load(f)
         if "dependencies" in package:
-            return "etherlime" in package["dependencies"]
+            return "etherlime-lib" in package["dependencies"] or "etherlime" in package["dependencies"]
     return False
 
 
