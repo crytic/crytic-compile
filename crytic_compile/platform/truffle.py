@@ -10,6 +10,7 @@ from .types import Type
 from .exceptions import InvalidCompilation
 from ..utils.naming import convert_filename
 from ..compiler.compiler import CompilerVersion
+from . import solc
 
 logger = logging.getLogger("CryticCompile")
 
@@ -142,6 +143,8 @@ def _get_version(truffle_call, cwd):
     stdout = stdout.split('\n')
     for line in stdout:
         if "Solidity" in line:
+            if 'native' in line:
+                return solc.get_version('solc'), 'solc-native'
             version = re.findall('\d+\.\d+\.\d+', line)[0]
             compiler = re.findall('(solc[a-z\-]*)', line)
             if len(compiler)>0:
