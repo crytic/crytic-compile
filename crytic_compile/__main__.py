@@ -85,6 +85,7 @@ def main():
                 print(f'\tUsed: {filename.used}')
     except InvalidCompilation as e:
         logger.error(e)
+        sys.exit(-1)
 
 
 if __name__ == '__main__':
