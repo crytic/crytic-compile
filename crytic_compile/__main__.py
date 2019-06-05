@@ -58,7 +58,7 @@ def parse_args():
     # If there is a config file provided, update the values with the one in the config file
     if os.path.isfile(args.config_file):
         try:
-            with open(args.config_file) as f:
+            with open(args.config_file, encoding='utf8') as f:
                 config = json.load(f)
                 for key, elem in config.items():
                     if key not in defaults_flag_in_config:

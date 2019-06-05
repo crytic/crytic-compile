@@ -109,7 +109,7 @@ def export(crytic_compile, **kwargs):
         os.makedirs(export_dir)
     path = os.path.join(export_dir, "combined_solc.json")
 
-    with open(path, 'w') as f:
+    with open(path, 'w', encoding='utf8') as f:
         contracts = dict()
         for contract_name in crytic_compile.contracts_names:
             abi = str(crytic_compile.abi(contract_name))
@@ -316,7 +316,7 @@ PATTERN = re.compile('pragma solidity[\^|>=|<=]?[ ]+?(\d+\.\d+\.\d+)')
 def _guess_solc(target, solc_working_dir):
     if solc_working_dir:
         target = os.path.join(solc_working_dir, target)
-    with open(target) as f:
+    with open(target, encoding='utf8') as f:
         buf = f.read()
         return PATTERN.findall(buf)
 

@@ -73,7 +73,7 @@ def compile(crytic_compile, target, **kwargs):
 
 def is_etherlime(target):
     if os.path.isfile(os.path.join(target, 'package.json')):
-        with open('package.json') as f:
+        with open('package.json', encoding='utf8') as f:
             package = json.load(f)
         if "dependencies" in package:
             return "etherlime-lib" in package["dependencies"] or "etherlime" in package["dependencies"]

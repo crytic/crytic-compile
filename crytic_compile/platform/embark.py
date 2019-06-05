@@ -16,7 +16,7 @@ def compile(crytic_compile, target, **kwargs):
     embark_overwrite_config = kwargs.get('embark_overwrite_config', False)
     crytic_compile._type = Type.EMBARK
     plugin_name = '@trailofbits/embark-contract-info'
-    with open(os.path.join(target, 'embark.json')) as f:
+    with open(os.path.join(target, 'embark.json'), encoding='utf8') as f:
         embark_json = json.load(f)
     if embark_overwrite_config:
         write_embark_json = False
@@ -29,7 +29,7 @@ def compile(crytic_compile, target, **kwargs):
         if write_embark_json:
             process = subprocess.Popen(['npm', 'install', plugin_name], cwd=target)
             _, stderr = process.communicate()
-            with open(os.path.join(target, 'embark.json'), 'w') as outfile:
+            with open(os.path.join(target, 'embark.json'), 'w', encoding='utf8') as outfile:
                 json.dump(embark_json, outfile, indent=2)
     else:
         if (not 'plugins' in embark_json) or (not plugin_name in embark_json['plugins']):
@@ -54,7 +54,7 @@ def compile(crytic_compile, target, **kwargs):
 
     crytic_compile.compiler_version = _get_version(target)
 
-    with open(infile, 'r') as f:
+    with open(infile, 'r', encoding='utf8') as f:
         targets_loaded = json.load(f)
         for k, ast in targets_loaded['asts'].items():
             filename = convert_filename(k, _relative_to_short, working_dir=target)
@@ -93,7 +93,7 @@ def is_dependency(path):
     return 'node_modules' in Path(path).parts
 
 def _get_version(target):
-    with open(os.path.join(target, 'embark.json')) as f:
+    with open(os.path.join(target, 'embark.json'), encoding='utf8') as f:
         config = json.load(f)
         version = '0.5.0' # default version with Embark 0.4
         if "versions" in config:

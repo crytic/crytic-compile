@@ -34,7 +34,7 @@ def compile(crytic_compile, target, **kwargs):
             else:
                 base_cmd = ['npx', f'truffle@{truffle_version}']
         elif os.path.isfile(os.path.join(target, 'package.json')):
-            with open(os.path.join(target, 'package.json')) as f:
+            with open(os.path.join(target, 'package.json'), encoding='utf8') as f:
                 package = json.load(f)
                 if 'devDependencies' in package:
                     if 'truffle' in package['devDependencies']:
@@ -117,7 +117,7 @@ def export(crytic_compile, **kwargs):
 
     for contract_name in crytic_compile.contracts_names:
         filename = crytic_compile.contracts_filenames[contract_name]
-        with open(os.path.join(export_dir, contract_name  + '.json'), 'w') as f:
+        with open(os.path.join(export_dir, contract_name  + '.json'), 'w', encoding='utf8') as f:
             output = {
                 "contractName": contract_name ,
                 "abi": crytic_compile.abi(contract_name),

@@ -25,7 +25,7 @@ def compile(crytic_compile, target, **kwargs):
 
     files = glob.glob(dir + '/**/*.sol.json', recursive=True)
     for file in files:
-        with open(file) as f:
+        with open(file, encoding='utf8') as f:
             targets_json = json.load(f)
         for original_contract_name, info in targets_json["contracts"].items():
             contract_name = extract_name(original_contract_name)
@@ -51,7 +51,7 @@ def export(crytic_compile, **kwargs):
         os.makedirs(export_dir)
     path = os.path.join(export_dir, "combined_solc.json")
 
-    with open(path, 'w') as f:
+    with open(path, 'w', encoding='utf8') as f:
         contracts = dict()
         for contract_name in crytic_compile.contracts_names:
             abi = str(crytic_compile.abi(contract_name))
@@ -85,7 +85,7 @@ def is_dapp(target):
     """
     makefile = os.path.join(target, "Makefile")
     if os.path.isfile(makefile):
-        with open(makefile) as f:
+        with open(makefile, encoding='utf8') as f:
             txt = f.read()
             return "dapp build" in txt
     return False
@@ -106,7 +106,7 @@ def _get_version(target):
     compiler = 'solc'
     for file in files:
         if version is None:
-            with open(file) as f:
+            with open(file, encoding='utf8') as f:
                 config = json.load(f)
             if "compiler" in config:
                 if "version" in config["compiler"]:

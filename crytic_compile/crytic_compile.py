@@ -503,7 +503,7 @@ class CryticCompile:
             os.makedirs(export_dir)
         path = os.path.join(export_dir, "contracts.json")
 
-        with open(path, 'w') as f:
+        with open(path, 'w', encoding='utf8') as f:
             contracts = dict()
             for contract_name in self.contracts_names:
                 filename = self.filename_of_contract(contract_name)
