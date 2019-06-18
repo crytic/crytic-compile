@@ -1,5 +1,7 @@
+import copy
 import os
 import json
+import glob
 import logging
 import re
 import subprocess
@@ -478,6 +480,50 @@ class CryticCompile:
     ###################################################################################
     ###################################################################################
 
+    @staticmethod
+    def export_all(compilations, **kwargs):
+        # Obtain arguments
+        export_format = kwargs.get('export_format', None)
+
+        # Define our return values
+        results = {
+            'compilations': []
+        }
+
+        # Determine if we are exporting a singular archive, or exporting each individually.
+        if export_format == 'archive':
+            # If we are to export source..
+            source_files = dict()
+            for compilation in compilations:
+                compilation_data = compilation.export(export_format='crytic-compile')
+                results['compilations'].append(compilation_data)
+                for contract_name in compilation.contracts_names:
+                    filename = compilation.filename_of_contract(contract_name)
+
+                    # If we are to export source code as well, we read in the source contents
+                    if filename.absolute not in source_files:
+                        with open(filename.absolute, encoding='utf8', newline='') as source_file:
+                            source_files[filename.absolute] = source_file.read()
+            results['source_files'] = source_files
+
+            # If we have an export directory specified, we output the JSON to a file.
+            export_dir = kwargs.get('export_dir', None)
+            if export_dir:
+                if not os.path.exists(export_dir):
+                    os.makedirs(export_dir)
+                path = os.path.join(export_dir, "contract-archive.json")
+                with open(path, 'w', encoding='utf8') as f:
+                    json.dump(results, f)
+
+            return results
+        else:
+            # We are not exporting an archive, each compilation can be exported itself.
+            for compilation in compilations:
+                compilation_data = compilation.export(**kwargs)
+                results['compilations'].append(compilation_data)
+
+        return results
+
     def export(self, **kwargs):
         """
             Export to json.
@@ -498,9 +544,6 @@ class CryticCompile:
             raise Exception('Export format unknown')
 
     def _export_standard(self, **kwargs):
-        # Determine if we should export the source code as well
-        export_src = kwargs.get('export_src', False)
-
         # Obtain objects to represent each contract
         contracts = dict()
         for contract_name in self.contracts_names:
@@ -516,11 +559,6 @@ class CryticCompile:
                               'short': filename.short,
                               'relative': filename.used}
             }
-
-            # If we are to export source code as well, we read in the source contents
-            if export_src:
-                with open(filename.absolute, encoding='utf8', newline='') as source_file:
-                    contracts[contract_name]['src-content'] = source_file.read()
 
         # Create our root object to contain the contracts and other information.
         output = {'asts': self._asts,
@@ -549,6 +587,36 @@ class CryticCompile:
     # region Compile
     ###################################################################################
     ###################################################################################
+
+    @staticmethod
+    def compile_all(target, **kwargs):
+        """
+        Given a direct or glob pattern target, compiles all underlying sources and returns
+        all the relevant instances of CryticCompile.
+        :param target: A string representing a file/directory path or glob pattern denoting where compilation should
+        occur.
+        :param kwargs: The remainder of the arguments passed through to all compilation steps.
+        :return: Returns a list of CryticCompile instances for all compilations which occurred.
+        """
+        # Attempt to perform glob expansion of target/filename
+        globbed_targets = glob.glob(target, recursive=True)
+
+        # Check if the target refers to a valid target already.
+        # If it does not, we assume it's a glob pattern.
+        compilations = []
+        if os.path.isfile(target) or is_supported(target):
+            compilations.append(CryticCompile(target, **kwargs))
+        elif os.path.isdir(target) or len(globbed_targets) > 0:
+            # We create a new glob to find solidity files at this path (in case this is a directory)
+            filenames = glob.glob(os.path.join(target, "*.sol"))
+            if not filenames:
+                filenames = globbed_targets
+
+            # We compile each file and add it to our compilations.
+            for filename in filenames:
+                compilations.append(CryticCompile(filename, **kwargs))
+
+        return compilations
 
     def _compile(self, target, **kwargs):
 

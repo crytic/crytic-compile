@@ -1,4 +1,5 @@
 import argparse
+import glob
 import sys
 import json
 import os
@@ -14,8 +15,11 @@ logger.setLevel(logging.INFO)
 
 
 def parse_args():
+    # Create our argument parser
     parser = argparse.ArgumentParser(description='crytic-compile. For usage information, see https://github.com/crytic/crytic-compile/wiki/Usage',
                                      usage="crytic-compile contract.sol [flag]")
+
+    # Add arguments
     parser.add_argument('target',
                         help='contract.sol')
 
@@ -80,15 +84,31 @@ def parse_args():
 def main():
     args = parse_args()
     try:
-        cryticCompile = CryticCompile(**vars(args))
-        cryticCompile.export(**vars(args))
-        if args.print_filename:
-            for contract in cryticCompile.contracts_names:
-                filename = cryticCompile.filename_of_contract(contract)
-                print(f'{contract} -> \n\tAbsolute: {filename.absolute}')
-                print(f'\tRelative: {filename.relative}')
-                print(f'\tShort: {filename.short}')
-                print(f'\tUsed: {filename.used}')
+        # Attempt to perform glob expansion of target/filename
+        globbed_targets = glob.glob(args.target, recursive=True)
+
+        # Check if the target refers to a valid target already.
+        # If it does not, we assume it's a glob pattern.
+        compilations = CryticCompile.compile_all(**vars(args))
+
+        # Perform relevant tasks for each compilation
+        printed_filenames = set()
+        for compilation in compilations:
+            # Print the filename of each contract (no duplicates).
+            if args.print_filename:
+                for contract in compilation.contracts_names:
+                    filename = compilation.filename_of_contract(contract)
+                    unique_id = f"{contract} - {filename}"
+                    if unique_id not in printed_filenames:
+                        print(f'{contract} -> \n\tAbsolute: {filename.absolute}')
+                        print(f'\tRelative: {filename.relative}')
+                        print(f'\tShort: {filename.short}')
+                        print(f'\tUsed: {filename.used}')
+                        printed_filenames.add(unique_id)
+
+        # Export all from compilations.
+        CryticCompile.export_all(compilations, **vars(args))
+
     except InvalidCompilation as e:
         logger.error(e)
         sys.exit(-1)
