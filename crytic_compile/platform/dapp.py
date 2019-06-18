@@ -46,36 +46,40 @@ def compile(crytic_compile, target, **kwargs):
 
 
 def export(crytic_compile, **kwargs):
-    export_dir = kwargs.get('export_dir', 'crytic-export')
-    if not os.path.exists(export_dir):
-        os.makedirs(export_dir)
-    path = os.path.join(export_dir, "combined_solc.json")
+    # Obtain objects to represent each contract
+    contracts = dict()
+    for contract_name in crytic_compile.contracts_names:
+        abi = str(crytic_compile.abi(contract_name))
+        abi = abi.replace('\'', '\"')
+        abi = abi.replace('True', 'true')
+        abi = abi.replace('False', 'false')
+        abi = abi.replace(' ', '')
+        exported_name = combine_filename_name(crytic_compile.contracts_filenames[contract_name].used, contract_name)
+        contracts[exported_name] = {
+            'srcmap': '',
+            'srcmap-runtime': '',
+            'abi': abi,
+            'bin': crytic_compile.bytecode_init(contract_name),
+            'bin-runtime': crytic_compile.bytecode_runtime(contract_name)
+        }
 
-    with open(path, 'w', encoding='utf8') as f:
-        contracts = dict()
-        for contract_name in crytic_compile.contracts_names:
-            abi = str(crytic_compile.abi(contract_name))
-            abi = abi.replace('\'', '\"')
-            abi = abi.replace('True', 'true')
-            abi = abi.replace('False', 'false')
-            abi = abi.replace(' ', '')
-            exported_name = combine_filename_name(crytic_compile.contracts_filenames[contract_name].used, contract_name)
-            contracts[exported_name] = {
-                'srcmap': '',
-                'srcmap-runtime': '',
-                'abi': abi,
-                'bin': crytic_compile.bytecode_init(contract_name),
-                'bin-runtime': crytic_compile.bytecode_runtime(contract_name)
-            }
+    sources = {filename: {"AST": ast} for (filename, ast) in crytic_compile.asts.items()}
+    sourceList = [filename.absolute for filename in crytic_compile.filenames]
 
-        sources = {filename : {"AST": ast} for (filename, ast) in crytic_compile.asts.items()}
-        sourceList = [filename.absolute for filename in crytic_compile.filenames]
+    # Create our root object to contain the contracts and other information.
+    output = {'sources': sources,
+              'sourceList': sourceList,
+              'contracts': contracts}
 
-        output = {'sources' : sources,
-                  'sourceList' : sourceList,
-                  'contracts': contracts}
-
-        json.dump(output, f)
+    # If we have an export directory specified, we output the JSON to a file.
+    export_dir = kwargs.get('export_dir', None)
+    if export_dir:
+        if not os.path.exists(export_dir):
+            os.makedirs(export_dir)
+        path = os.path.join(export_dir, "combined_solc.json")
+        with open(path, 'w', encoding='utf8') as f:
+            json.dump(output, f)
+    return output
 
 def is_dapp(target):
     """

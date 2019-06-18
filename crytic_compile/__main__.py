@@ -32,10 +32,16 @@ def parse_args():
                         default=None)
 
     parser.add_argument('--export-dir',
-                        help='Export directory (default: crytic-export',
+                        help='Export directory (default: crytic-export)',
                         action='store',
                         dest='export_dir',
                         default='crytic-export')
+
+    parser.add_argument('--export-src',
+                        help='Include source code when exporting (default: false)',
+                        action='store_true',
+                        dest='export_src',
+                        default=False)
 
     parser.add_argument('--print-filenames',
                         help='Print all the filenames',

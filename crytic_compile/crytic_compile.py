@@ -488,47 +488,60 @@ class CryticCompile:
                 export_dir (str): export dir (default crytic-export)
         """
         export_format = kwargs.get('export_format', None)
-        if export_format is None or export_format=="crytic-compile":
-            self._export_standard(**kwargs)
+        if export_format is None or export_format == "crytic-compile":
+            return self._export_standard(**kwargs)
         elif export_format == "solc":
-            solc.export(self, **kwargs)
+            return solc.export(self, **kwargs)
         elif export_format == "truffle":
-            truffle.export(self, **kwargs)
+            return truffle.export(self, **kwargs)
         else:
             raise Exception('Export format unknown')
 
     def _export_standard(self, **kwargs):
-        export_dir = kwargs.get('export_dir', 'crytic-export')
-        if not os.path.exists(export_dir):
-            os.makedirs(export_dir)
-        path = os.path.join(export_dir, "contracts.json")
+        # Determine if we should export the source code as well
+        export_src = kwargs.get('export_src', False)
 
-        with open(path, 'w', encoding='utf8') as f:
-            contracts = dict()
-            for contract_name in self.contracts_names:
-                filename = self.filename_of_contract(contract_name)
-                contracts[contract_name] = {
-                    'abi': self.abi(contract_name),
-                    'bin': self.bytecode_init(contract_name),
-                    'bin-runtime': self.bytecode_runtime(contract_name),
-                    'srcmap': ";".join(self.srcmap_init(contract_name)),
-                    'srcmap-runtime': ";".join(self.srcmap_runtime(contract_name)),
-                    'filenames': {'absolute': filename.absolute,
-                                  'used': filename.used,
-                                  'short': filename.short,
-                                  'relative': filename.used}
-                }
+        # Obtain objects to represent each contract
+        contracts = dict()
+        for contract_name in self.contracts_names:
+            filename = self.filename_of_contract(contract_name)
+            contracts[contract_name] = {
+                'abi': self.abi(contract_name),
+                'bin': self.bytecode_init(contract_name),
+                'bin-runtime': self.bytecode_runtime(contract_name),
+                'srcmap': ";".join(self.srcmap_init(contract_name)),
+                'srcmap-runtime': ";".join(self.srcmap_runtime(contract_name)),
+                'filenames': {'absolute': filename.absolute,
+                              'used': filename.used,
+                              'short': filename.short,
+                              'relative': filename.used}
+            }
 
-            output = {'asts': self._asts,
-                      'contracts': contracts,
-                      'compiler': {
-                          'compiler': self._compiler_version.compiler,
-                          'version': self._compiler_version.version,
-                          'optimized': self._compiler_version.optimized,
-                      },
-                      'working_dir': str(self._working_dir)}
+            # If we are to export source code as well, we read in the source contents
+            if export_src:
+                with open(filename.absolute, encoding='utf8', newline='') as source_file:
+                    contracts[contract_name]['src-content'] = source_file.read()
 
-            json.dump(output, f)
+        # Create our root object to contain the contracts and other information.
+        output = {'asts': self._asts,
+                  'contracts': contracts,
+                  'compiler': {
+                      'compiler': self._compiler_version.compiler,
+                      'version': self._compiler_version.version,
+                      'optimized': self._compiler_version.optimized,
+                  },
+                  'working_dir': str(self._working_dir)}
+
+        # If we have an export directory specified, we output the JSON to a file.
+        export_dir = kwargs.get('export_dir', None)
+        if export_dir:
+            if not os.path.exists(export_dir):
+                os.makedirs(export_dir)
+            path = os.path.join(export_dir, "contracts.json")
+            with open(path, 'w', encoding='utf8') as f:
+                json.dump(output, f)
+
+        return output
 
     # endregion
     ###################################################################################
