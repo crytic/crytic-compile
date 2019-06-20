@@ -84,11 +84,7 @@ def parse_args():
 def main():
     args = parse_args()
     try:
-        # Attempt to perform glob expansion of target/filename
-        globbed_targets = glob.glob(args.target, recursive=True)
-
-        # Check if the target refers to a valid target already.
-        # If it does not, we assume it's a glob pattern.
+        # Compile all specified (possibly glob patterned) targets.
         compilations = CryticCompile.compile_all(**vars(args))
 
         # Perform relevant tasks for each compilation

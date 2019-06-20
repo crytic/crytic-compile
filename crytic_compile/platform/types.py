@@ -1,12 +1,14 @@
-from enum import Enum
+from enum import IntEnum
 
-class Type(Enum):
+
+class Type(IntEnum):
     SOLC = 1
     TRUFFLE = 2
     EMBARK = 3
     DAPP = 4
     ETHERLIME = 5
     ETHERSCAN = 6
+    ARCHIVE = 7
 
     def __str__(self):
         if self == Type.SOLC:
@@ -21,4 +23,6 @@ class Type(Enum):
             return 'Etherlime'
         if self == Type.ETHERSCAN:
             return 'Etherscan'
+        if self == Type.ARCHIVE:
+            return 'Archive'
         raise ValueError

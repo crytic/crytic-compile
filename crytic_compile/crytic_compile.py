@@ -6,6 +6,8 @@ import logging
 import re
 import subprocess
 import sha3
+from crytic_compile.compiler.compiler import CompilerVersion
+from crytic_compile.utils.naming import Filename
 from pathlib import Path
 
 from .platform import solc, truffle, embark, dapp, etherlime, etherscan
@@ -15,14 +17,20 @@ from .utils.naming import combine_filename_name
 logger = logging.getLogger("CryticCompile")
 logging.basicConfig()
 
+
 def is_supported(target):
     supported = [solc.is_solc,
                  truffle.is_truffle,
                  embark.is_embark,
                  dapp.is_dapp,
                  etherlime.is_etherlime,
-                 etherscan.is_etherscan]
+                 etherscan.is_etherscan,
+                 is_archive]
     return any(f(target) for f in supported)
+
+
+def is_archive(target):
+    return os.path.isfile(target) and target.endswith('.ccarchive')
 
 
 class CryticCompile:
@@ -30,7 +38,7 @@ class CryticCompile:
     def __init__(self, target, **kwargs):
         '''
             Args:
-                target (str)
+                target (str | tuple(export_dict, index))
             Keyword Args:
                 See https://github.com/crytic/crytic-compile/wiki/Configuration
         '''
@@ -44,6 +52,7 @@ class CryticCompile:
         self._hashes = {}
         self._srcmaps = {}
         self._srcmaps_runtime = {}
+        self._src_content = {}
 
         # set containing all the contract names
         self._contracts_name = set()
@@ -67,7 +76,16 @@ class CryticCompile:
 
         self._working_dir = Path.cwd()
 
-        self._compile(target, **kwargs)
+        # If its a exported archive, we use compilation index 0.
+        if isinstance(target, dict):
+            target = (target, 0)
+
+        # If its an indexed compilation in the exported archive.
+        if isinstance(target, tuple) and len(target) == 2 and \
+                isinstance(target[0], dict) and isinstance(target[1], int):
+            self._import_archive_compilation(target[0], target[1])
+        else:
+            self._compile(target, **kwargs)
 
     ###################################################################################
     ###################################################################################
@@ -261,6 +279,17 @@ class CryticCompile:
 
     def srcmap_runtime(self, name):
         return self._srcmaps_runtime.get(name, [])
+
+    @property
+    def src_content(self):
+        # If we have no source code loaded yet, load it for every contract.
+        if not self._src_content:
+            for name in self.contracts_names:
+                filename = self.filename_of_contract(name)
+                if filename.absolute not in self._src_content and os.path.isfile(filename.absolute):
+                    with open(filename.absolute, encoding='utf8', newline='') as source_file:
+                        self._src_content[filename.absolute] = source_file.read()
+        return self._src_content
 
     # endregion
     ###################################################################################
@@ -476,6 +505,48 @@ class CryticCompile:
     # endregion
     ###################################################################################
     ###################################################################################
+    # region Import
+    ###################################################################################
+    ###################################################################################
+
+    @staticmethod
+    def import_archive_compilations(compiled_archive):
+        # If the argument is a string, it is likely a filepath, load the archive.
+        if isinstance(compiled_archive, str):
+            with open(compiled_archive, encoding='utf8') as f:
+                compiled_archive = json.load(f)
+
+        # Verify the compiled archive is of the correct form
+        if not isinstance(compiled_archive, dict) or 'compilations' not in compiled_archive:
+            raise ValueError("Cannot import compiled archive, invalid format.")
+
+        return [CryticCompile((compiled_archive, i)) for i in range(0, len(compiled_archive['compilations']))]
+
+    def _import_archive_compilation(self, compiled_archive, compilation_index):
+        compilation = compiled_archive['compilations'][compilation_index]
+        self._asts = compilation['asts']
+        self._compiler_version = CompilerVersion(compiler=compilation['compiler']['compiler'],
+                                                 version=compilation['compiler']['version'],
+                                                 optimized=compilation['compiler']['optimized'])
+        for contract_name, contract in compilation['contracts'].items():
+            self._contracts_name.add(contract_name)
+            self._contracts_filenames[contract_name] = Filename(absolute=contract['filenames']['absolute'],
+                                                                relative=contract['filenames']['used'],
+                                                                short=contract['filenames']['short'],
+                                                                used=contract['filenames']['relative'])
+            self._abis[contract_name] = contract['abi']
+            self._init_bytecodes[contract_name] = contract['bin']
+            self._runtime_bytecodes[contract_name] = contract['bin-runtime']
+            self._srcmaps[contract_name] = contract['srcmap'].split(';')
+            self._srcmaps_runtime[contract_name] = contract['srcmap-runtime'].split(';')
+
+        self._working_dir = compilation['working_dir']
+        self._type = compilation['type']
+
+    # endregion
+
+    ###################################################################################
+    ###################################################################################
     # region Export
     ###################################################################################
     ###################################################################################
@@ -492,30 +563,27 @@ class CryticCompile:
 
         # Determine if we are exporting a singular archive, or exporting each individually.
         if export_format == 'archive':
+            # Create our source file dictionary
+            results['source_files'] = {}
+
             # If we are to export source..
-            source_files = dict()
             for compilation in compilations:
                 compilation_data = compilation.export(export_format='crytic-compile')
                 results['compilations'].append(compilation_data)
-                for contract_name in compilation.contracts_names:
-                    filename = compilation.filename_of_contract(contract_name)
 
-                    # If we are to export source code as well, we read in the source contents
-                    if filename.absolute not in source_files:
-                        with open(filename.absolute, encoding='utf8', newline='') as source_file:
-                            source_files[filename.absolute] = source_file.read()
-            results['source_files'] = source_files
+                # Next set all source content
+                for filename_absolute, source_content in compilation.src_content.items():
+                    results['source_files'][filename_absolute] = source_content
 
             # If we have an export directory specified, we output the JSON to a file.
             export_dir = kwargs.get('export_dir', None)
             if export_dir:
                 if not os.path.exists(export_dir):
                     os.makedirs(export_dir)
-                path = os.path.join(export_dir, "contract-archive.json")
+                path = os.path.join(export_dir, "contracts.ccarchive")
                 with open(path, 'w', encoding='utf8') as f:
                     json.dump(results, f)
 
-            return results
         else:
             # We are not exporting an archive, each compilation can be exported itself.
             for compilation in compilations:
@@ -561,14 +629,17 @@ class CryticCompile:
             }
 
         # Create our root object to contain the contracts and other information.
-        output = {'asts': self._asts,
-                  'contracts': contracts,
-                  'compiler': {
-                      'compiler': self._compiler_version.compiler,
-                      'version': self._compiler_version.version,
-                      'optimized': self._compiler_version.optimized,
-                  },
-                  'working_dir': str(self._working_dir)}
+        output = {
+            'asts': self._asts,
+            'contracts': contracts,
+            'compiler': {
+                'compiler': self._compiler_version.compiler,
+                'version': self._compiler_version.version,
+                'optimized': self._compiler_version.optimized,
+            },
+            'working_dir': str(self._working_dir),
+            'type': int(self._type)
+        }
 
         # If we have an export directory specified, we output the JSON to a file.
         export_dir = kwargs.get('export_dir', None)
@@ -605,7 +676,10 @@ class CryticCompile:
         # If it does not, we assume it's a glob pattern.
         compilations = []
         if os.path.isfile(target) or is_supported(target):
-            compilations.append(CryticCompile(target, **kwargs))
+            if is_archive(target):
+                compilations += CryticCompile.import_archive_compilations(target)
+            else:
+                compilations.append(CryticCompile(target, **kwargs))
         elif os.path.isdir(target) or len(globbed_targets) > 0:
             # We create a new glob to find solidity files at this path (in case this is a directory)
             filenames = glob.glob(os.path.join(target, "*.sol"))
