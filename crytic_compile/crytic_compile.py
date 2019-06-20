@@ -10,7 +10,7 @@ from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.utils.naming import Filename
 from pathlib import Path
 
-from .platform import solc, truffle, embark, dapp, etherlime, etherscan
+from .platform import solc, truffle, embark, dapp, etherlime, etherscan, archive
 
 from .utils.naming import combine_filename_name
 
@@ -530,18 +530,26 @@ class CryticCompile:
                                                  optimized=compilation['compiler']['optimized'])
         for contract_name, contract in compilation['contracts'].items():
             self._contracts_name.add(contract_name)
-            self._contracts_filenames[contract_name] = Filename(absolute=contract['filenames']['absolute'],
-                                                                relative=contract['filenames']['used'],
-                                                                short=contract['filenames']['short'],
-                                                                used=contract['filenames']['relative'])
+            filename = Filename(absolute=contract['filenames']['absolute'],
+                                relative=contract['filenames']['used'],
+                                short=contract['filenames']['short'],
+                                used=contract['filenames']['relative'])
+            self._contracts_filenames[contract_name] = filename
+
             self._abis[contract_name] = contract['abi']
             self._init_bytecodes[contract_name] = contract['bin']
             self._runtime_bytecodes[contract_name] = contract['bin-runtime']
             self._srcmaps[contract_name] = contract['srcmap'].split(';')
             self._srcmaps_runtime[contract_name] = contract['srcmap-runtime'].split(';')
 
+            archive.set_dependency_status(filename.absolute, contract['is_dependency'])
+
+        # Set all our filenames
+        self._filenames = set(self._contracts_filenames.values())
+
         self._working_dir = compilation['working_dir']
         self._type = compilation['type']
+        self._platform = archive
 
     # endregion
 
@@ -622,10 +630,13 @@ class CryticCompile:
                 'bin-runtime': self.bytecode_runtime(contract_name),
                 'srcmap': ";".join(self.srcmap_init(contract_name)),
                 'srcmap-runtime': ";".join(self.srcmap_runtime(contract_name)),
-                'filenames': {'absolute': filename.absolute,
-                              'used': filename.used,
-                              'short': filename.short,
-                              'relative': filename.used}
+                'filenames': {
+                    'absolute': filename.absolute,
+                    'used': filename.used,
+                    'short': filename.short,
+                    'relative': filename.used
+                },
+                'is_dependency': self._platform.is_dependency(filename.absolute)
             }
 
         # Create our root object to contain the contracts and other information.
@@ -689,6 +700,8 @@ class CryticCompile:
             # We compile each file and add it to our compilations.
             for filename in filenames:
                 compilations.append(CryticCompile(filename, **kwargs))
+        else:
+            raise ValueError(f"Unresolved target: {str(target)}")
 
         return compilations
 
