@@ -257,14 +257,12 @@ class CryticCompile:
         init = self._init_bytecodes.get(name, None)
         return self._update_bytecode_with_libraries(init, libraries)
 
-
     # endregion
     ###################################################################################
     ###################################################################################
     # region Source mapping
     ###################################################################################
     ###################################################################################
-
 
     @property
     def srcmaps_init(self):
@@ -290,6 +288,9 @@ class CryticCompile:
                     with open(filename.absolute, encoding='utf8', newline='') as source_file:
                         self._src_content[filename.absolute] = source_file.read()
         return self._src_content
+
+    def src_content_for_file(self, filename_absolute):
+        return self.src_content.get(filename_absolute, None)
 
     # endregion
     ###################################################################################
@@ -544,7 +545,10 @@ class CryticCompile:
 
             archive.set_dependency_status(filename.absolute, contract['is_dependency'])
 
-        # Set all our filenames
+            # Set all source code
+            self._src_content[filename.absolute] = compiled_archive['source_content'][filename.absolute]
+
+        # Set our filenames
         self._filenames = set(self._contracts_filenames.values())
 
         self._working_dir = compilation['working_dir']
@@ -572,7 +576,7 @@ class CryticCompile:
         # Determine if we are exporting a singular archive, or exporting each individually.
         if export_format == 'archive':
             # Create our source file dictionary
-            results['source_files'] = {}
+            results['source_content'] = {}
 
             # If we are to export source..
             for compilation in compilations:
@@ -581,7 +585,7 @@ class CryticCompile:
 
                 # Next set all source content
                 for filename_absolute, source_content in compilation.src_content.items():
-                    results['source_files'][filename_absolute] = source_content
+                    results['source_content'][filename_absolute] = source_content
 
             # If we have an export directory specified, we output the JSON to a file.
             export_dir = kwargs.get('export_dir', None)
