@@ -139,7 +139,8 @@ def export(crytic_compile, **kwargs):
 
         with open(path, 'w', encoding='utf8') as f:
             json.dump(output, f)
-    return output
+        return path
+    return None
 
 def get_version(solc):
     cmd  = [solc, "--version"]

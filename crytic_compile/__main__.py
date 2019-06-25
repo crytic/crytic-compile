@@ -1,13 +1,13 @@
 import argparse
-import glob
 import sys
 import json
 import os
 import logging
 from pkg_resources import require
 from .cryticparser import cryticparser, defaults_flag_in_config
-from .crytic_compile import CryticCompile
+from .crytic_compile import CryticCompile, compile_all
 from .platform import InvalidCompilation
+from .utils.zip import save_to_zip
 
 logging.basicConfig()
 logger = logging.getLogger("CryticCompile")
@@ -41,11 +41,11 @@ def parse_args():
                         dest='export_dir',
                         default='crytic-export')
 
-    parser.add_argument('--export-src',
-                        help='Include source code when exporting (default: false)',
-                        action='store_true',
-                        dest='export_src',
-                        default=False)
+    parser.add_argument('--export-zip',
+                        help='Export all the projects to a zip file',
+                        action='store',
+                        dest='export_to_zip',
+                        default=None)
 
     parser.add_argument('--print-filenames',
                         help='Print all the filenames',
@@ -85,7 +85,7 @@ def main():
     args = parse_args()
     try:
         # Compile all specified (possibly glob patterned) targets.
-        compilations = CryticCompile.compile_all(**vars(args))
+        compilations = compile_all(**vars(args))
 
         # Perform relevant tasks for each compilation
         printed_filenames = set()
@@ -102,8 +102,8 @@ def main():
                         print(f'\tUsed: {filename.used}')
                         printed_filenames.add(unique_id)
 
-        # Export all from compilations.
-        CryticCompile.export_all(compilations, **vars(args))
+        if args.export_to_zip:
+            save_to_zip(compilations, args.export_to_zip)
 
     except InvalidCompilation as e:
         logger.error(e)

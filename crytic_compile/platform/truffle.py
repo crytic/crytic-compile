@@ -132,10 +132,12 @@ def export(crytic_compile, **kwargs):
 
         # If we have an export directory, export it.
         if export_dir:
-            with open(os.path.join(export_dir, contract_name + '.json'), 'w', encoding='utf8') as f:
+            path = os.path.join(export_dir, contract_name + '.json')
+            with open(path, 'w', encoding='utf8') as f:
                 json.dump(output, f)
+            return path
 
-    return results
+    return None
 
 def is_truffle(target):
     return (os.path.isfile(os.path.join(target, 'truffle.js')) or
