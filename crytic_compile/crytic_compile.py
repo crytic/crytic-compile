@@ -8,7 +8,7 @@ import subprocess
 import sha3
 from pathlib import Path
 
-from .platform import solc, truffle, embark, dapp, etherlime, etherscan, archive, standard
+from .platform import solc, truffle, embark, dapp, etherlime, etherscan, archive, standard, vyper
 from .utils.zip import load_from_zip
 
 logger = logging.getLogger("CryticCompile")
@@ -23,7 +23,8 @@ def is_supported(target):
                  etherlime.is_etherlime,
                  etherscan.is_etherscan,
                  standard.is_standard,
-                 archive.is_archive]
+                 archive.is_archive,
+                 vyper.is_vyper]
     return any(f(target) for f in supported) or target.endswith('.zip')
 
 PLATFORMS = {'solc': solc,
@@ -33,7 +34,8 @@ PLATFORMS = {'solc': solc,
              'etherlime': etherlime,
              'etherscan': etherscan,
              'archive': archive,
-             'standard': standard}
+             'standard': standard,
+             'vyper': vyper}
 
 def compile_all(target, **kwargs):
     """
@@ -610,6 +612,7 @@ class CryticCompile:
         etherscan_ignore = kwargs.get('etherscan_ignore', False)
         standard_ignore = kwargs.get('standard_ignore', False)
         archive_ignore = kwargs.get('standard_ignore', False)
+        vyper_ignore = kwargs.get('vyper_ignore', False)
 
         custom_build = kwargs.get('compile_custom_build', None)
 
@@ -621,6 +624,7 @@ class CryticCompile:
             etherscan_ignore = True
             standard_ignore = True
             archive_ignore = True
+            vyper_ignore = True
 
             self._run_custom_build(custom_build)
 
@@ -642,6 +646,8 @@ class CryticCompile:
                 self._platform = standard
             elif not archive_ignore and archive.is_archive(target):
                 self._platform = archive
+            elif not vyper_ignore and vyper.is_vyper(target):
+                self._platform = vyper
             # .json or .sol provided
             else:
                 self._platform = solc
