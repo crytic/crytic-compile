@@ -1,17 +1,19 @@
+import copy
 import os
 import json
+import glob
 import logging
 import re
 import subprocess
 import sha3
 from pathlib import Path
 
-from .platform import solc, truffle, embark, dapp, etherlime, etherscan
-
-from .utils.naming import combine_filename_name
+from .platform import solc, truffle, embark, dapp, etherlime, etherscan, archive, standard
+from .utils.zip import load_from_zip
 
 logger = logging.getLogger("CryticCompile")
 logging.basicConfig()
+
 
 def is_supported(target):
     supported = [solc.is_solc,
@@ -19,8 +21,53 @@ def is_supported(target):
                  embark.is_embark,
                  dapp.is_dapp,
                  etherlime.is_etherlime,
-                 etherscan.is_etherscan]
-    return any(f(target) for f in supported)
+                 etherscan.is_etherscan,
+                 standard.is_standard,
+                 archive.is_archive]
+    return any(f(target) for f in supported) or target.endswith('.zip')
+
+PLATFORMS = {'solc': solc,
+             'truffle': truffle,
+             'embark': embark,
+             'dapp': dapp,
+             'etherlime': etherlime,
+             'etherscan': etherscan,
+             'archive': archive,
+             'standard': standard}
+
+def compile_all(target, **kwargs):
+    """
+    Given a direct or glob pattern target, compiles all underlying sources and returns
+    all the relevant instances of CryticCompile.
+    :param target: A string representing a file/directory path or glob pattern denoting where compilation should
+    occur.
+    :param kwargs: The remainder of the arguments passed through to all compilation steps.
+    :return: Returns a list of CryticCompile instances for all compilations which occurred.
+    """
+    # Attempt to perform glob expansion of target/filename
+    globbed_targets = glob.glob(target, recursive=True)
+
+    # Check if the target refers to a valid target already.
+    # If it does not, we assume it's a glob pattern.
+    compilations = []
+    if os.path.isfile(target) or is_supported(target):
+        if target.endswith('.zip'):
+            compilations = load_from_zip(target)
+        else:
+            compilations.append(CryticCompile(target, **kwargs))
+    elif os.path.isdir(target) or len(globbed_targets) > 0:
+        # We create a new glob to find solidity files at this path (in case this is a directory)
+        filenames = glob.glob(os.path.join(target, "*.sol"))
+        if not filenames:
+            filenames = globbed_targets
+
+        # We compile each file and add it to our compilations.
+        for filename in filenames:
+            compilations.append(CryticCompile(filename, **kwargs))
+    else:
+        raise ValueError(f"Unresolved target: {str(target)}")
+
+    return compilations
 
 
 class CryticCompile:
@@ -42,6 +89,9 @@ class CryticCompile:
         self._hashes = {}
         self._srcmaps = {}
         self._srcmaps_runtime = {}
+        self._src_content = {}
+        # dependencies is needed for platform conversion
+        self._dependencies = set()
 
         # set containing all the contract names
         self._contracts_name = set()
@@ -63,9 +113,19 @@ class CryticCompile:
         # compiler.compiler
         self._compiler_version = None
 
+        self._target = target
+
         self._working_dir = Path.cwd()
 
+        # If its a exported archive, we use compilation index 0.
+        if isinstance(target, dict):
+            target = (target, 0)
+
         self._compile(target, **kwargs)
+
+    @property
+    def target(self):
+        return self._target
 
     ###################################################################################
     ###################################################################################
@@ -152,7 +212,7 @@ class CryticCompile:
         return d[filename]
 
     def is_dependency(self, filename):
-        return self._platform.is_dependency(filename)
+        return filename in self._dependencies or self._platform.is_dependency(filename)
 
     # endregion
     ###################################################################################
@@ -237,14 +297,12 @@ class CryticCompile:
         init = self._init_bytecodes.get(name, None)
         return self._update_bytecode_with_libraries(init, libraries)
 
-
     # endregion
     ###################################################################################
     ###################################################################################
     # region Source mapping
     ###################################################################################
     ###################################################################################
-
 
     @property
     def srcmaps_init(self):
@@ -259,6 +317,20 @@ class CryticCompile:
 
     def srcmap_runtime(self, name):
         return self._srcmaps_runtime.get(name, [])
+
+    @property
+    def src_content(self):
+        # If we have no source code loaded yet, load it for every contract.
+        if not self._src_content:
+            for name in self.contracts_names:
+                filename = self.filename_of_contract(name)
+                if filename.absolute not in self._src_content and os.path.isfile(filename.absolute):
+                    with open(filename.absolute, encoding='utf8', newline='') as source_file:
+                        self._src_content[filename.absolute] = source_file.read()
+        return self._src_content
+
+    def src_content_for_file(self, filename_absolute):
+        return self.src_content.get(filename_absolute, None)
 
     # endregion
     ###################################################################################
@@ -474,6 +546,27 @@ class CryticCompile:
     # endregion
     ###################################################################################
     ###################################################################################
+    # region Import
+    ###################################################################################
+    ###################################################################################
+
+    @staticmethod
+    def import_archive_compilations(compiled_archive):
+        # If the argument is a string, it is likely a filepath, load the archive.
+        if isinstance(compiled_archive, str):
+            with open(compiled_archive, encoding='utf8') as f:
+                compiled_archive = json.load(f)
+
+        # Verify the compiled archive is of the correct form
+        if not isinstance(compiled_archive, dict) or 'compilations' not in compiled_archive:
+            raise ValueError("Cannot import compiled archive, invalid format.")
+
+        return [CryticCompile((compiled_archive, i)) for i in range(0, len(compiled_archive['compilations']))]
+
+    # endregion
+
+    ###################################################################################
+    ###################################################################################
     # region Export
     ###################################################################################
     ###################################################################################
@@ -484,51 +577,22 @@ class CryticCompile:
             The json format can be crytic-compile, solc or truffle.
             solc format is --combined-json bin-runtime,bin,srcmap,srcmap-runtime,abi,ast,compact-format
             Keyword Args:
-                export_format (str): export format (default None). Accepted: None, 'solc', 'truffle'
+                export_format (str): export format (default None). Accepted: None, 'solc', 'truffle', 'archive'
                 export_dir (str): export dir (default crytic-export)
         """
         export_format = kwargs.get('export_format', None)
-        if export_format is None or export_format=="crytic-compile":
-            self._export_standard(**kwargs)
+        if export_format is None or export_format == "crytic-compile":
+            return standard.export(**kwargs)
         elif export_format == "solc":
-            solc.export(self, **kwargs)
+            return solc.export(self, **kwargs)
         elif export_format == "truffle":
-            truffle.export(self, **kwargs)
+            return truffle.export(self, **kwargs)
+        elif export_format == "archive":
+            return archive.export(self, **kwargs)
         else:
             raise Exception('Export format unknown')
 
-    def _export_standard(self, **kwargs):
-        export_dir = kwargs.get('export_dir', 'crytic-export')
-        if not os.path.exists(export_dir):
-            os.makedirs(export_dir)
-        path = os.path.join(export_dir, "contracts.json")
 
-        with open(path, 'w', encoding='utf8') as f:
-            contracts = dict()
-            for contract_name in self.contracts_names:
-                filename = self.filename_of_contract(contract_name)
-                contracts[contract_name] = {
-                    'abi': self.abi(contract_name),
-                    'bin': self.bytecode_init(contract_name),
-                    'bin-runtime': self.bytecode_runtime(contract_name),
-                    'srcmap': ";".join(self.srcmap_init(contract_name)),
-                    'srcmap-runtime': ";".join(self.srcmap_runtime(contract_name)),
-                    'filenames': {'absolute': filename.absolute,
-                                  'used': filename.used,
-                                  'short': filename.short,
-                                  'relative': filename.used}
-                }
-
-            output = {'asts': self._asts,
-                      'contracts': contracts,
-                      'compiler': {
-                          'compiler': self._compiler_version.compiler,
-                          'version': self._compiler_version.version,
-                          'optimized': self._compiler_version.optimized,
-                      },
-                      'working_dir': str(self._working_dir)}
-
-            json.dump(output, f)
 
     # endregion
     ###################################################################################
@@ -544,8 +608,10 @@ class CryticCompile:
         dapp_ignore = kwargs.get('dapp_ignore', False)
         etherlime_ignore = kwargs.get('etherlime_ignore', False)
         etherscan_ignore = kwargs.get('etherscan_ignore', False)
+        standard_ignore = kwargs.get('standard_ignore', False)
+        archive_ignore = kwargs.get('standard_ignore', False)
 
-        custom_build = kwargs.get('compile_custom_build', False)
+        custom_build = kwargs.get('compile_custom_build', None)
 
         if custom_build:
             truffle_ignore = True
@@ -553,36 +619,29 @@ class CryticCompile:
             dapp_ignore = True
             etherlime_ignore = True
             etherscan_ignore = True
+            standard_ignore = True
+            archive_ignore = True
 
             self._run_custom_build(custom_build)
 
         compile_force_framework = kwargs.get('compile_force_framework', None)
-        if compile_force_framework:
-            if compile_force_framework == 'truffle':
-                self._platform = truffle
-            elif compile_force_framework == 'embark':
-                self._platform = embark
-            elif compile_force_framework == 'dapp':
-                self._platform = dapp
-            elif compile_force_framework == 'etherlime':
-                self._platform = etherlime
-            elif compile_force_framework == 'etherscan':
-                self._platform = etherscan
+        if compile_force_framework and compile_force_framework in PLATFORMS:
+            self._platform = PLATFORMS[compile_force_framework]
         else:
-            # truffle directory
             if not truffle_ignore and truffle.is_truffle(target):
                 self._platform = truffle
-            # embark directory
             elif not embark_ignore and embark.is_embark(target):
                 self._platform = embark
-            # dap directory
             elif not dapp_ignore and dapp.is_dapp(target):
                 self._platform = dapp
-            #etherlime directory
             elif not etherlime_ignore and etherlime.is_etherlime(target):
                 self._platform = etherlime
             elif not etherscan_ignore and etherscan.is_etherscan(target):
                 self._platform = etherscan
+            elif not standard_ignore and standard.is_standard(target):
+                self._platform = standard
+            elif not archive_ignore and archive.is_archive(target):
+                self._platform = archive
             # .json or .sol provided
             else:
                 self._platform = solc

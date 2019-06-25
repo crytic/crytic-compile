@@ -5,8 +5,9 @@ import os
 import logging
 from pkg_resources import require
 from .cryticparser import cryticparser, defaults_flag_in_config
-from .crytic_compile import CryticCompile
+from .crytic_compile import CryticCompile, compile_all
 from .platform import InvalidCompilation
+from .utils.zip import save_to_zip
 
 logging.basicConfig()
 logger = logging.getLogger("CryticCompile")
@@ -14,8 +15,11 @@ logger.setLevel(logging.INFO)
 
 
 def parse_args():
+    # Create our argument parser
     parser = argparse.ArgumentParser(description='crytic-compile. For usage information, see https://github.com/crytic/crytic-compile/wiki/Usage',
                                      usage="crytic-compile contract.sol [flag]")
+
+    # Add arguments
     parser.add_argument('target',
                         help='contract.sol')
 
@@ -32,10 +36,16 @@ def parse_args():
                         default=None)
 
     parser.add_argument('--export-dir',
-                        help='Export directory (default: crytic-export',
+                        help='Export directory (default: crytic-export)',
                         action='store',
                         dest='export_dir',
                         default='crytic-export')
+
+    parser.add_argument('--export-zip',
+                        help='Export all the projects to a zip file',
+                        action='store',
+                        dest='export_to_zip',
+                        default=None)
 
     parser.add_argument('--print-filenames',
                         help='Print all the filenames',
@@ -74,17 +84,30 @@ def parse_args():
 def main():
     args = parse_args()
     try:
-        cryticCompile = CryticCompile(**vars(args))
-        cryticCompile.export(**vars(args))
-        if args.print_filename:
-            for contract in cryticCompile.contracts_names:
-                filename = cryticCompile.filename_of_contract(contract)
-                print(f'{contract} -> \n\tAbsolute: {filename.absolute}')
-                print(f'\tRelative: {filename.relative}')
-                print(f'\tShort: {filename.short}')
-                print(f'\tUsed: {filename.used}')
+        # Compile all specified (possibly glob patterned) targets.
+        compilations = compile_all(**vars(args))
+
+        # Perform relevant tasks for each compilation
+        printed_filenames = set()
+        for compilation in compilations:
+            # Print the filename of each contract (no duplicates).
+            if args.print_filename:
+                for contract in compilation.contracts_names:
+                    filename = compilation.filename_of_contract(contract)
+                    unique_id = f"{contract} - {filename}"
+                    if unique_id not in printed_filenames:
+                        print(f'{contract} -> \n\tAbsolute: {filename.absolute}')
+                        print(f'\tRelative: {filename.relative}')
+                        print(f'\tShort: {filename.short}')
+                        print(f'\tUsed: {filename.used}')
+                        printed_filenames.add(unique_id)
+
+        if args.export_to_zip:
+            save_to_zip(compilations, args.export_to_zip)
+
     except InvalidCompilation as e:
         logger.error(e)
+        sys.exit(-1)
 
 
 if __name__ == '__main__':

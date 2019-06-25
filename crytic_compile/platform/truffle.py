@@ -111,22 +111,33 @@ def compile(crytic_compile, target, **kwargs):
 
 
 def export(crytic_compile, **kwargs):
-    export_dir = kwargs.get('export_dir', 'crytic-export')
-    if not os.path.exists(export_dir):
+    # Get our export directory, if it's set, we create the path.
+    export_dir = kwargs.get('export_dir', None)
+    if export_dir and not os.path.exists(export_dir):
         os.makedirs(export_dir)
 
+    # Loop for each contract filename.
+    results = []
     for contract_name in crytic_compile.contracts_names:
+        # Create the informational object to output for this contract
         filename = crytic_compile.contracts_filenames[contract_name]
-        with open(os.path.join(export_dir, contract_name  + '.json'), 'w', encoding='utf8') as f:
-            output = {
-                "contractName": contract_name ,
-                "abi": crytic_compile.abi(contract_name),
-                "bytecode": "0x" + crytic_compile.bytecode_init(contract_name),
-                "deployedBytecode": "0x" + crytic_compile.bytecode_runtime(contract_name),
-                "ast": crytic_compile.ast(filename)
-            }
-            json.dump(output, f)
+        output = {
+            "contractName": contract_name,
+            "abi": crytic_compile.abi(contract_name),
+            "bytecode": "0x" + crytic_compile.bytecode_init(contract_name),
+            "deployedBytecode": "0x" + crytic_compile.bytecode_runtime(contract_name),
+            "ast": crytic_compile.ast(filename)
+        }
+        results.append(results)
 
+        # If we have an export directory, export it.
+        if export_dir:
+            path = os.path.join(export_dir, contract_name + '.json')
+            with open(path, 'w', encoding='utf8') as f:
+                json.dump(output, f)
+            return path
+
+    return None
 
 def is_truffle(target):
     return (os.path.isfile(os.path.join(target, 'truffle.js')) or
