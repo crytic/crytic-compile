@@ -21,4 +21,4 @@ Some pull request guidelines:
 - Title your pull request with a brief description of what it's changing. "Fixes #123" is a good comment to add to the description, but makes for an unclear title on its own.
 
 # Development Environment
-Instructions for installing a development version of Slither can be found in our [wiki](https://github.com/crytic/crytic-compile/wiki/Developer-installation).
+Instructions for installing a development version of crytic-compile can be found in our [wiki](https://github.com/crytic/crytic-compile/wiki/Developer-installation).
