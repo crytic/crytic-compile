@@ -13,6 +13,7 @@ def generate_standard_export(crytic_compile):
     contracts = dict()
     for contract_name in crytic_compile.contracts_names:
         filename = crytic_compile.filename_of_contract(contract_name)
+        librairies = crytic_compile.libraries_names_and_patterns(contract_name)
         contracts[contract_name] = {
             'abi': crytic_compile.abi(contract_name),
             'bin': crytic_compile.bytecode_init(contract_name),
@@ -25,6 +26,7 @@ def generate_standard_export(crytic_compile):
                 'short': filename.short,
                 'relative': filename.used
             },
+            'libraries': dict(librairies) if librairies else dict(),
             'is_dependency': crytic_compile._platform.is_dependency(filename.absolute)
         }
 
@@ -55,7 +57,7 @@ def export(crytic_compile, **kwargs):
         target = crytic_compile.target
         target = "contracts" if os.path.isdir(target) else Path(target).parts[-1]
 
-        path = os.path.join(export_dir, f"{target}_archive.json")
+        path = os.path.join(export_dir, f"{target}.json")
         with open(path, 'w', encoding='utf8') as f:
             json.dump(output, f)
 
@@ -85,6 +87,7 @@ def load_from_compile(crytic_compile, loaded_json):
         crytic_compile._runtime_bytecodes[contract_name] = contract['bin-runtime']
         crytic_compile._srcmaps[contract_name] = contract['srcmap'].split(';')
         crytic_compile._srcmaps_runtime[contract_name] = contract['srcmap-runtime'].split(';')
+        crytic_compile._libraries[contract_name] = contract['libraries']
 
         if contract['is_dependency']:
             crytic_compile._is_dependencies.add(filename.absolute)

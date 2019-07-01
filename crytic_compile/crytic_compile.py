@@ -434,12 +434,12 @@ class CryticCompile:
         - __X__ following Solidity 0.4 format
         - __$..$__ following Solidity 0.5 format
         :param lib_name:
-        :return: contract name (None if not found)
+        :return: (contract name, pattern) (None if not found)
         """
 
         for name in self.contracts_names:
             if name == lib_name:
-                return name
+                return (name, name)
 
             # Some platform use only the contract name
             # Some use fimename:contract_name
@@ -450,16 +450,19 @@ class CryticCompile:
             name_with_used_filename = name_with_used_filename[0:36]
 
             # Solidity 0.4
-            if '__' + name + '_' * (38-len(name)) == lib_name:
-                return name
+            solidity_0_4 = '__' + name + '_' * (38-len(name))
+            if solidity_0_4 == lib_name:
+                return (name, solidity_0_4)
 
             # Solidity 0.4 with filename
-            if '__' + name_with_absolute_filename+ '_' * (38-len(name_with_absolute_filename)) == lib_name:
-                return name
+            solidity_0_4_filename = '__' + name_with_absolute_filename+ '_' * (38-len(name_with_absolute_filename))
+            if solidity_0_4_filename == lib_name:
+                return (name, solidity_0_4_filename)
 
             # Solidity 0.4 with filename
-            if '__' + name_with_used_filename+ '_' * (38-len(name_with_used_filename)) == lib_name:
-                return name
+            solidity_0_4_filename = '__' + name_with_used_filename + '_' * (38 - len(name_with_used_filename))
+            if solidity_0_4_filename == lib_name:
+                return (name, solidity_0_4_filename)
 
 
             # Solidity 0.5
@@ -467,29 +470,30 @@ class CryticCompile:
             s.update(name.encode('utf-8'))
             v5_name = "__$" + s.hexdigest()[:34] + "$__"
 
-            if  v5_name == lib_name:
-                return name
+            if v5_name == lib_name:
+                return (name, v5_name)
 
             # Solidity 0.5 with filename
             s = sha3.keccak_256()
             s.update(name_with_absolute_filename .encode('utf-8'))
             v5_name = "__$" + s.hexdigest()[:34] + "$__"
 
-            if  v5_name == lib_name:
-                return name
+            if v5_name == lib_name:
+                return (name, v5_name)
 
             s = sha3.keccak_256()
             s.update(name_with_used_filename.encode('utf-8'))
             v5_name = "__$" + s.hexdigest()[:34] + "$__"
 
             if v5_name == lib_name:
-                return name
+                return (name, v5_name)
 
-        # handle specific case of colission for Solidity <0.4
+        # handle specific case of collision for Solidity <0.4
         # We can only detect that the second contract is meant to be the library
         # if there is only two contracts in the codebase
         if len(self._contracts_name) == 2:
-            return next((c for c in self._contracts_name if c != original_contract), None)
+            return next(((c, '__' + c + '_' * (38-len(c))) for c in self._contracts_name if c != original_contract),
+                        None)
 
         return None
 
@@ -504,8 +508,20 @@ class CryticCompile:
             init = re.findall(r'__.{36}__', self.bytecode_init(name))
             runtime = re.findall(r'__.{36}__', self.bytecode_runtime(name))
             self._libraries[name] = [self._library_name_lookup(x, name) for x in set(init+runtime)]
-        return self._libraries[name]
+        return [name for (name, pattern) in self._libraries[name]]
 
+    def libraries_names_and_patterns(self, name):
+        """
+        Return the name of the libraries used by the contract
+        :param name: contract
+        :return: list of (libraries name, pattern)
+        """
+
+        if name not in self._libraries:
+            init = re.findall(r'__.{36}__', self.bytecode_init(name))
+            runtime = re.findall(r'__.{36}__', self.bytecode_runtime(name))
+            self._libraries[name] = [self._library_name_lookup(x, name) for x in set(init+runtime)]
+        return self._libraries[name]
 
     def _update_bytecode_with_libraries(self, bytecode, libraries):
         if libraries:
@@ -577,12 +593,13 @@ class CryticCompile:
             The json format can be crytic-compile, solc or truffle.
             solc format is --combined-json bin-runtime,bin,srcmap,srcmap-runtime,abi,ast,compact-format
             Keyword Args:
-                export_format (str): export format (default None). Accepted: None, 'solc', 'truffle', 'archive'
+                export_format (str): export format (default None). Accepted: None, 'solc', 'truffle',
+                'crytic-compile', 'standard'
                 export_dir (str): export dir (default crytic-export)
         """
         export_format = kwargs.get('export_format', None)
-        if export_format is None or export_format == "crytic-compile":
-            return standard.export(**kwargs)
+        if export_format is None or export_format in ["crytic-compile", "standard"]:
+            return standard.export(self, **kwargs)
         elif export_format == "solc":
             return solc.export(self, **kwargs)
         elif export_format == "truffle":

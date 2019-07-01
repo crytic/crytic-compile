@@ -30,9 +30,15 @@ def parse_args():
                         default='crytic.config.json')
 
     parser.add_argument('--export-format',
-                        help='Export json with non crytic-compile format (default None. Accepted: solc, truffle)',
+                        help='Export json with non crytic-compile format (default None. Accepted: standard, solc, truffle)',
                         action='store',
                         dest='export_format',
+                        default=None)
+
+    parser.add_argument('--export-formats',
+                        help='Comma-separated list of export format, defaults to None',
+                        action='store',
+                        dest='export_formats',
                         default=None)
 
     parser.add_argument('--export-dir',
@@ -101,9 +107,18 @@ def main():
                         print(f'\tShort: {filename.short}')
                         print(f'\tUsed: {filename.used}')
                         printed_filenames.add(unique_id)
+            if args.export_format:
+                compilation.export(**vars(args))
+
+            if args.export_formats:
+                for format in args.export_formats.split(','):
+                    args.export_format = format
+                    compilation.export(**vars(args))
 
         if args.export_to_zip:
             save_to_zip(compilations, args.export_to_zip)
+
+
 
     except InvalidCompilation as e:
         logger.error(e)
