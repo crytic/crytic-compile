@@ -16,7 +16,7 @@ def compile(crytic_compile, target, **kwargs):
     crytic_compile.type = Type.SOLC
     solc = kwargs.get('solc', 'solc')
     solc_disable_warnings = kwargs.get('solc_disable_warnings', False)
-    solc_arguments = kwargs.get('solc_arguments', '')
+    solc_arguments = kwargs.get('solc_args', '')
     solc_remaps = kwargs.get('solc_remaps', None)
     solc_working_dir = kwargs.get('solc_working_dir', None)
 
