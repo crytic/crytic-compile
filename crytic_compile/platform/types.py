@@ -10,6 +10,7 @@ class Type(IntEnum):
     ETHERSCAN = 6
     STANDARD = 7
     ARCHIVE = 8
+    VYPER = 9
 
     def __str__(self):
         if self == Type.SOLC:
@@ -27,5 +28,7 @@ class Type(IntEnum):
         if self == Type.STANDARD:
             return 'Standard'
         if self == Type.ARCHIVE:
+            return 'Archive'
+        if self == Type.VYPER:
             return 'Archive'
         raise ValueError

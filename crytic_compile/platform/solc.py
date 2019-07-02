@@ -170,8 +170,7 @@ def _run_solc(crytic_compile, filename, solc, solc_disable_warnings, solc_argume
     :return:
     """
     if not os.path.isfile(filename):
-        logger.error('{} does not exist (are you in the correct directory?)'.format(filename))
-        exit(-1)
+        raise InvalidCompilation('{} does not exist (are you in the correct directory?)'.format(filename))
 
     if not filename.endswith('.sol'):
         raise InvalidCompilation('Incorrect file format')
