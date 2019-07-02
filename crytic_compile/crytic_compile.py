@@ -61,7 +61,9 @@ def compile_all(target, **kwargs):
         # We create a new glob to find solidity files at this path (in case this is a directory)
         filenames = glob.glob(os.path.join(target, "*.sol"))
         if not filenames:
-            filenames = globbed_targets
+            filenames = glob.glob(os.path.join(target, "*.vy"))
+            if not filenames:
+                filenames = globbed_targets
 
         # We compile each file and add it to our compilations.
         for filename in filenames:

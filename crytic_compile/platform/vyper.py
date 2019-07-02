@@ -10,7 +10,7 @@ from .exceptions import InvalidCompilation
 from ..utils.naming import extract_filename, extract_name, combine_filename_name, convert_filename
 
 def is_vyper(target):
-    return target.endswith('.py')
+    return os.path.isfile(target) and target.endswith('.vy')
 
 def compile(crytic_compile, target, **kwargs):
 
@@ -19,7 +19,7 @@ def compile(crytic_compile, target, **kwargs):
     vyper = kwargs.get('vyper', 'vyper')
 
 
-    targets_json = _run_vyper(crytic_compile, target, vyper)
+    targets_json = _run_vyper(target, vyper)
 
     assert 'version' in targets_json
     crytic_compile.compiler_version = CompilerVersion(compiler="vyper",
@@ -46,7 +46,7 @@ def compile(crytic_compile, target, **kwargs):
     #crytic_compile.asts[path.absolute] = info['AST']
 
 
-def _run_vyper(crytic_compile, filename, vyper, env=None, working_dir=None):
+def _run_vyper(filename, vyper, env=None, working_dir=None):
     if not os.path.isfile(filename):
         raise InvalidCompilation('{} does not exist (are you in the correct directory?)'.format(filename))
 
@@ -71,3 +71,6 @@ def _run_vyper(crytic_compile, filename, vyper, env=None, working_dir=None):
 
 def _relative_to_short(relative):
     return relative
+
+def is_dependency(_path):
+    return False
