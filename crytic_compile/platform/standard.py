@@ -24,7 +24,7 @@ def generate_standard_export(crytic_compile):
                 'absolute': filename.absolute,
                 'used': filename.used,
                 'short': filename.short,
-                'relative': filename.used
+                'relative': filename.relative
             },
             'libraries': dict(librairies) if librairies else dict(),
             'is_dependency': crytic_compile._platform.is_dependency(filename.absolute)
