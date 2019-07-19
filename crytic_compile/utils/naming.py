@@ -1,9 +1,11 @@
 import platform
 import os.path
+import logging
 from pathlib import Path
 from collections import namedtuple
 from ..platform.exceptions import InvalidCompilation
 
+logger = logging.getLogger("CryticCompile")
 
 Filename = namedtuple('Filename', ['absolute', 'used', 'relative', 'short'])
 
