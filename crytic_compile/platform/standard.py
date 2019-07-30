@@ -24,7 +24,7 @@ def generate_standard_export(crytic_compile):
                 'absolute': filename.absolute,
                 'used': filename.used,
                 'short': filename.short,
-                'relative': filename.used
+                'relative': filename.relative
             },
             'libraries': dict(librairies) if librairies else dict(),
             'is_dependency': crytic_compile._platform.is_dependency(filename.absolute)
@@ -77,9 +77,9 @@ def load_from_compile(crytic_compile, loaded_json):
     for contract_name, contract in loaded_json['contracts'].items():
         crytic_compile._contracts_name.add(contract_name)
         filename = Filename(absolute=contract['filenames']['absolute'],
-                            relative=contract['filenames']['used'],
+                            relative=contract['filenames']['relative'],
                             short=contract['filenames']['short'],
-                            used=contract['filenames']['relative'])
+                            used=contract['filenames']['used'])
         crytic_compile._contracts_filenames[contract_name] = filename
 
         crytic_compile._abis[contract_name] = contract['abi']

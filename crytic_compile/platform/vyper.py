@@ -31,7 +31,6 @@ def compile(crytic_compile, target, **kwargs):
     info = targets_json[target]
     contract_filename = convert_filename(target, _relative_to_short)
 
-
     contract_name = Path(target).parts[-1]
 
     crytic_compile.contracts_names.add(contract_name)
@@ -46,6 +45,7 @@ def compile(crytic_compile, target, **kwargs):
 
     ast = _get_vyper_ast(target, vyper)
     crytic_compile.asts[contract_filename.absolute] = ast
+
 
 
 def _run_vyper(filename, vyper, env=None, working_dir=None):

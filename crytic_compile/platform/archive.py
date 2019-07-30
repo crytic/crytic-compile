@@ -7,7 +7,7 @@ def is_archive(target):
     return Path(target).parts[-1].endswith("_export_archive.json")
 
 def compile(crytic_compile, target, **kwargs):
-    if os.path.isfile(target):
+    if isinstance(target, str) and os.path.isfile(target):
         with open(target, encoding='utf8') as f:
             loaded_json = json.load(f)
     else:
