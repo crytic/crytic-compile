@@ -185,6 +185,8 @@ def _run_solc(crytic_compile, filename, solc, solc_disable_warnings, solc_argume
 
     cmd = [solc]
     if solc_remaps:
+        if isinstance(solc_remaps, str):
+            solc_remaps = solc_remaps.split(' ')
         cmd += solc_remaps
     cmd += [filename, '--combined-json', options]
     if solc_arguments:
