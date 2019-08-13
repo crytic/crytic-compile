@@ -8,7 +8,7 @@ import subprocess
 import sha3
 from pathlib import Path
 
-from .platform import solc, truffle, embark, dapp, etherlime, etherscan, archive, standard, vyper
+from .platform import solc, solc_standard_json, truffle, embark, dapp, etherlime, etherscan, archive, standard, vyper
 from .utils.zip import load_from_zip
 
 logger = logging.getLogger("CryticCompile")
@@ -28,6 +28,7 @@ def is_supported(target):
     return any(f(target) for f in supported) or target.endswith('.zip')
 
 PLATFORMS = {'solc': solc,
+             'solc_standard_json': solc_standard_json,
              'truffle': truffle,
              'embark': embark,
              'dapp': dapp,
