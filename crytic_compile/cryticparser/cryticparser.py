@@ -61,6 +61,11 @@ def init_solc(parser):
                             action='store',
                             default=defaults_flag_in_config['solc_solcs_bin'])
 
+    group_solc.add_argument('--solc-standard-json',
+                            help='Compile all specified targets in a single compilation using solc standard json',
+                            action='store_true',
+                            default=defaults_flag_in_config['solc_standard_json'])
+
 def init_truffle(parser):
     group_truffle = parser.add_argument_group('Truffle options')
     group_truffle.add_argument('--truffle-ignore-compile',
