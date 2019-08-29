@@ -8,7 +8,7 @@ import subprocess
 import sha3
 from pathlib import Path
 
-from .platform import solc, truffle, embark, dapp, etherlime, etherscan, archive, standard, vyper
+from .platform import solc, solc_standard_json, truffle, embark, dapp, etherlime, etherscan, archive, standard, vyper
 from .utils.zip import load_from_zip
 
 logger = logging.getLogger("CryticCompile")
@@ -28,6 +28,7 @@ def is_supported(target):
     return any(f(target) for f in supported) or target.endswith('.zip')
 
 PLATFORMS = {'solc': solc,
+             'solc_standard_json': solc_standard_json,
              'truffle': truffle,
              'embark': embark,
              'dapp': dapp,
@@ -46,6 +47,8 @@ def compile_all(target, **kwargs):
     :param kwargs: The remainder of the arguments passed through to all compilation steps.
     :return: Returns a list of CryticCompile instances for all compilations which occurred.
     """
+    use_solc_standard_json = kwargs.get('solc_standard_json', False)
+
     # Attempt to perform glob expansion of target/filename
     globbed_targets = glob.glob(target, recursive=True)
 
@@ -65,9 +68,17 @@ def compile_all(target, **kwargs):
             if not filenames:
                 filenames = globbed_targets
 
-        # We compile each file and add it to our compilations.
-        for filename in filenames:
-            compilations.append(CryticCompile(filename, **kwargs))
+        # Determine if we're using --standard-solc option to aggregate many files into a single compilation.
+        if use_solc_standard_json:
+            # If we're using standard solc, then we generated our input to create a single compilation with all files
+            standard_json = solc_standard_json.SolcStandardJson()
+            for filename in filenames:
+                standard_json.add_source_file(filename)
+            compilations.append(CryticCompile(standard_json, **kwargs))
+        else:
+            # We compile each file and add it to our compilations.
+            for filename in filenames:
+                compilations.append(CryticCompile(filename, **kwargs))
     else:
         raise ValueError(f"Unresolved target: {str(target)}")
 
@@ -79,7 +90,7 @@ class CryticCompile:
     def __init__(self, target, **kwargs):
         '''
             Args:
-                target (str)
+                target (str|SolcStandardJson)
             Keyword Args:
                 See https://github.com/crytic/crytic-compile/wiki/Configuration
         '''
@@ -651,7 +662,9 @@ class CryticCompile:
         if compile_force_framework and compile_force_framework in PLATFORMS:
             self._platform = PLATFORMS[compile_force_framework]
         else:
-            if not truffle_ignore and truffle.is_truffle(target):
+            if isinstance(target, solc_standard_json.SolcStandardJson):
+                self._platform = solc_standard_json
+            elif not truffle_ignore and truffle.is_truffle(target):
                 self._platform = truffle
             elif not embark_ignore and embark.is_embark(target):
                 self._platform = embark

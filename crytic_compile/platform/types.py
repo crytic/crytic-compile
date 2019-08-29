@@ -11,10 +11,13 @@ class Type(IntEnum):
     STANDARD = 7
     ARCHIVE = 8
     VYPER = 9
+    SOLC_STANDARD_JSON = 10
 
     def __str__(self):
         if self == Type.SOLC:
             return 'solc'
+        if self == Type.SOLC_STANDARD_JSON:
+            return 'solc_standard_json'
         if self == Type.TRUFFLE:
             return 'Truffle'
         if self == Type.EMBARK:
