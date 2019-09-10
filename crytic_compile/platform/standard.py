@@ -27,7 +27,7 @@ def generate_standard_export(crytic_compile):
                 'relative': filename.relative
             },
             'libraries': dict(librairies) if librairies else dict(),
-            'is_dependency': crytic_compile._platform.is_dependency(filename.absolute)
+            'is_dependency': crytic_compile.is_dependency(filename.absolute)
         }
 
     # Create our root object to contain the contracts and other information.
@@ -90,10 +90,10 @@ def load_from_compile(crytic_compile, loaded_json):
         crytic_compile._libraries[contract_name] = contract['libraries']
 
         if contract['is_dependency']:
-            crytic_compile._is_dependencies.add(filename.absolute)
-            crytic_compile._is_dependencies.add(filename.relative)
-            crytic_compile._is_dependencies.add(filename.short)
-            crytic_compile._is_dependencies.add(filename.used)
+            crytic_compile._dependencies.add(filename.absolute)
+            crytic_compile._dependencies.add(filename.relative)
+            crytic_compile._dependencies.add(filename.short)
+            crytic_compile._dependencies.add(filename.used)
 
 
     # Set our filenames
