@@ -57,7 +57,7 @@ def init_solc(parser):
                             default=defaults_flag_in_config['solc_solcs_select'])
 
     group_solc.add_argument('--solc-solcs-bin',
-                            help='Specify different solc version to try (path config). Example: --solc-solcs-path solc-0.4.24,solc-0.5.3',
+                            help='Specify different solc version to try (path config). Example: --solc-solcs-bin solc-0.4.24,solc-0.5.3',
                             action='store',
                             default=defaults_flag_in_config['solc_solcs_bin'])
 
