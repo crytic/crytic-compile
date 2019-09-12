@@ -98,7 +98,7 @@ def _get_version(target):
         version = '0.5.0' # default version with Embark 0.4
         if "versions" in config:
             if 'solc' in config['versions']:
-                version = config['versions']
+                version = config['versions']['solc']
         optimized = False
         if 'options' in config:
             if 'solc' in config['options']:
