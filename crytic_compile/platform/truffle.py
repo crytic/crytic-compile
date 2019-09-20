@@ -26,6 +26,8 @@ def compile(crytic_compile, target, **kwargs):
 
     if platform.system() == 'Windows':
         base_cmd = ["truffle.cmd"]
+    elif kwargs.get('npx_disable', False):
+        base_cmd = ["truffle"]
     else:
         base_cmd = ["npx", "truffle"]
         if truffle_version:

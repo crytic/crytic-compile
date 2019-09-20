@@ -23,6 +23,7 @@ def init(parser):
     init_embark(parser)
     init_dapp(parser)
     init_etherlime(parser)
+    init_npx(parser)
 
 def init_solc(parser):
     group_solc = parser.add_argument_group('Solc options')
@@ -121,3 +122,11 @@ def init_etherlime(parser):
                                  dest='etherlime_compile_arguments',
                                  default=defaults_flag_in_config['etherlime_compile_arguments'])
 
+
+def init_npx(parser):
+    group_npx = parser.add_argument_group('NPX options')
+    group_npx.add_argument('--npx-disable',
+                           help='Do not use npx',
+                           action='store_true',
+                           dest='npx_disable',
+                           default=defaults_flag_in_config['npx_disable'])
