@@ -53,7 +53,11 @@ def compile(crytic_compile, target, **kwargs):
                         truffle_version = 'truffle@{}'.format(version)
                         base_cmd = ['npx', truffle_version]
 
-    version, compiler = _get_version(base_cmd, cwd=target)
+    version_from_config =_get_version_from_config(target)
+    if version_from_config:
+        version, compiler = version_from_config
+    else:
+        version, compiler = _get_version(base_cmd, cwd=target)
 
     if not truffle_ignore_compile:
         cmd = base_cmd + ['compile', '--all']
@@ -149,6 +153,31 @@ def is_truffle(target):
 
 def is_dependency(path):
     return 'node_modules' in Path(path).parts
+
+
+def _get_version_from_config(target):
+    '''
+    Naive check on the truffleconfig file to get the version
+    :param target:
+    :return: (version, compiler) | None
+    '''
+    config = Path(target, 'truffle-config.js')
+    if not config.exists():
+        config = Path(target, 'truffle.js')
+        if not config.exists():
+            return None
+    with open(config) as config_f:
+        config_buffer = config_f.read()
+
+    # The config is a javascript file
+    # Use a naive regex to match the solc version
+    match = re.search(r'solc: {[ ]*\n[ ]*version: "([0-9\.]*)', config_buffer)
+    if match:
+        if match.groups():
+            version = match.groups()[0]
+            return version, "solc-js"
+    return None
+
 
 def _get_version(truffle_call, cwd):
     cmd = truffle_call + ["version"]
