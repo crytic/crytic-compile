@@ -19,4 +19,5 @@ defaults_flag_in_config = {
     'dapp_ignore_compile': False,
     'etherlime_ignore_compile': False,
     'etherlime_compile_arguments': None,
+    'npx_disable': False
 }
