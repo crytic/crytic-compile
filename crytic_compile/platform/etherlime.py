@@ -54,6 +54,9 @@ def compile(crytic_compile, target, **kwargs):
                     if "version" in target_loaded["compiler"]:
                         version = re.findall('\d+\.\d+\.\d+', target_loaded["compiler"]["version"])[0]
 
+            if not 'ast' in target_loaded:
+                continue
+
             filename =target_loaded['ast']['absolutePath']
             filename = convert_filename(filename, _relative_to_short)
             crytic_compile.asts[filename.absolute] = target_loaded['ast']

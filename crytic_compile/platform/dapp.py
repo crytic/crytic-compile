@@ -27,6 +27,10 @@ def compile(crytic_compile, target, **kwargs):
     for file in files:
         with open(file, encoding='utf8') as f:
             targets_json = json.load(f)
+
+        if not "contracts" in targets_json:
+            continue
+
         for original_contract_name, info in targets_json["contracts"].items():
             contract_name = extract_name(original_contract_name)
             contract_filename = extract_filename(original_contract_name)
