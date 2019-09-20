@@ -90,6 +90,8 @@ def compile(crytic_compile, target, **kwargs):
                     except json.decoder.JSONDecodeError:
                         pass
 
+            if not 'ast' in target_loaded:
+                continue
 
             filename = target_loaded['ast']['absolutePath']
             filename = convert_filename(filename, _relative_to_short, working_dir=target)
