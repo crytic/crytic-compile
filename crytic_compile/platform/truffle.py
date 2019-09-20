@@ -56,7 +56,6 @@ def compile(crytic_compile, target, **kwargs):
     version_from_config =_get_version_from_config(target)
     if version_from_config:
         version, compiler = version_from_config
-        print(version)
     else:
         version, compiler = _get_version(base_cmd, cwd=target)
 
