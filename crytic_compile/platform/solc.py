@@ -74,10 +74,14 @@ def compile(crytic_compile, target, **kwargs):
             contract_filename = extract_filename(original_contract_name)
             # for solc < 0.4.10 we cant retrieve the filename from the ast
             if skip_filename:
-                contract_filename = convert_filename(target, _relative_to_short,
+                contract_filename = convert_filename(target,
+                                                     _relative_to_short,
+                                                     crytic_compile,
                                                      working_dir=solc_working_dir)
             else:
-                contract_filename = convert_filename(contract_filename, _relative_to_short,
+                contract_filename = convert_filename(contract_filename,
+                                                     _relative_to_short,
+                                                     crytic_compile,
                                                      working_dir=solc_working_dir)
             crytic_compile.contracts_names.add(contract_name)
             crytic_compile.contracts_filenames[contract_name] = contract_filename
@@ -90,9 +94,15 @@ def compile(crytic_compile, target, **kwargs):
     if "sources" in targets_json:
         for path, info in targets_json["sources"].items():
             if skip_filename:
-                path = convert_filename(target, _relative_to_short, working_dir=solc_working_dir)
+                path = convert_filename(target,
+                                        _relative_to_short,
+                                        crytic_compile,
+                                        working_dir=solc_working_dir)
             else:
-                path = convert_filename(path, _relative_to_short, working_dir=solc_working_dir)
+                path = convert_filename(path,
+                                        _relative_to_short,
+                                        crytic_compile,
+                                        working_dir=solc_working_dir)
             crytic_compile.filenames.add(path)
             crytic_compile.asts[path.absolute] = info['AST']
 

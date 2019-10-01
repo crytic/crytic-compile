@@ -27,13 +27,14 @@ def combine_filename_name(filename, name):
     return filename + ":" + name
 
 
-def convert_filename(used_filename, relative_to_short, working_dir=None):
+def convert_filename(used_filename, relative_to_short, crytic_compile, working_dir=None):
     """
     Convert filename.
     The used_filename can be absolute, relative, or missing node_modules/contracts directory
     convert_filename return a tuple(absolute,used), where absolute points to the absolute path, and used the original
     :param used_filename:
     :param relative_to_short: lambda function
+    :param crytic_compile:
     :param working_dir:
     :return: Filename (namedtuple)
     """
@@ -56,6 +57,12 @@ def convert_filename(used_filename, relative_to_short, working_dir=None):
             cwd = working_dir
         else:
             cwd = Path.cwd().joinpath(Path(working_dir)).resolve()
+
+    if crytic_compile.package_name:
+        try:
+            filename = filename.relative_to(Path(crytic_compile.package_name))
+        except ValueError:
+            pass
 
     if not filename.exists():
         if cwd.joinpath(Path('node_modules'), filename).exists():

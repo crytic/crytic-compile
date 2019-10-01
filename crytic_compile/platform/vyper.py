@@ -29,7 +29,9 @@ def compile(crytic_compile, target, **kwargs):
     assert target in targets_json
 
     info = targets_json[target]
-    contract_filename = convert_filename(target, _relative_to_short)
+    contract_filename = convert_filename(target,
+                                         _relative_to_short,
+                                         crytic_compile)
 
     contract_name = Path(target).parts[-1]
 
