@@ -7,6 +7,8 @@ from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.utils.naming import Filename
 
 def is_standard(target):
+    if not Path(target).parts:
+        return False
     return Path(target).parts[-1].endswith("_export.json")
 
 def generate_standard_export(crytic_compile):

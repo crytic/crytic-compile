@@ -8,7 +8,8 @@ import subprocess
 import sha3
 from pathlib import Path
 
-from .platform import solc, solc_standard_json, truffle, embark, dapp, etherlime, etherscan, archive, standard, vyper
+from .platform import solc, solc_standard_json, truffle, embark, dapp, etherlime, \
+    etherscan, archive, standard, vyper, brownie
 from .utils.zip import load_from_zip
 from .utils.npm import get_package_name
 
@@ -25,7 +26,8 @@ def is_supported(target):
                  etherscan.is_etherscan,
                  standard.is_standard,
                  archive.is_archive,
-                 vyper.is_vyper]
+                 vyper.is_vyper,
+                 brownie.is_brownie]
     return any(f(target) for f in supported) or target.endswith('.zip')
 
 PLATFORMS = {'solc': solc,
@@ -37,7 +39,8 @@ PLATFORMS = {'solc': solc,
              'etherscan': etherscan,
              'archive': archive,
              'standard': standard,
-             'vyper': vyper}
+             'vyper': vyper,
+             'brownie': brownie}
 
 def compile_all(target, **kwargs):
     """
@@ -646,6 +649,7 @@ class CryticCompile:
         standard_ignore = kwargs.get('standard_ignore', False)
         archive_ignore = kwargs.get('standard_ignore', False)
         vyper_ignore = kwargs.get('vyper_ignore', False)
+        brownie_ignore = kwargs.get('brownie_ignore', False)
 
         custom_build = kwargs.get('compile_custom_build', None)
 
@@ -658,6 +662,7 @@ class CryticCompile:
             standard_ignore = True
             archive_ignore = True
             vyper_ignore = True
+            brownie_ignore = True
 
             self._run_custom_build(custom_build)
 
@@ -683,6 +688,8 @@ class CryticCompile:
                 self._platform = archive
             elif not vyper_ignore and vyper.is_vyper(target):
                 self._platform = vyper
+            elif not brownie_ignore and brownie.is_brownie(target):
+                self._platform = brownie
             # .json or .sol provided
             else:
                 self._platform = solc

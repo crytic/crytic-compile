@@ -4,6 +4,8 @@ from pathlib import Path
 from . import standard
 
 def is_archive(target):
+    if not Path(target).parts:
+        return False
     return Path(target).parts[-1].endswith("_export_archive.json")
 
 def compile(crytic_compile, target, **kwargs):

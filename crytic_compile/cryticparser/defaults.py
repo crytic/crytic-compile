@@ -16,6 +16,7 @@ defaults_flag_in_config = {
     'truffle_build_directory': 'build/contracts',
     'embark_ignore_compile': False,
     'embark_overwrite_config': False,
+    'brownie_ignore_compile': False,
     'dapp_ignore_compile': False,
     'etherlime_ignore_compile': False,
     'etherlime_compile_arguments': None,

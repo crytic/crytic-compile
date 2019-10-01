@@ -100,6 +100,15 @@ def init_embark(parser):
                               action='store_true',
                               default=defaults_flag_in_config['embark_overwrite_config'])
 
+def init_brownie(parser):
+    group_embark = parser.add_argument_group('Brownie options')
+    group_embark.add_argument('--brownie-ignore-compile',
+                              help='Do not run brownie compile',
+                              action='store_true',
+                              dest='brownie_ignore_compile',
+                              default=defaults_flag_in_config['brownie_ignore_compile'])
+
+
 def init_dapp(parser):
     group_dapp = parser.add_argument_group('Dapp options')
     group_dapp.add_argument('--dapp-ignore-compile',
