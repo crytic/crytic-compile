@@ -58,7 +58,9 @@ def compile(crytic_compile, target, **kwargs):
                 continue
 
             filename =target_loaded['ast']['absolutePath']
-            filename = convert_filename(filename, _relative_to_short)
+            filename = convert_filename(filename,
+                                        _relative_to_short,
+                                        crytic_compile)
             crytic_compile.asts[filename.absolute] = target_loaded['ast']
             crytic_compile.filenames.add(filename)
             contract_name = target_loaded['contractName']

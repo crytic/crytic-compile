@@ -10,6 +10,7 @@ from pathlib import Path
 
 from .platform import solc, solc_standard_json, truffle, embark, dapp, etherlime, etherscan, archive, standard, vyper
 from .utils.zip import load_from_zip
+from .utils.npm import get_package_name
 
 logger = logging.getLogger("CryticCompile")
 logging.basicConfig()
@@ -131,6 +132,8 @@ class CryticCompile:
         self._target = target
 
         self._working_dir = Path.cwd()
+
+        self._package = get_package_name(target)
 
         # If its a exported archive, we use compilation index 0.
         if isinstance(target, dict):
@@ -725,6 +728,19 @@ class CryticCompile:
             bytecode
         ) for (key, bytecode) in self._runtime_bytecodes.items()}
 
+    # endregion
+    ###################################################################################
+    ###################################################################################
+    # region NPM
+    ###################################################################################
+    ###################################################################################
+
+    @property
+    def package_name(self):
+        """
+        :return: str or None
+        """
+        return self._package
 
     # endregion
     ###################################################################################
