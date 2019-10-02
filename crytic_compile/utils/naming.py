@@ -7,27 +7,32 @@ from ..platform.exceptions import InvalidCompilation
 
 logger = logging.getLogger("CryticCompile")
 
-Filename = namedtuple('Filename', ['absolute', 'used', 'relative', 'short'])
+Filename = namedtuple("Filename", ["absolute", "used", "relative", "short"])
+
 
 def extract_name(name):
-    '''
+    """
         Convert '/path:Contract' to Contract
-    '''
-    return name[name.rfind(':')+1:]
+    """
+    return name[name.rfind(":") + 1 :]
+
 
 def extract_filename(name):
-    '''
+    """
         Convert '/path:Contract' to /path
-    '''
-    if not ':' in name:
+    """
+    if not ":" in name:
         return name
-    return name[:name.rfind(':')]
+    return name[: name.rfind(":")]
+
 
 def combine_filename_name(filename, name):
     return filename + ":" + name
 
 
-def convert_filename(used_filename, relative_to_short, crytic_compile, working_dir=None):
+def convert_filename(
+    used_filename, relative_to_short, crytic_compile, working_dir=None
+):
     """
     Convert filename.
     The used_filename can be absolute, relative, or missing node_modules/contracts directory
@@ -39,11 +44,11 @@ def convert_filename(used_filename, relative_to_short, crytic_compile, working_d
     :return: Filename (namedtuple)
     """
     filename = used_filename
-    if platform.system() == 'Windows':
+    if platform.system() == "Windows":
         elements = list(Path(filename).parts)
-        if elements[0] == '/' or elements[0] == '\\':
+        if elements[0] == "/" or elements[0] == "\\":
             elements = elements[1:]  # remove '/'
-            elements[0] = elements[0] + ':/'  # add :/
+            elements[0] = elements[0] + ":/"  # add :/
         filename = Path(*elements)
     else:
         filename = Path(filename)
@@ -65,14 +70,14 @@ def convert_filename(used_filename, relative_to_short, crytic_compile, working_d
             pass
 
     if not filename.exists():
-        if cwd.joinpath(Path('node_modules'), filename).exists():
-            filename = cwd.joinpath('node_modules', filename)
-        elif cwd.joinpath(Path('contracts'), filename).exists():
-            filename = cwd.joinpath('contracts', filename)
+        if cwd.joinpath(Path("node_modules"), filename).exists():
+            filename = cwd.joinpath("node_modules", filename)
+        elif cwd.joinpath(Path("contracts"), filename).exists():
+            filename = cwd.joinpath("contracts", filename)
         elif working_dir.joinpath(filename).exists():
             filename = working_dir.joinpath(filename)
         else:
-            raise InvalidCompilation(f'Unknown file: {filename}')
+            raise InvalidCompilation(f"Unknown file: {filename}")
     elif not filename.is_absolute():
         filename = cwd.joinpath(filename)
 
@@ -92,8 +97,9 @@ def convert_filename(used_filename, relative_to_short, crytic_compile, working_d
 
     short = relative_to_short(short)
 
-
-    return Filename(absolute=str(absolute),
-                    relative=str(relative),
-                    short=str(short),
-                    used=used_filename)
+    return Filename(
+        absolute=str(absolute),
+        relative=str(relative),
+        short=str(short),
+        used=used_filename,
+    )

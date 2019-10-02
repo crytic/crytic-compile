@@ -8,8 +8,19 @@ import subprocess
 import sha3
 from pathlib import Path
 
-from .platform import solc, solc_standard_json, truffle, embark, dapp, etherlime, \
-    etherscan, archive, standard, vyper, brownie
+from .platform import (
+    solc,
+    solc_standard_json,
+    truffle,
+    embark,
+    dapp,
+    etherlime,
+    etherscan,
+    archive,
+    standard,
+    vyper,
+    brownie,
+)
 from .utils.zip import load_from_zip
 from .utils.npm import get_package_name
 
@@ -18,29 +29,35 @@ logging.basicConfig()
 
 
 def is_supported(target):
-    supported = [solc.is_solc,
-                 truffle.is_truffle,
-                 embark.is_embark,
-                 dapp.is_dapp,
-                 etherlime.is_etherlime,
-                 etherscan.is_etherscan,
-                 standard.is_standard,
-                 archive.is_archive,
-                 vyper.is_vyper,
-                 brownie.is_brownie]
-    return any(f(target) for f in supported) or target.endswith('.zip')
+    supported = [
+        solc.is_solc,
+        truffle.is_truffle,
+        embark.is_embark,
+        dapp.is_dapp,
+        etherlime.is_etherlime,
+        etherscan.is_etherscan,
+        standard.is_standard,
+        archive.is_archive,
+        vyper.is_vyper,
+        brownie.is_brownie,
+    ]
+    return any(f(target) for f in supported) or target.endswith(".zip")
 
-PLATFORMS = {'solc': solc,
-             'solc_standard_json': solc_standard_json,
-             'truffle': truffle,
-             'embark': embark,
-             'dapp': dapp,
-             'etherlime': etherlime,
-             'etherscan': etherscan,
-             'archive': archive,
-             'standard': standard,
-             'vyper': vyper,
-             'brownie': brownie}
+
+PLATFORMS = {
+    "solc": solc,
+    "solc_standard_json": solc_standard_json,
+    "truffle": truffle,
+    "embark": embark,
+    "dapp": dapp,
+    "etherlime": etherlime,
+    "etherscan": etherscan,
+    "archive": archive,
+    "standard": standard,
+    "vyper": vyper,
+    "brownie": brownie,
+}
+
 
 def compile_all(target, **kwargs):
     """
@@ -51,7 +68,7 @@ def compile_all(target, **kwargs):
     :param kwargs: The remainder of the arguments passed through to all compilation steps.
     :return: Returns a list of CryticCompile instances for all compilations which occurred.
     """
-    use_solc_standard_json = kwargs.get('solc_standard_json', False)
+    use_solc_standard_json = kwargs.get("solc_standard_json", False)
 
     # Attempt to perform glob expansion of target/filename
     globbed_targets = glob.glob(target, recursive=True)
@@ -60,7 +77,7 @@ def compile_all(target, **kwargs):
     # If it does not, we assume it's a glob pattern.
     compilations = []
     if os.path.isfile(target) or is_supported(target):
-        if target.endswith('.zip'):
+        if target.endswith(".zip"):
             compilations = load_from_zip(target)
         else:
             compilations.append(CryticCompile(target, **kwargs))
@@ -90,14 +107,13 @@ def compile_all(target, **kwargs):
 
 
 class CryticCompile:
-
     def __init__(self, target, **kwargs):
-        '''
+        """
             Args:
                 target (str|SolcStandardJson)
             Keyword Args:
                 See https://github.com/crytic/crytic-compile/wiki/Configuration
-        '''
+        """
         # ASTS are indexed by absolute path
         self._asts = {}
 
@@ -154,7 +170,6 @@ class CryticCompile:
     ###################################################################################
     ###################################################################################
 
-
     @property
     def filenames(self):
         """
@@ -176,7 +191,7 @@ class CryticCompile:
         Return a dict (contract_name -> absolute filename)
         :return:
         """
-        return {k: f.absolute for (k,f) in self._contracts_filenames.items()}
+        return {k: f.absolute for (k, f) in self._contracts_filenames.items()}
 
     def filename_of_contract(self, name):
         """
@@ -208,13 +223,13 @@ class CryticCompile:
             return used_filename
         d = {f.used: f.absolute for _, f in self._contracts_filenames}
         if not used_filename in d:
-            raise ValueError('f{filename} does not exist in {d}')
+            raise ValueError("f{filename} does not exist in {d}")
         return d[used_filename]
 
     def relative_filename_from_absolute_filename(self, absolute_filename):
         d = {f.absolute: f.relative for _, f in self._contracts_filenames}
         if not absolute_filename in d:
-            raise ValueError('f{absolute_filename} does not exist in {d}')
+            raise ValueError("f{absolute_filename} does not exist in {d}")
         return d[absolute_filename]
 
     def filename_lookup(self, filename):
@@ -229,7 +244,7 @@ class CryticCompile:
             d[f.relative] = f
             d[f.used] = f
         if not filename in d:
-            raise ValueError(f'{filename} does not exist in {d}')
+            raise ValueError(f"{filename} does not exist in {d}")
         return d[filename]
 
     def is_dependency(self, filename):
@@ -253,7 +268,9 @@ class CryticCompile:
             for c in self._contracts_name:
                 libraries += self.libraries_names(c)
             libraries = set(libraries)
-            self._contracts_name_without_libraries = set([l for l in self._contracts_name if not l in libraries])
+            self._contracts_name_without_libraries = set(
+                [l for l in self._contracts_name if not l in libraries]
+            )
         return self._contracts_name_without_libraries
 
     # endregion
@@ -300,7 +317,6 @@ class CryticCompile:
     ###################################################################################
     ###################################################################################
 
-
     @property
     def bytecodes_runtime(self):
         return self._runtime_bytecodes
@@ -308,7 +324,6 @@ class CryticCompile:
     @property
     def bytecodes_init(self):
         return self._init_bytecodes
-
 
     def bytecode_runtime(self, name, libraries=None):
         runtime = self._runtime_bytecodes.get(name, None)
@@ -345,8 +360,12 @@ class CryticCompile:
         if not self._src_content:
             for name in self.contracts_names:
                 filename = self.filename_of_contract(name)
-                if filename.absolute not in self._src_content and os.path.isfile(filename.absolute):
-                    with open(filename.absolute, encoding='utf8', newline='') as source_file:
+                if filename.absolute not in self._src_content and os.path.isfile(
+                    filename.absolute
+                ):
+                    with open(
+                        filename.absolute, encoding="utf8", newline=""
+                    ) as source_file:
                         self._src_content[filename.absolute] = source_file.read()
         return self._src_content
 
@@ -360,7 +379,6 @@ class CryticCompile:
     ###################################################################################
     ###################################################################################
 
-
     @property
     def type(self):
         return self._type
@@ -369,14 +387,12 @@ class CryticCompile:
     def type(self, t):
         self._type = t
 
-
     # endregion
     ###################################################################################
     ###################################################################################
     # region Compiler information
     ###################################################################################
     ###################################################################################
-
 
     @property
     def compiler_version(self):
@@ -410,10 +426,10 @@ class CryticCompile:
             # libraries are on the format __$kecckack(filename:contract_name)[34]$__
             # https://solidity.readthedocs.io/en/v0.5.7/050-breaking-changes.html#command-line-and-json-interfaces
 
-            lib_4 = '__' + lib + '_'* (38-len(lib))
+            lib_4 = "__" + lib + "_" * (38 - len(lib))
 
             s = sha3.keccak_256()
-            s.update(lib.encode('utf-8'))
+            s.update(lib.encode("utf-8"))
             lib_5 = "__$" + s.hexdigest()[:34] + "$__"
 
             new_names[lib] = addr
@@ -423,25 +439,33 @@ class CryticCompile:
             if lib in self.contracts_names:
                 lib_filename = self.contracts_filenames[lib]
 
-                lib_with_abs_filename = lib_filename.absolute + ':' + lib
+                lib_with_abs_filename = lib_filename.absolute + ":" + lib
                 lib_with_abs_filename = lib_with_abs_filename[0:36]
 
-                lib_4 = '__' + lib_with_abs_filename + '_' * (38 - len(lib_with_abs_filename))
+                lib_4 = (
+                    "__"
+                    + lib_with_abs_filename
+                    + "_" * (38 - len(lib_with_abs_filename))
+                )
                 new_names[lib_4] = addr
 
-                lib_with_used_filename = lib_filename.used + ':' + lib
+                lib_with_used_filename = lib_filename.used + ":" + lib
                 lib_with_used_filename = lib_with_used_filename[0:36]
 
-                lib_4 = '__' + lib_with_used_filename + '_' * (38 - len(lib_with_used_filename))
+                lib_4 = (
+                    "__"
+                    + lib_with_used_filename
+                    + "_" * (38 - len(lib_with_used_filename))
+                )
                 new_names[lib_4] = addr
 
                 s = sha3.keccak_256()
-                s.update(lib_with_abs_filename.encode('utf-8'))
+                s.update(lib_with_abs_filename.encode("utf-8"))
                 lib_5 = "__$" + s.hexdigest()[:34] + "$__"
                 new_names[lib_5] = addr
 
                 s = sha3.keccak_256()
-                s.update(lib_with_used_filename.encode('utf-8'))
+                s.update(lib_with_used_filename.encode("utf-8"))
                 lib_5 = "__$" + s.hexdigest()[:34] + "$__"
                 new_names[lib_5] = addr
 
@@ -464,31 +488,40 @@ class CryticCompile:
 
             # Some platform use only the contract name
             # Some use fimename:contract_name
-            name_with_absolute_filename = self.contracts_filenames[name].absolute + ':' + name
+            name_with_absolute_filename = (
+                self.contracts_filenames[name].absolute + ":" + name
+            )
             name_with_absolute_filename = name_with_absolute_filename[0:36]
 
-            name_with_used_filename = self.contracts_filenames[name].used + ':' + name
+            name_with_used_filename = self.contracts_filenames[name].used + ":" + name
             name_with_used_filename = name_with_used_filename[0:36]
 
             # Solidity 0.4
-            solidity_0_4 = '__' + name + '_' * (38-len(name))
+            solidity_0_4 = "__" + name + "_" * (38 - len(name))
             if solidity_0_4 == lib_name:
                 return (name, solidity_0_4)
 
             # Solidity 0.4 with filename
-            solidity_0_4_filename = '__' + name_with_absolute_filename+ '_' * (38-len(name_with_absolute_filename))
+            solidity_0_4_filename = (
+                "__"
+                + name_with_absolute_filename
+                + "_" * (38 - len(name_with_absolute_filename))
+            )
             if solidity_0_4_filename == lib_name:
                 return (name, solidity_0_4_filename)
 
             # Solidity 0.4 with filename
-            solidity_0_4_filename = '__' + name_with_used_filename + '_' * (38 - len(name_with_used_filename))
+            solidity_0_4_filename = (
+                "__"
+                + name_with_used_filename
+                + "_" * (38 - len(name_with_used_filename))
+            )
             if solidity_0_4_filename == lib_name:
                 return (name, solidity_0_4_filename)
 
-
             # Solidity 0.5
             s = sha3.keccak_256()
-            s.update(name.encode('utf-8'))
+            s.update(name.encode("utf-8"))
             v5_name = "__$" + s.hexdigest()[:34] + "$__"
 
             if v5_name == lib_name:
@@ -496,14 +529,14 @@ class CryticCompile:
 
             # Solidity 0.5 with filename
             s = sha3.keccak_256()
-            s.update(name_with_absolute_filename .encode('utf-8'))
+            s.update(name_with_absolute_filename.encode("utf-8"))
             v5_name = "__$" + s.hexdigest()[:34] + "$__"
 
             if v5_name == lib_name:
                 return (name, v5_name)
 
             s = sha3.keccak_256()
-            s.update(name_with_used_filename.encode('utf-8'))
+            s.update(name_with_used_filename.encode("utf-8"))
             v5_name = "__$" + s.hexdigest()[:34] + "$__"
 
             if v5_name == lib_name:
@@ -513,8 +546,14 @@ class CryticCompile:
         # We can only detect that the second contract is meant to be the library
         # if there is only two contracts in the codebase
         if len(self._contracts_name) == 2:
-            return next(((c, '__' + c + '_' * (38-len(c))) for c in self._contracts_name if c != original_contract),
-                        None)
+            return next(
+                (
+                    (c, "__" + c + "_" * (38 - len(c)))
+                    for c in self._contracts_name
+                    if c != original_contract
+                ),
+                None,
+            )
 
         return None
 
@@ -526,9 +565,11 @@ class CryticCompile:
         """
 
         if name not in self._libraries:
-            init = re.findall(r'__.{36}__', self.bytecode_init(name))
-            runtime = re.findall(r'__.{36}__', self.bytecode_runtime(name))
-            self._libraries[name] = [self._library_name_lookup(x, name) for x in set(init+runtime)]
+            init = re.findall(r"__.{36}__", self.bytecode_init(name))
+            runtime = re.findall(r"__.{36}__", self.bytecode_runtime(name))
+            self._libraries[name] = [
+                self._library_name_lookup(x, name) for x in set(init + runtime)
+            ]
         return [name for (name, pattern) in self._libraries[name]]
 
     def libraries_names_and_patterns(self, name):
@@ -539,20 +580,22 @@ class CryticCompile:
         """
 
         if name not in self._libraries:
-            init = re.findall(r'__.{36}__', self.bytecode_init(name))
-            runtime = re.findall(r'__.{36}__', self.bytecode_runtime(name))
-            self._libraries[name] = [self._library_name_lookup(x, name) for x in set(init+runtime)]
+            init = re.findall(r"__.{36}__", self.bytecode_init(name))
+            runtime = re.findall(r"__.{36}__", self.bytecode_runtime(name))
+            self._libraries[name] = [
+                self._library_name_lookup(x, name) for x in set(init + runtime)
+            ]
         return self._libraries[name]
 
     def _update_bytecode_with_libraries(self, bytecode, libraries):
         if libraries:
             libraries = self._convert_libraries_names(libraries)
-            for library_found in re.findall(r'__.{36}__', bytecode):
+            for library_found in re.findall(r"__.{36}__", bytecode):
                 if library_found in libraries:
                     bytecode = re.sub(
                         re.escape(library_found),
-                        '{:040x}'.format(libraries[library_found]),
-                        bytecode
+                        "{:040x}".format(libraries[library_found]),
+                        bytecode,
                     )
         return bytecode
 
@@ -571,13 +614,13 @@ class CryticCompile:
     def _compute_hashes(self, name):
         self._hashes[name] = {}
         for sig in self.abi(name):
-            if 'type' in sig:
-                if sig['type'] == 'function':
-                    sig_name = sig['name']
-                    arguments = ','.join([x['type'] for x in sig['inputs']])
-                    sig = f'{sig_name}({arguments})'
+            if "type" in sig:
+                if sig["type"] == "function":
+                    sig_name = sig["name"]
+                    arguments = ",".join([x["type"] for x in sig["inputs"]])
+                    sig = f"{sig_name}({arguments})"
                     s = sha3.keccak_256()
-                    s.update(sig.encode('utf-8'))
+                    s.update(sig.encode("utf-8"))
                     self._hashes[name][sig] = int("0x" + s.hexdigest()[:8], 16)
 
     # endregion
@@ -591,14 +634,20 @@ class CryticCompile:
     def import_archive_compilations(compiled_archive):
         # If the argument is a string, it is likely a filepath, load the archive.
         if isinstance(compiled_archive, str):
-            with open(compiled_archive, encoding='utf8') as f:
+            with open(compiled_archive, encoding="utf8") as f:
                 compiled_archive = json.load(f)
 
         # Verify the compiled archive is of the correct form
-        if not isinstance(compiled_archive, dict) or 'compilations' not in compiled_archive:
+        if (
+            not isinstance(compiled_archive, dict)
+            or "compilations" not in compiled_archive
+        ):
             raise ValueError("Cannot import compiled archive, invalid format.")
 
-        return [CryticCompile((compiled_archive, i)) for i in range(0, len(compiled_archive['compilations']))]
+        return [
+            CryticCompile((compiled_archive, i))
+            for i in range(0, len(compiled_archive["compilations"]))
+        ]
 
     # endregion
 
@@ -618,7 +667,7 @@ class CryticCompile:
                 'crytic-compile', 'standard'
                 export_dir (str): export dir (default crytic-export)
         """
-        export_format = kwargs.get('export_format', None)
+        export_format = kwargs.get("export_format", None)
         if export_format is None or export_format in ["crytic-compile", "standard"]:
             return standard.export(self, **kwargs)
         elif export_format == "solc":
@@ -628,9 +677,7 @@ class CryticCompile:
         elif export_format == "archive":
             return archive.export(self, **kwargs)
         else:
-            raise Exception('Export format unknown')
-
-
+            raise Exception("Export format unknown")
 
     # endregion
     ###################################################################################
@@ -641,17 +688,17 @@ class CryticCompile:
 
     def _compile(self, target, **kwargs):
 
-        truffle_ignore = kwargs.get('truffle_ignore', False)
-        embark_ignore = kwargs.get('embark_ignore', False)
-        dapp_ignore = kwargs.get('dapp_ignore', False)
-        etherlime_ignore = kwargs.get('etherlime_ignore', False)
-        etherscan_ignore = kwargs.get('etherscan_ignore', False)
-        standard_ignore = kwargs.get('standard_ignore', False)
-        archive_ignore = kwargs.get('standard_ignore', False)
-        vyper_ignore = kwargs.get('vyper_ignore', False)
-        brownie_ignore = kwargs.get('brownie_ignore', False)
+        truffle_ignore = kwargs.get("truffle_ignore", False)
+        embark_ignore = kwargs.get("embark_ignore", False)
+        dapp_ignore = kwargs.get("dapp_ignore", False)
+        etherlime_ignore = kwargs.get("etherlime_ignore", False)
+        etherscan_ignore = kwargs.get("etherscan_ignore", False)
+        standard_ignore = kwargs.get("standard_ignore", False)
+        archive_ignore = kwargs.get("standard_ignore", False)
+        vyper_ignore = kwargs.get("vyper_ignore", False)
+        brownie_ignore = kwargs.get("brownie_ignore", False)
 
-        custom_build = kwargs.get('compile_custom_build', None)
+        custom_build = kwargs.get("compile_custom_build", None)
 
         if custom_build:
             truffle_ignore = True
@@ -666,7 +713,7 @@ class CryticCompile:
 
             self._run_custom_build(custom_build)
 
-        compile_force_framework = kwargs.get('compile_force_framework', None)
+        compile_force_framework = kwargs.get("compile_force_framework", None)
         if compile_force_framework and compile_force_framework in PLATFORMS:
             self._platform = PLATFORMS[compile_force_framework]
         else:
@@ -695,21 +742,23 @@ class CryticCompile:
                 self._platform = solc
 
         self._platform.compile(self, target, **kwargs)
-        remove_metadata = kwargs.get('compile_remove_metadata', False)
+        remove_metadata = kwargs.get("compile_remove_metadata", False)
         if remove_metadata:
             self._remove_metadata()
 
     def _run_custom_build(self, custom_build):
-        cmd = custom_build.split(' ')
+        cmd = custom_build.split(" ")
 
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = process.communicate()
-        stdout, stderr = stdout.decode(), stderr.decode()  # convert bytestrings to unicode strings
+        stdout, stderr = (
+            stdout.decode(),
+            stderr.decode(),
+        )  # convert bytestrings to unicode strings
 
         logger.info(stdout)
         if stderr:
-            logger.error('Custom build error: \n%s', stderr)
-
+            logger.error("Custom build error: \n%s", stderr)
 
     # endregion
     ###################################################################################
@@ -719,21 +768,19 @@ class CryticCompile:
     ###################################################################################
 
     def _remove_metadata(self):
-        '''
+        """
             Init bytecode contains metadata that needs to be removed
             see http://solidity.readthedocs.io/en/v0.4.24/metadata.html#encoding-of-the-metadata-hash-in-the-bytecode
-        '''
-        self._init_bytecodes = {key: re.sub(
-                    r'a165627a7a72305820.{64}0029',
-                    r'',
-                    bytecode
-                ) for (key, bytecode) in self._init_bytecodes.items()}
+        """
+        self._init_bytecodes = {
+            key: re.sub(r"a165627a7a72305820.{64}0029", r"", bytecode)
+            for (key, bytecode) in self._init_bytecodes.items()
+        }
 
-        self._runtime_bytecodes = {key: re.sub(
-            r'a165627a7a72305820.{64}0029',
-            r'',
-            bytecode
-        ) for (key, bytecode) in self._runtime_bytecodes.items()}
+        self._runtime_bytecodes = {
+            key: re.sub(r"a165627a7a72305820.{64}0029", r"", bytecode)
+            for (key, bytecode) in self._runtime_bytecodes.items()
+        }
 
     # endregion
     ###################################################################################

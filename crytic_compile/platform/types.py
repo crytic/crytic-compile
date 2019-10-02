@@ -15,23 +15,23 @@ class Type(IntEnum):
 
     def __str__(self):
         if self == Type.SOLC:
-            return 'solc'
+            return "solc"
         if self == Type.SOLC_STANDARD_JSON:
-            return 'solc_standard_json'
+            return "solc_standard_json"
         if self == Type.TRUFFLE:
-            return 'Truffle'
+            return "Truffle"
         if self == Type.EMBARK:
-            return 'Embark'
+            return "Embark"
         if self == Type.DAPP:
-            return 'Dapp'
+            return "Dapp"
         if self == Type.ETHERLIME:
-            return 'Etherlime'
+            return "Etherlime"
         if self == Type.ETHERSCAN:
-            return 'Etherscan'
+            return "Etherscan"
         if self == Type.STANDARD:
-            return 'Standard'
+            return "Standard"
         if self == Type.ARCHIVE:
-            return 'Archive'
+            return "Archive"
         if self == Type.VYPER:
-            return 'Archive'
+            return "Archive"
         raise ValueError
