@@ -5,7 +5,7 @@ setup(
     description="Util to facilitate smart contracts compilation.",
     url="https://github.com/crytic/crytic-compile",
     author="Trail of Bits",
-    version="0.1.3",
+    version="0.1.4",
     packages=find_packages(),
     python_requires=">=3.6",
     install_requires=["pysha3>=1.0.2"],

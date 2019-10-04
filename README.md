@@ -10,6 +10,7 @@ Library to help smart contract compilation. It includes support for:
 - [Dapp](https://dapp.tools/dapp/)
 - [Etherlime](https://github.com/LimeChain/etherlime)
 - [Etherscan](https://etherscan.io/)
+- [Brownie](https://github.com/iamdefinitelyahuman/brownie)
 
 See the [Configuration](https://github.com/crytic/crytic-compile/wiki/Configuration) documentation for advanced usages.
 
