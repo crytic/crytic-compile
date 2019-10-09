@@ -20,6 +20,7 @@ from .platform import (
     standard,
     vyper,
     brownie,
+    waffle,
 )
 from .utils.zip import load_from_zip
 from .utils.npm import get_package_name
@@ -40,6 +41,7 @@ def is_supported(target):
         archive.is_archive,
         vyper.is_vyper,
         brownie.is_brownie,
+        waffle.is_waffle,
     ]
     return any(f(target) for f in supported) or target.endswith(".zip")
 
@@ -56,6 +58,7 @@ PLATFORMS = {
     "standard": standard,
     "vyper": vyper,
     "brownie": brownie,
+    "waffle": waffle,
 }
 
 
@@ -697,6 +700,7 @@ class CryticCompile:
         archive_ignore = kwargs.get("standard_ignore", False)
         vyper_ignore = kwargs.get("vyper_ignore", False)
         brownie_ignore = kwargs.get("brownie_ignore", False)
+        waffle_ignore = kwargs.get("waffle_ignore", False)
 
         custom_build = kwargs.get("compile_custom_build", None)
 
@@ -710,6 +714,7 @@ class CryticCompile:
             archive_ignore = True
             vyper_ignore = True
             brownie_ignore = True
+            waffle_ignore = True
 
             self._run_custom_build(custom_build)
 
@@ -737,6 +742,8 @@ class CryticCompile:
                 self._platform = vyper
             elif not brownie_ignore and brownie.is_brownie(target):
                 self._platform = brownie
+            elif not waffle_ignore and waffle.is_waffle(target):
+                self._platform = waffle
             # .json or .sol provided
             else:
                 self._platform = solc

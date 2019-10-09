@@ -20,5 +20,7 @@ defaults_flag_in_config = {
     "dapp_ignore_compile": False,
     "etherlime_ignore_compile": False,
     "etherlime_compile_arguments": None,
+    "waffle_ignore_compile": False,
+    "waffle_config_file": None,
     "npx_disable": False,
 }

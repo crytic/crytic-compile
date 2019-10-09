@@ -12,6 +12,7 @@ class Type(IntEnum):
     ARCHIVE = 8
     VYPER = 9
     SOLC_STANDARD_JSON = 10
+    WAFFLE = 11
 
     def __str__(self):
         if self == Type.SOLC:
@@ -34,4 +35,6 @@ class Type(IntEnum):
             return "Archive"
         if self == Type.VYPER:
             return "Archive"
+        if self == Type.WAFFLE:
+            return "Waffle"
         raise ValueError

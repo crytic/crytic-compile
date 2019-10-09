@@ -6,7 +6,7 @@ def init(parser):
     group_solc = parser.add_argument_group("Compile options")
     group_solc.add_argument(
         "--compile-force-framework",
-        help="Force the compile to a given framework (truffle, embark, dapp, etherlime, etherscan)",
+        help="Force the compile to a given framework (truffle, embark, dapp, etherlime, etherscan, waffle)",
         action="store",
         default=defaults_flag_in_config["compile_force_framework"],
     )
@@ -30,6 +30,7 @@ def init(parser):
     init_embark(parser)
     init_dapp(parser)
     init_etherlime(parser)
+    init_waffle(parser)
     init_npx(parser)
 
 
@@ -91,6 +92,23 @@ def init_solc(parser):
         default=defaults_flag_in_config["solc_standard_json"],
     )
 
+
+def init_waffle(parser):
+    group_waffle = parser.add_argument_group("Waffle options")
+    group_waffle.add_argument(
+        "--waffle-ignore-compile",
+        help="Do not run waffle compile",
+        action="store_true",
+        dest="waffle_ignore_compile",
+        default=defaults_flag_in_config["waffle_ignore_compile"],
+    )
+
+    group_waffle.add_argument(
+        "--waffle-config-file",
+        help="Provide a waffle config file",
+        action="store",
+        default=defaults_flag_in_config["waffle_config_file"],
+    )
 
 def init_truffle(parser):
     group_truffle = parser.add_argument_group("Truffle options")
