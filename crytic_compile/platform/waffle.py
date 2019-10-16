@@ -9,7 +9,6 @@ from .types import Type
 from .exceptions import InvalidCompilation
 from ..utils.naming import convert_filename
 from ..compiler.compiler import CompilerVersion
-from . import solc
 
 logger = logging.getLogger("CryticCompile")
 
@@ -24,9 +23,9 @@ def compile(crytic_compile, target, **kwargs):
         cmd = ["npx"] + cmd
 
     # Default behaviour (without any config_file)
-    build_directory =  os.path.join("build")
-    compiler = "solc-js"
-    version =  _get_version(compiler, target)
+    build_directory = os.path.join("build")
+    compiler = "native"
+    version =_get_version(compiler, target)
     config = {}
 
     config_file = kwargs.get(
@@ -46,8 +45,6 @@ def compile(crytic_compile, target, **kwargs):
 
     if "outputType" not in config or config["outputType"] != "all":
         config["outputType"] = "all"
-
-
 
     needed_config = { "compilerOptions": {
         "outputSelection": {
@@ -88,10 +85,9 @@ def compile(crytic_compile, target, **kwargs):
                 curr_config["*"] = curr_needed_config["*"]
 
         else:
-            curr["outputSelection"] = curr_needed_config["outputSelection"]
+            curr_config["outputSelection"] = curr_needed_config["outputSelection"]
     else:
         config["compilerOptions"] = needed_config["compilerOptions"]
-
 
     if not waffle_ignore_compile:
         with tempfile.NamedTemporaryFile(mode='w', suffix=".json") as f:
