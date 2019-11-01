@@ -17,7 +17,7 @@ def generate_standard_export(crytic_compile):
     contracts = dict()
     for contract_name in crytic_compile.contracts_names:
         filename = crytic_compile.filename_of_contract(contract_name)
-        librairies = crytic_compile.libraries_names_and_patterns(contract_name)
+        libraries = crytic_compile.libraries_names_and_patterns(contract_name)
         contracts[contract_name] = {
             "abi": crytic_compile.abi(contract_name),
             "bin": crytic_compile.bytecode_init(contract_name),
@@ -30,7 +30,7 @@ def generate_standard_export(crytic_compile):
                 "short": filename.short,
                 "relative": filename.relative,
             },
-            "libraries": dict(librairies) if librairies else dict(),
+            "libraries": dict(libraries) if libraries else dict(),
             "is_dependency": crytic_compile.is_dependency(filename.absolute),
         }
 
@@ -43,6 +43,7 @@ def generate_standard_export(crytic_compile):
             "version": crytic_compile._compiler_version.version,
             "optimized": crytic_compile._compiler_version.optimized,
         },
+        "package": crytic_compile._package,
         "working_dir": str(crytic_compile._working_dir),
         "type": int(crytic_compile._type),
     }
@@ -77,6 +78,7 @@ def compile(crytic_compile, target, **kwargs):
 
 
 def load_from_compile(crytic_compile, loaded_json):
+    crytic_compile._package = loaded_json.get("package", None)
     crytic_compile._asts = loaded_json["asts"]
     crytic_compile._compiler_version = CompilerVersion(
         compiler=loaded_json["compiler"]["compiler"],
