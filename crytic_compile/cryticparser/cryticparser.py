@@ -110,6 +110,7 @@ def init_waffle(parser):
         default=defaults_flag_in_config["waffle_config_file"],
     )
 
+
 def init_truffle(parser):
     group_truffle = parser.add_argument_group("Truffle options")
     group_truffle.add_argument(
