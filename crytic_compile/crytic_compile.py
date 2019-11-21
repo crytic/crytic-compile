@@ -148,6 +148,8 @@ class CryticCompile:
         self._type = None
         self._platform = None
 
+        self._bytecode_only = False
+
         # compiler.compiler
         self._compiler_version = None
 
@@ -162,6 +164,7 @@ class CryticCompile:
             target = (target, 0)
 
         self._compile(target, **kwargs)
+
 
     @property
     def target(self):
@@ -408,6 +411,18 @@ class CryticCompile:
     @compiler_version.setter
     def compiler_version(self, c):
         self._compiler_version = c
+
+    @property
+    def bytecode_only(self):
+        '''
+        Return true if only the bytecode was retrieved
+        :return:
+        '''
+        return self._bytecode_only
+
+    @bytecode_only.setter
+    def bytecode_only(self, b):
+        self._bytecode_only = b
 
     # endregion
     ###################################################################################
