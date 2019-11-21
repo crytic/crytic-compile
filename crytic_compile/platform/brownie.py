@@ -88,7 +88,10 @@ def compile(crytic_compile, target, **kwargs):
 
 
 def is_brownie(target):
-    return os.path.isfile(os.path.join(target, "brownie-config.json"))
+    # < 1.1.0: brownie-config.json
+    # >= 1.1.0: brownie-config.yaml
+    return (os.path.isfile(os.path.join(target, "brownie-config.json")) or
+            os.path.isfile(os.path.join(target, "brownie-config.yaml")))
 
 
 def is_dependency(path):
