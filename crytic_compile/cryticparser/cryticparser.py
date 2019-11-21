@@ -30,6 +30,7 @@ def init(parser):
     init_embark(parser)
     init_dapp(parser)
     init_etherlime(parser)
+    init_etherscan(parser)
     init_waffle(parser)
     init_npx(parser)
 
@@ -196,6 +197,23 @@ def init_etherlime(parser):
         default=defaults_flag_in_config["etherlime_compile_arguments"],
     )
 
+def init_etherscan(parser):
+    group_etherscan = parser.add_argument_group("Etherscan options")
+    group_etherscan.add_argument(
+        "--etherscan-only-source-code",
+        help="Only compile if the source code is available.",
+        action="store_true",
+        dest="etherscan_only_source_code",
+        default=defaults_flag_in_config["etherscan_only_source_code"],
+    )
+
+    group_etherscan.add_argument(
+        "--etherscan-only-bytecode",
+        help="Only looks for bytecode.",
+        action="store_true",
+        dest="etherscan_only_bytecode",
+        default=defaults_flag_in_config["etherscan_only_bytecode"],
+    )
 
 def init_npx(parser):
     group_npx = parser.add_argument_group("NPX options")
