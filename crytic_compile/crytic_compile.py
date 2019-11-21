@@ -165,7 +165,6 @@ class CryticCompile:
 
         self._compile(target, **kwargs)
 
-
     @property
     def target(self):
         return self._target
@@ -414,10 +413,10 @@ class CryticCompile:
 
     @property
     def bytecode_only(self):
-        '''
+        """
         Return true if only the bytecode was retrieved
         :return:
-        '''
+        """
         return self._bytecode_only
 
     @bytecode_only.setter

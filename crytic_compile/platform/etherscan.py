@@ -16,17 +16,15 @@ ethercan_base = (
     "https://api%s.etherscan.io/api?module=contract&action=getsourcecode&address=%s"
 )
 
-ethercan_base_bytecode = (
-    "https://%setherscan.io/address/%s#code"
-)
+ethercan_base_bytecode = "https://%setherscan.io/address/%s#code"
 
 supported_network = {
     # Key, (prefix_base, perfix_bytecode)
-    "mainet:":   ("",          ""),
-    "ropsten:":  ("-ropsten",  "ropsten."),
-    "kovan:":    ("-kovan",    "kovan."),
-    "rinkeby:":  ("-rinkeby",  "rinkeby."),
-    "goerli:":   ("-goerli",   "goerli."),
+    "mainet:": ("", ""),
+    "ropsten:": ("-ropsten", "ropsten."),
+    "kovan:": ("-kovan", "kovan."),
+    "rinkeby:": ("-rinkeby", "rinkeby."),
+    "goerli:": ("-goerli", "goerli."),
     "tobalaba:": ("-tobalaba", "tobalaba."),
 }
 
@@ -34,34 +32,30 @@ supported_network = {
 def _handle_bytecode(crytic_compile, target, result):
     # There is no direct API to get the bytecode from etherscan
     # The page changes from time to time, we use for now a simple parsing, it will not be robust
-    begin = '''Search Algorithm">\nSimilar Contracts</button>\n<div id="dividcode">\n<pre class=\'wordwrap\' style=\'height: 15pc;\'>0x'''
-    result = result.decode('utf8')
+    begin = """Search Algorithm">\nSimilar Contracts</button>\n<div id="dividcode">\n<pre class=\'wordwrap\' style=\'height: 15pc;\'>0x"""
+    result = result.decode("utf8")
     # Removing everything before the begin string
-    result = result[result.find(begin)+len(begin):]
-    bytecode = result[:result.find('<')]
+    result = result[result.find(begin) + len(begin) :]
+    bytecode = result[: result.find("<")]
 
-    contract_name = f'Contract_{target}'
+    contract_name = f"Contract_{target}"
 
-    contract_filename = Filename(
-        absolute='',
-        relative='',
-        short='',
-        used='',
-    )
+    contract_filename = Filename(absolute="", relative="", short="", used="")
 
     crytic_compile.contracts_names.add(contract_name)
     crytic_compile.contracts_filenames[contract_name] = contract_filename
     crytic_compile.abis[contract_name] = {}
     crytic_compile.bytecodes_init[contract_name] = bytecode
-    crytic_compile.bytecodes_runtime[contract_name] = ''
+    crytic_compile.bytecodes_runtime[contract_name] = ""
     crytic_compile.srcmaps_init[contract_name] = []
     crytic_compile.srcmaps_runtime[contract_name] = []
 
     crytic_compile.compiler_version = CompilerVersion(
-        compiler="unknown", version='', optimized=None
+        compiler="unknown", version="", optimized=None
     )
 
     crytic_compile.bytecode_only = True
+
 
 def compile(crytic_compile, target, **kwargs):
     crytic_compile.type = Type.ETHERSCAN
@@ -81,10 +75,10 @@ def compile(crytic_compile, target, **kwargs):
         addr = target
         prefix = None
 
-    only_source = kwargs.get('etherscan_only_source_code', False)
-    only_bytecode = kwargs.get('etherscan_only_bytecode', False)
+    only_source = kwargs.get("etherscan_only_source_code", False)
+    only_bytecode = kwargs.get("etherscan_only_bytecode", False)
 
-    source_code = ''
+    source_code = ""
     result = None
     contract_name = None
 
@@ -100,26 +94,31 @@ def compile(crytic_compile, target, **kwargs):
 
         if info["message"] != "OK":
             logger.error("Contract has no public source code")
-            raise InvalidCompilation("Contract has no public source code: " + etherscan_url)
+            raise InvalidCompilation(
+                "Contract has no public source code: " + etherscan_url
+            )
 
         if not "result" in info:
             logger.error("Contract has no public source code")
-            raise InvalidCompilation("Contract has no public source code: " + etherscan_url)
+            raise InvalidCompilation(
+                "Contract has no public source code: " + etherscan_url
+            )
 
         result = info["result"][0]
         source_code = result["SourceCode"]
         contract_name = result["ContractName"]
 
-    if source_code == '' and not only_source:
-        logger.info('Source code not available, try to fetch the bytecode only')
+    if source_code == "" and not only_source:
+        logger.info("Source code not available, try to fetch the bytecode only")
 
-        req = urllib.request.Request(etherscan_bytecode_url, headers={"User-Agent": "Mozilla/5.0"})
+        req = urllib.request.Request(
+            etherscan_bytecode_url, headers={"User-Agent": "Mozilla/5.0"}
+        )
         with urllib.request.urlopen(req) as response:
             html = response.read()
 
         _handle_bytecode(crytic_compile, target, html)
         return
-
 
     if prefix:
         filename = os.path.join(
