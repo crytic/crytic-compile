@@ -17,16 +17,17 @@ ethercan_base = (
 )
 
 ethercan_base_bytecode = (
-    "%s%shttps://etherscan.io/address/%s#code"
+    "https://%setherscan.io/address/%s#code"
 )
 
 supported_network = {
-    "mainet:": "",
-    "ropsten:": "-ropsten",
-    "kovan:": "-kovan",
-    "rinkeby:": "-rinkeby",
-    "goerli:": "-goerli",
-    "tobalaba:": "-tobalaba",
+    # Key, (prefix_base, perfix_bytecode)
+    "mainet:":   ("",          ""),
+    "ropsten:":  ("-ropsten",  "ropsten."),
+    "kovan:":    ("-kovan",    "kovan."),
+    "rinkeby:":  ("-rinkeby",  "rinkeby."),
+    "goerli:":   ("-goerli",   "goerli."),
+    "tobalaba:": ("-tobalaba", "tobalaba."),
 }
 
 
@@ -68,16 +69,15 @@ def compile(crytic_compile, target, **kwargs):
     solc = kwargs.get("solc", "solc")
 
     if target.startswith(tuple(supported_network)):
-        prefix = supported_network[target[: target.find(":") + 1]]
+        prefix = supported_network[target[: target.find(":") + 1]][0]
+        prefix_bytecode = supported_network[target[: target.find(":") + 1]][1]
         addr = target[target.find(":") + 1 :]
         etherscan_url = ethercan_base % (prefix, addr)
-        if prefix != "":
-            etherscan_bytecode_url = ethercan_base_bytecode % (prefix, ".", addr)
-        else:
-            etherscan_bytecode_url = ethercan_base_bytecode % (prefix, "", addr)
+        etherscan_bytecode_url = ethercan_base_bytecode % (prefix_bytecode, addr)
+
     else:
         etherscan_url = ethercan_base % ("", target)
-        etherscan_bytecode_url = ethercan_base_bytecode % ("", "", target)
+        etherscan_bytecode_url = ethercan_base_bytecode % ("", target)
         addr = target
         prefix = None
 
