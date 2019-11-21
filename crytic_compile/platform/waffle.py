@@ -1,3 +1,7 @@
+"""
+Waffle platform
+"""
+
 import os
 import tempfile
 import logging
@@ -5,6 +9,13 @@ import subprocess
 import re
 import json
 from pathlib import Path
+
+from typing import TYPE_CHECKING, Dict
+
+# Handle cycle
+if TYPE_CHECKING:
+    from crytic_compile import CryticCompile
+
 from .types import Type
 from .exceptions import InvalidCompilation
 from ..utils.naming import convert_filename
@@ -13,7 +24,14 @@ from ..compiler.compiler import CompilerVersion
 logger = logging.getLogger("CryticCompile")
 
 
-def compile(crytic_compile, target, **kwargs):
+def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
+    """
+    Compile the target
+    :param crytic_compile:
+    :param target:
+    :param kwargs:
+    :return:
+    """
 
     waffle_ignore_compile = kwargs.get("waffle_ignore_compile", False)
     crytic_compile.type = Type.WAFFLE
@@ -164,7 +182,12 @@ def compile(crytic_compile, target, **kwargs):
     )
 
 
-def is_waffle(target):
+def is_waffle(target: str) -> bool:
+    """
+    Check if the target is a waffle project
+    :param target:
+    :return:
+    """
     if os.path.isfile(os.path.join(target, "package.json")):
         with open("package.json", encoding="utf8") as f:
             package = json.load(f)
@@ -173,11 +196,21 @@ def is_waffle(target):
     return False
 
 
-def is_dependency(path):
+def is_dependency(path: str) -> bool:
+    """
+    Check if the path is a dependency
+    :param path:
+    :return:
+    """
     return "node_modules" in Path(path).parts
 
 
-def _load_config(config_file):
+def _load_config(config_file: str) -> Dict:
+    """
+    Load the config file
+    :param config_file:
+    :return:
+    """
     with open(config_file, "r") as f:
         content = f.read()
 
@@ -187,7 +220,7 @@ def _load_config(config_file):
         return json.loads(content)
 
 
-def _get_version(compiler, cwd, config=None):
+def _get_version(compiler: str, cwd: str, config=None) -> str:
     if config is not None and "solcVersion" in config:
         version = re.findall("\d+\.\d+\.\d+", config["solcVersion"])[0]
 
@@ -221,7 +254,7 @@ def _get_version(compiler, cwd, config=None):
     return version
 
 
-def _relative_to_short(relative):
+def _relative_to_short(relative: Path) -> Path:
     short = relative
     try:
         short = short.relative_to(Path("contracts"))

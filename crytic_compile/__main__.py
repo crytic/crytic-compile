@@ -1,23 +1,33 @@
+"""
+This is the Slither cli script
+"""
 import argparse
-import sys
 import json
-import os
 import logging
+import os
+import sys
+
 from pkg_resources import require
-from .cryticparser import cryticparser, defaults_flag_in_config
-from .crytic_compile import CryticCompile, compile_all
-from .platform import InvalidCompilation
-from .utils.zip import save_to_zip
+
+from crytic_compile.crytic_compile import compile_all
+from crytic_compile.cryticparser import cryticparser, defaults_flag_in_config
+from crytic_compile.platform import InvalidCompilation
+from crytic_compile.utils.zip import save_to_zip
 
 logging.basicConfig()
-logger = logging.getLogger("CryticCompile")
-logger.setLevel(logging.INFO)
+LOGGER = logging.getLogger("CryticCompile")
+LOGGER.setLevel(logging.INFO)
 
 
 def parse_args():
+    """
+    Parse the arguments
+    :return:
+    """
     # Create our argument parser
     parser = argparse.ArgumentParser(
-        description="crytic-compile. For usage information, see https://github.com/crytic/crytic-compile/wiki/Usage",
+        description="""crytic-compile. For usage information,
+see https://github.com/crytic/crytic-compile/wiki/Usage""",
         usage="crytic-compile contract.sol [flag]",
     )
 
@@ -34,7 +44,8 @@ def parse_args():
 
     parser.add_argument(
         "--export-format",
-        help="Export json with non crytic-compile format (default None. Accepted: standard, solc, truffle)",
+        help="""Export json with non crytic-compile format
+(default None. Accepted: standard, solc, truffle)""",
         action="store",
         dest="export_format",
         default=None,
@@ -89,29 +100,34 @@ def parse_args():
     # If there is a config file provided, update the values with the one in the config file
     if os.path.isfile(args.config_file):
         try:
-            with open(args.config_file, encoding="utf8") as f:
-                config = json.load(f)
+            with open(args.config_file, encoding="utf8") as f_config:
+                config = json.load(f_config)
                 for key, elem in config.items():
                     if key not in defaults_flag_in_config:
-                        logger.info(
-                            "{} has an unknown key: {} : {}".format(
-                                args.config_file, key, elem
-                            )
+                        LOGGER.info(
+                            "%s has an unknown key: %s : %s",
+                            args.config_file,
+                            key,
+                            elem,
                         )
                         continue
                     if getattr(args, key) == defaults_flag_in_config[key]:
                         setattr(args, key, elem)
-        except json.decoder.JSONDecodeError as e:
-            logger.error(
-                "Impossible to read {}, please check the file {}".format(
-                    args.config_file, e
-                )
+        except json.decoder.JSONDecodeError as exception:
+            LOGGER.error(
+                "Impossible to read %s, please check the file %s",
+                args.config_file,
+                exception,
             )
 
     return args
 
 
 def main():
+    """
+    Main function run from the cli
+    :return:
+    """
     args = parse_args()
     try:
         # Compile all specified (possibly glob patterned) targets.
@@ -135,15 +151,15 @@ def main():
                 compilation.export(**vars(args))
 
             if args.export_formats:
-                for format in args.export_formats.split(","):
-                    args.export_format = format
+                for export_format in args.export_formats.split(","):
+                    args.export_format = export_format
                     compilation.export(**vars(args))
 
         if args.export_to_zip:
             save_to_zip(compilations, args.export_to_zip)
 
-    except InvalidCompilation as e:
-        logger.error(e)
+    except InvalidCompilation as exception:
+        LOGGER.error(exception)
         sys.exit(-1)
 
 

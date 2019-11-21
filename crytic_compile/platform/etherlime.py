@@ -1,3 +1,7 @@
+"""
+Etherlime platform. https://github.com/LimeChain/etherlime
+"""
+
 import os
 import json
 import logging
@@ -5,15 +9,29 @@ import subprocess
 import glob
 import re
 from pathlib import Path
-from .types import Type
-from .exceptions import InvalidCompilation
-from ..utils.naming import convert_filename
-from ..compiler.compiler import CompilerVersion
+
+# Cycle dependency
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from crytic_compile import CryticCompile
+
+from crytic_compile.platform.types import Type
+from crytic_compile.platform.exceptions import InvalidCompilation
+from crytic_compile.utils.naming import convert_filename
+from crytic_compile.compiler.compiler import CompilerVersion
 
 logger = logging.getLogger("CryticCompile")
 
 
-def compile(crytic_compile, target, **kwargs):
+def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
+    """
+    Compile the target
+    :param crytic_compile:
+    :param target:
+    :param kwargs:
+    :return:
+    """
 
     etherlime_ignore_compile = kwargs.get("etherlime_ignore_compile", False)
 
@@ -65,8 +83,10 @@ def compile(crytic_compile, target, **kwargs):
             if not "ast" in target_loaded:
                 continue
 
-            filename = target_loaded["ast"]["absolutePath"]
-            filename = convert_filename(filename, _relative_to_short, crytic_compile)
+            filename_txt = target_loaded["ast"]["absolutePath"]
+            filename = convert_filename(
+                filename_txt, _relative_to_short, crytic_compile
+            )
             crytic_compile.asts[filename.absolute] = target_loaded["ast"]
             crytic_compile.filenames.add(filename)
             contract_name = target_loaded["contractName"]
@@ -91,7 +111,12 @@ def compile(crytic_compile, target, **kwargs):
     )
 
 
-def is_etherlime(target):
+def is_etherlime(target: str) -> bool:
+    """
+    Check if the target is an etherlime project
+    :param target:
+    :return:
+    """
     if os.path.isfile(os.path.join(target, "package.json")):
         with open("package.json", encoding="utf8") as f:
             package = json.load(f)
@@ -103,17 +128,32 @@ def is_etherlime(target):
     return False
 
 
-def is_dependency(path):
+def is_dependency(path: str) -> bool:
+    """
+    Check if the path is a dependency
+    :param path:
+    :return:
+    """
     return "node_modules" in Path(path).parts
 
 
-def _is_optimized(compile_arguments):
+def _is_optimized(compile_arguments: str) -> bool:
+    """
+    Check if the optimization is enabled
+    :param compile_arguments:
+    :return:
+    """
     if compile_arguments:
         return "--run" in compile_arguments
     return False
 
 
-def _relative_to_short(relative):
+def _relative_to_short(relative: Path) -> Path:
+    """
+    Translate relative to short
+    :param relative:
+    :return:
+    """
     short = relative
     try:
         short = short.relative_to(Path("contracts"))

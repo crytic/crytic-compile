@@ -4,20 +4,33 @@ import logging
 import subprocess
 import re
 
-from .types import Type
-from ..utils.naming import (
+# Cycle dependency
+from typing import TYPE_CHECKING, Union
+
+if TYPE_CHECKING:
+    from crytic_compile import CryticCompile
+
+from crytic_compile.platform.types import Type
+from crytic_compile.utils.naming import (
     extract_filename,
     extract_name,
     combine_filename_name,
     convert_filename,
 )
-from .exceptions import InvalidCompilation
-from ..compiler.compiler import CompilerVersion
+from crytic_compile.platform.exceptions import InvalidCompilation
+from crytic_compile.compiler.compiler import CompilerVersion
 
 logger = logging.getLogger("CryticCompile")
 
 
-def compile(crytic_compile, target, **kwargs):
+def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
+    """
+    Compile the target
+    :param crytic_compile:
+    :param target:
+    :param kwargs:
+    :return:
+    """
     crytic_compile.type = Type.SOLC
     solc = kwargs.get("solc", "solc")
     solc_disable_warnings = kwargs.get("solc_disable_warnings", False)
@@ -130,15 +143,31 @@ def compile(crytic_compile, target, **kwargs):
             crytic_compile.asts[path.absolute] = info["AST"]
 
 
-def is_solc(target):
+def is_solc(target: str) -> bool:
+    """
+    Check if the target is a solc project
+    :param target:
+    :return:
+    """
     return os.path.isfile(target) and target.endswith(".sol")
 
 
-def is_dependency(_path):
+def is_dependency(_path: str) -> bool:
+    """
+    Always return false
+    :param _path:
+    :return:
+    """
     return False
 
 
-def export(crytic_compile, **kwargs):
+def export(crytic_compile: "CryticCompile", **kwargs: str) -> Union[str, None]:
+    """
+    Export the project to the solc format
+    :param crytic_compile:
+    :param kwargs:
+    :return:
+    """
     # Obtain objects to represent each contract
     contracts = dict()
     for contract_name in crytic_compile.contracts_names:
@@ -180,7 +209,12 @@ def export(crytic_compile, **kwargs):
     return None
 
 
-def get_version(solc):
+def get_version(solc: str) -> str:
+    """
+    Get the compiler verison used
+    :param solc:
+    :return:
+    """
     cmd = [solc, "--version"]
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, _ = process.communicate()
@@ -190,16 +224,21 @@ def get_version(solc):
     return version[0]
 
 
-def _is_optimized(solc_arguments):
+def _is_optimized(solc_arguments: str) -> bool:
+    """
+    Check if optimization are used
+    :param solc_arguments:
+    :return:
+    """
     if solc_arguments:
         return "--optimize" in solc_arguments
     return False
 
 
 def _run_solc(
-    crytic_compile,
-    filename,
-    solc,
+    crytic_compile: "CryticCompile",
+    filename: str,
+    solc: str,
     solc_disable_warnings,
     solc_arguments,
     solc_remaps=None,

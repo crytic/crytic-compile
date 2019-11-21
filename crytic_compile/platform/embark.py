@@ -1,18 +1,35 @@
-import os
+"""
+Embark platform. https://github.com/embark-framework/embark
+"""
+
 import json
 import logging
+import os
 import subprocess
 
-from ..utils.naming import extract_filename, extract_name, convert_filename
-from ..compiler.compiler import CompilerVersion
-from .types import Type
-from .exceptions import InvalidCompilation
+# Cycle dependency
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from crytic_compile import CryticCompile
+
+from crytic_compile.utils.naming import extract_filename, extract_name, convert_filename
+from crytic_compile.compiler.compiler import CompilerVersion
+from crytic_compile.platform.types import Type
+from crytic_compile.platform.exceptions import InvalidCompilation
 from pathlib import Path
 
 logger = logging.getLogger("CryticCompile")
 
 
-def compile(crytic_compile, target, **kwargs):
+def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
+    """
+    Compile the target
+    :param crytic_compile:
+    :param target:
+    :param kwargs:
+    :return:
+    """
     embark_ignore_compile = kwargs.get("embark_ignore_compile", False)
     embark_overwrite_config = kwargs.get("embark_overwrite_config", False)
     crytic_compile._type = Type.EMBARK
@@ -110,15 +127,30 @@ def compile(crytic_compile, target, **kwargs):
                 ].split(";")
 
 
-def is_embark(target):
+def is_embark(target: str) -> bool:
+    """
+    Check if the target is an embark project
+    :param target:
+    :return:
+    """
     return os.path.isfile(os.path.join(target, "embark.json"))
 
 
-def is_dependency(path):
+def is_dependency(path: str) -> bool:
+    """
+    Check if the path is a dependency
+    :param path:
+    :return:
+    """
     return "node_modules" in Path(path).parts
 
 
-def _get_version(target):
+def _get_version(target: str) -> CompilerVersion:
+    """
+    Get the compiler version
+    :param target:
+    :return:
+    """
     with open(os.path.join(target, "embark.json"), encoding="utf8") as f:
         config = json.load(f)
         version = "0.5.0"  # default version with Embark 0.4
@@ -134,7 +166,12 @@ def _get_version(target):
     return CompilerVersion(compiler="solc-js", version=version, optimized=optimized)
 
 
-def _relative_to_short(relative):
+def _relative_to_short(relative: Path) -> Path:
+    """
+    Convert relative to short
+    :param relative:
+    :return:
+    """
     short = relative
     try:
         short = short.relative_to(Path(".embark", "contracts"))

@@ -1,3 +1,7 @@
+"""
+Dapp platform. https://github.com/dapphub/dapptools
+"""
+
 import os
 import json
 import logging
@@ -5,9 +9,16 @@ import glob
 import re
 
 import subprocess
-from ..compiler.compiler import CompilerVersion
-from .types import Type
-from ..utils.naming import (
+
+# Cycle dependency
+from typing import TYPE_CHECKING, Dict
+
+if TYPE_CHECKING:
+    from crytic_compile import CryticCompile
+
+from crytic_compile.compiler.compiler import CompilerVersion
+from crytic_compile.platform.types import Type
+from crytic_compile.utils.naming import (
     extract_filename,
     extract_name,
     combine_filename_name,
@@ -18,7 +29,14 @@ from pathlib import Path
 logger = logging.getLogger("CryticCompile")
 
 
-def compile(crytic_compile, target, **kwargs):
+def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
+    """
+    Compile the target
+    :param crytic_compile:
+    :param target:
+    :param kwargs:
+    :return:
+    """
     crytic_compile.type = Type.DAPP
     dapp_ignore_compile = kwargs.get("dapp_ignore_compile", False)
     dir = os.path.join(target, "out")
@@ -63,7 +81,13 @@ def compile(crytic_compile, target, **kwargs):
             crytic_compile.asts[path.absolute] = info["AST"]
 
 
-def export(crytic_compile, **kwargs):
+def export(crytic_compile: "CryticCompile", **kwargs: str) -> Dict:
+    """
+    Export the target
+    :param crytic_compile:
+    :param kwargs:
+    :return:
+    """
     # Obtain objects to represent each contract
     contracts = dict()
     for contract_name in crytic_compile.contracts_names:
@@ -102,7 +126,7 @@ def export(crytic_compile, **kwargs):
     return output
 
 
-def is_dapp(target):
+def is_dapp(target: str) -> bool:
     """
     Heuristic used: check if "dapp build" is present in Makefile
     :param target:
@@ -116,11 +140,21 @@ def is_dapp(target):
     return False
 
 
-def is_dependency(path):
+def is_dependency(path: str) -> bool:
+    """
+    Check if the path is a dependency
+    :param path:
+    :return:
+    """
     return "lib" in Path(path).parts
 
 
-def _run_dapp(target):
+def _run_dapp(target: str):
+    """
+    Run Dapp
+    :param target:
+    :return:
+    """
     cmd = ["dapp", "build"]
 
     process = subprocess.Popen(
@@ -129,7 +163,12 @@ def _run_dapp(target):
     _, _ = process.communicate()
 
 
-def _get_version(target):
+def _get_version(target: str) -> CompilerVersion:
+    """
+    Get the compiler version used
+    :param target:
+    :return:
+    """
     files = glob.glob(target + "/**/*meta.json", recursive=True)
     version = None
     optimized = None
@@ -150,7 +189,12 @@ def _get_version(target):
     return CompilerVersion(compiler=compiler, version=version, optimized=optimized)
 
 
-def _relative_to_short(relative):
+def _relative_to_short(relative: Path) -> Path:
+    """
+    Translate relative path to short
+    :param relative:
+    :return:
+    """
     short = relative
     try:
         short = short.relative_to(Path("src"))

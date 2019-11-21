@@ -1,19 +1,35 @@
 # Standard crytic-compile export
-import os
 import json
+import os
 from pathlib import Path
+
+# Cycle dependency
+from typing import TYPE_CHECKING, Dict, Optional
+
+if TYPE_CHECKING:
+    from crytic_compile import CryticCompile
 
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.utils.naming import Filename
 
 
-def is_standard(target):
+def is_standard(target: str) -> bool:
+    """
+    Check if the target is the standard crytic compile export
+    :param target:
+    :return:
+    """
     if not Path(target).parts:
         return False
     return Path(target).parts[-1].endswith("_export.json")
 
 
-def generate_standard_export(crytic_compile):
+def generate_standard_export(crytic_compile: "CryticCompile") -> Dict:
+    """
+    Export the standard crytic compile export
+    :param crytic_compile:
+    :return:
+    """
     contracts = dict()
     for contract_name in crytic_compile.contracts_names:
         filename = crytic_compile.filename_of_contract(contract_name)
@@ -50,7 +66,13 @@ def generate_standard_export(crytic_compile):
     return output
 
 
-def export(crytic_compile, **kwargs):
+def export(crytic_compile: "CryticCompile", **kwargs: str) -> Optional[str]:
+    """
+    Export the project to the standard crytic compile format
+    :param crytic_compile:
+    :param kwargs:
+    :return:
+    """
     # Obtain objects to represent each contract
 
     output = generate_standard_export(crytic_compile)
@@ -61,23 +83,37 @@ def export(crytic_compile, **kwargs):
             os.makedirs(export_dir)
 
         target = crytic_compile.target
-        target = "contracts" if os.path.isdir(target) else Path(target).parts[-1]
+        if isinstance(target, str):
+            target = "contracts" if os.path.isdir(target) else Path(target).parts[-1]
 
-        path = os.path.join(export_dir, f"{target}.json")
-        with open(path, "w", encoding="utf8") as f:
-            json.dump(output, f)
+            path = os.path.join(export_dir, f"{target}.json")
+            with open(path, "w", encoding="utf8") as f:
+                json.dump(output, f)
 
-        return path
+            return path
     return None
 
 
-def compile(crytic_compile, target, **kwargs):
+def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
+    """
+    Compile the target (load file)
+    :param crytic_compile:
+    :param target:
+    :param kwargs:
+    :return:
+    """
     with open(target, encoding="utf8") as f:
         loaded_json = json.load(f)
     load_from_compile(crytic_compile, loaded_json)
 
 
-def load_from_compile(crytic_compile, loaded_json):
+def load_from_compile(crytic_compile: "CryticCompile", loaded_json: Dict):
+    """
+    Load from json
+    :param crytic_compile:
+    :param loaded_json:
+    :return:
+    """
     crytic_compile._package = loaded_json.get("package", None)
     crytic_compile._asts = loaded_json["asts"]
     crytic_compile._compiler_version = CompilerVersion(
@@ -117,10 +153,20 @@ def load_from_compile(crytic_compile, loaded_json):
     crytic_compile._type = loaded_json["type"]
 
 
-def is_dependency(filename):
+def is_dependency(filename: str) -> bool:
+    """
+    Always return False
+    :param filename:
+    :return:
+    """
     # handled by crytic_compile_dependencies
     return False
 
 
 def _relative_to_short(relative):
+    """
+
+    :param relative:
+    :return:
+    """
     return relative

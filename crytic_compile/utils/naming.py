@@ -3,21 +3,28 @@ import os.path
 import logging
 from pathlib import Path
 from collections import namedtuple
-from ..platform.exceptions import InvalidCompilation
+
+from crytic_compile.platform.exceptions import InvalidCompilation
+
+# Cycle dependency
+from typing import TYPE_CHECKING, Union
+
+if TYPE_CHECKING:
+    from crytic_compile import CryticCompile
 
 logger = logging.getLogger("CryticCompile")
 
 Filename = namedtuple("Filename", ["absolute", "used", "relative", "short"])
 
 
-def extract_name(name):
+def extract_name(name: str):
     """
         Convert '/path:Contract' to Contract
     """
     return name[name.rfind(":") + 1 :]
 
 
-def extract_filename(name):
+def extract_filename(name: str):
     """
         Convert '/path:Contract' to /path
     """
@@ -31,8 +38,11 @@ def combine_filename_name(filename, name):
 
 
 def convert_filename(
-    used_filename, relative_to_short, crytic_compile, working_dir=None
-):
+    used_filename: Union[str, Path],
+    relative_to_short,
+    crytic_compile: "CryticCompile",
+    working_dir=None,
+) -> Filename:
     """
     Convert filename.
     The used_filename can be absolute, relative, or missing node_modules/contracts directory
@@ -43,15 +53,15 @@ def convert_filename(
     :param working_dir:
     :return: Filename (namedtuple)
     """
-    filename = used_filename
+    filename_txt = used_filename
     if platform.system() == "Windows":
-        elements = list(Path(filename).parts)
+        elements = list(Path(filename_txt).parts)
         if elements[0] == "/" or elements[0] == "\\":
             elements = elements[1:]  # remove '/'
             elements[0] = elements[0] + ":/"  # add :/
         filename = Path(*elements)
     else:
-        filename = Path(filename)
+        filename = Path(filename_txt)
 
     if working_dir is None:
         cwd = Path.cwd()

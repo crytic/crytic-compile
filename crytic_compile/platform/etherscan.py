@@ -1,14 +1,31 @@
+"""
+Etherscan platform.
+"""
+
 import json
 import logging
 import urllib.request
 import os
 import re
 
-from .types import Type
-from .exceptions import InvalidCompilation
-from .solc import _run_solc
-from ..utils.naming import extract_filename, extract_name, convert_filename, Filename
-from ..compiler.compiler import CompilerVersion
+from pathlib import Path
+
+# Cycle dependency
+from typing import TYPE_CHECKING, Union, Dict, Optional, Match
+
+if TYPE_CHECKING:
+    from crytic_compile import CryticCompile
+
+from crytic_compile.platform.types import Type
+from crytic_compile.platform.exceptions import InvalidCompilation
+from crytic_compile.platform.solc import _run_solc
+from crytic_compile.utils.naming import (
+    extract_filename,
+    extract_name,
+    convert_filename,
+    Filename,
+)
+from crytic_compile.compiler.compiler import CompilerVersion
 
 logger = logging.getLogger("CryticCompile")
 
@@ -29,11 +46,11 @@ supported_network = {
 }
 
 
-def _handle_bytecode(crytic_compile, target, result):
+def _handle_bytecode(crytic_compile: "CryticCompile", target: str, result_b: bytes):
     # There is no direct API to get the bytecode from etherscan
     # The page changes from time to time, we use for now a simple parsing, it will not be robust
     begin = """Search Algorithm">\nSimilar Contracts</button>\n<div id="dividcode">\n<pre class=\'wordwrap\' style=\'height: 15pc;\'>0x"""
-    result = result.decode("utf8")
+    result = result_b.decode("utf8")
     # Removing everything before the begin string
     result = result[result.find(begin) + len(begin) :]
     bytecode = result[: result.find("<")]
@@ -57,13 +74,20 @@ def _handle_bytecode(crytic_compile, target, result):
     crytic_compile.bytecode_only = True
 
 
-def compile(crytic_compile, target, **kwargs):
+def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
+    """
+    Compile the tharget
+    :param crytic_compile:
+    :param target:
+    :param kwargs:
+    :return:
+    """
     crytic_compile.type = Type.ETHERSCAN
 
     solc = kwargs.get("solc", "solc")
 
     if target.startswith(tuple(supported_network)):
-        prefix = supported_network[target[: target.find(":") + 1]][0]
+        prefix: Union[None, str] = supported_network[target[: target.find(":") + 1]][0]
         prefix_bytecode = supported_network[target[: target.find(":") + 1]][1]
         addr = target[target.find(":") + 1 :]
         etherscan_url = ethercan_base % (prefix, addr)
@@ -79,7 +103,7 @@ def compile(crytic_compile, target, **kwargs):
     only_bytecode = kwargs.get("etherscan_only_bytecode", False)
 
     source_code = ""
-    result = None
+    result: Optional[Dict[str, str]] = None
     contract_name = None
 
     if not only_bytecode:
@@ -187,19 +211,34 @@ def compile(crytic_compile, target, **kwargs):
         crytic_compile.asts[path.absolute] = info["AST"]
 
 
-def is_etherscan(target):
+def is_etherscan(target: str) -> Optional[Match[str]]:
+    """
+    Check if the target is an etherscan address
+    :param target:
+    :return:
+    """
     if target.startswith(tuple(supported_network)):
         target = target[target.find(":") + 1 :]
     return re.match("^\s*0x[a-zA-Z0-9]{40}\s*$", target)
 
 
-def is_dependency(_path):
+def is_dependency(_path: str) -> bool:
+    """
+    Always return false
+    :param _path:
+    :return:
+    """
     return False
 
 
-def convert_version(version):
+def convert_version(version: str) -> str:
+    """
+    Convert the compiler version
+    :param version:
+    :return:
+    """
     return version[1 : version.find("+")]
 
 
-def _relative_to_short(relative):
+def _relative_to_short(relative: Path) -> Path:
     return relative

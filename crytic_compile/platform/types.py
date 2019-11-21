@@ -1,7 +1,15 @@
+"""
+Handle the platform type
+"""
+
 from enum import IntEnum
 
 
 class Type(IntEnum):
+    """
+    Represent the different platform
+    """
+
     SOLC = 1
     TRUFFLE = 2
     EMBARK = 3

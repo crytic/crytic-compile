@@ -1,18 +1,9 @@
-import os
 import json
 import logging
+import os
 import subprocess
-import re
 
-from .types import Type
-from ..utils.naming import (
-    extract_filename,
-    extract_name,
-    combine_filename_name,
-    convert_filename,
-)
 from .exceptions import InvalidCompilation
-from ..compiler.compiler import CompilerVersion
 from .solc import (
     export as export_solc,
     is_dependency as is_dependency_solc,
@@ -20,6 +11,9 @@ from .solc import (
     _is_optimized,
     _relative_to_short,
 )
+from .types import Type
+from ..compiler.compiler import CompilerVersion
+from ..utils.naming import convert_filename
 
 
 class SolcStandardJson:

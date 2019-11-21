@@ -1,21 +1,37 @@
-import os
-import logging
-import subprocess
-import platform
+"""
+Truffle platform
+"""
 import glob
-import re
 import json
+import logging
+import os
+import platform
+import re
+import subprocess
 from pathlib import Path
+from typing import TYPE_CHECKING, Optional, Tuple
+
+# Handle cycle
+if TYPE_CHECKING:
+    from crytic_compile import CryticCompile
+
 from .types import Type
 from .exceptions import InvalidCompilation
 from ..utils.naming import convert_filename
 from ..compiler.compiler import CompilerVersion
 from . import solc
 
-logger = logging.getLogger("CryticCompile")
+LOGGER = logging.getLogger("CryticCompile")
 
 
-def compile(crytic_compile, target, **kwargs):
+def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
+    """
+    Compile the target
+    :param crytic_compile:
+    :param target:
+    :param kwargs:
+    :return:
+    """
     build_directory = kwargs.get(
         "truffle_build_directory", os.path.join("build", "contracts")
     )
@@ -65,7 +81,7 @@ def compile(crytic_compile, target, **kwargs):
     if not truffle_ignore_compile:
         cmd = base_cmd + ["compile", "--all"]
 
-        logger.info(
+        LOGGER.info(
             "'{}' running (use --truffle-version truffle@x.x.x to use specific version)".format(
                 " ".join(cmd)
             )
@@ -81,9 +97,9 @@ def compile(crytic_compile, target, **kwargs):
             stderr.decode(),
         )  # convert bytestrings to unicode strings
 
-        logger.info(stdout)
+        LOGGER.info(stdout)
         if stderr:
-            logger.error(stderr)
+            LOGGER.error(stderr)
     if not os.path.isdir(os.path.join(target, build_directory)):
         if os.path.isdir(os.path.join(target, "node_modules")):
             raise InvalidCompilation(
@@ -94,8 +110,8 @@ def compile(crytic_compile, target, **kwargs):
 
     optimized = None
 
-    for filename in filenames:
-        with open(filename, encoding="utf8") as f:
+    for filename_txt in filenames:
+        with open(filename_txt, encoding="utf8") as f:
             target_loaded = json.load(f)
 
             if optimized is None:
@@ -144,7 +160,13 @@ def compile(crytic_compile, target, **kwargs):
     )
 
 
-def export(crytic_compile, **kwargs):
+def export(crytic_compile: "CryticCompile", **kwargs: str) -> Optional[str]:
+    """
+    Export to the truffle format
+    :param crytic_compile:
+    :param kwargs:
+    :return:
+    """
     # Get our export directory, if it's set, we create the path.
     export_dir = kwargs.get("export_dir", None)
     if export_dir and not os.path.exists(export_dir):
@@ -174,17 +196,27 @@ def export(crytic_compile, **kwargs):
     return None
 
 
-def is_truffle(target):
+def is_truffle(target: str) -> bool:
+    """
+    Check if the target is a truffle project
+    :param target:
+    :return:
+    """
     return os.path.isfile(os.path.join(target, "truffle.js")) or os.path.isfile(
         os.path.join(target, "truffle-config.js")
     )
 
 
-def is_dependency(path):
+def is_dependency(path: str) -> bool:
+    """
+    Check if the target is a dependency
+    :param path:
+    :return:
+    """
     return "node_modules" in Path(path).parts
 
 
-def _get_version_from_config(target):
+def _get_version_from_config(target: str) -> Optional[Tuple[str, str]]:
     """
     Naive check on the truffleconfig file to get the version
     :param target:

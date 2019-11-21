@@ -1,9 +1,17 @@
 import json
+from typing import List
+
+# Cycle dependency
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from crytic_compile import CryticCompile
+
 from zipfile import ZipFile
 from crytic_compile.platform.archive import generate_archive_export
 
 
-def load_from_zip(target):
+def load_from_zip(target: str) -> List["CryticCompile"]:
     from crytic_compile.crytic_compile import CryticCompile
 
     compilations = []

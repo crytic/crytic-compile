@@ -1,8 +1,9 @@
 import json
 from pathlib import Path
+from typing import Union, List
 
 
-def get_package_name(target):
+def get_package_name(target_txt: Union[str, List]) -> Union[str, None]:
     """
     Return the package's name
     :param target:
@@ -10,11 +11,11 @@ def get_package_name(target):
     """
 
     # Verify the target path is a string (exported zip archives are lists)
-    if not isinstance(target, str):
+    if not isinstance(target_txt, str):
         return None
 
     # Obtain the path the target string represents
-    target = Path(target)
+    target = Path(target_txt)
     if target.is_dir():
         package = Path(target, "package.json")
         if package.exists():
