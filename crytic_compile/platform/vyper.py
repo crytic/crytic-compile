@@ -1,25 +1,40 @@
-import subprocess
-import os
-import re
-from pathlib import Path
+"""
+Vyper platform
+"""
 import json
-from .types import Type
+import os
+import subprocess
+from pathlib import Path
 
-from ..compiler.compiler import CompilerVersion
-from .exceptions import InvalidCompilation
-from ..utils.naming import (
-    extract_filename,
-    extract_name,
-    combine_filename_name,
-    convert_filename,
-)
+from typing import TYPE_CHECKING, Dict
+
+from crytic_compile.platform.exceptions import InvalidCompilation
+from crytic_compile.platform.types import Type
+from crytic_compile.compiler.compiler import CompilerVersion
+from crytic_compile.utils.naming import convert_filename
+
+# Handle cycle
+if TYPE_CHECKING:
+    from crytic_compile import CryticCompile
 
 
-def is_vyper(target):
+def is_vyper(target: str) -> bool:
+    """
+    Check if the target is a vyper project
+    :param target:
+    :return:
+    """
     return os.path.isfile(target) and target.endswith(".vy")
 
 
-def compile(crytic_compile, target, **kwargs):
+def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
+    """
+    Compile the target
+    :param crytic_compile:
+    :param target:
+    :param kwargs:
+    :return:
+    """
 
     crytic_compile.type = Type.VYPER
 
@@ -43,9 +58,7 @@ def compile(crytic_compile, target, **kwargs):
     crytic_compile.contracts_filenames[contract_name] = contract_filename
     crytic_compile.abis[contract_name] = info["abi"]
     crytic_compile.bytecodes_init[contract_name] = info["bytecode"].replace("0x", "")
-    crytic_compile.bytecodes_runtime[contract_name] = info["bytecode_runtime"].replace(
-        "0x", ""
-    )
+    crytic_compile.bytecodes_runtime[contract_name] = info["bytecode_runtime"].replace("0x", "")
     crytic_compile.srcmaps_init[contract_name] = []
     crytic_compile.srcmaps_runtime[contract_name] = []
 
@@ -55,7 +68,7 @@ def compile(crytic_compile, target, **kwargs):
     crytic_compile.asts[contract_filename.absolute] = ast
 
 
-def _run_vyper(filename, vyper, env=None, working_dir=None):
+def _run_vyper(filename: str, vyper: str, env: Dict = None, working_dir: str = None) -> Dict:
     if not os.path.isfile(filename):
         raise InvalidCompilation(
             "{} does not exist (are you in the correct directory?)".format(filename)
@@ -66,14 +79,10 @@ def _run_vyper(filename, vyper, env=None, working_dir=None):
     additional_kwargs = {"cwd": working_dir} if working_dir else {}
     try:
         process = subprocess.Popen(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            env=env,
-            **additional_kwargs,
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env, **additional_kwargs
         )
-    except Exception as e:
-        raise InvalidCompilation(e)
+    except Exception as exception:
+        raise InvalidCompilation(exception)
 
     stdout, stderr = process.communicate()
 
@@ -86,7 +95,7 @@ def _run_vyper(filename, vyper, env=None, working_dir=None):
         raise InvalidCompilation(f"Invalid vyper compilation\n{stderr}")
 
 
-def _get_vyper_ast(filename, vyper, env=None, working_dir=None):
+def _get_vyper_ast(filename: str, vyper: str, env=None, working_dir=None) -> Dict:
     if not os.path.isfile(filename):
         raise InvalidCompilation(
             "{} does not exist (are you in the correct directory?)".format(filename)
@@ -97,14 +106,10 @@ def _get_vyper_ast(filename, vyper, env=None, working_dir=None):
     additional_kwargs = {"cwd": working_dir} if working_dir else {}
     try:
         process = subprocess.Popen(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            env=env,
-            **additional_kwargs,
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env, **additional_kwargs
         )
-    except Exception as e:
-        raise InvalidCompilation(e)
+    except Exception as exception:
+        raise InvalidCompilation(exception)
 
     stdout, stderr = process.communicate()
 
@@ -122,4 +127,9 @@ def _relative_to_short(relative):
 
 
 def is_dependency(_path):
+    """
+    Always return false
+    :param _path:
+    :return:
+    """
     return False

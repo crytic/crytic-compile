@@ -1,23 +1,33 @@
+"""
+Module handling the file naming operation (relative -> absolute, etc)
+"""
+
 import platform
 import os.path
 import logging
 from pathlib import Path
 from collections import namedtuple
-from ..platform.exceptions import InvalidCompilation
+from typing import TYPE_CHECKING, Union
 
-logger = logging.getLogger("CryticCompile")
+from crytic_compile.platform.exceptions import InvalidCompilation
+
+# Cycle dependency
+if TYPE_CHECKING:
+    from crytic_compile import CryticCompile
+
+LOGGER = logging.getLogger("CryticCompile")
 
 Filename = namedtuple("Filename", ["absolute", "used", "relative", "short"])
 
 
-def extract_name(name):
+def extract_name(name: str):
     """
         Convert '/path:Contract' to Contract
     """
     return name[name.rfind(":") + 1 :]
 
 
-def extract_filename(name):
+def extract_filename(name: str):
     """
         Convert '/path:Contract' to /path
     """
@@ -26,32 +36,42 @@ def extract_filename(name):
     return name[: name.rfind(":")]
 
 
-def combine_filename_name(filename, name):
+def combine_filename_name(filename: str, name: str):
+    """
+    Combine the filename with the contract name
+    :param filename:
+    :param name:
+    :return:
+    """
     return filename + ":" + name
 
 
 def convert_filename(
-    used_filename, relative_to_short, crytic_compile, working_dir=None
-):
+    used_filename: Union[str, Path],
+    relative_to_short,
+    crytic_compile: "CryticCompile",
+    working_dir=None,
+) -> Filename:
     """
     Convert filename.
     The used_filename can be absolute, relative, or missing node_modules/contracts directory
-    convert_filename return a tuple(absolute,used), where absolute points to the absolute path, and used the original
+    convert_filename return a tuple(absolute,used),
+    where absolute points to the absolute path, and used the original
     :param used_filename:
     :param relative_to_short: lambda function
     :param crytic_compile:
     :param working_dir:
     :return: Filename (namedtuple)
     """
-    filename = used_filename
+    filename_txt = used_filename
     if platform.system() == "Windows":
-        elements = list(Path(filename).parts)
+        elements = list(Path(filename_txt).parts)
         if elements[0] == "/" or elements[0] == "\\":
             elements = elements[1:]  # remove '/'
             elements[0] = elements[0] + ":/"  # add :/
         filename = Path(*elements)
     else:
-        filename = Path(filename)
+        filename = Path(filename_txt)
 
     if working_dir is None:
         cwd = Path.cwd()
@@ -98,8 +118,5 @@ def convert_filename(
     short = relative_to_short(short)
 
     return Filename(
-        absolute=str(absolute),
-        relative=str(relative),
-        short=str(short),
-        used=used_filename,
+        absolute=str(absolute), relative=str(relative), short=str(short), used=used_filename
     )
