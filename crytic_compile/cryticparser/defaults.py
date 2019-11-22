@@ -1,5 +1,8 @@
+"""
+Default value for options
+"""
 # Those are the flags shared by the command line and the config file
-defaults_flag_in_config = {
+DEFAULTS_FLAG_IN_CONFIG = {
     "compile_force_framework": None,
     "compile_remove_metadata": False,
     "compile_custom_build": None,

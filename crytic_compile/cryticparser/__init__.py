@@ -1,1 +1,4 @@
-from .defaults import defaults_flag_in_config
+"""
+Init module
+"""
+from .defaults import DEFAULTS_FLAG_IN_CONFIG
