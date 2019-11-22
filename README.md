@@ -51,7 +51,7 @@ The file structure is:
                 "absolute": "..",
                 "relative": "..",
                 "short": "..",
-                "used": "..",
+                "used": ".."
             }
         }
     },
