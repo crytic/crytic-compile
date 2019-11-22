@@ -3,16 +3,13 @@ Archive platform.
 """
 import os
 import json
-from typing import Dict, Tuple
-
-# Cycle dependency
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from crytic_compile import CryticCompile
-
+from typing import Dict, Tuple, TYPE_CHECKING
 from pathlib import Path
 from crytic_compile.platform import standard
+
+# Cycle dependency
+if TYPE_CHECKING:
+    from crytic_compile import CryticCompile
 
 
 def is_archive(target: str) -> bool:
@@ -26,12 +23,12 @@ def is_archive(target: str) -> bool:
     return Path(target).parts[-1].endswith("_export_archive.json")
 
 
-def compile(crytic_compile: "CryticCompile", target: str, **kwargs):
+def compile(crytic_compile: "CryticCompile", target: str, **_kwargs):
     """
     Compile
     :param crytic_compile:
     :param target:
-    :param kwargs:
+    :param _kwargs:
     :return:
     """
     if isinstance(target, str) and os.path.isfile(target):
@@ -41,7 +38,7 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs):
         loaded_json = json.loads(target)
     standard.load_from_compile(crytic_compile, loaded_json)
 
-    crytic_compile._src_content = loaded_json["source_content"]
+    crytic_compile.src_content = loaded_json["source_content"]
 
 
 def generate_archive_export(crytic_compile: "CryticCompile") -> Tuple[Dict, str]:

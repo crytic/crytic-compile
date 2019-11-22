@@ -1,18 +1,21 @@
+"""
+Module handling the file naming operation (relative -> absolute, etc)
+"""
+
 import platform
 import os.path
 import logging
 from pathlib import Path
 from collections import namedtuple
+from typing import TYPE_CHECKING, Union
 
 from crytic_compile.platform.exceptions import InvalidCompilation
 
 # Cycle dependency
-from typing import TYPE_CHECKING, Union
-
 if TYPE_CHECKING:
     from crytic_compile import CryticCompile
 
-logger = logging.getLogger("CryticCompile")
+LOGGER = logging.getLogger("CryticCompile")
 
 Filename = namedtuple("Filename", ["absolute", "used", "relative", "short"])
 
@@ -33,7 +36,13 @@ def extract_filename(name: str):
     return name[: name.rfind(":")]
 
 
-def combine_filename_name(filename, name):
+def combine_filename_name(filename: str, name: str):
+    """
+    Combine the filename with the contract name
+    :param filename:
+    :param name:
+    :return:
+    """
     return filename + ":" + name
 
 
@@ -46,7 +55,8 @@ def convert_filename(
     """
     Convert filename.
     The used_filename can be absolute, relative, or missing node_modules/contracts directory
-    convert_filename return a tuple(absolute,used), where absolute points to the absolute path, and used the original
+    convert_filename return a tuple(absolute,used),
+    where absolute points to the absolute path, and used the original
     :param used_filename:
     :param relative_to_short: lambda function
     :param crytic_compile:
@@ -108,8 +118,5 @@ def convert_filename(
     short = relative_to_short(short)
 
     return Filename(
-        absolute=str(absolute),
-        relative=str(relative),
-        short=str(short),
-        used=used_filename,
+        absolute=str(absolute), relative=str(relative), short=str(short), used=used_filename
     )

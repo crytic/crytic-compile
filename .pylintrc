@@ -1,0 +1,3 @@
+[MESSAGES CONTROL]
+# Disable bad continuation, too many issues with black
+disable = bad-continuation

@@ -1,14 +1,13 @@
+"""
+Solc platform
+"""
 import os
 import json
 import logging
 import subprocess
 import re
 
-# Cycle dependency
-from typing import TYPE_CHECKING, Union
-
-if TYPE_CHECKING:
-    from crytic_compile import CryticCompile
+from typing import TYPE_CHECKING, Union, List, Dict
 
 from crytic_compile.platform.types import Type
 from crytic_compile.utils.naming import (
@@ -20,7 +19,11 @@ from crytic_compile.utils.naming import (
 from crytic_compile.platform.exceptions import InvalidCompilation
 from crytic_compile.compiler.compiler import CompilerVersion
 
-logger = logging.getLogger("CryticCompile")
+# Cycle dependency
+if TYPE_CHECKING:
+    from crytic_compile import CryticCompile
+
+LOGGER = logging.getLogger("CryticCompile")
 
 
 def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
@@ -39,21 +42,19 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
     solc_working_dir = kwargs.get("solc_working_dir", None)
 
     crytic_compile.compiler_version = CompilerVersion(
-        compiler="solc",
-        version=get_version(solc),
-        optimized=_is_optimized(solc_arguments),
+        compiler="solc", version=get_version(solc), optimized=_is_optimized(solc_arguments)
     )
 
     # From config file, solcs is a dict (version -> path)
     # From command line, solc is a list
     # The guessing of version only works from config file
     # This is to prevent too complex command line
-    solcs_path = kwargs.get("solc_solcs_bin")
+    solcs_path: Union[str, Dict, List[str]] = kwargs.get("solc_solcs_bin")
     # solcs_env is always a list. It matches solc-select list
     solcs_env = kwargs.get("solc_solcs_select")
 
     if solcs_path:
-        if not isinstance(solcs_path, dict):
+        if isinstance(solcs_path, str):
             solcs_path = solcs_path.split(",")
         targets_json = _run_solcs_path(
             crytic_compile,
@@ -66,14 +67,14 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
         )
 
     elif solcs_env:
-        solcs_env = solcs_env.split(",")
+        solcs_env_list = solcs_env.split(",")
         targets_json = _run_solcs_env(
             crytic_compile,
             target,
             solc,
             solc_disable_warnings,
             solc_arguments,
-            solcs_env=solcs_env,
+            solcs_env=solcs_env_list,
             solc_remaps=solc_remaps,
             working_dir=solc_working_dir,
         )
@@ -89,10 +90,7 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
             working_dir=solc_working_dir,
         )
 
-    if crytic_compile.compiler_version.version in [f"0.4.{x}" for x in range(0, 10)]:
-        skip_filename = True
-    else:
-        skip_filename = False
+    skip_filename = crytic_compile.compiler_version.version in [f"0.4.{x}" for x in range(0, 10)]
 
     if "contracts" in targets_json:
         for original_contract_name, info in targets_json["contracts"].items():
@@ -101,10 +99,7 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
             # for solc < 0.4.10 we cant retrieve the filename from the ast
             if skip_filename:
                 contract_filename = convert_filename(
-                    target,
-                    _relative_to_short,
-                    crytic_compile,
-                    working_dir=solc_working_dir,
+                    target, _relative_to_short, crytic_compile, working_dir=solc_working_dir
                 )
             else:
                 contract_filename = convert_filename(
@@ -119,25 +114,17 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
             crytic_compile.bytecodes_init[contract_name] = info["bin"]
             crytic_compile.bytecodes_runtime[contract_name] = info["bin-runtime"]
             crytic_compile.srcmaps_init[contract_name] = info["srcmap"].split(";")
-            crytic_compile.srcmaps_runtime[contract_name] = info[
-                "srcmap-runtime"
-            ].split(";")
+            crytic_compile.srcmaps_runtime[contract_name] = info["srcmap-runtime"].split(";")
 
     if "sources" in targets_json:
         for path, info in targets_json["sources"].items():
             if skip_filename:
                 path = convert_filename(
-                    target,
-                    _relative_to_short,
-                    crytic_compile,
-                    working_dir=solc_working_dir,
+                    target, _relative_to_short, crytic_compile, working_dir=solc_working_dir
                 )
             else:
                 path = convert_filename(
-                    path,
-                    _relative_to_short,
-                    crytic_compile,
-                    working_dir=solc_working_dir,
+                    path, _relative_to_short, crytic_compile, working_dir=solc_working_dir
                 )
             crytic_compile.filenames.add(path)
             crytic_compile.asts[path.absolute] = info["AST"]
@@ -188,9 +175,7 @@ def export(crytic_compile: "CryticCompile", **kwargs: str) -> Union[str, None]:
         }
 
     # Create additional informational objects.
-    sources = {
-        filename: {"AST": ast} for (filename, ast) in crytic_compile.asts.items()
-    }
+    sources = {filename: {"AST": ast} for (filename, ast) in crytic_compile.asts.items()}
     source_list = [x.absolute for x in crytic_compile.filenames]
 
     # Create our root object to contain the contracts and other information.
@@ -203,8 +188,8 @@ def export(crytic_compile: "CryticCompile", **kwargs: str) -> Union[str, None]:
             os.makedirs(export_dir)
         path = os.path.join(export_dir, "combined_solc.json")
 
-        with open(path, "w", encoding="utf8") as f:
-            json.dump(output, f)
+        with open(path, "w", encoding="utf8") as file_desc:
+            json.dump(output, file_desc)
         return path
     return None
 
@@ -217,10 +202,10 @@ def get_version(solc: str) -> str:
     """
     cmd = [solc, "--version"]
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdout, _ = process.communicate()
-    stdout = stdout.decode()  # convert bytestrings to unicode strings
-    version = re.findall("\d+\.\d+\.\d+", stdout)
-    assert len(version)
+    stdout_bytes, _ = process.communicate()
+    stdout = stdout_bytes.decode()  # convert bytestrings to unicode strings
+    version = re.findall(r"\d+\.\d+\.\d+", stdout)
+    assert len(version) != 0
     return version[0]
 
 
@@ -267,9 +252,8 @@ def _run_solc(
 
     compiler_version = crytic_compile.compiler_version
     assert compiler_version
-    if compiler_version.version in [
-        f"0.4.{x}" for x in range(0, 12)
-    ] or compiler_version.version.startswith("0.3"):
+    old_04_versions = [f"0.4.{x}" for x in range(0, 12)]
+    if compiler_version.version in old_04_versions or compiler_version.version.startswith("0.3"):
         options = "abi,ast,bin,bin-runtime,srcmap,srcmap-runtime"
     else:
         options = "abi,ast,bin,bin-runtime,srcmap,srcmap-runtime,hashes,compact-format"
@@ -309,24 +293,17 @@ def _run_solc(
 
     if env:
         process = subprocess.Popen(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            env=env,
-            **additional_kwargs,
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env, **additional_kwargs
         )
     else:
         process = subprocess.Popen(
             cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **additional_kwargs
         )
     stdout, stderr = process.communicate()
-    stdout, stderr = (
-        stdout.decode(),
-        stderr.decode(),
-    )  # convert bytestrings to unicode strings
+    stdout, stderr = (stdout.decode(), stderr.decode())  # convert bytestrings to unicode strings
 
     if stderr and (not solc_disable_warnings):
-        logger.info("Compilation warnings/errors on %s:\n%s", filename, stderr)
+        LOGGER.info("Compilation warnings/errors on %s:\n%s", filename, stderr)
 
     try:
         ret = json.loads(stdout)
@@ -450,14 +427,14 @@ def _run_solcs_env(
     return targets_json
 
 
-PATTERN = re.compile("pragma solidity[\^|>=|<=]?[ ]+?(\d+\.\d+\.\d+)")
+PATTERN = re.compile(r"pragma solidity[\^|>=|<=]?[ ]+?(\d+\.\d+\.\d+)")
 
 
 def _guess_solc(target, solc_working_dir):
     if solc_working_dir:
         target = os.path.join(solc_working_dir, target)
-    with open(target, encoding="utf8") as f:
-        buf = f.read()
+    with open(target, encoding="utf8") as file_desc:
+        buf = file_desc.read()
         return PATTERN.findall(buf)
 
 

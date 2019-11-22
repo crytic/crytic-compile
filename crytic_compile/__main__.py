@@ -10,7 +10,7 @@ import sys
 from pkg_resources import require
 
 from crytic_compile.crytic_compile import compile_all
-from crytic_compile.cryticparser import cryticparser, defaults_flag_in_config
+from crytic_compile.cryticparser import cryticparser, DEFAULTS_FLAG_IN_CONFIG
 from crytic_compile.platform import InvalidCompilation
 from crytic_compile.utils.zip import save_to_zip
 
@@ -103,21 +103,14 @@ see https://github.com/crytic/crytic-compile/wiki/Usage""",
             with open(args.config_file, encoding="utf8") as f_config:
                 config = json.load(f_config)
                 for key, elem in config.items():
-                    if key not in defaults_flag_in_config:
-                        LOGGER.info(
-                            "%s has an unknown key: %s : %s",
-                            args.config_file,
-                            key,
-                            elem,
-                        )
+                    if key not in DEFAULTS_FLAG_IN_CONFIG:
+                        LOGGER.info("%s has an unknown key: %s : %s", args.config_file, key, elem)
                         continue
-                    if getattr(args, key) == defaults_flag_in_config[key]:
+                    if getattr(args, key) == DEFAULTS_FLAG_IN_CONFIG[key]:
                         setattr(args, key, elem)
         except json.decoder.JSONDecodeError as exception:
             LOGGER.error(
-                "Impossible to read %s, please check the file %s",
-                args.config_file,
-                exception,
+                "Impossible to read %s, please check the file %s", args.config_file, exception
             )
 
     return args

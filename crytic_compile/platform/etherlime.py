@@ -9,19 +9,18 @@ import subprocess
 import glob
 import re
 from pathlib import Path
-
-# Cycle dependency
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from crytic_compile import CryticCompile
+from typing import TYPE_CHECKING, Optional
 
 from crytic_compile.platform.types import Type
 from crytic_compile.platform.exceptions import InvalidCompilation
 from crytic_compile.utils.naming import convert_filename
 from crytic_compile.compiler.compiler import CompilerVersion
 
-logger = logging.getLogger("CryticCompile")
+# Cycle dependency
+if TYPE_CHECKING:
+    from crytic_compile import CryticCompile
+
+LOGGER = logging.getLogger("CryticCompile")
 
 
 def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
@@ -48,60 +47,54 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
 
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-        stdout, stderr = process.communicate()
+        stdout_bytes, stderr_bytes = process.communicate()
         stdout, stderr = (
-            stdout.decode(),
-            stderr.decode(),
+            stdout_bytes.decode(),
+            stderr_bytes.decode(),
         )  # convert bytestrings to unicode strings
 
-        logger.info(stdout)
+        LOGGER.info(stdout)
 
         if stderr:
-            logger.error(stderr)
+            LOGGER.error(stderr)
 
     # similar to truffle
     if not os.path.isdir(os.path.join(target, build_directory)):
-        raise InvalidCompilation(
-            "No truffle build directory found, did you run `truffle compile`?"
-        )
+        raise InvalidCompilation("No truffle build directory found, did you run `truffle compile`?")
     filenames = glob.glob(os.path.join(target, build_directory, "*.json"))
 
     version = None
     compiler = "solc-js"
 
-    for filename in filenames:
-        with open(filename, encoding="utf8") as f:
-            target_loaded = json.load(f)
+    for file in filenames:
+        with open(file, encoding="utf8") as file_desc:
+            target_loaded = json.load(file_desc)
 
             if version is None:
                 if "compiler" in target_loaded:
                     if "version" in target_loaded["compiler"]:
                         version = re.findall(
-                            "\d+\.\d+\.\d+", target_loaded["compiler"]["version"]
+                            r"\d+\.\d+\.\d+", target_loaded["compiler"]["version"]
                         )[0]
 
             if not "ast" in target_loaded:
                 continue
 
             filename_txt = target_loaded["ast"]["absolutePath"]
-            filename = convert_filename(
-                filename_txt, _relative_to_short, crytic_compile
-            )
+            filename = convert_filename(filename_txt, _relative_to_short, crytic_compile)
             crytic_compile.asts[filename.absolute] = target_loaded["ast"]
             crytic_compile.filenames.add(filename)
             contract_name = target_loaded["contractName"]
             crytic_compile.contracts_filenames[contract_name] = filename
             crytic_compile.contracts_names.add(contract_name)
             crytic_compile.abis[contract_name] = target_loaded["abi"]
-            crytic_compile.bytecodes_init[contract_name] = target_loaded[
-                "bytecode"
-            ].replace("0x", "")
+            crytic_compile.bytecodes_init[contract_name] = target_loaded["bytecode"].replace(
+                "0x", ""
+            )
             crytic_compile.bytecodes_runtime[contract_name] = target_loaded[
                 "deployedBytecode"
             ].replace("0x", "")
-            crytic_compile.srcmaps_init[contract_name] = target_loaded[
-                "sourceMap"
-            ].split(";")
+            crytic_compile.srcmaps_init[contract_name] = target_loaded["sourceMap"].split(";")
             crytic_compile.srcmaps_runtime[contract_name] = target_loaded[
                 "deployedSourceMap"
             ].split(";")
@@ -118,12 +111,11 @@ def is_etherlime(target: str) -> bool:
     :return:
     """
     if os.path.isfile(os.path.join(target, "package.json")):
-        with open("package.json", encoding="utf8") as f:
-            package = json.load(f)
+        with open("package.json", encoding="utf8") as file_desc:
+            package = json.load(file_desc)
         if "dependencies" in package:
             return (
-                "etherlime-lib" in package["dependencies"]
-                or "etherlime" in package["dependencies"]
+                "etherlime-lib" in package["dependencies"] or "etherlime" in package["dependencies"]
             )
     return False
 
@@ -137,7 +129,7 @@ def is_dependency(path: str) -> bool:
     return "node_modules" in Path(path).parts
 
 
-def _is_optimized(compile_arguments: str) -> bool:
+def _is_optimized(compile_arguments: Optional[str]) -> bool:
     """
     Check if the optimization is enabled
     :param compile_arguments:

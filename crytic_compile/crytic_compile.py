@@ -1,16 +1,21 @@
+"""
+CryticCompile main module. Handle the compilation.
+"""
+
 import os
 import json
 import glob
 import logging
 import re
 import subprocess
-from typing import Dict, List, Union, Set, Tuple
+from typing import Dict, List, Union, Set, Tuple, Optional
 from types import ModuleType
 from pathlib import Path
+from typing import TYPE_CHECKING
 import sha3
 
 
-from crytic_compile.platform import (
+from .platform import (
     solc,
     solc_standard_json,
     truffle,
@@ -24,17 +29,15 @@ from crytic_compile.platform import (
     brownie,
     waffle,
 )
-from crytic_compile.platform.solc_standard_json import SolcStandardJson
-from crytic_compile.utils.naming import Filename
-from crytic_compile.utils.zip import load_from_zip
-from crytic_compile.utils.npm import get_package_name
+from .platform.solc_standard_json import SolcStandardJson
+from .utils.naming import Filename
+from .utils.zip import load_from_zip
+from .utils.npm import get_package_name
 
 # Cycle dependency
-from typing import TYPE_CHECKING
-
 if TYPE_CHECKING:
-    from crytic_compile.platform import Type
-    from crytic_compile.compiler.compiler import CompilerVersion
+    from .platform import Type
+    from .compiler.compiler import CompilerVersion
 
 LOGGER = logging.getLogger("CryticCompile")
 logging.basicConfig()
@@ -83,7 +86,7 @@ class CryticCompile:
     Main class.
     """
 
-    def __init__(self, target: Union[str, bytes, SolcStandardJson], **kwargs: str):
+    def __init__(self, target: Union[str, SolcStandardJson], **kwargs: str):
         """
             Args:
                 target (str|SolcStandardJson)
@@ -107,7 +110,7 @@ class CryticCompile:
         # set containing all the contract names
         self._contracts_name: Set[str] = set()
         # set containing all the contract name without the libraries
-        self._contracts_name_without_libraries = None
+        self._contracts_name_without_libraries: Optional[Set[str]] = None
 
         # set containing all the filenames
         self._filenames: Set[Filename] = set()
@@ -115,16 +118,16 @@ class CryticCompile:
         self._contracts_filenames: Dict[str, Filename] = {}
 
         # mapping from contract_name to libraries_names (libraries used by the contract)
-        self._libraries: Dict[str, str] = {}
+        self._libraries: Dict[str, List[str]] = {}
 
         # platform.type
-        self._type: Union[None, "Type"] = None
-        self._platform: Union[None, ModuleType] = None
+        self._type: Optional["Type"] = None
+        self._platform: Optional[ModuleType] = None
 
         self._bytecode_only = False
 
         # compiler.compiler
-        self._compiler_version: Union[None, "CompilerVersion"] = None
+        self._compiler_version: Optional["CompilerVersion"] = None
 
         self._target = target
 
@@ -140,6 +143,10 @@ class CryticCompile:
 
     @property
     def target(self) -> Union[str, SolcStandardJson]:
+        """
+        Return the target (project)
+        :return:
+        """
         return self._target
 
     ###################################################################################
@@ -154,6 +161,10 @@ class CryticCompile:
         :return: set(naming.Filename)
         """
         return self._filenames
+
+    @filenames.setter
+    def filenames(self, all_filenames: Set[Filename]):
+        self._filenames = all_filenames
 
     @property
     def contracts_filenames(self) -> Dict[str, Filename]:
@@ -199,16 +210,21 @@ class CryticCompile:
         # If used_filename is already an absolute pathn no need to lookup
         if used_filename in self._filenames:
             return used_filename
-        d = {f.used: f.absolute for _, f in self._contracts_filenames.items()}
-        if used_filename not in d:
+        d_file = {f.used: f.absolute for _, f in self._contracts_filenames.items()}
+        if used_filename not in d_file:
             raise ValueError("f{filename} does not exist in {d}")
-        return d[used_filename]
+        return d_file[used_filename]
 
     def relative_filename_from_absolute_filename(self, absolute_filename: str) -> str:
-        d = {f.absolute: f.relative for _, f in self._contracts_filenames.items()}
-        if absolute_filename not in d:
+        """
+        Return the relative file based on the absolute name
+        :param absolute_filename:
+        :return:
+        """
+        d_file = {f.absolute: f.relative for _, f in self._contracts_filenames.items()}
+        if absolute_filename not in d_file:
             raise ValueError("f{absolute_filename} does not exist in {d}")
-        return d[absolute_filename]
+        return d_file[absolute_filename]
 
     def filename_lookup(self, filename: str) -> Filename:
         """
@@ -216,14 +232,22 @@ class CryticCompile:
         :param filename: str
         :return: crytic_compile.naming.Filename
         """
-        d = {}
-        for f in self._filenames:
-            d[f.absolute] = f
-            d[f.relative] = f
-            d[f.used] = f
-        if not filename in d:
-            raise ValueError(f"{filename} does not exist in {d}")
-        return d[filename]
+        d_file = {}
+        for file in self._filenames:
+            d_file[file.absolute] = file
+            d_file[file.relative] = file
+            d_file[file.used] = file
+        if filename not in d_file:
+            raise ValueError(f"{filename} does not exist in {d_file}")
+        return d_file[filename]
+
+    @property
+    def dependencies(self) -> Set[str]:
+        """
+        Return the dependencies files
+        :return:
+        """
+        return self._dependencies
 
     def is_dependency(self, filename: str) -> bool:
         """
@@ -231,7 +255,27 @@ class CryticCompile:
         :param filename:
         :return:
         """
-        return filename in self._dependencies or self._platform.is_dependency(filename)
+        return filename in self._dependencies or self.platform.is_dependency(filename)
+
+    @property
+    def package(self) -> Optional[str]:
+        """
+        Return the package name
+        :return:
+        """
+        return self._package
+
+    @property
+    def working_dir(self) -> Path:
+        """
+        Return the working dir
+        :return:
+        """
+        return self._working_dir
+
+    @working_dir.setter
+    def working_dir(self, path: Path):
+        self._working_dir = path
 
     # endregion
     ###################################################################################
@@ -248,6 +292,14 @@ class CryticCompile:
         """
         return self._contracts_name
 
+    @contracts_names.setter
+    def contracts_names(self, names: Set[str]):
+        """
+        Return the contracts names
+        :return:
+        """
+        self._contracts_name = names
+
     @property
     def contracts_names_without_libraries(self) -> Set[str]:
         """
@@ -255,13 +307,12 @@ class CryticCompile:
         :return:
         """
         if self._contracts_name_without_libraries is None:
-            libraries = []
-            for c in self._contracts_name:
-                libraries += self.libraries_names(c)
-            libraries = set(libraries)
-            self._contracts_name_without_libraries = set(
-                [l for l in self._contracts_name if not l in libraries]
-            )
+            libraries: List[str] = []
+            for contract_name in self._contracts_name:
+                libraries += self.libraries_names(contract_name)
+            self._contracts_name_without_libraries = {
+                l for l in self._contracts_name if l not in set(libraries)
+            }
         return self._contracts_name_without_libraries
 
     # endregion
@@ -302,6 +353,10 @@ class CryticCompile:
         """
         return self._asts
 
+    @asts.setter
+    def asts(self, value: Dict):
+        self._asts = value
+
     def ast(self, path: str) -> Union[Dict, None]:
         """
         Return of the file
@@ -330,6 +385,14 @@ class CryticCompile:
         """
         return self._runtime_bytecodes
 
+    @bytecodes_runtime.setter
+    def bytecodes_runtime(self, bytecodes: Dict[str, str]):
+        """
+        Return the init bytecodes
+        :return:
+        """
+        self._runtime_bytecodes = bytecodes
+
     @property
     def bytecodes_init(self) -> Dict[str, str]:
         """
@@ -338,9 +401,15 @@ class CryticCompile:
         """
         return self._init_bytecodes
 
-    def bytecode_runtime(
-        self, name: str, libraries: Union[None, Dict[str, str]] = None
-    ) -> str:
+    @bytecodes_init.setter
+    def bytecodes_init(self, bytecodes: Dict[str, str]):
+        """
+        Return the init bytecodes
+        :return:
+        """
+        self._init_bytecodes = bytecodes
+
+    def bytecode_runtime(self, name: str, libraries: Union[None, Dict[str, str]] = None) -> str:
         """
         Return the runtime bytecode of the contract. If library is provided, patch the bytecode
         :param name:
@@ -350,9 +419,7 @@ class CryticCompile:
         runtime = self._runtime_bytecodes.get(name, None)
         return self._update_bytecode_with_libraries(runtime, libraries)
 
-    def bytecode_init(
-        self, name: str, libraries: Union[None, Dict[str, str]] = None
-    ) -> str:
+    def bytecode_init(self, name: str, libraries: Union[None, Dict[str, str]] = None) -> str:
         """
         Return the init bytecode of the contract. If library is provided, patch the bytecode
         :param name:
@@ -386,9 +453,19 @@ class CryticCompile:
         return self._srcmaps_runtime
 
     def srcmap_init(self, name: str) -> List[str]:
+        """
+        Return the init srcmap
+        :param name:
+        :return:
+        """
         return self._srcmaps.get(name, [])
 
     def srcmap_runtime(self, name: str) -> List[str]:
+        """
+        Return the runtime srcmap
+        :param name:
+        :return:
+        """
         return self._srcmaps_runtime.get(name, [])
 
     @property
@@ -401,16 +478,26 @@ class CryticCompile:
         if not self._src_content:
             for name in self.contracts_names:
                 filename = self.filename_of_contract(name)
-                if filename.absolute not in self._src_content and os.path.isfile(
-                    filename.absolute
-                ):
-                    with open(
-                        filename.absolute, encoding="utf8", newline=""
-                    ) as source_file:
+                if filename.absolute not in self._src_content and os.path.isfile(filename.absolute):
+                    with open(filename.absolute, encoding="utf8", newline="") as source_file:
                         self._src_content[filename.absolute] = source_file.read()
         return self._src_content
 
+    @src_content.setter
+    def src_content(self, src):
+        """
+        Set the src_content
+        :param src:
+        :return:
+        """
+        self._src_content = src
+
     def src_content_for_file(self, filename_absolute: str) -> Union[str, None]:
+        """
+        Get the source code of the file
+        :param filename_absolute:
+        :return:
+        """
         return self.src_content.get(filename_absolute, None)
 
     # endregion
@@ -421,12 +508,27 @@ class CryticCompile:
     ###################################################################################
 
     @property
-    def type(self) -> Union[None, "Type"]:
+    def type(self) -> "Type":
+        """
+        Return the type of the platform used
+        :return:
+        """
+        # Type should have been set by now
+        assert self._type
         return self._type
 
     @type.setter
-    def type(self, t: "Type"):
-        self._type = t
+    def type(self, type: "Type"):
+        self._type = type
+
+    @property
+    def platform(self) -> ModuleType:
+        """
+        Return the platform module
+        :return:
+        """
+        assert self._platform
+        return self._platform
 
     # endregion
     ###################################################################################
@@ -444,8 +546,8 @@ class CryticCompile:
         return self._compiler_version
 
     @compiler_version.setter
-    def compiler_version(self, c):
-        self._compiler_version = c
+    def compiler_version(self, compiler):
+        self._compiler_version = compiler
 
     @property
     def bytecode_only(self) -> bool:
@@ -456,8 +558,8 @@ class CryticCompile:
         return self._bytecode_only
 
     @bytecode_only.setter
-    def bytecode_only(self, b):
-        self._bytecode_only = b
+    def bytecode_only(self, bytecode):
+        self._bytecode_only = bytecode
 
     # endregion
     ###################################################################################
@@ -465,6 +567,14 @@ class CryticCompile:
     # region Libraries
     ###################################################################################
     ###################################################################################
+
+    @property
+    def libraries(self) -> Dict[str, List[str]]:
+        """
+        Return the libraries used (contract_name -> libraries)
+        :return:
+        """
+        return self._libraries
 
     def _convert_libraries_names(self, libraries: Dict[str, str]) -> Dict[str, str]:
         """
@@ -481,9 +591,9 @@ class CryticCompile:
 
             lib_4 = "__" + lib + "_" * (38 - len(lib))
 
-            s = sha3.keccak_256()
-            s.update(lib.encode("utf-8"))
-            lib_5 = "__$" + s.hexdigest()[:34] + "$__"
+            sha3_result = sha3.keccak_256()
+            sha3_result.update(lib.encode("utf-8"))
+            lib_5 = "__$" + sha3_result.hexdigest()[:34] + "$__"
 
             new_names[lib] = addr
             new_names[lib_4] = addr
@@ -495,31 +605,23 @@ class CryticCompile:
                 lib_with_abs_filename = lib_filename.absolute + ":" + lib
                 lib_with_abs_filename = lib_with_abs_filename[0:36]
 
-                lib_4 = (
-                    "__"
-                    + lib_with_abs_filename
-                    + "_" * (38 - len(lib_with_abs_filename))
-                )
+                lib_4 = "__" + lib_with_abs_filename + "_" * (38 - len(lib_with_abs_filename))
                 new_names[lib_4] = addr
 
                 lib_with_used_filename = lib_filename.used + ":" + lib
                 lib_with_used_filename = lib_with_used_filename[0:36]
 
-                lib_4 = (
-                    "__"
-                    + lib_with_used_filename
-                    + "_" * (38 - len(lib_with_used_filename))
-                )
+                lib_4 = "__" + lib_with_used_filename + "_" * (38 - len(lib_with_used_filename))
                 new_names[lib_4] = addr
 
-                s = sha3.keccak_256()
-                s.update(lib_with_abs_filename.encode("utf-8"))
-                lib_5 = "__$" + s.hexdigest()[:34] + "$__"
+                sha3_result = sha3.keccak_256()
+                sha3_result.update(lib_with_abs_filename.encode("utf-8"))
+                lib_5 = "__$" + sha3_result.hexdigest()[:34] + "$__"
                 new_names[lib_5] = addr
 
-                s = sha3.keccak_256()
-                s.update(lib_with_used_filename.encode("utf-8"))
-                lib_5 = "__$" + s.hexdigest()[:34] + "$__"
+                sha3_result = sha3.keccak_256()
+                sha3_result.update(lib_with_used_filename.encode("utf-8"))
+                lib_5 = "__$" + sha3_result.hexdigest()[:34] + "$__"
                 new_names[lib_5] = addr
 
         return new_names
@@ -543,9 +645,7 @@ class CryticCompile:
 
             # Some platform use only the contract name
             # Some use fimename:contract_name
-            name_with_absolute_filename = (
-                self.contracts_filenames[name].absolute + ":" + name
-            )
+            name_with_absolute_filename = self.contracts_filenames[name].absolute + ":" + name
             name_with_absolute_filename = name_with_absolute_filename[0:36]
 
             name_with_used_filename = self.contracts_filenames[name].used + ":" + name
@@ -558,41 +658,37 @@ class CryticCompile:
 
             # Solidity 0.4 with filename
             solidity_0_4_filename = (
-                "__"
-                + name_with_absolute_filename
-                + "_" * (38 - len(name_with_absolute_filename))
+                "__" + name_with_absolute_filename + "_" * (38 - len(name_with_absolute_filename))
             )
             if solidity_0_4_filename == lib_name:
                 return name, solidity_0_4_filename
 
             # Solidity 0.4 with filename
             solidity_0_4_filename = (
-                "__"
-                + name_with_used_filename
-                + "_" * (38 - len(name_with_used_filename))
+                "__" + name_with_used_filename + "_" * (38 - len(name_with_used_filename))
             )
             if solidity_0_4_filename == lib_name:
                 return name, solidity_0_4_filename
 
             # Solidity 0.5
-            s = sha3.keccak_256()
-            s.update(name.encode("utf-8"))
-            v5_name = "__$" + s.hexdigest()[:34] + "$__"
+            sha3_result = sha3.keccak_256()
+            sha3_result.update(name.encode("utf-8"))
+            v5_name = "__$" + sha3_result.hexdigest()[:34] + "$__"
 
             if v5_name == lib_name:
                 return name, v5_name
 
             # Solidity 0.5 with filename
-            s = sha3.keccak_256()
-            s.update(name_with_absolute_filename.encode("utf-8"))
-            v5_name = "__$" + s.hexdigest()[:34] + "$__"
+            sha3_result = sha3.keccak_256()
+            sha3_result.update(name_with_absolute_filename.encode("utf-8"))
+            v5_name = "__$" + sha3_result.hexdigest()[:34] + "$__"
 
             if v5_name == lib_name:
                 return name, v5_name
 
-            s = sha3.keccak_256()
-            s.update(name_with_used_filename.encode("utf-8"))
-            v5_name = "__$" + s.hexdigest()[:34] + "$__"
+            sha3_result = sha3.keccak_256()
+            sha3_result.update(name_with_used_filename.encode("utf-8"))
+            v5_name = "__$" + sha3_result.hexdigest()[:34] + "$__"
 
             if v5_name == lib_name:
                 return name, v5_name
@@ -687,9 +783,9 @@ class CryticCompile:
                     sig_name = sig["name"]
                     arguments = ",".join([x["type"] for x in sig["inputs"]])
                     sig = f"{sig_name}({arguments})"
-                    s = sha3.keccak_256()
-                    s.update(sig.encode("utf-8"))
-                    self._hashes[name][sig] = int("0x" + s.hexdigest()[:8], 16)
+                    sha3_result = sha3.keccak_256()
+                    sha3_result.update(sig.encode("utf-8"))
+                    self._hashes[name][sig] = int("0x" + sha3_result.hexdigest()[:8], 16)
 
     # endregion
     ###################################################################################
@@ -699,19 +795,20 @@ class CryticCompile:
     ###################################################################################
 
     @staticmethod
-    def import_archive_compilations(
-        compiled_archive: Union[str, Dict]
-    ) -> List["CryticCompile"]:
+    def import_archive_compilations(compiled_archive: Union[str, Dict]) -> List["CryticCompile"]:
+        """
+        Import from an archive. compiled_archive is either a json file or the loaded dictionary
+        The dictionary myst contain the "compilations" keyword
+        :param compiled_archive:
+        :return:
+        """
         # If the argument is a string, it is likely a filepath, load the archive.
         if isinstance(compiled_archive, str):
-            with open(compiled_archive, encoding="utf8") as f:
-                compiled_archive = json.load(f)
+            with open(compiled_archive, encoding="utf8") as file:
+                compiled_archive = json.load(file)
 
         # Verify the compiled archive is of the correct form
-        if (
-            not isinstance(compiled_archive, dict)
-            or "compilations" not in compiled_archive
-        ):
+        if not isinstance(compiled_archive, dict) or "compilations" not in compiled_archive:
             raise ValueError("Cannot import compiled archive, invalid format.")
 
         return [
@@ -727,7 +824,7 @@ class CryticCompile:
     ###################################################################################
     ###################################################################################
 
-    def export(self, **kwargs: Dict) -> Union[None, str]:
+    def export(self, **kwargs: str) -> Optional[str]:
         """
             Export to json.
             The json format can be crytic-compile, solc or truffle.
@@ -747,8 +844,7 @@ class CryticCompile:
             return truffle.export(self, **kwargs)
         elif export_format == "archive":
             return archive.export(self, **kwargs)
-        else:
-            raise Exception("Export format unknown")
+        raise Exception("Export format unknown")
 
     # endregion
     ###################################################################################
@@ -757,7 +853,7 @@ class CryticCompile:
     ###################################################################################
     ###################################################################################
 
-    def _compile(self, target: str, **kwargs: Dict):
+    def _compile(self, target: str, **kwargs: str):
 
         truffle_ignore = kwargs.get("truffle_ignore", False)
         embark_ignore = kwargs.get("embark_ignore", False)
@@ -786,9 +882,7 @@ class CryticCompile:
 
             self._run_custom_build(custom_build)
 
-        compile_force_framework: Union[str, None] = kwargs.get(
-            "compile_force_framework", None
-        )
+        compile_force_framework: Union[str, None] = kwargs.get("compile_force_framework", None)
         if compile_force_framework and compile_force_framework in PLATFORMS:
             self._platform = PLATFORMS[compile_force_framework]
         else:
@@ -823,14 +917,15 @@ class CryticCompile:
         if remove_metadata:
             self._remove_metadata()
 
-    def _run_custom_build(self, custom_build: str):
+    @staticmethod
+    def _run_custom_build(custom_build: str):
         cmd = custom_build.split(" ")
 
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, stderr = process.communicate()
+        stdout_bytes, stderr_bytes = process.communicate()
         stdout, stderr = (
-            stdout.decode(),
-            stderr.decode(),
+            stdout_bytes.decode(),
+            stderr_bytes.decode(),
         )  # convert bytestrings to unicode strings
 
         LOGGER.info(stdout)
@@ -867,18 +962,23 @@ class CryticCompile:
     ###################################################################################
 
     @property
-    def package_name(self) -> Union[str, None]:
+    def package_name(self) -> Optional[str]:
         """
         :return: str or None
         """
         return self._package
 
-    # endregion
-    ###################################################################################
-    ###################################################################################
+    @package_name.setter
+    def package_name(self, name: Optional[str]):
+        self._package = name
 
 
-def compile_all(target: str, **kwargs: Dict) -> List[CryticCompile]:
+# endregion
+###################################################################################
+###################################################################################
+
+
+def compile_all(target: str, **kwargs: str) -> List[CryticCompile]:
     """
     Given a direct or glob pattern target, compiles all underlying sources and returns
     all the relevant instances of CryticCompile.

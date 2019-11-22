@@ -6,20 +6,20 @@ import json
 import logging
 import os
 import subprocess
+from pathlib import Path
 
-# Cycle dependency
 from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from crytic_compile import CryticCompile
 
 from crytic_compile.utils.naming import extract_filename, extract_name, convert_filename
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform.types import Type
 from crytic_compile.platform.exceptions import InvalidCompilation
-from pathlib import Path
 
-logger = logging.getLogger("CryticCompile")
+# Cycle dependency
+if TYPE_CHECKING:
+    from crytic_compile import CryticCompile
+
+LOGGER = logging.getLogger("CryticCompile")
 
 
 def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
@@ -32,10 +32,10 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
     """
     embark_ignore_compile = kwargs.get("embark_ignore_compile", False)
     embark_overwrite_config = kwargs.get("embark_overwrite_config", False)
-    crytic_compile._type = Type.EMBARK
+    crytic_compile.type = Type.EMBARK
     plugin_name = "@trailofbits/embark-contract-info"
-    with open(os.path.join(target, "embark.json"), encoding="utf8") as f:
-        embark_json = json.load(f)
+    with open(os.path.join(target, "embark.json"), encoding="utf8") as file_desc:
+        embark_json = json.load(file_desc)
     if embark_overwrite_config:
         write_embark_json = False
         if not "plugins" in embark_json:
@@ -47,16 +47,15 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
         if write_embark_json:
             process = subprocess.Popen(["npm", "install", plugin_name], cwd=target)
             _, stderr = process.communicate()
-            with open(
-                os.path.join(target, "embark.json"), "w", encoding="utf8"
-            ) as outfile:
+            with open(os.path.join(target, "embark.json"), "w", encoding="utf8") as outfile:
                 json.dump(embark_json, outfile, indent=2)
     else:
-        if (not "plugins" in embark_json) or (
-            not plugin_name in embark_json["plugins"]
-        ):
+        if (not "plugins" in embark_json) or (not plugin_name in embark_json["plugins"]):
             raise InvalidCompilation(
-                "embark-contract-info plugin was found in embark.json. Please install the plugin (see https://github.com/crytic/crytic-compile/wiki/Usage#embark), or use --embark-overwrite-config."
+                "embark-contract-info plugin was found in embark.json. "
+                "Please install the plugin (see "
+                "https://github.com/crytic/crytic-compile/wiki/Usage#embark)"
+                ", or use --embark-overwrite-config."
             )
 
     if not embark_ignore_compile:
@@ -67,31 +66,28 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
             cwd=target,
         )
         stdout, stderr = process.communicate()
-        logger.info("%s\n" % stdout.decode())
+        LOGGER.info("%s\n", stdout.decode())
         if stderr:
             # Embark might return information to stderr, but compile without issue
-            logger.error("%s" % stderr.decode())
+            LOGGER.error("%s", stderr.decode())
     infile = os.path.join(target, "crytic-export", "contracts-embark.json")
     if not os.path.isfile(infile):
         raise InvalidCompilation(
-            "Embark did not generate the AST file. Is Embark installed (npm install -g embark)? Is embark-contract-info installed? (npm install -g embark)."
+            "Embark did not generate the AST file. Is Embark installed "
+            "(npm install -g embark)? Is embark-contract-info installed? (npm install -g embark)."
         )
 
     crytic_compile.compiler_version = _get_version(target)
 
-    with open(infile, "r", encoding="utf8") as f:
-        targets_loaded = json.load(f)
+    with open(infile, "r", encoding="utf8") as file_desc:
+        targets_loaded = json.load(file_desc)
         for k, ast in targets_loaded["asts"].items():
-            filename = convert_filename(
-                k, _relative_to_short, crytic_compile, working_dir=target
-            )
+            filename = convert_filename(k, _relative_to_short, crytic_compile, working_dir=target)
             crytic_compile.asts[filename.absolute] = ast
             crytic_compile.filenames.add(filename)
 
         if not "contracts" in targets_loaded:
-            logger.error(
-                f"Incorrect json file generated. Are you using {plugin_name} >= 1.1.0?"
-            )
+            LOGGER.error("Incorrect json file generated. Are you using %s >= 1.1.0?", plugin_name)
             raise InvalidCompilation(
                 f"Incorrect json file generated. Are you using {plugin_name} >= 1.1.0?"
             )
@@ -100,10 +96,7 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
             contract_name = extract_name(original_contract_name)
             contract_filename = extract_filename(original_contract_name)
             contract_filename = convert_filename(
-                contract_filename,
-                _relative_to_short,
-                crytic_compile,
-                working_dir=target,
+                contract_filename, _relative_to_short, crytic_compile, working_dir=target
             )
 
             crytic_compile.contracts_filenames[contract_name] = contract_filename
@@ -112,19 +105,15 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
             if "abi" in info:
                 crytic_compile.abis[contract_name] = info["abi"]
             if "bin" in info:
-                crytic_compile.bytecodes_init[contract_name] = info["bin"].replace(
+                crytic_compile.bytecodes_init[contract_name] = info["bin"].replace("0x", "")
+            if "bin-runtime" in info:
+                crytic_compile.bytecodes_runtime[contract_name] = info["bin-runtime"].replace(
                     "0x", ""
                 )
-            if "bin-runtime" in info:
-                crytic_compile.bytecodes_runtime[contract_name] = info[
-                    "bin-runtime"
-                ].replace("0x", "")
             if "srcmap" in info:
                 crytic_compile.srcmaps_init[contract_name] = info["srcmap"].split(";")
             if "srcmap-runtime" in info:
-                crytic_compile.srcmaps_runtime[contract_name] = info[
-                    "srcmap-runtime"
-                ].split(";")
+                crytic_compile.srcmaps_runtime[contract_name] = info["srcmap-runtime"].split(";")
 
 
 def is_embark(target: str) -> bool:
@@ -151,8 +140,8 @@ def _get_version(target: str) -> CompilerVersion:
     :param target:
     :return:
     """
-    with open(os.path.join(target, "embark.json"), encoding="utf8") as f:
-        config = json.load(f)
+    with open(os.path.join(target, "embark.json"), encoding="utf8") as file_desc:
+        config = json.load(file_desc)
         version = "0.5.0"  # default version with Embark 0.4
         if "versions" in config:
             if "solc" in config["versions"]:

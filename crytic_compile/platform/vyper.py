@@ -8,14 +8,14 @@ from pathlib import Path
 
 from typing import TYPE_CHECKING, Dict
 
+from crytic_compile.platform.exceptions import InvalidCompilation
+from crytic_compile.platform.types import Type
+from crytic_compile.compiler.compiler import CompilerVersion
+from crytic_compile.utils.naming import convert_filename
+
 # Handle cycle
 if TYPE_CHECKING:
     from crytic_compile import CryticCompile
-
-from .exceptions import InvalidCompilation
-from .types import Type
-from ..compiler.compiler import CompilerVersion
-from ..utils.naming import convert_filename
 
 
 def is_vyper(target: str) -> bool:
@@ -58,9 +58,7 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
     crytic_compile.contracts_filenames[contract_name] = contract_filename
     crytic_compile.abis[contract_name] = info["abi"]
     crytic_compile.bytecodes_init[contract_name] = info["bytecode"].replace("0x", "")
-    crytic_compile.bytecodes_runtime[contract_name] = info["bytecode_runtime"].replace(
-        "0x", ""
-    )
+    crytic_compile.bytecodes_runtime[contract_name] = info["bytecode_runtime"].replace("0x", "")
     crytic_compile.srcmaps_init[contract_name] = []
     crytic_compile.srcmaps_runtime[contract_name] = []
 
@@ -70,9 +68,7 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
     crytic_compile.asts[contract_filename.absolute] = ast
 
 
-def _run_vyper(
-    filename: str, vyper: str, env: Dict = None, working_dir: str = None
-) -> Dict:
+def _run_vyper(filename: str, vyper: str, env: Dict = None, working_dir: str = None) -> Dict:
     if not os.path.isfile(filename):
         raise InvalidCompilation(
             "{} does not exist (are you in the correct directory?)".format(filename)
@@ -83,14 +79,10 @@ def _run_vyper(
     additional_kwargs = {"cwd": working_dir} if working_dir else {}
     try:
         process = subprocess.Popen(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            env=env,
-            **additional_kwargs,
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env, **additional_kwargs
         )
-    except Exception as e:
-        raise InvalidCompilation(e)
+    except Exception as exception:
+        raise InvalidCompilation(exception)
 
     stdout, stderr = process.communicate()
 
@@ -114,14 +106,10 @@ def _get_vyper_ast(filename: str, vyper: str, env=None, working_dir=None) -> Dic
     additional_kwargs = {"cwd": working_dir} if working_dir else {}
     try:
         process = subprocess.Popen(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            env=env,
-            **additional_kwargs,
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env, **additional_kwargs
         )
-    except Exception as e:
-        raise InvalidCompilation(e)
+    except Exception as exception:
+        raise InvalidCompilation(exception)
 
     stdout, stderr = process.communicate()
 

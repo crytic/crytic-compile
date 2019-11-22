@@ -9,17 +9,17 @@ import platform
 import re
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, Tuple
+from typing import TYPE_CHECKING, Optional, Tuple, List, Dict
+
+from crytic_compile.platform.types import Type
+from crytic_compile.platform.exceptions import InvalidCompilation
+from crytic_compile.utils.naming import convert_filename
+from crytic_compile.compiler.compiler import CompilerVersion
+from crytic_compile.platform import solc
 
 # Handle cycle
 if TYPE_CHECKING:
     from crytic_compile import CryticCompile
-
-from .types import Type
-from .exceptions import InvalidCompilation
-from ..utils.naming import convert_filename
-from ..compiler.compiler import CompilerVersion
-from . import solc
 
 LOGGER = logging.getLogger("CryticCompile")
 
@@ -32,9 +32,7 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
     :param kwargs:
     :return:
     """
-    build_directory = kwargs.get(
-        "truffle_build_directory", os.path.join("build", "contracts")
-    )
+    build_directory = kwargs.get("truffle_build_directory", os.path.join("build", "contracts"))
     truffle_ignore_compile = kwargs.get("truffle_ignore_compile", False)
     truffle_version = kwargs.get("truffle_version", None)
     crytic_compile.type = Type.TRUFFLE
@@ -55,8 +53,8 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
             else:
                 base_cmd = ["npx", f"truffle@{truffle_version}"]
         elif os.path.isfile(os.path.join(target, "package.json")):
-            with open(os.path.join(target, "package.json"), encoding="utf8") as f:
-                package = json.load(f)
+            with open(os.path.join(target, "package.json"), encoding="utf8") as file_desc:
+                package = json.load(file_desc)
                 if "devDependencies" in package:
                     if "truffle" in package["devDependencies"]:
                         version = package["devDependencies"]["truffle"]
@@ -82,19 +80,16 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
         cmd = base_cmd + ["compile", "--all"]
 
         LOGGER.info(
-            "'{}' running (use --truffle-version truffle@x.x.x to use specific version)".format(
-                " ".join(cmd)
-            )
+            "'%s' running (use --truffle-version truffle@x.x.x to use specific version)",
+            " ".join(cmd),
         )
 
-        process = subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=target
-        )
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=target)
 
-        stdout, stderr = process.communicate()
+        stdout_bytes, stderr_bytes = process.communicate()
         stdout, stderr = (
-            stdout.decode(),
-            stderr.decode(),
+            stdout_bytes.decode(),
+            stderr_bytes.decode(),
         )  # convert bytestrings to unicode strings
 
         LOGGER.info(stdout)
@@ -111,8 +106,8 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
     optimized = None
 
     for filename_txt in filenames:
-        with open(filename_txt, encoding="utf8") as f:
-            target_loaded = json.load(f)
+        with open(filename_txt, encoding="utf8") as file_desc:
+            target_loaded = json.load(file_desc)
 
             if optimized is None:
                 if "metadata" in target_loaded:
@@ -122,9 +117,7 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
                         if "settings" in metadata:
                             if "optimizer" in metadata["settings"]:
                                 if "enabled" in metadata["settings"]["optimizer"]:
-                                    optimized = metadata["settings"]["optimizer"][
-                                        "enabled"
-                                    ]
+                                    optimized = metadata["settings"]["optimizer"]["enabled"]
                     except json.decoder.JSONDecodeError:
                         pass
 
@@ -142,15 +135,13 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
             crytic_compile.contracts_filenames[contract_name] = filename
             crytic_compile.contracts_names.add(contract_name)
             crytic_compile.abis[contract_name] = target_loaded["abi"]
-            crytic_compile.bytecodes_init[contract_name] = target_loaded[
-                "bytecode"
-            ].replace("0x", "")
+            crytic_compile.bytecodes_init[contract_name] = target_loaded["bytecode"].replace(
+                "0x", ""
+            )
             crytic_compile.bytecodes_runtime[contract_name] = target_loaded[
                 "deployedBytecode"
             ].replace("0x", "")
-            crytic_compile.srcmaps_init[contract_name] = target_loaded[
-                "sourceMap"
-            ].split(";")
+            crytic_compile.srcmaps_init[contract_name] = target_loaded["sourceMap"].split(";")
             crytic_compile.srcmaps_runtime[contract_name] = target_loaded[
                 "deployedSourceMap"
             ].split(";")
@@ -173,7 +164,7 @@ def export(crytic_compile: "CryticCompile", **kwargs: str) -> Optional[str]:
         os.makedirs(export_dir)
 
     # Loop for each contract filename.
-    results = []
+    results: List[Dict] = []
     for contract_name in crytic_compile.contracts_names:
         # Create the informational object to output for this contract
         filename = crytic_compile.contracts_filenames[contract_name]
@@ -182,15 +173,15 @@ def export(crytic_compile: "CryticCompile", **kwargs: str) -> Optional[str]:
             "abi": crytic_compile.abi(contract_name),
             "bytecode": "0x" + crytic_compile.bytecode_init(contract_name),
             "deployedBytecode": "0x" + crytic_compile.bytecode_runtime(contract_name),
-            "ast": crytic_compile.ast(filename),
+            "ast": crytic_compile.ast(filename.absolute),
         }
-        results.append(results)
+        results.append(output)
 
         # If we have an export directory, export it.
         if export_dir:
             path = os.path.join(export_dir, contract_name + ".json")
-            with open(path, "w", encoding="utf8") as f:
-                json.dump(output, f)
+            with open(path, "w", encoding="utf8") as file_desc:
+                json.dump(output, file_desc)
             return path
 
     return None
@@ -242,9 +233,7 @@ def _get_version_from_config(target: str) -> Optional[Tuple[str, str]]:
 
 def _get_version(truffle_call, cwd):
     cmd = truffle_call + ["version"]
-    process = subprocess.Popen(
-        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd
-    )
+    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd)
     stdout, _ = process.communicate()
     stdout = stdout.decode()  # convert bytestrings to unicode strings
     stdout = stdout.split("\n")
@@ -252,8 +241,8 @@ def _get_version(truffle_call, cwd):
         if "Solidity" in line:
             if "native" in line:
                 return solc.get_version("solc"), "solc-native"
-            version = re.findall("\d+\.\d+\.\d+", line)[0]
-            compiler = re.findall("(solc[a-z\-]*)", line)
+            version = re.findall(r"\d+\.\d+\.\d+", line)[0]
+            compiler = re.findall(r"(solc[a-z\-]*)", line)
             if len(compiler) > 0:
                 return version, compiler
 

@@ -7,18 +7,16 @@ import subprocess
 import glob
 import json
 from pathlib import Path
-from typing import Dict, List
-
-# Cycle dependency
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from crytic_compile import CryticCompile
+from typing import Dict, List, TYPE_CHECKING
 
 from crytic_compile.platform.types import Type
 from crytic_compile.platform.exceptions import InvalidCompilation
 from crytic_compile.utils.naming import convert_filename, Filename
 from crytic_compile.compiler.compiler import CompilerVersion
+
+# Cycle dependency
+if TYPE_CHECKING:
+    from crytic_compile import CryticCompile
 
 LOGGER = logging.getLogger("CryticCompile")
 
@@ -40,14 +38,12 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs: Dict):
     if not brownie_ignore_compile:
         cmd = base_cmd + ["compile"]
 
-        process = subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=target
-        )
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=target)
 
-        stdout, stderr = process.communicate()
+        stdout_bytes, stderr_bytes = process.communicate()
         stdout, stderr = (
-            stdout.decode(),
-            stderr.decode(),
+            stdout_bytes.decode(),
+            stderr_bytes.decode(),
         )  # convert bytestrings to unicode strings
 
         LOGGER.info(stdout)
@@ -62,9 +58,7 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs: Dict):
     _iterate_over_files(crytic_compile, target, filenames)
 
 
-def _iterate_over_files(
-    crytic_compile: "CryticCompile", target: str, filenames: List[str]
-):
+def _iterate_over_files(crytic_compile: "CryticCompile", target: str, filenames: List[str]):
     """
     Iterate over the files
     :param crytic_compile:
@@ -100,15 +94,13 @@ def _iterate_over_files(
             crytic_compile.contracts_filenames[contract_name] = filename
             crytic_compile.contracts_names.add(contract_name)
             crytic_compile.abis[contract_name] = target_loaded["abi"]
-            crytic_compile.bytecodes_init[contract_name] = target_loaded[
-                "bytecode"
-            ].replace("0x", "")
+            crytic_compile.bytecodes_init[contract_name] = target_loaded["bytecode"].replace(
+                "0x", ""
+            )
             crytic_compile.bytecodes_runtime[contract_name] = target_loaded[
                 "deployedBytecode"
             ].replace("0x", "")
-            crytic_compile.srcmaps_init[contract_name] = target_loaded[
-                "sourceMap"
-            ].split(";")
+            crytic_compile.srcmaps_init[contract_name] = target_loaded["sourceMap"].split(";")
             crytic_compile.srcmaps_runtime[contract_name] = target_loaded[
                 "deployedSourceMap"
             ].split(";")
@@ -126,15 +118,15 @@ def is_brownie(target: str):
     """
     # < 1.1.0: brownie-config.json
     # >= 1.1.0: brownie-config.yaml
-    return os.path.isfile(
-        os.path.join(target, "brownie-config.json")
-    ) or os.path.isfile(os.path.join(target, "brownie-config.yaml"))
+    return os.path.isfile(os.path.join(target, "brownie-config.json")) or os.path.isfile(
+        os.path.join(target, "brownie-config.yaml")
+    )
 
 
-def is_dependency(path: str) -> bool:
+def is_dependency(_path: str) -> bool:
     """
     Check if the path is a dependency
-    :param path:
+    :param _path:
     :return:
     """
     return False
