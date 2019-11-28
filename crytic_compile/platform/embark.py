@@ -30,7 +30,7 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
     :param kwargs:
     :return:
     """
-    embark_ignore_compile = kwargs.get("embark_ignore_compile", False)
+    embark_ignore_compile = kwargs.get("embark_ignore_compile", False) or kwargs.get("ignore_compile", False)
     embark_overwrite_config = kwargs.get("embark_overwrite_config", False)
     crytic_compile.type = Type.EMBARK
     plugin_name = "@trailofbits/embark-contract-info"

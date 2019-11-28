@@ -32,7 +32,7 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
     :return:
     """
 
-    etherlime_ignore_compile = kwargs.get("etherlime_ignore_compile", False)
+    etherlime_ignore_compile = kwargs.get("etherlime_ignore_compile", False) or kwargs.get("ignore_compile", False)
 
     crytic_compile.type = Type.ETHERLIME
     build_directory = "build"

@@ -30,7 +30,7 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs: Dict):
     :return:
     """
     build_directory = Path("build", "contracts")
-    brownie_ignore_compile = kwargs.get("brownie_ignore_compile", False)
+    brownie_ignore_compile = kwargs.get("brownie_ignore_compile", False) or kwargs.get("ignore_compile", False)
     crytic_compile.type = Type.TRUFFLE
 
     base_cmd = ["brownie"]

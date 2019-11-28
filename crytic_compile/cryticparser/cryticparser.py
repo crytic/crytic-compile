@@ -36,6 +36,14 @@ def init(parser: ArgumentParser):
         default=DEFAULTS_FLAG_IN_CONFIG["compile_custom_build"],
     )
 
+    group_solc.add_argument(
+        "--ignore-compile",
+        help="Do not run compile of any platform",
+        action="store_true",
+        dest="ignore_compile",
+        default=DEFAULTS_FLAG_IN_CONFIG["ignore_compile"],
+    )
+
     _init_solc(parser)
     _init_truffle(parser)
     _init_embark(parser)
