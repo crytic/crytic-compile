@@ -28,4 +28,5 @@ DEFAULTS_FLAG_IN_CONFIG = {
     "waffle_ignore_compile": False,
     "waffle_config_file": None,
     "npx_disable": False,
+    "ignore_compile": False,
 }

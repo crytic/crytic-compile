@@ -33,7 +33,7 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
     :return:
     """
     build_directory = kwargs.get("truffle_build_directory", os.path.join("build", "contracts"))
-    truffle_ignore_compile = kwargs.get("truffle_ignore_compile", False)
+    truffle_ignore_compile = kwargs.get("truffle_ignore_compile", False) or kwargs.get("ignore_compile", False)
     truffle_version = kwargs.get("truffle_version", None)
     crytic_compile.type = Type.TRUFFLE
     # Truffle on windows has naming conflicts where it will invoke truffle.js directly instead

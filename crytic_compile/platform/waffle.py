@@ -34,7 +34,7 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
     :return:
     """
 
-    waffle_ignore_compile = kwargs.get("waffle_ignore_compile", False)
+    waffle_ignore_compile = kwargs.get("waffle_ignore_compile", False) or kwargs.get("ignore_compile", False)
     crytic_compile.type = Type.WAFFLE
 
     cmd = ["waffle"]

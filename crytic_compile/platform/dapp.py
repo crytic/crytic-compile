@@ -40,7 +40,7 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
     :return:
     """
     crytic_compile.type = Type.DAPP
-    dapp_ignore_compile = kwargs.get("dapp_ignore_compile", False)
+    dapp_ignore_compile = kwargs.get("dapp_ignore_compile", False) or kwargs.get("ignore_compile", False)
     directory = os.path.join(target, "out")
 
     if not dapp_ignore_compile:
