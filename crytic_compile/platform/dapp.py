@@ -22,11 +22,9 @@ from crytic_compile.utils.naming import (
     convert_filename,
 )
 
-
 # Handle cycle
 if TYPE_CHECKING:
     from crytic_compile import CryticCompile
-
 
 LOGGER = logging.getLogger("CryticCompile")
 
@@ -150,7 +148,10 @@ def _run_dapp(target: str):
     """
     cmd = ["dapp", "build"]
 
-    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=target)
+    try:
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=target)
+    except OSError as e:
+        raise InvalidCompilation(e)
     _, _ = process.communicate()
 
 

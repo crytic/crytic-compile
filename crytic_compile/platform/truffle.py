@@ -233,9 +233,14 @@ def _get_version_from_config(target: str) -> Optional[Tuple[str, str]]:
 
 def _get_version(truffle_call, cwd):
     cmd = truffle_call + ["version"]
-    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd)
+    try:
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd)
+    except OSError as e:
+        raise InvalidCompilation(f"Truffle failed: {e}")
     stdout, _ = process.communicate()
     stdout = stdout.decode()  # convert bytestrings to unicode strings
+    if not stdout:
+        raise InvalidCompilation(f"Truffle failed to run: 'truffle version'")
     stdout = stdout.split("\n")
     for line in stdout:
         if "Solidity" in line:

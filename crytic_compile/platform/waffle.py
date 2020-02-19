@@ -118,9 +118,12 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
             LOGGER.info("Temporary file created: %s", file_desc.name)
             LOGGER.info("'%s running", " ".join(cmd))
 
-            process = subprocess.Popen(
-                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=target
-            )
+            try:
+                process = subprocess.Popen(
+                    cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=target
+                )
+            except OSError as e:
+                raise InvalidCompilation(e)
 
             stdout, stderr = process.communicate()
             stdout, stderr = (
@@ -224,7 +227,10 @@ def _get_version(compiler: str, cwd: str, config=None) -> str:
 
     elif compiler == "native":
         cmd = ["solc", "--version"]
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd)
+        try:
+            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd)
+        except OSError as e:
+            raise InvalidCompilation(e)
         stdout_bytes, _ = process.communicate()
         stdout = stdout_bytes.decode()  # convert bytestrings to unicode strings
         stdout = stdout.split("\n")
@@ -234,7 +240,10 @@ def _get_version(compiler: str, cwd: str, config=None) -> str:
 
     elif compiler == "solc-js":
         cmd = ["solcjs", "--version"]
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd)
+        try:
+            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd)
+        except OSError as e:
+            raise InvalidCompilation(e)
         stdout_bytes, _ = process.communicate()
         stdout = stdout_bytes.decode()  # convert bytestrings to unicode strings
         version = re.findall(r"\d+\.\d+\.\d+", stdout)[0]

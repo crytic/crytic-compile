@@ -37,8 +37,10 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs: Dict):
 
     if not brownie_ignore_compile:
         cmd = base_cmd + ["compile"]
-
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=target)
+        try:
+            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=target)
+        except OSError as e:
+            raise InvalidCompilation(e)
 
         stdout_bytes, stderr_bytes = process.communicate()
         stdout, stderr = (

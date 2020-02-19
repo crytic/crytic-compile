@@ -81,8 +81,8 @@ def _run_vyper(filename: str, vyper: str, env: Dict = None, working_dir: str = N
         process = subprocess.Popen(
             cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env, **additional_kwargs
         )
-    except Exception as exception:
-        raise InvalidCompilation(exception)
+    except OSError as e:
+        raise InvalidCompilation(e)
 
     stdout, stderr = process.communicate()
 
