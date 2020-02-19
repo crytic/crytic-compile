@@ -201,11 +201,15 @@ def get_version(solc: str) -> str:
     :return:
     """
     cmd = [solc, "--version"]
-    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    try:
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    except OSError as e:
+        raise InvalidCompilation(e)
     stdout_bytes, _ = process.communicate()
     stdout = stdout_bytes.decode()  # convert bytestrings to unicode strings
     version = re.findall(r"\d+\.\d+\.\d+", stdout)
-    assert len(version) != 0
+    if len(version) == 0:
+        raise InvalidCompilation(f'Solidity version not found: {stdout}')
     return version[0]
 
 
@@ -290,15 +294,17 @@ def _run_solc(
                 relative_filepath = relative_filepath[len(working_dir) + 1 :]
 
             cmd += ["--allow-paths", ".", relative_filepath]
-
-    if env:
-        process = subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env, **additional_kwargs
-        )
-    else:
-        process = subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **additional_kwargs
-        )
+    try:
+        if env:
+            process = subprocess.Popen(
+                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env, **additional_kwargs
+            )
+        else:
+            process = subprocess.Popen(
+                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **additional_kwargs
+            )
+    except OSError as e:
+        raise InvalidCompilation(e)
     stdout, stderr = process.communicate()
     stdout, stderr = (stdout.decode(), stderr.decode())  # convert bytestrings to unicode strings
 

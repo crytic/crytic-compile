@@ -214,13 +214,16 @@ def _run_solc_standard_json(
     cmd = [solc, "--standard-json", "--allow-paths", "."]
     additional_kwargs = {"cwd": working_dir} if working_dir else {}
 
-    process = subprocess.Popen(
-        cmd,
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        **additional_kwargs,
-    )
+    try:
+        process = subprocess.Popen(
+            cmd,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            **additional_kwargs,
+        )
+    except OSError as e:
+        raise InvalidCompilation(e)
     stdout, stderr = process.communicate(json.dumps(solc_input).encode("utf-8"))
     stdout, stderr = (stdout.decode(), stderr.decode())  # convert bytestrings to unicode strings
 

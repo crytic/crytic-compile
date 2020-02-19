@@ -45,7 +45,10 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
         if compile_arguments:
             cmd += compile_arguments.split(" ")
 
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        try:
+            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        except OSError as e:
+            raise InvalidCompilation(e)
 
         stdout_bytes, stderr_bytes = process.communicate()
         stdout, stderr = (

@@ -45,7 +45,10 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
             embark_json["plugins"][plugin_name] = {"flags": ""}
             write_embark_json = True
         if write_embark_json:
-            process = subprocess.Popen(["npm", "install", plugin_name], cwd=target)
+            try:
+                process = subprocess.Popen(["npm", "install", plugin_name], cwd=target)
+            except OSError as e:
+                raise InvalidCompilation(e)
             _, stderr = process.communicate()
             with open(os.path.join(target, "embark.json"), "w", encoding="utf8") as outfile:
                 json.dump(embark_json, outfile, indent=2)
@@ -59,12 +62,15 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
             )
 
     if not embark_ignore_compile:
-        process = subprocess.Popen(
-            ["embark", "build", "--contracts"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            cwd=target,
-        )
+        try:
+            process = subprocess.Popen(
+                ["embark", "build", "--contracts"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                cwd=target,
+            )
+        except OSError as e:
+            raise InvalidCompilation(e)
         stdout, stderr = process.communicate()
         LOGGER.info("%s\n", stdout.decode())
         if stderr:
