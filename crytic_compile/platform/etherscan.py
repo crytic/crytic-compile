@@ -110,7 +110,7 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
             LOGGER.error("Incorrect etherscan request")
             raise InvalidCompilation("Incorrect etherscan request " + etherscan_url)
 
-        if info["message"] != "OK":
+        if not info["message"].startswith("OK"):
             LOGGER.error("Contract has no public source code")
             raise InvalidCompilation("Contract has no public source code: " + etherscan_url)
 
