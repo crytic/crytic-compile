@@ -25,6 +25,7 @@ DEFAULTS_FLAG_IN_CONFIG = {
     "etherlime_compile_arguments": None,
     "etherscan_only_source_code": False,
     "etherscan_only_bytecode": False,
+    "etherscan_api_key": None,
     "waffle_ignore_compile": False,
     "waffle_config_file": None,
     "npx_disable": False,

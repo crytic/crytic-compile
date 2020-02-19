@@ -46,7 +46,7 @@ def _handle_bytecode(crytic_compile: "CryticCompile", target: str, result_b: byt
     begin += """<div id="dividcode">\n<pre class=\'wordwrap\' style=\'height: 15pc;\'>0x"""
     result = result_b.decode("utf8")
     # Removing everything before the begin string
-    result = result[result.find(begin) + len(begin) :]
+    result = result[result.find(begin) + len(begin):]
     bytecode = result[: result.find("<")]
 
     contract_name = f"Contract_{target}"
@@ -83,7 +83,7 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
     if target.startswith(tuple(SUPPORTED_NETWORK)):
         prefix: Union[None, str] = SUPPORTED_NETWORK[target[: target.find(":") + 1]][0]
         prefix_bytecode = SUPPORTED_NETWORK[target[: target.find(":") + 1]][1]
-        addr = target[target.find(":") + 1 :]
+        addr = target[target.find(":") + 1:]
         etherscan_url = ETHERSCAN_BASE % (prefix, addr)
         etherscan_bytecode_url = ETHERSCAN_BASE_BYTECODE % (prefix_bytecode, addr)
 
@@ -96,6 +96,13 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
     only_source = kwargs.get("etherscan_only_source_code", False)
     only_bytecode = kwargs.get("etherscan_only_bytecode", False)
 
+    etherscan_api_key = kwargs.get("etherscan_api_key", None)
+
+    if etherscan_api_key:
+        etherscan_url += f"&apikey={etherscan_api_key}"
+        print(etherscan_url)
+        etherscan_bytecode_url += f"&apikey={etherscan_api_key}"
+
     source_code = ""
     result: Dict[str, Union[Dict, str, int]] = dict()
     contract_name = None
@@ -106,7 +113,7 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
 
         info = json.loads(html)
 
-        if not "message" in info:
+        if "message" not  in info:
             LOGGER.error("Incorrect etherscan request")
             raise InvalidCompilation("Incorrect etherscan request " + etherscan_url)
 
@@ -114,7 +121,7 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
             LOGGER.error("Contract has no public source code")
             raise InvalidCompilation("Contract has no public source code: " + etherscan_url)
 
-        if not "result" in info:
+        if "result" not in info:
             LOGGER.error("Contract has no public source code")
             raise InvalidCompilation("Contract has no public source code: " + etherscan_url)
 
@@ -198,7 +205,7 @@ def is_etherscan(target: str) -> Optional[Match[str]]:
     :return:
     """
     if target.startswith(tuple(SUPPORTED_NETWORK)):
-        target = target[target.find(":") + 1 :]
+        target = target[target.find(":") + 1:]
     return re.match(r"^\s*0x[a-zA-Z0-9]{40}\s*$", target)
 
 
@@ -217,7 +224,7 @@ def convert_version(version: str) -> str:
     :param version:
     :return:
     """
-    return version[1 : version.find("+")]
+    return version[1: version.find("+")]
 
 
 def _relative_to_short(relative: Path) -> Path:

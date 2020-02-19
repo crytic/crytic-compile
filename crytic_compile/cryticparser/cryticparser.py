@@ -235,6 +235,14 @@ def _init_etherscan(parser):
         default=DEFAULTS_FLAG_IN_CONFIG["etherscan_only_bytecode"],
     )
 
+    group_etherscan.add_argument(
+        "--etherscan-apikey",
+        help="Etherscan API key.",
+        action="store",
+        dest="etherscan_api_key",
+        default=DEFAULTS_FLAG_IN_CONFIG["etherscan_api_key"],
+    )
+
 
 def _init_npx(parser):
     group_npx = parser.add_argument_group("NPX options")
