@@ -17,6 +17,8 @@ from crytic_compile.utils.naming import convert_filename
 from crytic_compile.compiler.compiler import CompilerVersion
 
 # Cycle dependency
+from crytic_compile.utils.natspec import Natspec
+
 if TYPE_CHECKING:
     from crytic_compile import CryticCompile
 
@@ -101,6 +103,11 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
             crytic_compile.srcmaps_runtime[contract_name] = target_loaded[
                 "deployedSourceMap"
             ].split(";")
+
+            userdoc = target_loaded.get('userdoc', {})
+            devdoc = target_loaded.get('devdoc', {})
+            natspec = Natspec(userdoc, devdoc)
+            crytic_compile.natspec[contract_name] = natspec
 
     crytic_compile.compiler_version = CompilerVersion(
         compiler=compiler, version=version, optimized=_is_optimized(compile_arguments)
