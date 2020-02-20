@@ -18,6 +18,8 @@ from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform import solc
 
 # Handle cycle
+from crytic_compile.utils.natspec import Natspec
+
 if TYPE_CHECKING:
     from crytic_compile import CryticCompile
 
@@ -121,6 +123,10 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
                     except json.decoder.JSONDecodeError:
                         pass
 
+            userdoc = target_loaded.get('userdoc', {})
+            devdoc = target_loaded.get('devdoc', {})
+            natspec = Natspec(userdoc, devdoc)
+
             if not "ast" in target_loaded:
                 continue
 
@@ -132,6 +138,7 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
             crytic_compile.asts[filename.absolute] = target_loaded["ast"]
             crytic_compile.filenames.add(filename)
             contract_name = target_loaded["contractName"]
+            crytic_compile.natspec[contract_name] = natspec
             crytic_compile.contracts_filenames[contract_name] = filename
             crytic_compile.contracts_names.add(contract_name)
             crytic_compile.abis[contract_name] = target_loaded["abi"]
@@ -174,6 +181,8 @@ def export(crytic_compile: "CryticCompile", **kwargs: str) -> Optional[str]:
             "bytecode": "0x" + crytic_compile.bytecode_init(contract_name),
             "deployedBytecode": "0x" + crytic_compile.bytecode_runtime(contract_name),
             "ast": crytic_compile.ast(filename.absolute),
+            "userdoc": crytic_compile.natspec[contract_name].userdoc.export(),
+            "devdoc": crytic_compile.natspec[contract_name].devdoc.export()
         }
         results.append(output)
 

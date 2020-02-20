@@ -100,7 +100,6 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
 
     if etherscan_api_key:
         etherscan_url += f"&apikey={etherscan_api_key}"
-        print(etherscan_url)
         etherscan_bytecode_url += f"&apikey={etherscan_api_key}"
 
     source_code = ""
