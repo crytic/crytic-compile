@@ -70,12 +70,6 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
                         truffle_version = "truffle@{}".format(version)
                         base_cmd = ["npx", truffle_version]
 
-    version_from_config = _get_version_from_config(target)
-    if version_from_config:
-        version, compiler = version_from_config
-    else:
-        version, compiler = _get_version(base_cmd, cwd=target)
-
     if not truffle_ignore_compile:
         cmd = base_cmd + ["compile", "--all"]
 
@@ -104,6 +98,9 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
     filenames = glob.glob(os.path.join(target, build_directory, "*.json"))
 
     optimized = None
+
+    version = None
+    compiler = None
 
     for filename_txt in filenames:
         with open(filename_txt, encoding="utf8") as file_desc:
@@ -145,6 +142,20 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
             crytic_compile.srcmaps_runtime[contract_name] = target_loaded[
                 "deployedSourceMap"
             ].split(";")
+
+            if compiler is None:
+                compiler = target_loaded.get("compiler", {}).get("name", None)
+            if version is None:
+                version = target_loaded.get("compiler", {}).get("version", None)
+                if '+' in version:
+                    version = version[0:version.find('+')]
+
+    if version is None or compiler is None:
+        version_from_config = _get_version_from_config(target)
+        if version_from_config:
+            version, compiler = version_from_config
+        else:
+            version, compiler = _get_version(base_cmd, cwd=target)
 
     crytic_compile.compiler_version = CompilerVersion(
         compiler=compiler, version=version, optimized=optimized
