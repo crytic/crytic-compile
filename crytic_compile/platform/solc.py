@@ -117,8 +117,8 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
             crytic_compile.bytecodes_runtime[contract_name] = info["bin-runtime"]
             crytic_compile.srcmaps_init[contract_name] = info["srcmap"].split(";")
             crytic_compile.srcmaps_runtime[contract_name] = info["srcmap-runtime"].split(";")
-            userdoc = info.get('userdoc', {})
-            devdoc = info.get('devdoc', {})
+            userdoc = json.loads(info.get('userdoc', "{}"))
+            devdoc = json.loads(info.get('devdoc', "{}"))
             natspec = Natspec(userdoc, devdoc)
             crytic_compile.natspec[contract_name] = natspec
 
