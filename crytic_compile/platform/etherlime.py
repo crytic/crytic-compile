@@ -11,6 +11,7 @@ import re
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
+from crytic_compile.platform.abstract_platform import AbstractPlatform
 from crytic_compile.platform.types import Type
 from crytic_compile.platform.exceptions import InvalidCompilation
 from crytic_compile.utils.naming import convert_filename
@@ -25,118 +26,124 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger("CryticCompile")
 
 
-def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
-    """
-    Compile the target
-    :param crytic_compile:
-    :param target:
-    :param kwargs:
-    :return:
-    """
+class Etherlime(AbstractPlatform):
+    NAME = "Etherlime"
+    PROJECT_URL = "https://github.com/LimeChain/etherlime"
+    TYPE = Type.ETHERLIME
 
-    etherlime_ignore_compile = kwargs.get("etherlime_ignore_compile", False) or kwargs.get("ignore_compile", False)
+    def compile(self, crytic_compile: "CryticCompile", **kwargs: str):
+        """
+        Compile the target
+        :param crytic_compile:
+        :param target:
+        :param kwargs:
+        :return:
+        """
 
-    crytic_compile.type = Type.ETHERLIME
-    build_directory = "build"
+        etherlime_ignore_compile = kwargs.get("etherlime_ignore_compile", False) or kwargs.get("ignore_compile", False)
 
-    compile_arguments = kwargs.get("etherlime_compile_arguments", None)
+        build_directory = "build"
 
-    if not etherlime_ignore_compile:
-        cmd = ["etherlime", "compile", target]
+        compile_arguments = kwargs.get("etherlime_compile_arguments", None)
 
-        if compile_arguments:
-            cmd += compile_arguments.split(" ")
+        if not etherlime_ignore_compile:
+            cmd = ["etherlime", "compile", self._target]
 
-        try:
-            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        except OSError as e:
-            raise InvalidCompilation(e)
+            if compile_arguments:
+                cmd += compile_arguments.split(" ")
 
-        stdout_bytes, stderr_bytes = process.communicate()
-        stdout, stderr = (
-            stdout_bytes.decode(),
-            stderr_bytes.decode(),
-        )  # convert bytestrings to unicode strings
+            try:
+                process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            except OSError as e:
+                raise InvalidCompilation(e)
 
-        LOGGER.info(stdout)
+            stdout_bytes, stderr_bytes = process.communicate()
+            stdout, stderr = (
+                stdout_bytes.decode(),
+                stderr_bytes.decode(),
+            )  # convert bytestrings to unicode strings
 
-        if stderr:
-            LOGGER.error(stderr)
+            LOGGER.info(stdout)
 
-    # similar to truffle
-    if not os.path.isdir(os.path.join(target, build_directory)):
-        raise InvalidCompilation("No truffle build directory found, did you run `truffle compile`?")
-    filenames = glob.glob(os.path.join(target, build_directory, "*.json"))
+            if stderr:
+                LOGGER.error(stderr)
 
-    version = None
-    compiler = "solc-js"
+        # similar to truffle
+        if not os.path.isdir(os.path.join(self._target, build_directory)):
+            raise InvalidCompilation("No truffle build directory found, did you run `truffle compile`?")
+        filenames = glob.glob(os.path.join(self._target, build_directory, "*.json"))
 
-    for file in filenames:
-        with open(file, encoding="utf8") as file_desc:
-            target_loaded = json.load(file_desc)
+        version = None
+        compiler = "solc-js"
 
-            if version is None:
-                if "compiler" in target_loaded:
-                    if "version" in target_loaded["compiler"]:
-                        version = re.findall(
-                            r"\d+\.\d+\.\d+", target_loaded["compiler"]["version"]
-                        )[0]
+        for file in filenames:
+            with open(file, encoding="utf8") as file_desc:
+                target_loaded = json.load(file_desc)
 
-            if not "ast" in target_loaded:
-                continue
+                if version is None:
+                    if "compiler" in target_loaded:
+                        if "version" in target_loaded["compiler"]:
+                            version = re.findall(
+                                r"\d+\.\d+\.\d+", target_loaded["compiler"]["version"]
+                            )[0]
 
-            filename_txt = target_loaded["ast"]["absolutePath"]
-            filename = convert_filename(filename_txt, _relative_to_short, crytic_compile)
-            crytic_compile.asts[filename.absolute] = target_loaded["ast"]
-            crytic_compile.filenames.add(filename)
-            contract_name = target_loaded["contractName"]
-            crytic_compile.contracts_filenames[contract_name] = filename
-            crytic_compile.contracts_names.add(contract_name)
-            crytic_compile.abis[contract_name] = target_loaded["abi"]
-            crytic_compile.bytecodes_init[contract_name] = target_loaded["bytecode"].replace(
-                "0x", ""
-            )
-            crytic_compile.bytecodes_runtime[contract_name] = target_loaded[
-                "deployedBytecode"
-            ].replace("0x", "")
-            crytic_compile.srcmaps_init[contract_name] = target_loaded["sourceMap"].split(";")
-            crytic_compile.srcmaps_runtime[contract_name] = target_loaded[
-                "deployedSourceMap"
-            ].split(";")
+                if not "ast" in target_loaded:
+                    continue
 
-            userdoc = target_loaded.get('userdoc', {})
-            devdoc = target_loaded.get('devdoc', {})
-            natspec = Natspec(userdoc, devdoc)
-            crytic_compile.natspec[contract_name] = natspec
+                filename_txt = target_loaded["ast"]["absolutePath"]
+                filename = convert_filename(filename_txt, _relative_to_short, crytic_compile)
+                crytic_compile.asts[filename.absolute] = target_loaded["ast"]
+                crytic_compile.filenames.add(filename)
+                contract_name = target_loaded["contractName"]
+                crytic_compile.contracts_filenames[contract_name] = filename
+                crytic_compile.contracts_names.add(contract_name)
+                crytic_compile.abis[contract_name] = target_loaded["abi"]
+                crytic_compile.bytecodes_init[contract_name] = target_loaded["bytecode"].replace(
+                    "0x", ""
+                )
+                crytic_compile.bytecodes_runtime[contract_name] = target_loaded[
+                    "deployedBytecode"
+                ].replace("0x", "")
+                crytic_compile.srcmaps_init[contract_name] = target_loaded["sourceMap"].split(";")
+                crytic_compile.srcmaps_runtime[contract_name] = target_loaded[
+                    "deployedSourceMap"
+                ].split(";")
 
-    crytic_compile.compiler_version = CompilerVersion(
-        compiler=compiler, version=version, optimized=_is_optimized(compile_arguments)
-    )
+                userdoc = target_loaded.get('userdoc', {})
+                devdoc = target_loaded.get('devdoc', {})
+                natspec = Natspec(userdoc, devdoc)
+                crytic_compile.natspec[contract_name] = natspec
 
+        crytic_compile.compiler_version = CompilerVersion(
+            compiler=compiler, version=version, optimized=_is_optimized(compile_arguments)
+        )
 
-def is_etherlime(target: str) -> bool:
-    """
-    Check if the target is an etherlime project
-    :param target:
-    :return:
-    """
-    if os.path.isfile(os.path.join(target, "package.json")):
-        with open("package.json", encoding="utf8") as file_desc:
-            package = json.load(file_desc)
-        if "dependencies" in package:
-            return (
-                "etherlime-lib" in package["dependencies"] or "etherlime" in package["dependencies"]
-            )
-    return False
+    @staticmethod
+    def is_supported(target: str, **kwargs: str) -> bool:
+        """
+        Check if the target is an etherlime project
+        :param target:
+        :return:
+        """
+        etherlime_ignore = kwargs.get("etherlime_ignore", False)
+        if etherlime_ignore:
+            return False
+        if os.path.isfile(os.path.join(target, "package.json")):
+            with open("package.json", encoding="utf8") as file_desc:
+                package = json.load(file_desc)
+            if "dependencies" in package:
+                return (
+                        "etherlime-lib" in package["dependencies"] or "etherlime" in package["dependencies"]
+                )
+        return False
 
-
-def is_dependency(path: str) -> bool:
-    """
-    Check if the path is a dependency
-    :param path:
-    :return:
-    """
-    return "node_modules" in Path(path).parts
+    def is_dependency(self, path: str) -> bool:
+        """
+        Check if the path is a dependency
+        :param path:
+        :return:
+        """
+        return "node_modules" in Path(path).parts
 
 
 def _is_optimized(compile_arguments: Optional[str]) -> bool:

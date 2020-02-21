@@ -7,8 +7,9 @@ import logging
 import subprocess
 import re
 
-from typing import TYPE_CHECKING, Union, List, Dict
+from typing import TYPE_CHECKING, Union, List, Dict, Optional
 
+from crytic_compile.platform.abstract_platform import AbstractPlatform
 from crytic_compile.platform.types import Type
 from crytic_compile.utils.naming import (
     extract_filename,
@@ -28,133 +29,7 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger("CryticCompile")
 
 
-def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
-    """
-    Compile the target
-    :param crytic_compile:
-    :param target:
-    :param kwargs:
-    :return:
-    """
-    crytic_compile.type = Type.SOLC
-    solc = kwargs.get("solc", "solc")
-    solc_disable_warnings = kwargs.get("solc_disable_warnings", False)
-    solc_arguments = kwargs.get("solc_args", "")
-    solc_remaps = kwargs.get("solc_remaps", None)
-    solc_working_dir = kwargs.get("solc_working_dir", None)
-
-    crytic_compile.compiler_version = CompilerVersion(
-        compiler="solc", version=get_version(solc), optimized=_is_optimized(solc_arguments)
-    )
-
-    # From config file, solcs is a dict (version -> path)
-    # From command line, solc is a list
-    # The guessing of version only works from config file
-    # This is to prevent too complex command line
-    solcs_path: Union[str, Dict, List[str]] = kwargs.get("solc_solcs_bin")
-    # solcs_env is always a list. It matches solc-select list
-    solcs_env = kwargs.get("solc_solcs_select")
-
-    if solcs_path:
-        if isinstance(solcs_path, str):
-            solcs_path = solcs_path.split(",")
-        targets_json = _run_solcs_path(
-            crytic_compile,
-            target,
-            solcs_path,
-            solc_disable_warnings,
-            solc_arguments,
-            solc_remaps=solc_remaps,
-            working_dir=solc_working_dir,
-        )
-
-    elif solcs_env:
-        solcs_env_list = solcs_env.split(",")
-        targets_json = _run_solcs_env(
-            crytic_compile,
-            target,
-            solc,
-            solc_disable_warnings,
-            solc_arguments,
-            solcs_env=solcs_env_list,
-            solc_remaps=solc_remaps,
-            working_dir=solc_working_dir,
-        )
-
-    else:
-        targets_json = _run_solc(
-            crytic_compile,
-            target,
-            solc,
-            solc_disable_warnings,
-            solc_arguments,
-            solc_remaps=solc_remaps,
-            working_dir=solc_working_dir,
-        )
-
-    skip_filename = crytic_compile.compiler_version.version in [f"0.4.{x}" for x in range(0, 10)]
-
-    if "contracts" in targets_json:
-        for original_contract_name, info in targets_json["contracts"].items():
-            contract_name = extract_name(original_contract_name)
-            contract_filename = extract_filename(original_contract_name)
-            # for solc < 0.4.10 we cant retrieve the filename from the ast
-            if skip_filename:
-                contract_filename = convert_filename(
-                    target, _relative_to_short, crytic_compile, working_dir=solc_working_dir
-                )
-            else:
-                contract_filename = convert_filename(
-                    contract_filename,
-                    _relative_to_short,
-                    crytic_compile,
-                    working_dir=solc_working_dir,
-                )
-            crytic_compile.contracts_names.add(contract_name)
-            crytic_compile.contracts_filenames[contract_name] = contract_filename
-            crytic_compile.abis[contract_name] = json.loads(info["abi"])
-            crytic_compile.bytecodes_init[contract_name] = info["bin"]
-            crytic_compile.bytecodes_runtime[contract_name] = info["bin-runtime"]
-            crytic_compile.srcmaps_init[contract_name] = info["srcmap"].split(";")
-            crytic_compile.srcmaps_runtime[contract_name] = info["srcmap-runtime"].split(";")
-            userdoc = json.loads(info.get('userdoc', "{}"))
-            devdoc = json.loads(info.get('devdoc', "{}"))
-            natspec = Natspec(userdoc, devdoc)
-            crytic_compile.natspec[contract_name] = natspec
-
-    if "sources" in targets_json:
-        for path, info in targets_json["sources"].items():
-            if skip_filename:
-                path = convert_filename(
-                    target, _relative_to_short, crytic_compile, working_dir=solc_working_dir
-                )
-            else:
-                path = convert_filename(
-                    path, _relative_to_short, crytic_compile, working_dir=solc_working_dir
-                )
-            crytic_compile.filenames.add(path)
-            crytic_compile.asts[path.absolute] = info["AST"]
-
-
-def is_solc(target: str) -> bool:
-    """
-    Check if the target is a solc project
-    :param target:
-    :return:
-    """
-    return os.path.isfile(target) and target.endswith(".sol")
-
-
-def is_dependency(_path: str) -> bool:
-    """
-    Always return false
-    :param _path:
-    :return:
-    """
-    return False
-
-
-def export(crytic_compile: "CryticCompile", **kwargs: str) -> Union[str, None]:
+def export_to_solc(crytic_compile: "CryticCompile", **kwargs: str) -> Union[str, None]:
     """
     Export the project to the solc format
     :param crytic_compile:
@@ -190,7 +65,7 @@ def export(crytic_compile: "CryticCompile", **kwargs: str) -> Union[str, None]:
     output = {"sources": sources, "sourceList": source_list, "contracts": contracts}
 
     # If we have an export directory specified, we output the JSON.
-    export_dir = kwargs.get("export_dir", None)
+    export_dir = kwargs.get("export_dir", 'crytic-export')
     if export_dir:
         if not os.path.exists(export_dir):
             os.makedirs(export_dir)
@@ -200,6 +75,135 @@ def export(crytic_compile: "CryticCompile", **kwargs: str) -> Union[str, None]:
             json.dump(output, file_desc)
         return path
     return None
+
+
+class Solc(AbstractPlatform):
+    NAME = "solc"
+    PROJECT_URL = "https://github.com/ethereum/solidity"
+    TYPE = Type.SOLC
+
+    def compile(self, crytic_compile: "CryticCompile", **kwargs: str):
+        """
+        Compile the target
+        :param crytic_compile:
+        :param kwargs:
+        :return:
+        """
+
+        solc = kwargs.get("solc", "solc")
+        solc_disable_warnings = kwargs.get("solc_disable_warnings", False)
+        solc_arguments = kwargs.get("solc_args", "")
+        solc_remaps = kwargs.get("solc_remaps", None)
+        solc_working_dir = kwargs.get("solc_working_dir", None)
+
+        crytic_compile.compiler_version = CompilerVersion(
+            compiler="solc", version=get_version(solc), optimized=is_optimized(solc_arguments)
+        )
+
+        # From config file, solcs is a dict (version -> path)
+        # From command line, solc is a list
+        # The guessing of version only works from config file
+        # This is to prevent too complex command line
+        solcs_path: Optional[Union[str, Dict, List[str]]] = kwargs.get("solc_solcs_bin")
+        # solcs_env is always a list. It matches solc-select list
+        solcs_env = kwargs.get("solc_solcs_select")
+
+        if solcs_path:
+            if isinstance(solcs_path, str):
+                solcs_path = solcs_path.split(",")
+            targets_json = _run_solcs_path(
+                crytic_compile,
+                self._target,
+                solcs_path,
+                solc_disable_warnings,
+                solc_arguments,
+                solc_remaps=solc_remaps,
+                working_dir=solc_working_dir,
+            )
+
+        elif solcs_env:
+            solcs_env_list = solcs_env.split(",")
+            targets_json = _run_solcs_env(
+                crytic_compile,
+                self._target,
+                solc,
+                solc_disable_warnings,
+                solc_arguments,
+                solcs_env=solcs_env_list,
+                solc_remaps=solc_remaps,
+                working_dir=solc_working_dir,
+            )
+
+        else:
+            targets_json = _run_solc(
+                crytic_compile,
+                self._target,
+                solc,
+                solc_disable_warnings,
+                solc_arguments,
+                solc_remaps=solc_remaps,
+                working_dir=solc_working_dir,
+            )
+
+        skip_filename = crytic_compile.compiler_version.version in [f"0.4.{x}" for x in range(0, 10)]
+
+        if "contracts" in targets_json:
+            for original_contract_name, info in targets_json["contracts"].items():
+                contract_name = extract_name(original_contract_name)
+                contract_filename = extract_filename(original_contract_name)
+                # for solc < 0.4.10 we cant retrieve the filename from the ast
+                if skip_filename:
+                    contract_filename = convert_filename(
+                        self._target, relative_to_short, crytic_compile, working_dir=solc_working_dir
+                    )
+                else:
+                    contract_filename = convert_filename(
+                        contract_filename,
+                        relative_to_short,
+                        crytic_compile,
+                        working_dir=solc_working_dir,
+                    )
+                crytic_compile.contracts_names.add(contract_name)
+                crytic_compile.contracts_filenames[contract_name] = contract_filename
+                crytic_compile.abis[contract_name] = json.loads(info["abi"])
+                crytic_compile.bytecodes_init[contract_name] = info["bin"]
+                crytic_compile.bytecodes_runtime[contract_name] = info["bin-runtime"]
+                crytic_compile.srcmaps_init[contract_name] = info["srcmap"].split(";")
+                crytic_compile.srcmaps_runtime[contract_name] = info["srcmap-runtime"].split(";")
+                userdoc = json.loads(info.get('userdoc', "{}"))
+                devdoc = json.loads(info.get('devdoc', "{}"))
+                natspec = Natspec(userdoc, devdoc)
+                crytic_compile.natspec[contract_name] = natspec
+
+        if "sources" in targets_json:
+            for path, info in targets_json["sources"].items():
+                if skip_filename:
+                    path = convert_filename(
+                        self._target, relative_to_short, crytic_compile, working_dir=solc_working_dir
+                    )
+                else:
+                    path = convert_filename(
+                        path, relative_to_short, crytic_compile, working_dir=solc_working_dir
+                    )
+                crytic_compile.filenames.add(path)
+                crytic_compile.asts[path.absolute] = info["AST"]
+
+    @staticmethod
+    def is_supported(target: str, **kwargs: str) -> bool:
+        """
+        Check if the target is a solc project
+        :param target:
+        :return:
+        """
+        return os.path.isfile(target) and target.endswith(".sol")
+
+    def is_dependency(self, _path: str) -> bool:
+        """
+        Always return false
+        :param _path:
+        :return:
+        """
+        return False
 
 
 def get_version(solc: str) -> str:
@@ -221,7 +225,7 @@ def get_version(solc: str) -> str:
     return version[0]
 
 
-def _is_optimized(solc_arguments: str) -> bool:
+def is_optimized(solc_arguments: str) -> bool:
     """
     Check if optimization are used
     :param solc_arguments:
@@ -233,14 +237,14 @@ def _is_optimized(solc_arguments: str) -> bool:
 
 
 def _run_solc(
-    crytic_compile: "CryticCompile",
-    filename: str,
-    solc: str,
-    solc_disable_warnings,
-    solc_arguments,
-    solc_remaps=None,
-    env=None,
-    working_dir=None,
+        crytic_compile: "CryticCompile",
+        filename: str,
+        solc: str,
+        solc_disable_warnings,
+        solc_arguments,
+        solc_remaps=None,
+        env=None,
+        working_dir=None,
 ):
     """
     Note: Ensure that crytic_compile.compiler_version is set prior calling _run_solc
@@ -299,7 +303,7 @@ def _run_solc(
                 working_dir = os.getcwd()
 
             if relative_filepath.startswith(working_dir):
-                relative_filepath = relative_filepath[len(working_dir) + 1 :]
+                relative_filepath = relative_filepath[len(working_dir) + 1:]
 
             cmd += ["--allow-paths", ".", relative_filepath]
     try:
@@ -327,14 +331,14 @@ def _run_solc(
 
 
 def _run_solcs_path(
-    crytic_compile,
-    filename,
-    solcs_path,
-    solc_disable_warnings,
-    solc_arguments,
-    solc_remaps=None,
-    env=None,
-    working_dir=None,
+        crytic_compile,
+        filename,
+        solcs_path,
+        solc_disable_warnings,
+        solc_arguments,
+        solc_remaps=None,
+        env=None,
+        working_dir=None,
 ):
     targets_json = None
     if isinstance(solcs_path, dict):
@@ -383,15 +387,15 @@ def _run_solcs_path(
 
 
 def _run_solcs_env(
-    crytic_compile,
-    filename,
-    solc,
-    solc_disable_warnings,
-    solc_arguments,
-    solc_remaps=None,
-    env=None,
-    working_dir=None,
-    solcs_env=None,
+        crytic_compile,
+        filename,
+        solc,
+        solc_disable_warnings,
+        solc_arguments,
+        solc_remaps=None,
+        env=None,
+        working_dir=None,
+        solcs_env=None,
 ):
     env = dict(os.environ) if env is None else env
     targets_json = None
@@ -452,5 +456,5 @@ def _guess_solc(target, solc_working_dir):
         return PATTERN.findall(buf)
 
 
-def _relative_to_short(relative):
+def relative_to_short(relative):
     return relative

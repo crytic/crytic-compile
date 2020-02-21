@@ -7,14 +7,13 @@ import os
 import subprocess
 from typing import Union, Dict, List, TYPE_CHECKING, Optional
 
+from crytic_compile.platform.abstract_platform import AbstractPlatform
 from crytic_compile.platform.exceptions import InvalidCompilation
 from crytic_compile.platform.solc import (
-    export as export_solc,
-    is_dependency as is_dependency_solc,
     get_version,
-    _is_optimized,
-    _relative_to_short,
-)
+    is_optimized,
+    relative_to_short,
+    Solc)
 from crytic_compile.platform.types import Type
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.utils.naming import convert_filename
@@ -26,16 +25,25 @@ if TYPE_CHECKING:
     from crytic_compile import CryticCompile
 
 
-class SolcStandardJson:
+LOGGER = logging.getLogger("CryticCompile")
+
+# Inherits is_dependency/is_supported from Solc
+class SolcStandardJson(Solc):
     """
     Represent the Standard solc Json object
     """
 
-    def __init__(self, target: Union[str, dict, "SolcStandardJson"] = None):
+    NAME = "Solc-json"
+    PROJECT_URL = "https://solidity.readthedocs.io/en/latest/using-the-compiler.html#compiler-input-and-output-json-description"
+    TYPE = Type.SOLC_STANDARD_JSON
+
+    def __init__(self, target: Union[str, dict] = None, **kwargs: str):
         """
         Initializes an object which represents solc standard json
         :param target: A string path to a standard json
         """
+        super().__init__(str(target), **kwargs)
+
         if target is None:
             self._json: Dict = dict()
         elif isinstance(target, str):
@@ -44,10 +52,11 @@ class SolcStandardJson:
                     self._json = json.load(target_file)
             else:
                 self._json = json.loads(target)
+
         elif isinstance(target, dict):
             self._json = target
-        elif isinstance(target, SolcStandardJson):
-            self._json = target._json
+#        elif isinstance(target, SolcStandardJson):
+#            self._json = target._json
         else:
             raise ValueError(f"Invalid target for solc standard json input.")
 
@@ -96,121 +105,85 @@ class SolcStandardJson:
         """
         return self._json
 
+    def compile(self, crytic_compile: "CryticCompile", **kwargs: str):
+        """
+        Compile the target
+        :param crytic_compile:
+        :param target:
+        :param kwargs:
+        :return:
+        """
 
-LOGGER = logging.getLogger("CryticCompile")
+        solc = kwargs.get("solc", "solc")
+        solc_disable_warnings = kwargs.get("solc_disable_warnings", False)
+        solc_arguments = kwargs.get("solc_args", "")
 
+        solc_remaps: Optional[Union[str, List[str]]] = kwargs.get("solc_remaps", None)
+        solc_working_dir = kwargs.get("solc_working_dir", None)
 
-def compile(
-    crytic_compile: "CryticCompile", target: Union[str, dict, "SolcStandardJson"], **kwargs: str
-):
-    """
-    Compile the target
-    :param crytic_compile:
-    :param target:
-    :param kwargs:
-    :return:
-    """
-    crytic_compile.type = Type.SOLC_STANDARD_JSON
-    solc = kwargs.get("solc", "solc")
-    solc_disable_warnings = kwargs.get("solc_disable_warnings", False)
-    solc_arguments = kwargs.get("solc_args", "")
-    solc_remaps: Optional[Union[str, List[str]]] = kwargs.get("solc_remaps", None)
-    solc_working_dir = kwargs.get("solc_working_dir", None)
+        crytic_compile.compiler_version = CompilerVersion(
+            compiler="solc", version=get_version(solc), optimized=is_optimized(solc_arguments)
+        )
 
-    crytic_compile.compiler_version = CompilerVersion(
-        compiler="solc", version=get_version(solc), optimized=_is_optimized(solc_arguments)
-    )
+        skip_filename = crytic_compile.compiler_version.version in [f"0.4.{x}" for x in range(0, 10)]
 
-    skip_filename = crytic_compile.compiler_version.version in [f"0.4.{x}" for x in range(0, 10)]
+        # Add all remappings
+        if solc_remaps:
+            if isinstance(solc_remaps, str):
+                solc_remaps = solc_remaps.split(" ")
+            for solc_remap in solc_remaps:
+                self.add_remapping(solc_remap)
 
-    # Initialize our solc input
-    target = SolcStandardJson(target)
+        # Invoke solc
+        targets_json = _run_solc_standard_json(
+            self.to_dict(), solc, solc_disable_warnings=solc_disable_warnings
+        )
 
-    # Add all remappings
-    if solc_remaps:
-        if isinstance(solc_remaps, str):
-            solc_remaps = solc_remaps.split(" ")
-        for solc_remap in solc_remaps:
-            target.add_remapping(solc_remap)
+        if "contracts" in targets_json:
+            for file_path, file_contracts in targets_json["contracts"].items():
+                for contract_name, info in file_contracts.items():
+                    # for solc < 0.4.10 we cant retrieve the filename from the ast
+                    if skip_filename:
+                        # TODO investigate the mypy type issue
+                        contract_filename = convert_filename(
+                            self._target, relative_to_short, crytic_compile, working_dir=solc_working_dir
+                        )
+                    else:
+                        contract_filename = convert_filename(
+                            file_path, relative_to_short, crytic_compile, working_dir=solc_working_dir
+                        )
+                    crytic_compile.contracts_names.add(contract_name)
+                    crytic_compile.contracts_filenames[contract_name] = contract_filename
+                    crytic_compile.abis[contract_name] = info["abi"]
 
-    # Invoke solc
-    targets_json = _run_solc_standard_json(
-        target.to_dict(), solc, solc_disable_warnings=solc_disable_warnings
-    )
+                    userdoc = info.get('userdoc', {})
+                    devdoc = info.get('devdoc', {})
+                    natspec = Natspec(userdoc, devdoc)
+                    crytic_compile.natspec[contract_name] = natspec
 
-    if "contracts" in targets_json:
-        for file_path, file_contracts in targets_json["contracts"].items():
-            for contract_name, info in file_contracts.items():
-                # for solc < 0.4.10 we cant retrieve the filename from the ast
+                    crytic_compile.bytecodes_init[contract_name] = info["evm"]["bytecode"]["object"]
+                    crytic_compile.bytecodes_runtime[contract_name] = info["evm"]["deployedBytecode"][
+                        "object"
+                    ]
+                    crytic_compile.srcmaps_init[contract_name] = info["evm"]["bytecode"][
+                        "sourceMap"
+                    ].split(";")
+                    crytic_compile.srcmaps_runtime[contract_name] = info["evm"]["deployedBytecode"][
+                        "sourceMap"
+                    ].split(";")
+
+        if "sources" in targets_json:
+            for path, info in targets_json["sources"].items():
                 if skip_filename:
-                    # TODO investigate the mypy type issue
-                    contract_filename = convert_filename(
-                        target, _relative_to_short, crytic_compile, working_dir=solc_working_dir
+                    path = convert_filename(
+                        self._target, relative_to_short, crytic_compile, working_dir=solc_working_dir
                     )
                 else:
-                    contract_filename = convert_filename(
-                        file_path, _relative_to_short, crytic_compile, working_dir=solc_working_dir
+                    path = convert_filename(
+                        path, relative_to_short, crytic_compile, working_dir=solc_working_dir
                     )
-                crytic_compile.contracts_names.add(contract_name)
-                crytic_compile.contracts_filenames[contract_name] = contract_filename
-                crytic_compile.abis[contract_name] = info["abi"]
-
-                userdoc = info.get('userdoc', {})
-                devdoc = info.get('devdoc', {})
-                natspec = Natspec(userdoc, devdoc)
-                crytic_compile.natspec[contract_name] = natspec
-
-                crytic_compile.bytecodes_init[contract_name] = info["evm"]["bytecode"]["object"]
-                crytic_compile.bytecodes_runtime[contract_name] = info["evm"]["deployedBytecode"][
-                    "object"
-                ]
-                crytic_compile.srcmaps_init[contract_name] = info["evm"]["bytecode"][
-                    "sourceMap"
-                ].split(";")
-                crytic_compile.srcmaps_runtime[contract_name] = info["evm"]["deployedBytecode"][
-                    "sourceMap"
-                ].split(";")
-
-    if "sources" in targets_json:
-        for path, info in targets_json["sources"].items():
-            if skip_filename:
-                path = convert_filename(
-                    target, _relative_to_short, crytic_compile, working_dir=solc_working_dir
-                )
-            else:
-                path = convert_filename(
-                    path, _relative_to_short, crytic_compile, working_dir=solc_working_dir
-                )
-            crytic_compile.filenames.add(path)
-            crytic_compile.asts[path.absolute] = info["ast"]
-
-
-def is_solc(target: str):
-    """
-    Check if the target is a Solidity file
-    :param target:
-    :return:
-    """
-    return os.path.isfile(target) and target.endswith(".sol")
-
-
-def is_dependency(path: str):
-    """
-    Check if the file is a dependency
-    :param path:
-    :return:
-    """
-    return is_dependency_solc(path)
-
-
-def export(crytic_compile: "CryticCompile", **kwargs: str):
-    """
-    Export to the standard solc output
-    :param crytic_compile:
-    :param kwargs:
-    :return:
-    """
-    return export_solc(crytic_compile, **vars(kwargs))
+                crytic_compile.filenames.add(path)
+                crytic_compile.asts[path.absolute] = info["ast"]
 
 
 def _run_solc_standard_json(
