@@ -14,6 +14,8 @@ from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.utils.naming import convert_filename
 
 # Handle cycle
+from crytic_compile.utils.natspec import Natspec
+
 if TYPE_CHECKING:
     from crytic_compile import CryticCompile
 
@@ -63,6 +65,9 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
     crytic_compile.srcmaps_runtime[contract_name] = []
 
     crytic_compile.filenames.add(contract_filename)
+
+    # Natspec not yet handled for vyper
+    crytic_compile.natspec[contract_name] = Natspec({}, {})
 
     ast = _get_vyper_ast(target, vyper)
     crytic_compile.asts[contract_filename.absolute] = ast

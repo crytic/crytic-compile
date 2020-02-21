@@ -31,6 +31,7 @@ from .platform import (
 )
 from .platform.solc_standard_json import SolcStandardJson
 from .utils.naming import Filename
+from .utils.natspec import Natspec
 from .utils.zip import load_from_zip
 from .utils.npm import get_package_name
 
@@ -126,6 +127,9 @@ class CryticCompile:
 
         self._bytecode_only = False
 
+        # Natspec
+        self._natspec: Dict[str, Natspec] = {}
+
         # compiler.compiler
         self._compiler_version: Optional["CompilerVersion"] = None
 
@@ -148,6 +152,20 @@ class CryticCompile:
         :return:
         """
         return self._target
+
+    ###################################################################################
+    ###################################################################################
+    # region Natspec
+    ###################################################################################
+    ###################################################################################
+
+    @property
+    def natspec(self):
+        """
+        Return the natspec of the contractse
+        :return: Dict[str, Natspec]
+        """
+        return self._natspec
 
     ###################################################################################
     ###################################################################################

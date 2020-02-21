@@ -23,6 +23,8 @@ from crytic_compile.utils.naming import (
 )
 
 # Handle cycle
+from crytic_compile.utils.natspec import Natspec
+
 if TYPE_CHECKING:
     from crytic_compile import CryticCompile
 
@@ -67,6 +69,11 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
             crytic_compile.bytecodes_runtime[contract_name] = info["bin-runtime"]
             crytic_compile.srcmaps_init[contract_name] = info["srcmap"].split(";")
             crytic_compile.srcmaps_runtime[contract_name] = info["srcmap-runtime"].split(";")
+
+            userdoc = json.loads(info.get('userdoc', "{}"))
+            devdoc = json.loads(info.get('devdoc', "{}"))
+            natspec = Natspec(userdoc, devdoc)
+            crytic_compile.natspec[contract_name] = natspec
 
         for path, info in targets_json["sources"].items():
             path = convert_filename(path, _relative_to_short, crytic_compile, working_dir=target)

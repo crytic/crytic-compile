@@ -11,6 +11,8 @@ from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.utils.naming import Filename
 
 # Cycle dependency
+from crytic_compile.utils.natspec import Natspec
+
 if TYPE_CHECKING:
     from crytic_compile import CryticCompile
 
@@ -50,6 +52,8 @@ def generate_standard_export(crytic_compile: "CryticCompile") -> Dict:
             },
             "libraries": dict(libraries) if libraries else dict(),
             "is_dependency": crytic_compile.is_dependency(filename.absolute),
+            "userdoc": crytic_compile.natspec[contract_name].userdoc.export(),
+            "devdoc": crytic_compile.natspec[contract_name].devdoc.export()
         }
 
     # Create our root object to contain the contracts and other information.
@@ -143,6 +147,10 @@ def load_from_compile(crytic_compile: "CryticCompile", loaded_json: Dict):
         crytic_compile.srcmaps_init[contract_name] = contract["srcmap"].split(";")
         crytic_compile.srcmaps_runtime[contract_name] = contract["srcmap-runtime"].split(";")
         crytic_compile.libraries[contract_name] = contract["libraries"]
+
+        userdoc = contract.get('userdoc', {})
+        devdoc = contract.get('devdoc', {})
+        crytic_compile.natspec[contract_name] = Natspec(userdoc, devdoc)
 
         if contract["is_dependency"]:
             crytic_compile.dependencies.add(filename.absolute)

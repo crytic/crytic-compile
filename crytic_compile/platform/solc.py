@@ -20,6 +20,8 @@ from crytic_compile.platform.exceptions import InvalidCompilation
 from crytic_compile.compiler.compiler import CompilerVersion
 
 # Cycle dependency
+from crytic_compile.utils.natspec import Natspec
+
 if TYPE_CHECKING:
     from crytic_compile import CryticCompile
 
@@ -115,6 +117,10 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
             crytic_compile.bytecodes_runtime[contract_name] = info["bin-runtime"]
             crytic_compile.srcmaps_init[contract_name] = info["srcmap"].split(";")
             crytic_compile.srcmaps_runtime[contract_name] = info["srcmap-runtime"].split(";")
+            userdoc = json.loads(info.get('userdoc', "{}"))
+            devdoc = json.loads(info.get('devdoc', "{}"))
+            natspec = Natspec(userdoc, devdoc)
+            crytic_compile.natspec[contract_name] = natspec
 
     if "sources" in targets_json:
         for path, info in targets_json["sources"].items():
@@ -172,6 +178,8 @@ def export(crytic_compile: "CryticCompile", **kwargs: str) -> Union[str, None]:
             "abi": abi,
             "bin": crytic_compile.bytecode_init(contract_name),
             "bin-runtime": crytic_compile.bytecode_runtime(contract_name),
+            "userdoc": crytic_compile.natspec[contract_name].userdoc.export(),
+            "devdoc": crytic_compile.natspec[contract_name].devdoc.export()
         }
 
     # Create additional informational objects.
@@ -258,9 +266,9 @@ def _run_solc(
     assert compiler_version
     old_04_versions = [f"0.4.{x}" for x in range(0, 12)]
     if compiler_version.version in old_04_versions or compiler_version.version.startswith("0.3"):
-        options = "abi,ast,bin,bin-runtime,srcmap,srcmap-runtime"
+        options = "abi,ast,bin,bin-runtime,srcmap,srcmap-runtime,userdoc,devdoc"
     else:
-        options = "abi,ast,bin,bin-runtime,srcmap,srcmap-runtime,hashes,compact-format"
+        options = "abi,ast,bin,bin-runtime,srcmap,srcmap-runtime,userdoc,devdoc,hashes,compact-format"
 
     cmd = [solc]
     if solc_remaps:

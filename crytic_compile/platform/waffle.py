@@ -19,6 +19,8 @@ from crytic_compile.utils.naming import convert_filename
 from crytic_compile.compiler.compiler import CompilerVersion
 
 # Handle cycle
+from crytic_compile.utils.natspec import Natspec
+
 if TYPE_CHECKING:
     from crytic_compile import CryticCompile
 
@@ -163,6 +165,11 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
         crytic_compile.contracts_filenames[contract_name] = filename
         crytic_compile.contracts_names.add(contract_name)
         crytic_compile.abis[contract_name] = target_loaded["abi"]
+
+        userdoc = target_loaded.get('userdoc', {})
+        devdoc = target_loaded.get('devdoc', {})
+        natspec = Natspec(userdoc, devdoc)
+        crytic_compile.natspec[contract_name] = natspec
 
         crytic_compile.bytecodes_init[contract_name] = target_loaded["evm"]["bytecode"]["object"]
         crytic_compile.srcmaps_init[contract_name] = target_loaded["evm"]["bytecode"][

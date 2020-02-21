@@ -20,6 +20,8 @@ from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.utils.naming import convert_filename
 
 # Cycle dependency
+from crytic_compile.utils.natspec import Natspec
+
 if TYPE_CHECKING:
     from crytic_compile import CryticCompile
 
@@ -63,7 +65,12 @@ class SolcStandardJson:
             self._json["settings"]["optimizer"] = {"enabled": False}
         if "outputSelection" not in self._json["settings"]:
             self._json["settings"]["outputSelection"] = {
-                "*": {"*": ["abi", "metadata", "evm.bytecode", "evm.deployedBytecode"], "": ["ast"]}
+                "*": {"*": ["abi",
+                            "metadata",
+                            "devdoc",
+                            "userdoc",
+                            "evm.bytecode",
+                            "evm.deployedBytecode"], "": ["ast"]}
             }
 
     def add_source_file(self, file_path: str):
@@ -147,6 +154,12 @@ def compile(
                 crytic_compile.contracts_names.add(contract_name)
                 crytic_compile.contracts_filenames[contract_name] = contract_filename
                 crytic_compile.abis[contract_name] = info["abi"]
+
+                userdoc = info.get('userdoc', {})
+                devdoc = info.get('devdoc', {})
+                natspec = Natspec(userdoc, devdoc)
+                crytic_compile.natspec[contract_name] = natspec
+
                 crytic_compile.bytecodes_init[contract_name] = info["evm"]["bytecode"]["object"]
                 crytic_compile.bytecodes_runtime[contract_name] = info["evm"]["deployedBytecode"][
                     "object"

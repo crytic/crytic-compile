@@ -16,6 +16,8 @@ from crytic_compile.platform.types import Type
 from crytic_compile.platform.exceptions import InvalidCompilation
 
 # Cycle dependency
+from crytic_compile.utils.natspec import Natspec
+
 if TYPE_CHECKING:
     from crytic_compile import CryticCompile
 
@@ -120,6 +122,11 @@ def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
                 crytic_compile.srcmaps_init[contract_name] = info["srcmap"].split(";")
             if "srcmap-runtime" in info:
                 crytic_compile.srcmaps_runtime[contract_name] = info["srcmap-runtime"].split(";")
+
+            userdoc = info.get('userdoc', {})
+            devdoc = info.get('devdoc', {})
+            natspec = Natspec(userdoc, devdoc)
+            crytic_compile.natspec[contract_name] = natspec
 
 
 def is_embark(target: str) -> bool:
