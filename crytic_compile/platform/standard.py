@@ -4,10 +4,10 @@ Standard crytic-compile export
 import json
 import os
 from pathlib import Path
+from typing import TYPE_CHECKING, Dict, Type, List
 
-from typing import TYPE_CHECKING, Dict, Optional
 from crytic_compile.compiler.compiler import CompilerVersion
-from crytic_compile.platform import Type
+from crytic_compile.platform import Type as PlatformType
 from crytic_compile.platform.abstract_platform import AbstractPlatform
 from crytic_compile.utils.naming import Filename
 
@@ -33,7 +33,11 @@ def export_to_standard(crytic_compile: "CryticCompile", **kwargs: str) -> str:
     if not os.path.exists(export_dir):
         os.makedirs(export_dir)
 
-    target = "contracts" if os.path.isdir(crytic_compile.target) else Path(crytic_compile.target).parts[-1]
+    target = (
+        "contracts"
+        if os.path.isdir(crytic_compile.target)
+        else Path(crytic_compile.target).parts[-1]
+    )
 
     path = os.path.join(export_dir, f"{target}.json")
     with open(path, "w", encoding="utf8") as file_desc:
@@ -43,9 +47,13 @@ def export_to_standard(crytic_compile: "CryticCompile", **kwargs: str) -> str:
 
 
 class Standard(AbstractPlatform):
+    """
+    Standard platform (crytic-compile specific)
+    """
+
     NAME = "Standard"
     PROJECT_URL = "https://github.com/crytic/crytic-compile"
-    TYPE = Type.STANDARD
+    TYPE = PlatformType.STANDARD
 
     HIDE = True
 
@@ -55,7 +63,7 @@ class Standard(AbstractPlatform):
         :param target: A string path to a standard json
         """
         super().__init__(str(target), **kwargs)
-        self._underlying_platform = Standard
+        self._underlying_platform: Type[AbstractPlatform] = Standard
 
     def compile(self, crytic_compile: "CryticCompile", **_kwargs: str):
         """
@@ -66,11 +74,12 @@ class Standard(AbstractPlatform):
         :return:
         """
         from crytic_compile.crytic_compile import get_platforms
+
         with open(self._target, encoding="utf8") as file_desc:
             loaded_json = json.load(file_desc)
         underlying_type = load_from_compile(crytic_compile, loaded_json)
-        underlying_type = Type(underlying_type)
-        platforms = get_platforms()
+        underlying_type = PlatformType(underlying_type)
+        platforms: List[Type[AbstractPlatform]] = get_platforms()
         platform = next((p for p in platforms if p.TYPE == underlying_type), Standard)
         self._underlying_platform = platform
 
@@ -88,10 +97,10 @@ class Standard(AbstractPlatform):
             return False
         return Path(target).parts[-1].endswith("_export.json")
 
-    def is_dependency(self, filename: str) -> bool:
+    def is_dependency(self, path: str) -> bool:
         """
         Always return False
-        :param filename:
+        :param path:
         :return:
         """
         # handled by crytic_compile_dependencies
@@ -135,7 +144,7 @@ def generate_standard_export(crytic_compile: "CryticCompile") -> Dict:
             "libraries": dict(libraries) if libraries else dict(),
             "is_dependency": crytic_compile.is_dependency(filename.absolute),
             "userdoc": crytic_compile.natspec[contract_name].userdoc.export(),
-            "devdoc": crytic_compile.natspec[contract_name].devdoc.export()
+            "devdoc": crytic_compile.natspec[contract_name].devdoc.export(),
         }
 
     # Create our root object to contain the contracts and other information.
@@ -189,8 +198,8 @@ def load_from_compile(crytic_compile: "CryticCompile", loaded_json: Dict) -> int
         crytic_compile.srcmaps_runtime[contract_name] = contract["srcmap-runtime"].split(";")
         crytic_compile.libraries[contract_name] = contract["libraries"]
 
-        userdoc = contract.get('userdoc', {})
-        devdoc = contract.get('devdoc', {})
+        userdoc = contract.get("userdoc", {})
+        devdoc = contract.get("devdoc", {})
         crytic_compile.natspec[contract_name] = Natspec(userdoc, devdoc)
 
         if contract["is_dependency"]:
@@ -204,7 +213,7 @@ def load_from_compile(crytic_compile: "CryticCompile", loaded_json: Dict) -> int
 
     crytic_compile.working_dir = loaded_json["working_dir"]
 
-    return loaded_json['type']
+    return loaded_json["type"]
 
 
 def _relative_to_short(relative):

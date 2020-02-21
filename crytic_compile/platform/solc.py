@@ -54,7 +54,7 @@ def export_to_solc(crytic_compile: "CryticCompile", **kwargs: str) -> Union[str,
             "bin": crytic_compile.bytecode_init(contract_name),
             "bin-runtime": crytic_compile.bytecode_runtime(contract_name),
             "userdoc": crytic_compile.natspec[contract_name].userdoc.export(),
-            "devdoc": crytic_compile.natspec[contract_name].devdoc.export()
+            "devdoc": crytic_compile.natspec[contract_name].devdoc.export(),
         }
 
     # Create additional informational objects.
@@ -65,7 +65,7 @@ def export_to_solc(crytic_compile: "CryticCompile", **kwargs: str) -> Union[str,
     output = {"sources": sources, "sourceList": source_list, "contracts": contracts}
 
     # If we have an export directory specified, we output the JSON.
-    export_dir = kwargs.get("export_dir", 'crytic-export')
+    export_dir = kwargs.get("export_dir", "crytic-export")
     if export_dir:
         if not os.path.exists(export_dir):
             os.makedirs(export_dir)
@@ -78,6 +78,10 @@ def export_to_solc(crytic_compile: "CryticCompile", **kwargs: str) -> Union[str,
 
 
 class Solc(AbstractPlatform):
+    """
+    Solc platform
+    """
+
     NAME = "solc"
     PROJECT_URL = "https://github.com/ethereum/solidity"
     TYPE = Type.SOLC
@@ -145,7 +149,9 @@ class Solc(AbstractPlatform):
                 working_dir=solc_working_dir,
             )
 
-        skip_filename = crytic_compile.compiler_version.version in [f"0.4.{x}" for x in range(0, 10)]
+        skip_filename = crytic_compile.compiler_version.version in [
+            f"0.4.{x}" for x in range(0, 10)
+        ]
 
         if "contracts" in targets_json:
             for original_contract_name, info in targets_json["contracts"].items():
@@ -154,7 +160,10 @@ class Solc(AbstractPlatform):
                 # for solc < 0.4.10 we cant retrieve the filename from the ast
                 if skip_filename:
                     contract_filename = convert_filename(
-                        self._target, relative_to_short, crytic_compile, working_dir=solc_working_dir
+                        self._target,
+                        relative_to_short,
+                        crytic_compile,
+                        working_dir=solc_working_dir,
                     )
                 else:
                     contract_filename = convert_filename(
@@ -170,8 +179,8 @@ class Solc(AbstractPlatform):
                 crytic_compile.bytecodes_runtime[contract_name] = info["bin-runtime"]
                 crytic_compile.srcmaps_init[contract_name] = info["srcmap"].split(";")
                 crytic_compile.srcmaps_runtime[contract_name] = info["srcmap-runtime"].split(";")
-                userdoc = json.loads(info.get('userdoc', "{}"))
-                devdoc = json.loads(info.get('devdoc', "{}"))
+                userdoc = json.loads(info.get("userdoc", "{}"))
+                devdoc = json.loads(info.get("devdoc", "{}"))
                 natspec = Natspec(userdoc, devdoc)
                 crytic_compile.natspec[contract_name] = natspec
 
@@ -179,7 +188,10 @@ class Solc(AbstractPlatform):
             for path, info in targets_json["sources"].items():
                 if skip_filename:
                     path = convert_filename(
-                        self._target, relative_to_short, crytic_compile, working_dir=solc_working_dir
+                        self._target,
+                        relative_to_short,
+                        crytic_compile,
+                        working_dir=solc_working_dir,
                     )
                 else:
                     path = convert_filename(
@@ -215,13 +227,13 @@ def get_version(solc: str) -> str:
     cmd = [solc, "--version"]
     try:
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    except OSError as e:
-        raise InvalidCompilation(e)
+    except OSError as error:
+        raise InvalidCompilation(error)
     stdout_bytes, _ = process.communicate()
     stdout = stdout_bytes.decode()  # convert bytestrings to unicode strings
     version = re.findall(r"\d+\.\d+\.\d+", stdout)
     if len(version) == 0:
-        raise InvalidCompilation(f'Solidity version not found: {stdout}')
+        raise InvalidCompilation(f"Solidity version not found: {stdout}")
     return version[0]
 
 
@@ -237,14 +249,14 @@ def is_optimized(solc_arguments: str) -> bool:
 
 
 def _run_solc(
-        crytic_compile: "CryticCompile",
-        filename: str,
-        solc: str,
-        solc_disable_warnings,
-        solc_arguments,
-        solc_remaps=None,
-        env=None,
-        working_dir=None,
+    crytic_compile: "CryticCompile",
+    filename: str,
+    solc: str,
+    solc_disable_warnings,
+    solc_arguments,
+    solc_remaps=None,
+    env=None,
+    working_dir=None,
 ):
     """
     Note: Ensure that crytic_compile.compiler_version is set prior calling _run_solc
@@ -272,7 +284,9 @@ def _run_solc(
     if compiler_version.version in old_04_versions or compiler_version.version.startswith("0.3"):
         options = "abi,ast,bin,bin-runtime,srcmap,srcmap-runtime,userdoc,devdoc"
     else:
-        options = "abi,ast,bin,bin-runtime,srcmap,srcmap-runtime,userdoc,devdoc,hashes,compact-format"
+        options = (
+            "abi,ast,bin,bin-runtime,srcmap,srcmap-runtime,userdoc,devdoc,hashes,compact-format"
+        )
 
     cmd = [solc]
     if solc_remaps:
@@ -303,7 +317,7 @@ def _run_solc(
                 working_dir = os.getcwd()
 
             if relative_filepath.startswith(working_dir):
-                relative_filepath = relative_filepath[len(working_dir) + 1:]
+                relative_filepath = relative_filepath[len(working_dir) + 1 :]
 
             cmd += ["--allow-paths", ".", relative_filepath]
     try:
@@ -315,8 +329,8 @@ def _run_solc(
             process = subprocess.Popen(
                 cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **additional_kwargs
             )
-    except OSError as e:
-        raise InvalidCompilation(e)
+    except OSError as error:
+        raise InvalidCompilation(error)
     stdout, stderr = process.communicate()
     stdout, stderr = (stdout.decode(), stderr.decode())  # convert bytestrings to unicode strings
 
@@ -331,14 +345,14 @@ def _run_solc(
 
 
 def _run_solcs_path(
-        crytic_compile,
-        filename,
-        solcs_path,
-        solc_disable_warnings,
-        solc_arguments,
-        solc_remaps=None,
-        env=None,
-        working_dir=None,
+    crytic_compile,
+    filename,
+    solcs_path,
+    solc_disable_warnings,
+    solc_arguments,
+    solc_remaps=None,
+    env=None,
+    working_dir=None,
 ):
     targets_json = None
     if isinstance(solcs_path, dict):
@@ -387,15 +401,15 @@ def _run_solcs_path(
 
 
 def _run_solcs_env(
-        crytic_compile,
-        filename,
-        solc,
-        solc_disable_warnings,
-        solc_arguments,
-        solc_remaps=None,
-        env=None,
-        working_dir=None,
-        solcs_env=None,
+    crytic_compile,
+    filename,
+    solc,
+    solc_disable_warnings,
+    solc_arguments,
+    solc_remaps=None,
+    env=None,
+    working_dir=None,
+    solcs_env=None,
 ):
     env = dict(os.environ) if env is None else env
     targets_json = None
@@ -457,4 +471,9 @@ def _guess_solc(target, solc_working_dir):
 
 
 def relative_to_short(relative):
+    """
+    Convert relative to short
+    :param relative:
+    :return:
+    """
     return relative

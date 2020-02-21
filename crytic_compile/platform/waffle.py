@@ -2,21 +2,20 @@
 Waffle platform
 """
 
-import os
-import tempfile
-import logging
-import subprocess
-import re
 import json
+import logging
+import os
+import re
+import subprocess
+import tempfile
 from pathlib import Path
+from typing import TYPE_CHECKING, Dict
 
-from typing import TYPE_CHECKING, Dict, Optional
-
-from crytic_compile.platform.abstract_platform import AbstractPlatform
-from crytic_compile.platform.types import Type
-from crytic_compile.platform.exceptions import InvalidCompilation
-from crytic_compile.utils.naming import convert_filename
 from crytic_compile.compiler.compiler import CompilerVersion
+from crytic_compile.platform.abstract_platform import AbstractPlatform
+from crytic_compile.platform.exceptions import InvalidCompilation
+from crytic_compile.platform.types import Type
+from crytic_compile.utils.naming import convert_filename
 
 # Handle cycle
 from crytic_compile.utils.natspec import Natspec
@@ -28,6 +27,10 @@ LOGGER = logging.getLogger("CryticCompile")
 
 
 class Waffle(AbstractPlatform):
+    """
+    Waffle platform
+    """
+
     NAME = "Waffle"
     PROJECT_URL = "https://github.com/EthWorks/Waffle"
     TYPE = Type.WAFFLE
@@ -41,7 +44,9 @@ class Waffle(AbstractPlatform):
         :return:
         """
 
-        waffle_ignore_compile = kwargs.get("waffle_ignore_compile", False) or kwargs.get("ignore_compile", False)
+        waffle_ignore_compile = kwargs.get("waffle_ignore_compile", False) or kwargs.get(
+            "ignore_compile", False
+        )
         target = self._target
 
         cmd = ["waffle"]
@@ -129,8 +134,8 @@ class Waffle(AbstractPlatform):
                     process = subprocess.Popen(
                         cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=target
                     )
-                except OSError as e:
-                    raise InvalidCompilation(e)
+                except OSError as error:
+                    raise InvalidCompilation(error)
 
                 stdout, stderr = process.communicate()
                 if stdout:
@@ -166,21 +171,23 @@ class Waffle(AbstractPlatform):
             crytic_compile.contracts_names.add(contract_name)
             crytic_compile.abis[contract_name] = target_loaded["abi"]
 
-            userdoc = target_loaded.get('userdoc', {})
-            devdoc = target_loaded.get('devdoc', {})
+            userdoc = target_loaded.get("userdoc", {})
+            devdoc = target_loaded.get("devdoc", {})
             natspec = Natspec(userdoc, devdoc)
             crytic_compile.natspec[contract_name] = natspec
 
-            crytic_compile.bytecodes_init[contract_name] = target_loaded["evm"]["bytecode"]["object"]
+            crytic_compile.bytecodes_init[contract_name] = target_loaded["evm"]["bytecode"][
+                "object"
+            ]
             crytic_compile.srcmaps_init[contract_name] = target_loaded["evm"]["bytecode"][
                 "sourceMap"
             ].split(";")
-            crytic_compile.bytecodes_runtime[contract_name] = target_loaded["evm"]["deployedBytecode"][
-                "object"
-            ]
-            crytic_compile.srcmaps_runtime[contract_name] = target_loaded["evm"]["deployedBytecode"][
-                "sourceMap"
-            ].split(";")
+            crytic_compile.bytecodes_runtime[contract_name] = target_loaded["evm"][
+                "deployedBytecode"
+            ]["object"]
+            crytic_compile.srcmaps_runtime[contract_name] = target_loaded["evm"][
+                "deployedBytecode"
+            ]["sourceMap"].split(";")
 
         crytic_compile.compiler_version = CompilerVersion(
             compiler=compiler, version=version, optimized=optimized
@@ -238,8 +245,8 @@ def _get_version(compiler: str, cwd: str, config=None) -> str:
         cmd = ["solc", "--version"]
         try:
             process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd)
-        except OSError as e:
-            raise InvalidCompilation(e)
+        except OSError as error:
+            raise InvalidCompilation(error)
         stdout_bytes, _ = process.communicate()
         stdout_txt = stdout_bytes.decode()  # convert bytestrings to unicode strings
         stdout = stdout_txt.split("\n")
@@ -251,8 +258,8 @@ def _get_version(compiler: str, cwd: str, config=None) -> str:
         cmd = ["solcjs", "--version"]
         try:
             process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd)
-        except OSError as e:
-            raise InvalidCompilation(e)
+        except OSError as error:
+            raise InvalidCompilation(error)
         stdout_bytes, _ = process.communicate()
         stdout_txt = stdout_bytes.decode()  # convert bytestrings to unicode strings
         version = re.findall(r"\d+\.\d+\.\d+", stdout_txt)[0]

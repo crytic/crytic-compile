@@ -1,13 +1,16 @@
 """
 Natspec module https://solidity.readthedocs.io/en/latest/natspec-format.html
 """
-from typing import Optional, List, Dict
+from typing import Optional, Dict
 
 
 class UserMethod:
+    """
+    Model the user method
+    """
 
     def __init__(self, method):
-        self._notice: Optional[str] = method.get('notice', None)
+        self._notice: Optional[str] = method.get("notice", None)
 
     @property
     def notice(self):
@@ -26,12 +29,15 @@ class UserMethod:
 
 
 class DevMethod:
+    """
+    Model the dev method
+    """
 
     def __init__(self, method):
-        self._author: Optional[str] = method.get('author', None)
-        self._details: Optional[str] = method.get('details', None)
-        self._params: Dict[str, str] = method.get('params', {})
-        self._return: Optional[str] = method.get('return', None)
+        self._author: Optional[str] = method.get("author", None)
+        self._details: Optional[str] = method.get("details", None)
+        self._params: Dict[str, str] = method.get("params", {})
+        self._return: Optional[str] = method.get("return", None)
 
     @property
     def author(self):
@@ -70,16 +76,24 @@ class DevMethod:
         Export to a python dict
         :return: Dict
         """
-        return {"author": self.author,
-                "details": self.details,
-                "params": self.params,
-                "return": self.method_return}
+        return {
+            "author": self.author,
+            "details": self.details,
+            "params": self.params,
+            "return": self.method_return,
+        }
 
 
 class UserDoc:
+    """
+    Model the user doc
+    """
+
     def __init__(self, userdoc: dict):
-        self._notice: Optional[str] = userdoc.get('notice', None)
-        self._methods: Dict[str, UserMethod] = {k: UserMethod(item) for k, item in userdoc.get('methods', {}).items()}
+        self._notice: Optional[str] = userdoc.get("notice", None)
+        self._methods: Dict[str, UserMethod] = {
+            k: UserMethod(item) for k, item in userdoc.get("methods", {}).items()
+        }
 
     @property
     def notice(self):
@@ -102,16 +116,24 @@ class UserDoc:
         Export to a python dict
         :return: Dict
         """
-        return {"methods": {k: items.export() for k, items in self.methods.items()},
-                "notice": self.notice}
+        return {
+            "methods": {k: items.export() for k, items in self.methods.items()},
+            "notice": self.notice,
+        }
 
 
 class DevDoc:
+    """
+    Model the dev doc
+    """
+
     def __init__(self, devdoc: Dict):
-        self._author: Optional[str] = devdoc.get('author', None)
-        self._details: Optional[str] = devdoc.get('details', None)
-        self._methods: Dict[str, DevMethod] = {k: DevMethod(item) for k, item in devdoc.get('methods', {}).items()}
-        self._title: Optional[str] = devdoc.get('title', None)
+        self._author: Optional[str] = devdoc.get("author", None)
+        self._details: Optional[str] = devdoc.get("details", None)
+        self._methods: Dict[str, DevMethod] = {
+            k: DevMethod(item) for k, item in devdoc.get("methods", {}).items()
+        }
+        self._title: Optional[str] = devdoc.get("title", None)
 
     @property
     def author(self):
@@ -150,14 +172,18 @@ class DevDoc:
         Export to a python dict
         :return: Dict
         """
-        return {"methods": {k: items.export() for k, items in self.methods.items()},
-                "author": self.author,
-                "details": self.details,
-                "title": self.title}
+        return {
+            "methods": {k: items.export() for k, items in self.methods.items()},
+            "author": self.author,
+            "details": self.details,
+            "title": self.title,
+        }
 
 
 class Natspec:
-
+    """
+    Model natspec
+    """
     def __init__(self, userdoc: Dict, devdoc: Dict):
         self._userdoc: UserDoc = UserDoc(userdoc)
         self._devdoc: DevDoc = DevDoc(devdoc)

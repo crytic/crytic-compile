@@ -4,20 +4,18 @@ Etherscan platform.
 
 import json
 import logging
-import urllib.request
 import os
 import re
-
+import urllib.request
 from pathlib import Path
+from typing import TYPE_CHECKING, Union, Dict
 
-from typing import TYPE_CHECKING, Union, Dict, Optional, Match
-
+from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform.abstract_platform import AbstractPlatform
-from crytic_compile.platform.types import Type
 from crytic_compile.platform.exceptions import InvalidCompilation
 from crytic_compile.platform.solc import _run_solc
+from crytic_compile.platform.types import Type
 from crytic_compile.utils.naming import extract_filename, extract_name, convert_filename, Filename
-from crytic_compile.compiler.compiler import CompilerVersion
 
 # Cycle dependency
 from crytic_compile.utils.natspec import Natspec
@@ -49,7 +47,7 @@ def _handle_bytecode(crytic_compile: "CryticCompile", target: str, result_b: byt
     begin += """<div id="dividcode">\n<pre class=\'wordwrap\' style=\'height: 15pc;\'>0x"""
     result = result_b.decode("utf8")
     # Removing everything before the begin string
-    result = result[result.find(begin) + len(begin):]
+    result = result[result.find(begin) + len(begin) :]
     bytecode = result[: result.find("<")]
 
     contract_name = f"Contract_{target}"
@@ -72,6 +70,10 @@ def _handle_bytecode(crytic_compile: "CryticCompile", target: str, result_b: byt
 
 
 class Etherscan(AbstractPlatform):
+    """
+    Etherscan platform
+    """
+
     NAME = "Etherscan"
     PROJECT_URL = "https://etherscan.io/"
     TYPE = Type.ETHERSCAN
@@ -92,7 +94,7 @@ class Etherscan(AbstractPlatform):
         if target.startswith(tuple(SUPPORTED_NETWORK)):
             prefix: Union[None, str] = SUPPORTED_NETWORK[target[: target.find(":") + 1]][0]
             prefix_bytecode = SUPPORTED_NETWORK[target[: target.find(":") + 1]][1]
-            addr = target[target.find(":") + 1:]
+            addr = target[target.find(":") + 1 :]
             etherscan_url = ETHERSCAN_BASE % (prefix, addr)
             etherscan_bytecode_url = ETHERSCAN_BASE_BYTECODE % (prefix_bytecode, addr)
 
@@ -113,7 +115,7 @@ class Etherscan(AbstractPlatform):
 
         source_code: str = ""
         result: Dict[str, Union[bool, str, int]] = dict()
-        contract_name: str = ''
+        contract_name: str = ""
 
         if not only_bytecode:
             with urllib.request.urlopen(etherscan_url) as response:
@@ -144,7 +146,9 @@ class Etherscan(AbstractPlatform):
         if source_code == "" and not only_source:
             LOGGER.info("Source code not available, try to fetch the bytecode only")
 
-            req = urllib.request.Request(etherscan_bytecode_url, headers={"User-Agent": "Mozilla/5.0"})
+            req = urllib.request.Request(
+                etherscan_bytecode_url, headers={"User-Agent": "Mozilla/5.0"}
+            )
             with urllib.request.urlopen(req) as response:
                 html = response.read()
 
@@ -177,7 +181,9 @@ class Etherscan(AbstractPlatform):
         assert isinstance(result["CompilerVersion"], str)
         assert isinstance(result["Runs"], int)
 
-        compiler_version = re.findall(r"\d+\.\d+\.\d+", convert_version(result["CompilerVersion"]))[0]
+        compiler_version = re.findall(r"\d+\.\d+\.\d+", convert_version(result["CompilerVersion"]))[
+            0
+        ]
         optimization_used: bool = result["OptimizationUsed"] == "1"
         optimized_run: int = result["Runs"]
 
@@ -202,7 +208,9 @@ class Etherscan(AbstractPlatform):
         for original_contract_name, info in targets_json["contracts"].items():
             contract_name = extract_name(original_contract_name)
             contract_filename = extract_filename(original_contract_name)
-            contract_filename = convert_filename(contract_filename, _relative_to_short, crytic_compile)
+            contract_filename = convert_filename(
+                contract_filename, _relative_to_short, crytic_compile
+            )
             crytic_compile.contracts_names.add(contract_name)
             crytic_compile.contracts_filenames[contract_name] = contract_filename
             crytic_compile.abis[contract_name] = json.loads(info["abi"])
@@ -211,8 +219,8 @@ class Etherscan(AbstractPlatform):
             crytic_compile.srcmaps_init[contract_name] = info["srcmap"].split(";")
             crytic_compile.srcmaps_runtime[contract_name] = info["srcmap-runtime"].split(";")
 
-            userdoc = json.loads(info.get('userdoc', "{}"))
-            devdoc = json.loads(info.get('devdoc', "{}"))
+            userdoc = json.loads(info.get("userdoc", "{}"))
+            devdoc = json.loads(info.get("devdoc", "{}"))
             natspec = Natspec(userdoc, devdoc)
             crytic_compile.natspec[contract_name] = natspec
 
@@ -232,7 +240,7 @@ class Etherscan(AbstractPlatform):
         if etherscan_ignore:
             return False
         if target.startswith(tuple(SUPPORTED_NETWORK)):
-            target = target[target.find(":") + 1:]
+            target = target[target.find(":") + 1 :]
         return bool(re.match(r"^\s*0x[a-zA-Z0-9]{40}\s*$", target))
 
     def is_dependency(self, _path: str) -> bool:
@@ -250,7 +258,7 @@ def convert_version(version: str) -> str:
     :param version:
     :return:
     """
-    return version[1: version.find("+")]
+    return version[1 : version.find("+")]
 
 
 def _relative_to_short(relative: Path) -> Path:

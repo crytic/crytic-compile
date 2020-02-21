@@ -2,26 +2,21 @@
 Dapp platform. https://github.com/dapphub/dapptools
 """
 
-import os
+import glob
 import json
 import logging
-import glob
+import os
 import re
 import subprocess
 from pathlib import Path
 
 # Cycle dependency
-from typing import TYPE_CHECKING, Dict
+from typing import TYPE_CHECKING
 
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform.abstract_platform import AbstractPlatform
 from crytic_compile.platform.types import Type
-from crytic_compile.utils.naming import (
-    extract_filename,
-    extract_name,
-    combine_filename_name,
-    convert_filename,
-)
+from crytic_compile.utils.naming import extract_filename, extract_name, convert_filename
 
 # Handle cycle
 from crytic_compile.utils.natspec import Natspec
@@ -33,11 +28,15 @@ LOGGER = logging.getLogger("CryticCompile")
 
 
 class Dapp(AbstractPlatform):
+    """
+    Dapp class
+    """
+
     NAME = "Dapp"
     PROJECT_URL = "https://github.com/dapphub/dapptools"
     TYPE = Type.DAPP
 
-    def compile(self,  crytic_compile: "CryticCompile", **kwargs: str):
+    def compile(self, crytic_compile: "CryticCompile", **kwargs: str):
         """
         Compile the target
         :param crytic_compile:
@@ -46,7 +45,9 @@ class Dapp(AbstractPlatform):
         :return:
         """
 
-        dapp_ignore_compile = kwargs.get("dapp_ignore_compile", False) or kwargs.get("ignore_compile", False)
+        dapp_ignore_compile = kwargs.get("dapp_ignore_compile", False) or kwargs.get(
+            "ignore_compile", False
+        )
         directory = os.path.join(self._target, "out")
 
         if not dapp_ignore_compile:
@@ -76,16 +77,17 @@ class Dapp(AbstractPlatform):
                 crytic_compile.srcmaps_init[contract_name] = info["srcmap"].split(";")
                 crytic_compile.srcmaps_runtime[contract_name] = info["srcmap-runtime"].split(";")
 
-                userdoc = json.loads(info.get('userdoc', "{}"))
-                devdoc = json.loads(info.get('devdoc', "{}"))
+                userdoc = json.loads(info.get("userdoc", "{}"))
+                devdoc = json.loads(info.get("devdoc", "{}"))
                 natspec = Natspec(userdoc, devdoc)
                 crytic_compile.natspec[contract_name] = natspec
 
             for path, info in targets_json["sources"].items():
-                path = convert_filename(path, _relative_to_short, crytic_compile, working_dir=self._target)
+                path = convert_filename(
+                    path, _relative_to_short, crytic_compile, working_dir=self._target
+                )
                 crytic_compile.filenames.add(path)
                 crytic_compile.asts[path.absolute] = info["AST"]
-
 
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:
@@ -123,8 +125,8 @@ def _run_dapp(target: str):
 
     try:
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=target)
-    except OSError as e:
-        raise InvalidCompilation(e)
+    except OSError as error:
+        raise InvalidCompilation(error)
     _, _ = process.communicate()
 
 

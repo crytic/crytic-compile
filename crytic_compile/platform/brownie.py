@@ -1,19 +1,19 @@
 """
 Brownie platform. https://github.com/iamdefinitelyahuman/brownie
 """
-import os
-import logging
-import subprocess
 import glob
 import json
+import logging
+import os
+import subprocess
 from pathlib import Path
-from typing import Dict, List, TYPE_CHECKING, Optional
+from typing import Dict, List, TYPE_CHECKING
 
-from crytic_compile.platform.abstract_platform import AbstractPlatform
-from crytic_compile.platform.types import Type
-from crytic_compile.platform.exceptions import InvalidCompilation
-from crytic_compile.utils.naming import convert_filename, Filename
 from crytic_compile.compiler.compiler import CompilerVersion
+from crytic_compile.platform.abstract_platform import AbstractPlatform
+from crytic_compile.platform.exceptions import InvalidCompilation
+from crytic_compile.platform.types import Type
+from crytic_compile.utils.naming import convert_filename, Filename
 
 # Cycle dependency
 from crytic_compile.utils.natspec import Natspec
@@ -25,6 +25,10 @@ LOGGER = logging.getLogger("CryticCompile")
 
 
 class Brownie(AbstractPlatform):
+    """
+    Brownie class
+    """
+
     NAME = "Brownie"
     PROJECT_URL = "https://github.com/iamdefinitelyahuman/brownie"
     TYPE = Type.BROWNIE
@@ -38,16 +42,20 @@ class Brownie(AbstractPlatform):
         :return:
         """
         build_directory = Path("build", "contracts")
-        brownie_ignore_compile = kwargs.get("brownie_ignore_compile", False) or kwargs.get("ignore_compile", False)
+        brownie_ignore_compile = kwargs.get("brownie_ignore_compile", False) or kwargs.get(
+            "ignore_compile", False
+        )
 
         base_cmd = ["brownie"]
 
         if not brownie_ignore_compile:
             cmd = base_cmd + ["compile"]
             try:
-                process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self._target)
-            except OSError as e:
-                raise InvalidCompilation(e)
+                process = subprocess.Popen(
+                    cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self._target
+                )
+            except OSError as error:
+                raise InvalidCompilation(error)
 
             stdout_bytes, stderr_bytes = process.communicate()
             stdout, stderr = (
@@ -89,7 +97,6 @@ class Brownie(AbstractPlatform):
         :return:
         """
         return False
-
 
 
 def _iterate_over_files(crytic_compile: "CryticCompile", target: str, filenames: List[str]):
@@ -139,8 +146,8 @@ def _iterate_over_files(crytic_compile: "CryticCompile", target: str, filenames:
                 "deployedSourceMap"
             ].split(";")
 
-            userdoc = target_loaded.get('userdoc', {})
-            devdoc = target_loaded.get('devdoc', {})
+            userdoc = target_loaded.get("userdoc", {})
+            devdoc = target_loaded.get("devdoc", {})
             natspec = Natspec(userdoc, devdoc)
             crytic_compile.natspec[contract_name] = natspec
 
@@ -156,8 +163,8 @@ def _get_version(compiler: Dict) -> str:
     :return:
     """
     version = compiler.get("version", "")
-    version = version[len("Version: "):]
-    version = version[0: version.find("+")]
+    version = version[len("Version: ") :]
+    version = version[0 : version.find("+")]
     return version
 
 

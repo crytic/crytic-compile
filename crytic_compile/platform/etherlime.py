@@ -27,6 +27,10 @@ LOGGER = logging.getLogger("CryticCompile")
 
 
 class Etherlime(AbstractPlatform):
+    """
+    Etherlime platform
+    """
+
     NAME = "Etherlime"
     PROJECT_URL = "https://github.com/LimeChain/etherlime"
     TYPE = Type.ETHERLIME
@@ -40,7 +44,9 @@ class Etherlime(AbstractPlatform):
         :return:
         """
 
-        etherlime_ignore_compile = kwargs.get("etherlime_ignore_compile", False) or kwargs.get("ignore_compile", False)
+        etherlime_ignore_compile = kwargs.get("etherlime_ignore_compile", False) or kwargs.get(
+            "ignore_compile", False
+        )
 
         build_directory = "build"
 
@@ -54,8 +60,8 @@ class Etherlime(AbstractPlatform):
 
             try:
                 process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            except OSError as e:
-                raise InvalidCompilation(e)
+            except OSError as error:
+                raise InvalidCompilation(error)
 
             stdout_bytes, stderr_bytes = process.communicate()
             stdout, stderr = (
@@ -70,7 +76,9 @@ class Etherlime(AbstractPlatform):
 
         # similar to truffle
         if not os.path.isdir(os.path.join(self._target, build_directory)):
-            raise InvalidCompilation("No truffle build directory found, did you run `truffle compile`?")
+            raise InvalidCompilation(
+                "No truffle build directory found, did you run `truffle compile`?"
+            )
         filenames = glob.glob(os.path.join(self._target, build_directory, "*.json"))
 
         version = None
@@ -109,8 +117,8 @@ class Etherlime(AbstractPlatform):
                     "deployedSourceMap"
                 ].split(";")
 
-                userdoc = target_loaded.get('userdoc', {})
-                devdoc = target_loaded.get('devdoc', {})
+                userdoc = target_loaded.get("userdoc", {})
+                devdoc = target_loaded.get("devdoc", {})
                 natspec = Natspec(userdoc, devdoc)
                 crytic_compile.natspec[contract_name] = natspec
 
@@ -133,7 +141,8 @@ class Etherlime(AbstractPlatform):
                 package = json.load(file_desc)
             if "dependencies" in package:
                 return (
-                        "etherlime-lib" in package["dependencies"] or "etherlime" in package["dependencies"]
+                    "etherlime-lib" in package["dependencies"]
+                    or "etherlime" in package["dependencies"]
                 )
         return False
 

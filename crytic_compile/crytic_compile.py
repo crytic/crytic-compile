@@ -8,16 +8,14 @@ import glob
 import logging
 import re
 import subprocess
-from typing import Dict, List, Union, Set, Tuple, Optional
+from typing import Dict, List, Union, Set, Tuple, Optional, Type, TYPE_CHECKING
 from pathlib import Path
-from typing import TYPE_CHECKING
 import sha3
 
 from .platform import solc_standard_json, all_platforms
 from .platform.abstract_platform import AbstractPlatform
 from .platform.all_export import PLATFORMS_EXPORT
 from .platform.solc import Solc
-from .platform.solc_standard_json import SolcStandardJson
 from .platform.standard import export_to_standard
 from .utils.naming import Filename
 from .utils.natspec import Natspec
@@ -26,14 +24,17 @@ from .utils.npm import get_package_name
 
 # Cycle dependency
 if TYPE_CHECKING:
-    from .platform import Type
     from .compiler.compiler import CompilerVersion
 
 LOGGER = logging.getLogger("CryticCompile")
 logging.basicConfig()
 
 
-def get_platforms():
+def get_platforms() -> List[Type[AbstractPlatform]]:
+    """
+    Return the available platforms classes
+    :return:
+    """
     platforms = [getattr(all_platforms, name) for name in dir(all_platforms)]
     platforms = [d for d in platforms if inspect.isclass(d) and issubclass(d, AbstractPlatform)]
     return sorted(platforms, key=lambda platform: platform.TYPE)
@@ -610,7 +611,7 @@ class CryticCompile:
         return new_names
 
     def _library_name_lookup(
-            self, lib_name: str, original_contract: str
+        self, lib_name: str, original_contract: str
     ) -> Optional[Tuple[str, str]]:
         """
         Convert a library name to the contract
@@ -641,14 +642,14 @@ class CryticCompile:
 
             # Solidity 0.4 with filename
             solidity_0_4_filename = (
-                    "__" + name_with_absolute_filename + "_" * (38 - len(name_with_absolute_filename))
+                "__" + name_with_absolute_filename + "_" * (38 - len(name_with_absolute_filename))
             )
             if solidity_0_4_filename == lib_name:
                 return name, solidity_0_4_filename
 
             # Solidity 0.4 with filename
             solidity_0_4_filename = (
-                    "__" + name_with_used_filename + "_" * (38 - len(name_with_used_filename))
+                "__" + name_with_used_filename + "_" * (38 - len(name_with_used_filename))
             )
             if solidity_0_4_filename == lib_name:
                 return name, solidity_0_4_filename
@@ -686,7 +687,8 @@ class CryticCompile:
                     for c in self._contracts_name
                     if c != original_contract
                 ),
-                None)
+                None,
+            )
 
         return None
 
@@ -700,9 +702,7 @@ class CryticCompile:
         if name not in self._libraries:
             init = re.findall(r"__.{36}__", self.bytecode_init(name))
             runtime = re.findall(r"__.{36}__", self.bytecode_runtime(name))
-            libraires = [
-                self._library_name_lookup(x, name) for x in set(init + runtime)
-            ]
+            libraires = [self._library_name_lookup(x, name) for x in set(init + runtime)]
             self._libraries[name] = [lib for lib in libraires if lib]
         return [name for (name, pattern) in self._libraries[name]]
 
@@ -716,14 +716,12 @@ class CryticCompile:
         if name not in self._libraries:
             init = re.findall(r"__.{36}__", self.bytecode_init(name))
             runtime = re.findall(r"__.{36}__", self.bytecode_runtime(name))
-            libraires = [
-                self._library_name_lookup(x, name) for x in set(init + runtime)
-            ]
+            libraires = [self._library_name_lookup(x, name) for x in set(init + runtime)]
             self._libraries[name] = [lib for lib in libraires if lib]
         return self._libraries[name]
 
     def _update_bytecode_with_libraries(
-            self, bytecode: str, libraries: Union[None, Dict[str, str]]
+        self, bytecode: str, libraries: Union[None, Dict[str, str]]
     ) -> str:
         """
         Patch the bytecode
@@ -836,7 +834,9 @@ class CryticCompile:
 
         compile_force_framework: Union[str, None] = kwargs.get("compile_force_framework", None)
         if compile_force_framework:
-            platform = next((p(target) for p in platforms if p.name == compile_force_framework), None)
+            platform = next(
+                (p(target) for p in platforms if p.NAME == compile_force_framework), None
+            )
 
         if not platform:
             platform = next((p(target) for p in platforms if p.is_supported(target)), None)
@@ -883,7 +883,8 @@ class CryticCompile:
     def _remove_metadata(self):
         """
             Init bytecode contains metadata that needs to be removed
-            see http://solidity.readthedocs.io/en/v0.4.24/metadata.html#encoding-of-the-metadata-hash-in-the-bytecode
+            see
+            http://solidity.readthedocs.io/en/v0.4.24/metadata.html#encoding-of-the-metadata-hash-in-the-bytecode
         """
         self._init_bytecodes = {
             key: re.sub(r"a165627a7a72305820.{64}0029", r"", bytecode)

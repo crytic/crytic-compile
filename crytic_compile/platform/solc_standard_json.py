@@ -7,17 +7,11 @@ import os
 import subprocess
 from typing import Union, Dict, List, TYPE_CHECKING, Optional
 
-from crytic_compile.platform.abstract_platform import AbstractPlatform
-from crytic_compile.platform.exceptions import InvalidCompilation
-from crytic_compile.platform.solc import (
-    get_version,
-    is_optimized,
-    relative_to_short,
-    Solc)
-from crytic_compile.platform.types import Type
 from crytic_compile.compiler.compiler import CompilerVersion
+from crytic_compile.platform.exceptions import InvalidCompilation
+from crytic_compile.platform.solc import get_version, is_optimized, relative_to_short, Solc
+from crytic_compile.platform.types import Type
 from crytic_compile.utils.naming import convert_filename
-
 # Cycle dependency
 from crytic_compile.utils.natspec import Natspec
 
@@ -55,8 +49,8 @@ class SolcStandardJson(Solc):
 
         elif isinstance(target, dict):
             self._json = target
-#        elif isinstance(target, SolcStandardJson):
-#            self._json = target._json
+        #        elif isinstance(target, SolcStandardJson):
+        #            self._json = target._json
         else:
             raise ValueError(f"Invalid target for solc standard json input.")
 
@@ -74,12 +68,17 @@ class SolcStandardJson(Solc):
             self._json["settings"]["optimizer"] = {"enabled": False}
         if "outputSelection" not in self._json["settings"]:
             self._json["settings"]["outputSelection"] = {
-                "*": {"*": ["abi",
-                            "metadata",
-                            "devdoc",
-                            "userdoc",
-                            "evm.bytecode",
-                            "evm.deployedBytecode"], "": ["ast"]}
+                "*": {
+                    "*": [
+                        "abi",
+                        "metadata",
+                        "devdoc",
+                        "userdoc",
+                        "evm.bytecode",
+                        "evm.deployedBytecode",
+                    ],
+                    "": ["ast"],
+                }
             }
 
     def add_source_file(self, file_path: str):
@@ -125,7 +124,9 @@ class SolcStandardJson(Solc):
             compiler="solc", version=get_version(solc), optimized=is_optimized(solc_arguments)
         )
 
-        skip_filename = crytic_compile.compiler_version.version in [f"0.4.{x}" for x in range(0, 10)]
+        skip_filename = crytic_compile.compiler_version.version in [
+            f"0.4.{x}" for x in range(0, 10)
+        ]
 
         # Add all remappings
         if solc_remaps:
@@ -144,27 +145,32 @@ class SolcStandardJson(Solc):
                 for contract_name, info in file_contracts.items():
                     # for solc < 0.4.10 we cant retrieve the filename from the ast
                     if skip_filename:
-                        # TODO investigate the mypy type issue
                         contract_filename = convert_filename(
-                            self._target, relative_to_short, crytic_compile, working_dir=solc_working_dir
+                            self._target,
+                            relative_to_short,
+                            crytic_compile,
+                            working_dir=solc_working_dir,
                         )
                     else:
                         contract_filename = convert_filename(
-                            file_path, relative_to_short, crytic_compile, working_dir=solc_working_dir
+                            file_path,
+                            relative_to_short,
+                            crytic_compile,
+                            working_dir=solc_working_dir,
                         )
                     crytic_compile.contracts_names.add(contract_name)
                     crytic_compile.contracts_filenames[contract_name] = contract_filename
                     crytic_compile.abis[contract_name] = info["abi"]
 
-                    userdoc = info.get('userdoc', {})
-                    devdoc = info.get('devdoc', {})
+                    userdoc = info.get("userdoc", {})
+                    devdoc = info.get("devdoc", {})
                     natspec = Natspec(userdoc, devdoc)
                     crytic_compile.natspec[contract_name] = natspec
 
                     crytic_compile.bytecodes_init[contract_name] = info["evm"]["bytecode"]["object"]
-                    crytic_compile.bytecodes_runtime[contract_name] = info["evm"]["deployedBytecode"][
-                        "object"
-                    ]
+                    crytic_compile.bytecodes_runtime[contract_name] = info["evm"][
+                        "deployedBytecode"
+                    ]["object"]
                     crytic_compile.srcmaps_init[contract_name] = info["evm"]["bytecode"][
                         "sourceMap"
                     ].split(";")
@@ -176,7 +182,10 @@ class SolcStandardJson(Solc):
             for path, info in targets_json["sources"].items():
                 if skip_filename:
                     path = convert_filename(
-                        self._target, relative_to_short, crytic_compile, working_dir=solc_working_dir
+                        self._target,
+                        relative_to_short,
+                        crytic_compile,
+                        working_dir=solc_working_dir,
                     )
                 else:
                     path = convert_filename(
@@ -208,10 +217,13 @@ def _run_solc_standard_json(
             stderr=subprocess.PIPE,
             **additional_kwargs,
         )
-    except OSError as e:
-        raise InvalidCompilation(e)
-    stdout, stderr = process.communicate(json.dumps(solc_input).encode("utf-8"))
-    stdout, stderr = (stdout.decode(), stderr.decode())  # convert bytestrings to unicode strings
+    except OSError as error:
+        raise InvalidCompilation(error)
+    stdout_b, stderr_b = process.communicate(json.dumps(solc_input).encode("utf-8"))
+    stdout, stderr = (
+        stdout_b.decode(),
+        stderr_b.decode(),
+    )  # convert bytestrings to unicode strings
 
     try:
         solc_json_output = json.loads(stdout)

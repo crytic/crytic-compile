@@ -7,14 +7,13 @@ import logging
 import os
 import subprocess
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from typing import TYPE_CHECKING, Optional
-
-from crytic_compile.platform.abstract_platform import AbstractPlatform
-from crytic_compile.utils.naming import extract_filename, extract_name, convert_filename
 from crytic_compile.compiler.compiler import CompilerVersion
-from crytic_compile.platform.types import Type
+from crytic_compile.platform.abstract_platform import AbstractPlatform
 from crytic_compile.platform.exceptions import InvalidCompilation
+from crytic_compile.platform.types import Type
+from crytic_compile.utils.naming import extract_filename, extract_name, convert_filename
 
 # Cycle dependency
 from crytic_compile.utils.natspec import Natspec
@@ -26,6 +25,10 @@ LOGGER = logging.getLogger("CryticCompile")
 
 
 class Embark(AbstractPlatform):
+    """
+    Embark platform
+    """
+
     NAME = "Embark"
     PROJECT_URL = "https://github.com/embarklabs/embark"
     TYPE = Type.EMBARK
@@ -38,7 +41,9 @@ class Embark(AbstractPlatform):
         :param kwargs:
         :return:
         """
-        embark_ignore_compile = kwargs.get("embark_ignore_compile", False) or kwargs.get("ignore_compile", False)
+        embark_ignore_compile = kwargs.get("embark_ignore_compile", False) or kwargs.get(
+            "ignore_compile", False
+        )
         embark_overwrite_config = kwargs.get("embark_overwrite_config", False)
 
         plugin_name = "@trailofbits/embark-contract-info"
@@ -55,10 +60,12 @@ class Embark(AbstractPlatform):
             if write_embark_json:
                 try:
                     process = subprocess.Popen(["npm", "install", plugin_name], cwd=self._target)
-                except OSError as e:
-                    raise InvalidCompilation(e)
+                except OSError as error:
+                    raise InvalidCompilation(error)
                 _, stderr = process.communicate()
-                with open(os.path.join(self._target, "embark.json"), "w", encoding="utf8") as outfile:
+                with open(
+                    os.path.join(self._target, "embark.json"), "w", encoding="utf8"
+                ) as outfile:
                     json.dump(embark_json, outfile, indent=2)
         else:
             if (not "plugins" in embark_json) or (not plugin_name in embark_json["plugins"]):
@@ -77,8 +84,8 @@ class Embark(AbstractPlatform):
                     stderr=subprocess.PIPE,
                     cwd=self._target,
                 )
-            except OSError as e:
-                raise InvalidCompilation(e)
+            except OSError as error:
+                raise InvalidCompilation(error)
             stdout, stderr = process.communicate()
             LOGGER.info("%s\n", stdout.decode())
             if stderr:
@@ -96,12 +103,16 @@ class Embark(AbstractPlatform):
         with open(infile, "r", encoding="utf8") as file_desc:
             targets_loaded = json.load(file_desc)
             for k, ast in targets_loaded["asts"].items():
-                filename = convert_filename(k, _relative_to_short, crytic_compile, working_dir=self._target)
+                filename = convert_filename(
+                    k, _relative_to_short, crytic_compile, working_dir=self._target
+                )
                 crytic_compile.asts[filename.absolute] = ast
                 crytic_compile.filenames.add(filename)
 
             if not "contracts" in targets_loaded:
-                LOGGER.error("Incorrect json file generated. Are you using %s >= 1.1.0?", plugin_name)
+                LOGGER.error(
+                    "Incorrect json file generated. Are you using %s >= 1.1.0?", plugin_name
+                )
                 raise InvalidCompilation(
                     f"Incorrect json file generated. Are you using {plugin_name} >= 1.1.0?"
                 )
@@ -127,10 +138,12 @@ class Embark(AbstractPlatform):
                 if "srcmap" in info:
                     crytic_compile.srcmaps_init[contract_name] = info["srcmap"].split(";")
                 if "srcmap-runtime" in info:
-                    crytic_compile.srcmaps_runtime[contract_name] = info["srcmap-runtime"].split(";")
+                    crytic_compile.srcmaps_runtime[contract_name] = info["srcmap-runtime"].split(
+                        ";"
+                    )
 
-                userdoc = info.get('userdoc', {})
-                devdoc = info.get('devdoc', {})
+                userdoc = info.get("userdoc", {})
+                devdoc = info.get("devdoc", {})
                 natspec = Natspec(userdoc, devdoc)
                 crytic_compile.natspec[contract_name] = natspec
 

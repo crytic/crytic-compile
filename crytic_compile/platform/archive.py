@@ -1,6 +1,7 @@
 """
 Archive platform.
-It is similar to the standard platform, except that the file generated contains a "source_content" field
+It is similar to the standard platform, except that the file generated
+contains a "source_content" field
 Which is a map: filename -> sourcecode
 """
 import os
@@ -40,6 +41,10 @@ def export_to_archive(crytic_compile: "CryticCompile", **kwargs) -> str:
 
 
 class Archive(AbstractPlatform):
+    """
+    Archive platform. It is similar to the Standard platform, but contains also the source code
+    """
+
     NAME = "Archive"
     PROJECT_URL = "https://github.com/crytic/crytic-compile"
     TYPE = Type.ARCHIVE
@@ -68,7 +73,6 @@ class Archive(AbstractPlatform):
             loaded_json = json.loads(self._target)
         underlying_type = standard.load_from_compile(crytic_compile, loaded_json)
         self._underlying_type = Type(underlying_type)
-
 
         crytic_compile.src_content = loaded_json["source_content"]
 

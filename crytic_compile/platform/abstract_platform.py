@@ -1,5 +1,8 @@
+"""
+Abstract Platform
+"""
 import abc
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from crytic_compile.platform import Type
 
@@ -8,25 +11,39 @@ if TYPE_CHECKING:
 
 
 class IncorrectPlatformInitialization(Exception):
+    """
+    Exception raises if a platform was not properly defined
+    """
+
     pass
 
 
 class AbstractPlatform(metaclass=abc.ABCMeta):
-    NAME: str = ''
-    PROJECT_URL: str = ''
+    """
+    This is the abstract class for the platform
+    """
+
+    NAME: str = ""
+    PROJECT_URL: str = ""
     TYPE: Type = Type.NOT_IMPLEMENTED
 
     HIDE = False  # True if the class is not meant for direct user manipulation
 
     def __init__(self, target: str, **kwargs: str):
         if not self.NAME:
-            raise IncorrectPlatformInitialization('NAME is not initialized {}'.format(self.__class__.__name__))
+            raise IncorrectPlatformInitialization(
+                "NAME is not initialized {}".format(self.__class__.__name__)
+            )
 
         if not self.PROJECT_URL:
-            raise IncorrectPlatformInitialization('PROJECT_URL is not initialized {}'.format(self.__class__.__name__))
+            raise IncorrectPlatformInitialization(
+                "PROJECT_URL is not initialized {}".format(self.__class__.__name__)
+            )
 
         if self.TYPE == Type.NOT_IMPLEMENTED:
-            raise IncorrectPlatformInitialization('TYPE is not initialized {}'.format(self.__class__.__name__))
+            raise IncorrectPlatformInitialization(
+                "TYPE is not initialized {}".format(self.__class__.__name__)
+            )
 
         self._target: str = target
 
@@ -37,18 +54,34 @@ class AbstractPlatform(metaclass=abc.ABCMeta):
     # For example the archive will return the underlying platform values
     @property
     def target(self) -> str:
+        """
+        Return the target name
+        :return:
+        """
         return self._target
 
     @property
-    def platform_name_used(self):
+    def platform_name_used(self) -> str:
+        """
+        Return the underlying platform used
+        :return:
+        """
         return self.NAME
 
     @property
-    def platform_project_url_used(self):
+    def platform_project_url_used(self) -> str:
+        """
+        Return the underlying platform url used
+        :return:
+        """
         return self.PROJECT_URL
 
     @property
-    def platform_type_used(self):
+    def platform_type_used(self) -> Type:
+        """
+        Return the underlying platform url used
+        :return:
+        """
         return self.TYPE
 
     # endregion
@@ -60,6 +93,12 @@ class AbstractPlatform(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str):
+        """
+        Run the compilation
+        :param crytic_compile:
+        :param kwargs:
+        :return:
+        """
         return
 
     @staticmethod

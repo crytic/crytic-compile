@@ -5,13 +5,12 @@ import json
 import os
 import subprocess
 from pathlib import Path
+from typing import TYPE_CHECKING, Dict
 
-from typing import TYPE_CHECKING, Dict, Optional
-
+from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform.abstract_platform import AbstractPlatform
 from crytic_compile.platform.exceptions import InvalidCompilation
 from crytic_compile.platform.types import Type
-from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.utils.naming import convert_filename
 
 # Handle cycle
@@ -22,6 +21,10 @@ if TYPE_CHECKING:
 
 
 class Vyper(AbstractPlatform):
+    """
+    Vyper platform
+    """
+
     NAME = "vyper"
     PROJECT_URL = "https://github.com/vyperlang/vyper"
     TYPE = Type.VYPER
@@ -103,8 +106,8 @@ def _run_vyper(filename: str, vyper: str, env: Dict = None, working_dir: str = N
         process = subprocess.Popen(
             cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env, **additional_kwargs
         )
-    except OSError as e:
-        raise InvalidCompilation(e)
+    except OSError as error:
+        raise InvalidCompilation(error)
 
     stdout, stderr = process.communicate()
 

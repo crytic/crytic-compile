@@ -16,12 +16,10 @@ from crytic_compile.platform.exceptions import InvalidCompilation
 from crytic_compile.utils.naming import convert_filename
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform import solc
-
+from crytic_compile.utils.natspec import Natspec
 from .abstract_platform import AbstractPlatform
 
 # Handle cycle
-from crytic_compile.utils.natspec import Natspec
-
 if TYPE_CHECKING:
     from crytic_compile import CryticCompile
 
@@ -52,7 +50,7 @@ def export_to_truffle(crytic_compile: "CryticCompile", **kwargs: str) -> Optiona
             "deployedBytecode": "0x" + crytic_compile.bytecode_runtime(contract_name),
             "ast": crytic_compile.ast(filename.absolute),
             "userdoc": crytic_compile.natspec[contract_name].userdoc.export(),
-            "devdoc": crytic_compile.natspec[contract_name].devdoc.export()
+            "devdoc": crytic_compile.natspec[contract_name].devdoc.export(),
         }
         results.append(output)
 
@@ -64,12 +62,17 @@ def export_to_truffle(crytic_compile: "CryticCompile", **kwargs: str) -> Optiona
 
     return export_dir
 
+
 class Truffle(AbstractPlatform):
+    """
+    Truffle platform
+    """
+
     NAME = "Truffle"
     PROJECT_URL = "https://github.com/trufflesuite/truffle"
     TYPE = Type.TRUFFLE
 
-    def compile(self,  crytic_compile: "CryticCompile", **kwargs: str):
+    def compile(self, crytic_compile: "CryticCompile", **kwargs: str):
         """
         Compile the target
         :param kwargs:
@@ -77,11 +80,14 @@ class Truffle(AbstractPlatform):
         """
 
         build_directory = kwargs.get("truffle_build_directory", os.path.join("build", "contracts"))
-        truffle_ignore_compile = kwargs.get("truffle_ignore_compile", False) or kwargs.get("ignore_compile", False)
+        truffle_ignore_compile = kwargs.get("truffle_ignore_compile", False) or kwargs.get(
+            "ignore_compile", False
+        )
         truffle_version = kwargs.get("truffle_version", None)
-        #crytic_compile.type = Type.TRUFFLE
+        # crytic_compile.type = Type.TRUFFLE
         # Truffle on windows has naming conflicts where it will invoke truffle.js directly instead
-        # of truffle.cmd (unless in powershell or git bash). The cleanest solution is to explicitly call
+        # of truffle.cmd (unless in powershell or git bash).
+        # The cleanest solution is to explicitly call
         # truffle.cmd. Reference:
         # https://truffleframework.com/docs/truffle/reference/configuration#resolving-naming-conflicts-on-windows
 
@@ -122,7 +128,9 @@ class Truffle(AbstractPlatform):
                 " ".join(cmd),
             )
 
-            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self._target)
+            process = subprocess.Popen(
+                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self._target
+            )
 
             stdout_bytes, stderr_bytes = process.communicate()
             stdout, stderr = (
@@ -162,8 +170,8 @@ class Truffle(AbstractPlatform):
                         except json.decoder.JSONDecodeError:
                             pass
 
-                userdoc = target_loaded.get('userdoc', {})
-                devdoc = target_loaded.get('devdoc', {})
+                userdoc = target_loaded.get("userdoc", {})
+                devdoc = target_loaded.get("devdoc", {})
                 natspec = Natspec(userdoc, devdoc)
 
                 if not "ast" in target_loaded:
@@ -196,8 +204,8 @@ class Truffle(AbstractPlatform):
                     compiler = target_loaded.get("compiler", {}).get("name", None)
                 if version is None:
                     version = target_loaded.get("compiler", {}).get("version", None)
-                    if '+' in version:
-                        version = version[0:version.find('+')]
+                    if "+" in version:
+                        version = version[0 : version.find("+")]
 
         if version is None or compiler is None:
             version_from_config = _get_version_from_config(self._target)
@@ -261,8 +269,8 @@ def _get_version(truffle_call, cwd):
     cmd = truffle_call + ["version"]
     try:
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd)
-    except OSError as e:
-        raise InvalidCompilation(f"Truffle failed: {e}")
+    except OSError as error:
+        raise InvalidCompilation(f"Truffle failed: {error}")
     stdout, _ = process.communicate()
     stdout = stdout.decode()  # convert bytestrings to unicode strings
     if not stdout:

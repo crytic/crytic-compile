@@ -1,3 +1,6 @@
+"""
+Module containing all the platforms
+"""
 from .truffle import Truffle
 from .solc import Solc
 from .solc_standard_json import SolcStandardJson
