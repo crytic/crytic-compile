@@ -2,9 +2,10 @@
 Abstract Platform
 """
 import abc
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 from crytic_compile.platform import Type
+from crytic_compile.utils.unit_tests import guess_tests
 
 if TYPE_CHECKING:
     from crytic_compile import CryticCompile
@@ -119,6 +120,24 @@ class AbstractPlatform(metaclass=abc.ABCMeta):
         :return:
         """
         return False
+
+    # Only _guessed_tests is an abstract method
+    # guessed_tests will call the generic guess_tests and appends to the list
+    # platforms-dependent tests
+    @abc.abstractmethod
+    def _guessed_tests(self) -> List[str]:
+        """
+        Guess the potential unit tests commands
+        :return:
+        """
+        return []
+
+    def guessed_tests(self) -> List[str]:
+        """
+        Guess the potential unit tests commands
+        :return:
+        """
+        return guess_tests(self._target) + self._guessed_tests()
 
     # endregion
     ###################################################################################

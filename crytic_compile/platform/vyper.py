@@ -5,7 +5,7 @@ import json
 import os
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict
+from typing import TYPE_CHECKING, Dict, List
 
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform.abstract_platform import AbstractPlatform
@@ -91,6 +91,13 @@ class Vyper(AbstractPlatform):
         if vyper_ignore:
             return False
         return os.path.isfile(target) and target.endswith(".vy")
+
+    def _guessed_tests(self) -> List[str]:
+        """
+        Guess the potential unit tests commands
+        :return:
+        """
+        return []
 
 
 def _run_vyper(filename: str, vyper: str, env: Dict = None, working_dir: str = None) -> Dict:

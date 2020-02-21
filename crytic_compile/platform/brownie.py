@@ -98,6 +98,13 @@ class Brownie(AbstractPlatform):
         """
         return False
 
+    def _guessed_tests(self) -> List[str]:
+        """
+        Guess the potential unit tests commands
+        :return:
+        """
+        return ["brownie test"]
+
 
 def _iterate_over_files(crytic_compile: "CryticCompile", target: str, filenames: List[str]):
     """

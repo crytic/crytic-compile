@@ -240,6 +240,13 @@ class Truffle(AbstractPlatform):
         """
         return "node_modules" in Path(path).parts
 
+    def _guessed_tests(self) -> List[str]:
+        """
+        Guess the potential unit tests commands
+        :return:
+        """
+        return ["truffle test"]
+
 
 def _get_version_from_config(target: str) -> Optional[Tuple[str, str]]:
     """

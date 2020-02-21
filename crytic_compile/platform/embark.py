@@ -7,7 +7,7 @@ import logging
 import os
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform.abstract_platform import AbstractPlatform
@@ -166,6 +166,13 @@ class Embark(AbstractPlatform):
         :return:
         """
         return "node_modules" in Path(path).parts
+
+    def _guessed_tests(self) -> List[str]:
+        """
+        Guess the potential unit tests commands
+        :return:
+        """
+        return ["embark test"]
 
 
 def _get_version(target: str) -> CompilerVersion:

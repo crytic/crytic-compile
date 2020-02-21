@@ -4,7 +4,7 @@ Standard crytic-compile export
 import json
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, Type, List
+from typing import TYPE_CHECKING, Dict, Type, List, Tuple
 
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform import Type as PlatformType
@@ -64,6 +64,7 @@ class Standard(AbstractPlatform):
         """
         super().__init__(str(target), **kwargs)
         self._underlying_platform: Type[AbstractPlatform] = Standard
+        self._unit_tests: List[str] = []
 
     def compile(self, crytic_compile: "CryticCompile", **_kwargs: str):
         """
@@ -77,11 +78,12 @@ class Standard(AbstractPlatform):
 
         with open(self._target, encoding="utf8") as file_desc:
             loaded_json = json.load(file_desc)
-        underlying_type = load_from_compile(crytic_compile, loaded_json)
+        (underlying_type, unit_tests) = load_from_compile(crytic_compile, loaded_json)
         underlying_type = PlatformType(underlying_type)
         platforms: List[Type[AbstractPlatform]] = get_platforms()
         platform = next((p for p in platforms if p.TYPE == underlying_type), Standard)
         self._underlying_platform = platform
+        self._unit_tests = unit_tests
 
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:
@@ -105,6 +107,9 @@ class Standard(AbstractPlatform):
         """
         # handled by crytic_compile_dependencies
         return False
+
+    def _guessed_tests(self) -> List[str]:
+        return self._unit_tests
 
     @property
     def platform_name_used(self):
@@ -163,11 +168,12 @@ def generate_standard_export(crytic_compile: "CryticCompile") -> Dict:
         "package": crytic_compile.package,
         "working_dir": str(crytic_compile.working_dir),
         "type": int(crytic_compile.platform.platform_type_used),
+        "unit_tests": crytic_compile.platform.guessed_tests(),
     }
     return output
 
 
-def load_from_compile(crytic_compile: "CryticCompile", loaded_json: Dict) -> int:
+def load_from_compile(crytic_compile: "CryticCompile", loaded_json: Dict) -> Tuple[int, List[str]]:
     """
     Load from json
     :param crytic_compile:
@@ -213,7 +219,7 @@ def load_from_compile(crytic_compile: "CryticCompile", loaded_json: Dict) -> int
 
     crytic_compile.working_dir = loaded_json["working_dir"]
 
-    return loaded_json["type"]
+    return (loaded_json["type"], loaded_json["unit_tests"])
 
 
 def _relative_to_short(relative):

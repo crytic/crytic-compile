@@ -8,7 +8,7 @@ import os
 import re
 import urllib.request
 from pathlib import Path
-from typing import TYPE_CHECKING, Union, Dict
+from typing import TYPE_CHECKING, Union, Dict, List
 
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform.abstract_platform import AbstractPlatform
@@ -248,6 +248,13 @@ class Etherscan(AbstractPlatform):
         :return:
         """
         return False
+
+    def _guessed_tests(self) -> List[str]:
+        """
+        Guess the potential unit tests commands
+        :return:
+        """
+        return []
 
 
 def convert_version(version: str) -> str:

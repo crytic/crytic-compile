@@ -9,7 +9,7 @@ import subprocess
 import glob
 import re
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, List
 
 from crytic_compile.platform.abstract_platform import AbstractPlatform
 from crytic_compile.platform.types import Type
@@ -153,6 +153,13 @@ class Etherlime(AbstractPlatform):
         :return:
         """
         return "node_modules" in Path(path).parts
+
+    def _guessed_tests(self) -> List[str]:
+        """
+        Guess the potential unit tests commands
+        :return:
+        """
+        return ["etherlime test"]
 
 
 def _is_optimized(compile_arguments: Optional[str]) -> bool:
