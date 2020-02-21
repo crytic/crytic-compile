@@ -179,17 +179,15 @@ class Etherscan(AbstractPlatform):
 
         # Assert to help mypy
         assert isinstance(result["CompilerVersion"], str)
-        assert isinstance(result["Runs"], int)
 
         compiler_version = re.findall(r"\d+\.\d+\.\d+", convert_version(result["CompilerVersion"]))[
             0
         ]
         optimization_used: bool = result["OptimizationUsed"] == "1"
-        optimized_run: int = result["Runs"]
 
         solc_arguments = None
         if optimization_used:
-            optimized_run = int(optimized_run)
+            optimized_run = int(result["Runs"])
             solc_arguments = f"--optimize --optimize-runs {optimized_run}"
 
         crytic_compile.compiler_version = CompilerVersion(
