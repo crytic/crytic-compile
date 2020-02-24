@@ -8,22 +8,16 @@ curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.34.0/install.sh | b
 source ~/.nvm/nvm.sh
 nvm install 10.17.0
 nvm use 10.17.0
-npm --version
 
 npm install -g embark@4.2.0
 embark demo
-cd -
 cd /tmp/embark_demo
 npm install
 crytic-compile . --embark-overwrite-config --compile-remove-metadata
-cd -
 
-DIFF=$(diff /tmp/embark_demo/crytic-export/contracts.json ../../tests/expected/embark-demo.json)
-if [ "$DIFF" != "" ]
-then  
+if [ $? -ne 0 ]
+then
     echo "Embark test failed"
-    echo $DIFF
     exit -1
 fi
-
 
