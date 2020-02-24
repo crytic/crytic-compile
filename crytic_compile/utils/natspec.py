@@ -184,6 +184,7 @@ class Natspec:
     """
     Model natspec
     """
+
     def __init__(self, userdoc: Dict, devdoc: Dict):
         self._userdoc: UserDoc = UserDoc(userdoc)
         self._devdoc: DevDoc = DevDoc(devdoc)

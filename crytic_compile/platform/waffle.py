@@ -9,7 +9,7 @@ import re
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict
+from typing import TYPE_CHECKING, Dict, List
 
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform.abstract_platform import AbstractPlatform
@@ -217,6 +217,13 @@ class Waffle(AbstractPlatform):
         :return:
         """
         return "node_modules" in Path(path).parts
+
+    def _guessed_tests(self) -> List[str]:
+        """
+        Guess the potential unit tests commands
+        :return:
+        """
+        return ["npx mocha"]
 
 
 def _load_config(config_file: str) -> Dict:

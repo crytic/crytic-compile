@@ -6,9 +6,9 @@ Which is a map: filename -> sourcecode
 """
 import os
 import json
-from typing import Dict, Tuple, TYPE_CHECKING
+from typing import Dict, Tuple, TYPE_CHECKING, List, Type
 from pathlib import Path
-from crytic_compile.platform import standard, Type
+from crytic_compile.platform import standard, Type as TypePlatform
 
 # Cycle dependency
 from crytic_compile.platform.abstract_platform import AbstractPlatform
@@ -47,7 +47,7 @@ class Archive(AbstractPlatform):
 
     NAME = "Archive"
     PROJECT_URL = "https://github.com/crytic/crytic-compile"
-    TYPE = Type.ARCHIVE
+    TYPE = TypePlatform.ARCHIVE
 
     HIDE = True
 
@@ -57,7 +57,8 @@ class Archive(AbstractPlatform):
         :param target: A string path to a standard json
         """
         super().__init__(str(target), **kwargs)
-        self._underlying_type = Type.ARCHIVE
+        self._underlying_platform: Type[AbstractPlatform] = Archive
+        self._unit_tests: List[str] = []
 
     def compile(self, crytic_compile: "CryticCompile", **_kwargs):
         """
@@ -66,13 +67,19 @@ class Archive(AbstractPlatform):
         :param _kwargs:
         :return:
         """
+        from crytic_compile.crytic_compile import get_platforms
+
         if isinstance(self._target, str) and os.path.isfile(self._target):
             with open(self._target, encoding="utf8") as f_target:
                 loaded_json = json.load(f_target)
         else:
             loaded_json = json.loads(self._target)
-        underlying_type = standard.load_from_compile(crytic_compile, loaded_json)
-        self._underlying_type = Type(underlying_type)
+        (underlying_type, unit_tests) = standard.load_from_compile(crytic_compile, loaded_json)
+        underlying_type = TypePlatform(underlying_type)
+        platforms: List[Type[AbstractPlatform]] = get_platforms()
+        platform = next((p for p in platforms if p.TYPE == underlying_type), Archive)
+        self._underlying_platform = platform
+        self._unit_tests = unit_tests
 
         crytic_compile.src_content = loaded_json["source_content"]
 
@@ -98,6 +105,9 @@ class Archive(AbstractPlatform):
         """
         # TODO: check if its correctly handled by crytic_compile_dependencies
         return False
+
+    def _guessed_tests(self) -> List[str]:
+        return self._unit_tests
 
 
 def generate_archive_export(crytic_compile: "CryticCompile") -> Tuple[Dict, str]:

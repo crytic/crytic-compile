@@ -12,14 +12,15 @@ from crytic_compile.platform.exceptions import InvalidCompilation
 from crytic_compile.platform.solc import get_version, is_optimized, relative_to_short, Solc
 from crytic_compile.platform.types import Type
 from crytic_compile.utils.naming import convert_filename
+
 # Cycle dependency
 from crytic_compile.utils.natspec import Natspec
 
 if TYPE_CHECKING:
     from crytic_compile import CryticCompile
 
-
 LOGGER = logging.getLogger("CryticCompile")
+
 
 # Inherits is_dependency/is_supported from Solc
 class SolcStandardJson(Solc):
@@ -193,6 +194,13 @@ class SolcStandardJson(Solc):
                     )
                 crytic_compile.filenames.add(path)
                 crytic_compile.asts[path.absolute] = info["ast"]
+
+    def _guessed_tests(self) -> List[str]:
+        """
+        Guess the potential unit tests commands
+        :return:
+        """
+        return []
 
 
 def _run_solc_standard_json(

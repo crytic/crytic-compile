@@ -217,6 +217,13 @@ class Solc(AbstractPlatform):
         """
         return False
 
+    def _guessed_tests(self) -> List[str]:
+        """
+        Guess the potential unit tests commands
+        :return:
+        """
+        return []
+
 
 def get_version(solc: str) -> str:
     """
