@@ -6,8 +6,8 @@ cd /tmp
 
 curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.34.0/install.sh | bash
 source ~/.nvm/nvm.sh
-nvm install --lts
-nvm use --lts
+nvm install 10.0.17
+nvm use 10.0.17
 npm --version
 
 npm install -g embark@4.2.0
