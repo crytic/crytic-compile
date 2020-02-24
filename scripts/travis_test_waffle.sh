@@ -28,7 +28,7 @@ contract BasicTokenMock is ERC20 {
 
 cd ..
 
-crytic-compile . --compile-remove-metadata --compile-force-framework waffle
+crytic-compile . --compile-remove-metadata --compile-force-framework Waffle
 
 if [ $? -ne 0 ]
 then

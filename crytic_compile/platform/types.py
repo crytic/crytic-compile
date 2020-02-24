@@ -10,17 +10,20 @@ class Type(IntEnum):
     Represent the different platform
     """
 
+    NOT_IMPLEMENTED = 0
     SOLC = 1
     TRUFFLE = 2
     EMBARK = 3
     DAPP = 4
     ETHERLIME = 5
     ETHERSCAN = 6
-    STANDARD = 7
-    ARCHIVE = 8
-    VYPER = 9
+    VYPER = 7
+    WAFFLE = 8
+    BROWNIE = 9
     SOLC_STANDARD_JSON = 10
-    WAFFLE = 11
+
+    STANDARD = 100
+    ARCHIVE = 101
 
     def __str__(self):
         if self == Type.SOLC:

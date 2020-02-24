@@ -1,18 +1,19 @@
 """
 Brownie platform. https://github.com/iamdefinitelyahuman/brownie
 """
-import os
-import logging
-import subprocess
 import glob
 import json
+import logging
+import os
+import subprocess
 from pathlib import Path
 from typing import Dict, List, TYPE_CHECKING
 
-from crytic_compile.platform.types import Type
-from crytic_compile.platform.exceptions import InvalidCompilation
-from crytic_compile.utils.naming import convert_filename, Filename
 from crytic_compile.compiler.compiler import CompilerVersion
+from crytic_compile.platform.abstract_platform import AbstractPlatform
+from crytic_compile.platform.exceptions import InvalidCompilation
+from crytic_compile.platform.types import Type
+from crytic_compile.utils.naming import convert_filename, Filename
 
 # Cycle dependency
 from crytic_compile.utils.natspec import Natspec
@@ -23,43 +24,79 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger("CryticCompile")
 
 
-def compile(crytic_compile: "CryticCompile", target: str, **kwargs: Dict):
+class Brownie(AbstractPlatform):
     """
-    Compile the target
-    :param crytic_compile:
-    :param target:
-    :param kwargs:
-    :return:
+    Brownie class
     """
-    build_directory = Path("build", "contracts")
-    brownie_ignore_compile = kwargs.get("brownie_ignore_compile", False) or kwargs.get("ignore_compile", False)
-    crytic_compile.type = Type.TRUFFLE
 
-    base_cmd = ["brownie"]
+    NAME = "Brownie"
+    PROJECT_URL = "https://github.com/iamdefinitelyahuman/brownie"
+    TYPE = Type.BROWNIE
 
-    if not brownie_ignore_compile:
-        cmd = base_cmd + ["compile"]
-        try:
-            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=target)
-        except OSError as e:
-            raise InvalidCompilation(e)
+    def compile(self, crytic_compile: "CryticCompile", **kwargs: str):
+        """
+        Compile the target
+        :param crytic_compile:
+        :param target:
+        :param kwargs:
+        :return:
+        """
+        build_directory = Path("build", "contracts")
+        brownie_ignore_compile = kwargs.get("brownie_ignore_compile", False) or kwargs.get(
+            "ignore_compile", False
+        )
 
-        stdout_bytes, stderr_bytes = process.communicate()
-        stdout, stderr = (
-            stdout_bytes.decode(),
-            stderr_bytes.decode(),
-        )  # convert bytestrings to unicode strings
+        base_cmd = ["brownie"]
 
-        LOGGER.info(stdout)
-        if stderr:
-            LOGGER.error(stderr)
+        if not brownie_ignore_compile:
+            cmd = base_cmd + ["compile"]
+            try:
+                process = subprocess.Popen(
+                    cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self._target
+                )
+            except OSError as error:
+                raise InvalidCompilation(error)
 
-    if not os.path.isdir(os.path.join(target, build_directory)):
-        raise InvalidCompilation("`brownie compile` failed. Can you run it?")
+            stdout_bytes, stderr_bytes = process.communicate()
+            stdout, stderr = (
+                stdout_bytes.decode(),
+                stderr_bytes.decode(),
+            )  # convert bytestrings to unicode strings
 
-    filenames = glob.glob(os.path.join(target, build_directory, "*.json"))
+            LOGGER.info(stdout)
+            if stderr:
+                LOGGER.error(stderr)
 
-    _iterate_over_files(crytic_compile, target, filenames)
+        if not os.path.isdir(os.path.join(self._target, build_directory)):
+            raise InvalidCompilation("`brownie compile` failed. Can you run it?")
+
+        filenames = glob.glob(os.path.join(self._target, build_directory, "*.json"))
+
+        _iterate_over_files(crytic_compile, self._target, filenames)
+
+    @staticmethod
+    def is_supported(target: str, **kwargs: str) -> bool:
+        """
+        Check if the target is a brownie env
+        :param target:
+        :return:
+        """
+        brownie_ignore = kwargs.get("brownie_ignore", False)
+        if brownie_ignore:
+            return False
+        # < 1.1.0: brownie-config.json
+        # >= 1.1.0: brownie-config.yaml
+        return os.path.isfile(os.path.join(target, "brownie-config.json")) or os.path.isfile(
+            os.path.join(target, "brownie-config.yaml")
+        )
+
+    def is_dependency(self, _path: str) -> bool:
+        """
+        Check if the path is a dependency
+        :param _path:
+        :return:
+        """
+        return False
 
 
 def _iterate_over_files(crytic_compile: "CryticCompile", target: str, filenames: List[str]):
@@ -109,36 +146,14 @@ def _iterate_over_files(crytic_compile: "CryticCompile", target: str, filenames:
                 "deployedSourceMap"
             ].split(";")
 
-            userdoc = target_loaded.get('userdoc', {})
-            devdoc = target_loaded.get('devdoc', {})
+            userdoc = target_loaded.get("userdoc", {})
+            devdoc = target_loaded.get("devdoc", {})
             natspec = Natspec(userdoc, devdoc)
             crytic_compile.natspec[contract_name] = natspec
 
     crytic_compile.compiler_version = CompilerVersion(
         compiler=compiler, version=version, optimized=optimized
     )
-
-
-def is_brownie(target: str):
-    """
-    Check if the target is a brownie env
-    :param target:
-    :return:
-    """
-    # < 1.1.0: brownie-config.json
-    # >= 1.1.0: brownie-config.yaml
-    return os.path.isfile(os.path.join(target, "brownie-config.json")) or os.path.isfile(
-        os.path.join(target, "brownie-config.yaml")
-    )
-
-
-def is_dependency(_path: str) -> bool:
-    """
-    Check if the path is a dependency
-    :param _path:
-    :return:
-    """
-    return False
 
 
 def _get_version(compiler: Dict) -> str:

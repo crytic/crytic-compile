@@ -2,149 +2,117 @@
 Dapp platform. https://github.com/dapphub/dapptools
 """
 
-import os
+import glob
 import json
 import logging
-import glob
+import os
 import re
 import subprocess
 from pathlib import Path
 
 # Cycle dependency
-from typing import TYPE_CHECKING, Dict
+from typing import TYPE_CHECKING
 
 from crytic_compile.compiler.compiler import CompilerVersion
+from crytic_compile.platform.abstract_platform import AbstractPlatform
 from crytic_compile.platform.types import Type
-from crytic_compile.utils.naming import (
-    extract_filename,
-    extract_name,
-    combine_filename_name,
-    convert_filename,
-)
+from crytic_compile.utils.naming import extract_filename, extract_name, convert_filename
 
 # Handle cycle
 from crytic_compile.utils.natspec import Natspec
 
 if TYPE_CHECKING:
-    from crytic_compile import CryticCompile
+    from crytic_compile import CryticCompile, InvalidCompilation
 
 LOGGER = logging.getLogger("CryticCompile")
 
 
-def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
+class Dapp(AbstractPlatform):
     """
-    Compile the target
-    :param crytic_compile:
-    :param target:
-    :param kwargs:
-    :return:
+    Dapp class
     """
-    crytic_compile.type = Type.DAPP
-    dapp_ignore_compile = kwargs.get("dapp_ignore_compile", False) or kwargs.get("ignore_compile", False)
-    directory = os.path.join(target, "out")
 
-    if not dapp_ignore_compile:
-        _run_dapp(target)
+    NAME = "Dapp"
+    PROJECT_URL = "https://github.com/dapphub/dapptools"
+    TYPE = Type.DAPP
 
-    crytic_compile.compiler_version = _get_version(target)
+    def compile(self, crytic_compile: "CryticCompile", **kwargs: str):
+        """
+        Compile the target
+        :param crytic_compile:
+        :param target:
+        :param kwargs:
+        :return:
+        """
 
-    files = glob.glob(directory + "/**/*.sol.json", recursive=True)
-    for file in files:
-        with open(file, encoding="utf8") as file_desc:
-            targets_json = json.load(file_desc)
-
-        if not "contracts" in targets_json:
-            continue
-
-        for original_contract_name, info in targets_json["contracts"].items():
-            contract_name = extract_name(original_contract_name)
-            contract_filename = extract_filename(original_contract_name)
-            contract_filename = convert_filename(
-                contract_filename, _relative_to_short, crytic_compile, working_dir=target
-            )
-            crytic_compile.contracts_names.add(contract_name)
-            crytic_compile.contracts_filenames[contract_name] = contract_filename
-            crytic_compile.abis[contract_name] = json.loads(info["abi"])
-            crytic_compile.bytecodes_init[contract_name] = info["bin"]
-            crytic_compile.bytecodes_runtime[contract_name] = info["bin-runtime"]
-            crytic_compile.srcmaps_init[contract_name] = info["srcmap"].split(";")
-            crytic_compile.srcmaps_runtime[contract_name] = info["srcmap-runtime"].split(";")
-
-            userdoc = json.loads(info.get('userdoc', "{}"))
-            devdoc = json.loads(info.get('devdoc', "{}"))
-            natspec = Natspec(userdoc, devdoc)
-            crytic_compile.natspec[contract_name] = natspec
-
-        for path, info in targets_json["sources"].items():
-            path = convert_filename(path, _relative_to_short, crytic_compile, working_dir=target)
-            crytic_compile.filenames.add(path)
-            crytic_compile.asts[path.absolute] = info["AST"]
-
-
-def export(crytic_compile: "CryticCompile", **kwargs: str) -> Dict:
-    """
-    Export the target
-    :param crytic_compile:
-    :param kwargs:
-    :return:
-    """
-    # Obtain objects to represent each contract
-    contracts = dict()
-    for contract_name in crytic_compile.contracts_names:
-        abi = str(crytic_compile.abi(contract_name))
-        abi = abi.replace("'", '"')
-        abi = abi.replace("True", "true")
-        abi = abi.replace("False", "false")
-        abi = abi.replace(" ", "")
-        exported_name = combine_filename_name(
-            crytic_compile.contracts_filenames[contract_name].used, contract_name
+        dapp_ignore_compile = kwargs.get("dapp_ignore_compile", False) or kwargs.get(
+            "ignore_compile", False
         )
-        contracts[exported_name] = {
-            "srcmap": "",
-            "srcmap-runtime": "",
-            "abi": abi,
-            "bin": crytic_compile.bytecode_init(contract_name),
-            "bin-runtime": crytic_compile.bytecode_runtime(contract_name),
-        }
+        directory = os.path.join(self._target, "out")
 
-    sources = {filename: {"AST": ast} for (filename, ast) in crytic_compile.asts.items()}
-    source_list = [filename.absolute for filename in crytic_compile.filenames]
+        if not dapp_ignore_compile:
+            _run_dapp(self._target)
 
-    # Create our root object to contain the contracts and other information.
-    output = {"sources": sources, "sourceList": source_list, "contracts": contracts}
+        crytic_compile.compiler_version = _get_version(self._target)
 
-    # If we have an export directory specified, we output the JSON to a file.
-    export_dir = kwargs.get("export_dir", None)
-    if export_dir:
-        if not os.path.exists(export_dir):
-            os.makedirs(export_dir)
-        path = os.path.join(export_dir, "combined_solc.json")
-        with open(path, "w", encoding="utf8") as file_desc:
-            json.dump(output, file_desc)
-    return output
+        files = glob.glob(directory + "/**/*.sol.json", recursive=True)
+        for file in files:
+            with open(file, encoding="utf8") as file_desc:
+                targets_json = json.load(file_desc)
 
+            if not "contracts" in targets_json:
+                continue
 
-def is_dapp(target: str) -> bool:
-    """
-    Heuristic used: check if "dapp build" is present in Makefile
-    :param target:
-    :return:
-    """
-    makefile = os.path.join(target, "Makefile")
-    if os.path.isfile(makefile):
-        with open(makefile, encoding="utf8") as file_desc:
-            txt = file_desc.read()
-            return "dapp build" in txt
-    return False
+            for original_contract_name, info in targets_json["contracts"].items():
+                contract_name = extract_name(original_contract_name)
+                contract_filename = extract_filename(original_contract_name)
+                contract_filename = convert_filename(
+                    contract_filename, _relative_to_short, crytic_compile, working_dir=self._target
+                )
+                crytic_compile.contracts_names.add(contract_name)
+                crytic_compile.contracts_filenames[contract_name] = contract_filename
+                crytic_compile.abis[contract_name] = json.loads(info["abi"])
+                crytic_compile.bytecodes_init[contract_name] = info["bin"]
+                crytic_compile.bytecodes_runtime[contract_name] = info["bin-runtime"]
+                crytic_compile.srcmaps_init[contract_name] = info["srcmap"].split(";")
+                crytic_compile.srcmaps_runtime[contract_name] = info["srcmap-runtime"].split(";")
 
+                userdoc = json.loads(info.get("userdoc", "{}"))
+                devdoc = json.loads(info.get("devdoc", "{}"))
+                natspec = Natspec(userdoc, devdoc)
+                crytic_compile.natspec[contract_name] = natspec
 
-def is_dependency(path: str) -> bool:
-    """
-    Check if the path is a dependency
-    :param path:
-    :return:
-    """
-    return "lib" in Path(path).parts
+            for path, info in targets_json["sources"].items():
+                path = convert_filename(
+                    path, _relative_to_short, crytic_compile, working_dir=self._target
+                )
+                crytic_compile.filenames.add(path)
+                crytic_compile.asts[path.absolute] = info["AST"]
+
+    @staticmethod
+    def is_supported(target: str, **kwargs: str) -> bool:
+        """
+        Heuristic used: check if "dapp build" is present in Makefile
+        :param target:
+        :return:
+        """
+        dapp_ignore = kwargs.get("dapp_ignore", False)
+        if dapp_ignore:
+            return False
+        makefile = os.path.join(target, "Makefile")
+        if os.path.isfile(makefile):
+            with open(makefile, encoding="utf8") as file_desc:
+                txt = file_desc.read()
+                return "dapp build" in txt
+        return False
+
+    def is_dependency(self, path: str) -> bool:
+        """
+        Check if the path is a dependency
+        :param path:
+        :return:
+        """
+        return "lib" in Path(path).parts
 
 
 def _run_dapp(target: str):
@@ -157,8 +125,8 @@ def _run_dapp(target: str):
 
     try:
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=target)
-    except OSError as e:
-        raise InvalidCompilation(e)
+    except OSError as error:
+        raise InvalidCompilation(error)
     _, _ = process.communicate()
 
 

@@ -5,12 +5,12 @@ import json
 import os
 import subprocess
 from pathlib import Path
-
 from typing import TYPE_CHECKING, Dict
 
+from crytic_compile.compiler.compiler import CompilerVersion
+from crytic_compile.platform.abstract_platform import AbstractPlatform
 from crytic_compile.platform.exceptions import InvalidCompilation
 from crytic_compile.platform.types import Type
-from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.utils.naming import convert_filename
 
 # Handle cycle
@@ -20,57 +20,77 @@ if TYPE_CHECKING:
     from crytic_compile import CryticCompile
 
 
-def is_vyper(target: str) -> bool:
+class Vyper(AbstractPlatform):
     """
-    Check if the target is a vyper project
-    :param target:
-    :return:
-    """
-    return os.path.isfile(target) and target.endswith(".vy")
-
-
-def compile(crytic_compile: "CryticCompile", target: str, **kwargs: str):
-    """
-    Compile the target
-    :param crytic_compile:
-    :param target:
-    :param kwargs:
-    :return:
+    Vyper platform
     """
 
-    crytic_compile.type = Type.VYPER
+    NAME = "vyper"
+    PROJECT_URL = "https://github.com/vyperlang/vyper"
+    TYPE = Type.VYPER
 
-    vyper = kwargs.get("vyper", "vyper")
+    def compile(self, crytic_compile: "CryticCompile", **kwargs: str):
+        """
+        Compile the target
+        :param crytic_compile:
+        :param target:
+        :param kwargs:
+        :return:
+        """
 
-    targets_json = _run_vyper(target, vyper)
+        target = self._target
 
-    assert "version" in targets_json
-    crytic_compile.compiler_version = CompilerVersion(
-        compiler="vyper", version=targets_json["version"], optimized=False
-    )
+        vyper = kwargs.get("vyper", "vyper")
 
-    assert target in targets_json
+        targets_json = _run_vyper(target, vyper)
 
-    info = targets_json[target]
-    contract_filename = convert_filename(target, _relative_to_short, crytic_compile)
+        assert "version" in targets_json
+        crytic_compile.compiler_version = CompilerVersion(
+            compiler="vyper", version=targets_json["version"], optimized=False
+        )
 
-    contract_name = Path(target).parts[-1]
+        assert target in targets_json
 
-    crytic_compile.contracts_names.add(contract_name)
-    crytic_compile.contracts_filenames[contract_name] = contract_filename
-    crytic_compile.abis[contract_name] = info["abi"]
-    crytic_compile.bytecodes_init[contract_name] = info["bytecode"].replace("0x", "")
-    crytic_compile.bytecodes_runtime[contract_name] = info["bytecode_runtime"].replace("0x", "")
-    crytic_compile.srcmaps_init[contract_name] = []
-    crytic_compile.srcmaps_runtime[contract_name] = []
+        info = targets_json[target]
+        contract_filename = convert_filename(target, _relative_to_short, crytic_compile)
 
-    crytic_compile.filenames.add(contract_filename)
+        contract_name = Path(target).parts[-1]
 
-    # Natspec not yet handled for vyper
-    crytic_compile.natspec[contract_name] = Natspec({}, {})
+        crytic_compile.contracts_names.add(contract_name)
+        crytic_compile.contracts_filenames[contract_name] = contract_filename
+        crytic_compile.abis[contract_name] = info["abi"]
+        crytic_compile.bytecodes_init[contract_name] = info["bytecode"].replace("0x", "")
+        crytic_compile.bytecodes_runtime[contract_name] = info["bytecode_runtime"].replace("0x", "")
+        crytic_compile.srcmaps_init[contract_name] = []
+        crytic_compile.srcmaps_runtime[contract_name] = []
 
-    ast = _get_vyper_ast(target, vyper)
-    crytic_compile.asts[contract_filename.absolute] = ast
+        crytic_compile.filenames.add(contract_filename)
+
+        # Natspec not yet handled for vyper
+        crytic_compile.natspec[contract_name] = Natspec({}, {})
+
+        ast = _get_vyper_ast(target, vyper)
+        crytic_compile.asts[contract_filename.absolute] = ast
+
+    def is_dependency(self, _path):
+        """
+        Always return false
+        :param _path:
+        :return:
+        """
+        return False
+
+    @staticmethod
+    def is_supported(target: str, **kwargs: str) -> bool:
+        """
+        Check if the target is a vyper project
+        :param target:
+        :return:
+        """
+        vyper_ignore = kwargs.get("vyper_ignore", False)
+        if vyper_ignore:
+            return False
+        return os.path.isfile(target) and target.endswith(".vy")
 
 
 def _run_vyper(filename: str, vyper: str, env: Dict = None, working_dir: str = None) -> Dict:
@@ -81,13 +101,13 @@ def _run_vyper(filename: str, vyper: str, env: Dict = None, working_dir: str = N
 
     cmd = [vyper, filename, "-f", "combined_json"]
 
-    additional_kwargs = {"cwd": working_dir} if working_dir else {}
+    additional_kwargs: Dict = {"cwd": working_dir} if working_dir else {}
     try:
         process = subprocess.Popen(
             cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env, **additional_kwargs
         )
-    except OSError as e:
-        raise InvalidCompilation(e)
+    except OSError as error:
+        raise InvalidCompilation(error)
 
     stdout, stderr = process.communicate()
 
@@ -129,12 +149,3 @@ def _get_vyper_ast(filename: str, vyper: str, env=None, working_dir=None) -> Dic
 
 def _relative_to_short(relative):
     return relative
-
-
-def is_dependency(_path):
-    """
-    Always return false
-    :param _path:
-    :return:
-    """
-    return False

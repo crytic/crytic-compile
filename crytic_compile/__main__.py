@@ -9,7 +9,7 @@ import sys
 
 from pkg_resources import require
 
-from crytic_compile.crytic_compile import compile_all
+from crytic_compile.crytic_compile import compile_all, get_platforms
 from crytic_compile.cryticparser import cryticparser, DEFAULTS_FLAG_IN_CONFIG
 from crytic_compile.platform import InvalidCompilation
 from crytic_compile.utils.zip import save_to_zip
@@ -90,6 +90,14 @@ see https://github.com/crytic/crytic-compile/wiki/Usage""",
         action="version",
     )
 
+    parser.add_argument(
+        "--supported-platforms",
+        help="Shows the platforms supported",
+        action=ShowPlatforms,
+        nargs=0,
+        default=False,
+    )
+
     cryticparser.init(parser)
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
@@ -114,6 +122,18 @@ see https://github.com/crytic/crytic-compile/wiki/Usage""",
             )
 
     return args
+
+
+class ShowPlatforms(argparse.Action):
+    """
+    This class is used to print the different platforms supported to the log
+    See --supported-platforms
+    """
+
+    def __call__(self, parser, args, values, option_string=None):
+        platforms = get_platforms()
+        LOGGER.info("\n" + "\n".join([f"- {x.NAME}: {x.PROJECT_URL}" for x in platforms]))
+        parser.exit()
 
 
 def main():

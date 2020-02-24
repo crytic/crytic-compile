@@ -1,35 +1,22 @@
 """
 CryticCompile main module. Handle the compilation.
 """
-
+import inspect
 import os
 import json
 import glob
 import logging
 import re
 import subprocess
-from typing import Dict, List, Union, Set, Tuple, Optional
-from types import ModuleType
+from typing import Dict, List, Union, Set, Tuple, Optional, Type, TYPE_CHECKING
 from pathlib import Path
-from typing import TYPE_CHECKING
 import sha3
 
-
-from .platform import (
-    solc,
-    solc_standard_json,
-    truffle,
-    embark,
-    dapp,
-    etherlime,
-    etherscan,
-    archive,
-    standard,
-    vyper,
-    brownie,
-    waffle,
-)
-from .platform.solc_standard_json import SolcStandardJson
+from .platform import solc_standard_json, all_platforms
+from .platform.abstract_platform import AbstractPlatform
+from .platform.all_export import PLATFORMS_EXPORT
+from .platform.solc import Solc
+from .platform.standard import export_to_standard
 from .utils.naming import Filename
 from .utils.natspec import Natspec
 from .utils.zip import load_from_zip
@@ -37,11 +24,20 @@ from .utils.npm import get_package_name
 
 # Cycle dependency
 if TYPE_CHECKING:
-    from .platform import Type
     from .compiler.compiler import CompilerVersion
 
 LOGGER = logging.getLogger("CryticCompile")
 logging.basicConfig()
+
+
+def get_platforms() -> List[Type[AbstractPlatform]]:
+    """
+    Return the available platforms classes
+    :return:
+    """
+    platforms = [getattr(all_platforms, name) for name in dir(all_platforms)]
+    platforms = [d for d in platforms if inspect.isclass(d) and issubclass(d, AbstractPlatform)]
+    return sorted(platforms, key=lambda platform: platform.TYPE)
 
 
 def is_supported(target: str) -> bool:
@@ -50,36 +46,8 @@ def is_supported(target: str) -> bool:
     :param target:
     :return:
     """
-    supported = [
-        solc.is_solc,
-        truffle.is_truffle,
-        embark.is_embark,
-        dapp.is_dapp,
-        etherlime.is_etherlime,
-        etherscan.is_etherscan,
-        standard.is_standard,
-        archive.is_archive,
-        vyper.is_vyper,
-        brownie.is_brownie,
-        waffle.is_waffle,
-    ]
-    return any(f(target) for f in supported) or target.endswith(".zip")
-
-
-PLATFORMS: Dict[str, ModuleType] = {
-    "solc": solc,
-    "solc_standard_json": solc_standard_json,
-    "truffle": truffle,
-    "embark": embark,
-    "dapp": dapp,
-    "etherlime": etherlime,
-    "etherscan": etherscan,
-    "archive": archive,
-    "standard": standard,
-    "vyper": vyper,
-    "brownie": brownie,
-    "waffle": waffle,
-}
+    platforms = get_platforms()
+    return any(platform.is_supported(target) for platform in platforms) or target.endswith(".zip")
 
 
 class CryticCompile:
@@ -87,7 +55,7 @@ class CryticCompile:
     Main class.
     """
 
-    def __init__(self, target: Union[str, SolcStandardJson], **kwargs: str):
+    def __init__(self, target: Union[str, AbstractPlatform], **kwargs: str):
         """
             Args:
                 target (str|SolcStandardJson)
@@ -118,12 +86,9 @@ class CryticCompile:
         # mapping from contract name to filename (naming.Filename)
         self._contracts_filenames: Dict[str, Filename] = {}
 
-        # mapping from contract_name to libraries_names (libraries used by the contract)
-        self._libraries: Dict[str, List[str]] = {}
-
-        # platform.type
-        self._type: Optional["Type"] = None
-        self._platform: Optional[ModuleType] = None
+        # Libraries used by the contract
+        # contract_name -> (library, pattern)
+        self._libraries: Dict[str, List[Tuple[str, str]]] = {}
 
         self._bytecode_only = False
 
@@ -133,25 +98,30 @@ class CryticCompile:
         # compiler.compiler
         self._compiler_version: Optional["CompilerVersion"] = None
 
-        self._target = target
-
         self._working_dir = Path.cwd()
 
-        self._package = get_package_name(target)
+        if isinstance(target, str):
+            platform = self._init_platform(target, **kwargs)
+        else:
+            platform = target
+
+        self._package = get_package_name(platform.target)
+
+        self._platform: AbstractPlatform = platform
 
         # If its a exported archive, we use compilation index 0.
-        if isinstance(target, dict):
-            target = (target, 0)
+        # if isinstance(target, dict):
+        #    target = (target, 0)
 
-        self._compile(target, **kwargs)
+        self._compile(**kwargs)
 
     @property
-    def target(self) -> Union[str, SolcStandardJson]:
+    def target(self) -> str:
         """
         Return the target (project)
         :return:
         """
-        return self._target
+        return self._platform.target
 
     ###################################################################################
     ###################################################################################
@@ -526,21 +496,17 @@ class CryticCompile:
     ###################################################################################
 
     @property
-    def type(self) -> "Type":
+    def type(self) -> int:
         """
         Return the type of the platform used
         :return:
         """
         # Type should have been set by now
-        assert self._type
-        return self._type
-
-    @type.setter
-    def type(self, type: "Type"):
-        self._type = type
+        assert self._platform.TYPE
+        return self._platform.TYPE
 
     @property
-    def platform(self) -> ModuleType:
+    def platform(self) -> AbstractPlatform:
         """
         Return the platform module
         :return:
@@ -587,9 +553,9 @@ class CryticCompile:
     ###################################################################################
 
     @property
-    def libraries(self) -> Dict[str, List[str]]:
+    def libraries(self) -> Dict[str, List[Tuple[str, str]]]:
         """
-        Return the libraries used (contract_name -> libraries)
+        Return the libraries used (contract_name -> [(library, pattern))])
         :return:
         """
         return self._libraries
@@ -646,7 +612,7 @@ class CryticCompile:
 
     def _library_name_lookup(
         self, lib_name: str, original_contract: str
-    ) -> Union[None, Tuple[str, str]]:
+    ) -> Optional[Tuple[str, str]]:
         """
         Convert a library name to the contract
         The library can be:
@@ -659,7 +625,7 @@ class CryticCompile:
 
         for name in self.contracts_names:
             if name == lib_name:
-                return (name, name)
+                return name, name
 
             # Some platform use only the contract name
             # Some use fimename:contract_name
@@ -736,9 +702,8 @@ class CryticCompile:
         if name not in self._libraries:
             init = re.findall(r"__.{36}__", self.bytecode_init(name))
             runtime = re.findall(r"__.{36}__", self.bytecode_runtime(name))
-            self._libraries[name] = [
-                self._library_name_lookup(x, name) for x in set(init + runtime)
-            ]
+            libraires = [self._library_name_lookup(x, name) for x in set(init + runtime)]
+            self._libraries[name] = [lib for lib in libraires if lib]
         return [name for (name, pattern) in self._libraries[name]]
 
     def libraries_names_and_patterns(self, name):
@@ -751,9 +716,8 @@ class CryticCompile:
         if name not in self._libraries:
             init = re.findall(r"__.{36}__", self.bytecode_init(name))
             runtime = re.findall(r"__.{36}__", self.bytecode_runtime(name))
-            self._libraries[name] = [
-                self._library_name_lookup(x, name) for x in set(init + runtime)
-            ]
+            libraires = [self._library_name_lookup(x, name) for x in set(init + runtime)]
+            self._libraries[name] = [lib for lib in libraires if lib]
         return self._libraries[name]
 
     def _update_bytecode_with_libraries(
@@ -829,10 +793,7 @@ class CryticCompile:
         if not isinstance(compiled_archive, dict) or "compilations" not in compiled_archive:
             raise ValueError("Cannot import compiled archive, invalid format.")
 
-        return [
-            CryticCompile((compiled_archive, i))
-            for i in range(0, len(compiled_archive["compilations"]))
-        ]
+        return [CryticCompile(archive) for archive in compiled_archive["compilations"]]
 
     # endregion
 
@@ -854,15 +815,11 @@ class CryticCompile:
                 export_dir (str): export dir (default crytic-export)
         """
         export_format = kwargs.get("export_format", None)
-        if export_format is None or export_format in ["crytic-compile", "standard"]:
-            return standard.export(self, **kwargs)
-        elif export_format == "solc":
-            return solc.export(self, **kwargs)
-        elif export_format == "truffle":
-            return truffle.export(self, **kwargs)
-        elif export_format == "archive":
-            return archive.export(self, **kwargs)
-        raise Exception("Export format unknown")
+        if export_format is None:
+            return export_to_standard(self, **kwargs)
+        if export_format not in PLATFORMS_EXPORT:
+            raise Exception("Export format unknown")
+        return PLATFORMS_EXPORT[export_format](self, **kwargs)
 
     # endregion
     ###################################################################################
@@ -871,66 +828,32 @@ class CryticCompile:
     ###################################################################################
     ###################################################################################
 
-    def _compile(self, target: str, **kwargs: str):
-
-        truffle_ignore = kwargs.get("truffle_ignore", False)
-        embark_ignore = kwargs.get("embark_ignore", False)
-        dapp_ignore = kwargs.get("dapp_ignore", False)
-        etherlime_ignore = kwargs.get("etherlime_ignore", False)
-        etherscan_ignore = kwargs.get("etherscan_ignore", False)
-        standard_ignore = kwargs.get("standard_ignore", False)
-        archive_ignore = kwargs.get("standard_ignore", False)
-        vyper_ignore = kwargs.get("vyper_ignore", False)
-        brownie_ignore = kwargs.get("brownie_ignore", False)
-        waffle_ignore = kwargs.get("waffle_ignore", False)
-
-        custom_build: Union[None, str] = kwargs.get("compile_custom_build", None)
-
-        if custom_build:
-            truffle_ignore = True
-            embark_ignore = True
-            dapp_ignore = True
-            etherlime_ignore = True
-            etherscan_ignore = True
-            standard_ignore = True
-            archive_ignore = True
-            vyper_ignore = True
-            brownie_ignore = True
-            waffle_ignore = True
-
-            self._run_custom_build(custom_build)
+    def _init_platform(self, target: str, **kwargs: str) -> AbstractPlatform:
+        platforms = get_platforms()
+        platform = None
 
         compile_force_framework: Union[str, None] = kwargs.get("compile_force_framework", None)
-        if compile_force_framework and compile_force_framework in PLATFORMS:
-            self._platform = PLATFORMS[compile_force_framework]
-        else:
-            if isinstance(target, solc_standard_json.SolcStandardJson):
-                self._platform = solc_standard_json
-            elif not truffle_ignore and truffle.is_truffle(target):
-                self._platform = truffle
-            elif not embark_ignore and embark.is_embark(target):
-                self._platform = embark
-            elif not dapp_ignore and dapp.is_dapp(target):
-                self._platform = dapp
-            elif not etherlime_ignore and etherlime.is_etherlime(target):
-                self._platform = etherlime
-            elif not etherscan_ignore and etherscan.is_etherscan(target):
-                self._platform = etherscan
-            elif not standard_ignore and standard.is_standard(target):
-                self._platform = standard
-            elif not archive_ignore and archive.is_archive(target):
-                self._platform = archive
-            elif not vyper_ignore and vyper.is_vyper(target):
-                self._platform = vyper
-            elif not brownie_ignore and brownie.is_brownie(target):
-                self._platform = brownie
-            elif not waffle_ignore and waffle.is_waffle(target):
-                self._platform = waffle
-            # .json or .sol provided
-            else:
-                self._platform = solc
+        if compile_force_framework:
+            platform = next(
+                (p(target) for p in platforms if p.NAME == compile_force_framework), None
+            )
 
-        self._platform.compile(self, target, **kwargs)
+        if not platform:
+            platform = next((p(target) for p in platforms if p.is_supported(target)), None)
+
+        if not platform:
+            platform = Solc(target)
+
+        return platform
+
+    def _compile(self, **kwargs: str):
+        custom_build: Union[None, str] = kwargs.get("compile_custom_build", None)
+        if custom_build:
+            self._run_custom_build(custom_build)
+
+        else:
+            self._platform.compile(self, **kwargs)
+
         remove_metadata = kwargs.get("compile_remove_metadata", False)
         if remove_metadata:
             self._remove_metadata()
@@ -960,7 +883,8 @@ class CryticCompile:
     def _remove_metadata(self):
         """
             Init bytecode contains metadata that needs to be removed
-            see http://solidity.readthedocs.io/en/v0.4.24/metadata.html#encoding-of-the-metadata-hash-in-the-bytecode
+            see
+            http://solidity.readthedocs.io/en/v0.4.24/metadata.html#encoding-of-the-metadata-hash-in-the-bytecode
         """
         self._init_bytecodes = {
             key: re.sub(r"a165627a7a72305820.{64}0029", r"", bytecode)
