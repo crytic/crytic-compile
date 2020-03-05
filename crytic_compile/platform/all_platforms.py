@@ -12,4 +12,5 @@ from .etherscan import Etherscan
 from .vyper import Vyper
 from .waffle import Waffle
 from .standard import Standard
+from .raw import Raw
 from .archive import Archive

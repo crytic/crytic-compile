@@ -24,6 +24,7 @@ class Type(IntEnum):
 
     STANDARD = 100
     ARCHIVE = 101
+    RAW = 102
 
     def __str__(self):
         if self == Type.SOLC:
@@ -48,4 +49,6 @@ class Type(IntEnum):
             return "Archive"
         if self == Type.WAFFLE:
             return "Waffle"
+        if self == Type.RAW:
+            return "raw" 
         raise ValueError
