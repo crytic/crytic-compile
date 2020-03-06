@@ -33,6 +33,7 @@ logging.basicConfig()
 def get_platforms() -> List[Type[AbstractPlatform]]:
     """
     Return the available platforms classes
+
     :return:
     """
     platforms = [getattr(all_platforms, name) for name in dir(all_platforms)]
@@ -43,6 +44,7 @@ def get_platforms() -> List[Type[AbstractPlatform]]:
 def is_supported(target: str) -> bool:
     """
     Check if the target is supported
+
     :param target:
     :return:
     """
@@ -119,6 +121,7 @@ class CryticCompile:
     def target(self) -> str:
         """
         Return the target (project)
+
         :return:
         """
         return self._platform.target
@@ -133,6 +136,7 @@ class CryticCompile:
     def natspec(self):
         """
         Return the natspec of the contractse
+
         :return: Dict[str, Natspec]
         """
         return self._natspec
@@ -158,6 +162,7 @@ class CryticCompile:
     def contracts_filenames(self) -> Dict[str, Filename]:
         """
         Return a dict contract_name -> Filename namedtuple (absolute, used)
+
         :return: dict(name -> utils.namings.Filename)
         """
         return self._contracts_filenames
@@ -166,6 +171,7 @@ class CryticCompile:
     def contracts_absolute_filenames(self) -> Dict[str, str]:
         """
         Return a dict (contract_name -> absolute filename)
+
         :return:
         """
         return {k: f.absolute for (k, f) in self._contracts_filenames.items()}
@@ -191,6 +197,7 @@ class CryticCompile:
     def find_absolute_filename_from_used_filename(self, used_filename: str) -> str:
         """
         Return the absolute filename based on the used one
+
         :param used_filename:
         :return: absolute filename
         """
@@ -206,6 +213,7 @@ class CryticCompile:
     def relative_filename_from_absolute_filename(self, absolute_filename: str) -> str:
         """
         Return the relative file based on the absolute name
+
         :param absolute_filename:
         :return:
         """
@@ -217,6 +225,7 @@ class CryticCompile:
     def filename_lookup(self, filename: str) -> Filename:
         """
         Return a crytic_compile.naming.Filename from a any filename form (used/absolute/relative)
+
         :param filename: str
         :return: crytic_compile.naming.Filename
         """
@@ -233,6 +242,7 @@ class CryticCompile:
     def dependencies(self) -> Set[str]:
         """
         Return the dependencies files
+
         :return:
         """
         return self._dependencies
@@ -240,6 +250,7 @@ class CryticCompile:
     def is_dependency(self, filename: str) -> bool:
         """
         Check if the filename is a dependency
+
         :param filename:
         :return:
         """
@@ -249,6 +260,7 @@ class CryticCompile:
     def package(self) -> Optional[str]:
         """
         Return the package name
+
         :return:
         """
         return self._package
@@ -257,6 +269,7 @@ class CryticCompile:
     def working_dir(self) -> Path:
         """
         Return the working dir
+
         :return:
         """
         return self._working_dir
@@ -276,6 +289,7 @@ class CryticCompile:
     def contracts_names(self) -> Set[str]:
         """
         Return the contracts names
+
         :return:
         """
         return self._contracts_name
@@ -284,6 +298,7 @@ class CryticCompile:
     def contracts_names(self, names: Set[str]):
         """
         Return the contracts names
+
         :return:
         """
         self._contracts_name = names
@@ -292,6 +307,7 @@ class CryticCompile:
     def contracts_names_without_libraries(self) -> Set[str]:
         """
         Return the contracts names (without the librairies)
+
         :return:
         """
         if self._contracts_name_without_libraries is None:
@@ -314,6 +330,7 @@ class CryticCompile:
     def abis(self) -> Dict:
         """
         Return the ABIs
+
         :return:
         """
         return self._abis
@@ -321,6 +338,7 @@ class CryticCompile:
     def abi(self, name: str) -> Dict:
         """
         Get the ABI from a contract
+
         :param name:
         :return:
         """
@@ -337,6 +355,7 @@ class CryticCompile:
     def asts(self) -> Dict:
         """
         Return the ASTs
+
         :return: dict (absolute filename -> AST)
         """
         return self._asts
@@ -348,6 +367,7 @@ class CryticCompile:
     def ast(self, path: str) -> Union[Dict, None]:
         """
         Return of the file
+
         :param path:
         :return:
         """
@@ -369,6 +389,7 @@ class CryticCompile:
     def bytecodes_runtime(self) -> Dict[str, str]:
         """
         Return the runtime bytecodes
+
         :return:
         """
         return self._runtime_bytecodes
@@ -377,6 +398,7 @@ class CryticCompile:
     def bytecodes_runtime(self, bytecodes: Dict[str, str]):
         """
         Return the init bytecodes
+
         :return:
         """
         self._runtime_bytecodes = bytecodes
@@ -385,6 +407,7 @@ class CryticCompile:
     def bytecodes_init(self) -> Dict[str, str]:
         """
         Return the init bytecodes
+
         :return:
         """
         return self._init_bytecodes
@@ -393,6 +416,7 @@ class CryticCompile:
     def bytecodes_init(self, bytecodes: Dict[str, str]):
         """
         Return the init bytecodes
+
         :return:
         """
         self._init_bytecodes = bytecodes
@@ -400,6 +424,7 @@ class CryticCompile:
     def bytecode_runtime(self, name: str, libraries: Union[None, Dict[str, str]] = None) -> str:
         """
         Return the runtime bytecode of the contract. If library is provided, patch the bytecode
+
         :param name:
         :param libraries:
         :return:
@@ -410,6 +435,7 @@ class CryticCompile:
     def bytecode_init(self, name: str, libraries: Union[None, Dict[str, str]] = None) -> str:
         """
         Return the init bytecode of the contract. If library is provided, patch the bytecode
+
         :param name:
         :param libraries:
         :return:
@@ -428,6 +454,7 @@ class CryticCompile:
     def srcmaps_init(self) -> Dict[str, List[str]]:
         """
         Return the init srcmap
+
         :return:
         """
         return self._srcmaps
@@ -436,6 +463,7 @@ class CryticCompile:
     def srcmaps_runtime(self) -> Dict[str, List[str]]:
         """
         Return the runtime srcmap
+
         :return:
         """
         return self._srcmaps_runtime
@@ -443,6 +471,7 @@ class CryticCompile:
     def srcmap_init(self, name: str) -> List[str]:
         """
         Return the init srcmap
+
         :param name:
         :return:
         """
@@ -451,6 +480,7 @@ class CryticCompile:
     def srcmap_runtime(self, name: str) -> List[str]:
         """
         Return the runtime srcmap
+
         :param name:
         :return:
         """
@@ -460,6 +490,7 @@ class CryticCompile:
     def src_content(self) -> Dict[str, str]:
         """
         Return the source content, filename -> source_code
+
         :return:
         """
         # If we have no source code loaded yet, load it for every contract.
@@ -475,6 +506,7 @@ class CryticCompile:
     def src_content(self, src):
         """
         Set the src_content
+
         :param src:
         :return:
         """
@@ -483,6 +515,7 @@ class CryticCompile:
     def src_content_for_file(self, filename_absolute: str) -> Union[str, None]:
         """
         Get the source code of the file
+
         :param filename_absolute:
         :return:
         """
@@ -499,6 +532,7 @@ class CryticCompile:
     def type(self) -> int:
         """
         Return the type of the platform used
+
         :return:
         """
         # Type should have been set by now
@@ -509,6 +543,7 @@ class CryticCompile:
     def platform(self) -> AbstractPlatform:
         """
         Return the platform module
+
         :return:
         """
         assert self._platform
@@ -525,6 +560,7 @@ class CryticCompile:
     def compiler_version(self) -> Union[None, "CompilerVersion"]:
         """
         Return the compiler used as a namedtuple(compiler, version)
+
         :return:
         """
         return self._compiler_version
@@ -537,6 +573,7 @@ class CryticCompile:
     def bytecode_only(self) -> bool:
         """
         Return true if only the bytecode was retrieved
+
         :return:
         """
         return self._bytecode_only
@@ -556,6 +593,7 @@ class CryticCompile:
     def libraries(self) -> Dict[str, List[Tuple[str, str]]]:
         """
         Return the libraries used (contract_name -> [(library, pattern))])
+
         :return:
         """
         return self._libraries
@@ -619,6 +657,7 @@ class CryticCompile:
         - the original contract name
         - __X__ following Solidity 0.4 format
         - __$..$__ following Solidity 0.5 format
+
         :param lib_name:
         :return: (contract name, pattern) (None if not found)
         """
@@ -695,6 +734,7 @@ class CryticCompile:
     def libraries_names(self, name: str) -> List[str]:
         """
         Return the name of the libraries used by the contract
+
         :param name: contract
         :return: list of libraries name
         """
@@ -709,6 +749,7 @@ class CryticCompile:
     def libraries_names_and_patterns(self, name):
         """
         Return the name of the libraries used by the contract
+
         :param name: contract
         :return: list of (libraries name, pattern)
         """
@@ -725,6 +766,7 @@ class CryticCompile:
     ) -> str:
         """
         Patch the bytecode
+
         :param bytecode:
         :param libraries:
         :return:
@@ -750,6 +792,7 @@ class CryticCompile:
     def hashes(self, name: str) -> Dict[str, int]:
         """
         Return the hashes of the functions
+
         :param name:
         :return:
         """
@@ -781,6 +824,7 @@ class CryticCompile:
         """
         Import from an archive. compiled_archive is either a json file or the loaded dictionary
         The dictionary myst contain the "compilations" keyword
+
         :param compiled_archive:
         :return:
         """
@@ -805,14 +849,7 @@ class CryticCompile:
 
     def export(self, **kwargs: str) -> Optional[str]:
         """
-            Export to json.
-            The json format can be crytic-compile, solc or truffle.
-            solc format is
-            --combined-json bin-runtime,bin,srcmap,srcmap-runtime,abi,ast,compact-format
-            Keyword Args:
-                export_format (str): export format (default None).
-                   Accepted: None, 'solc', 'truffle', 'crytic-compile', 'standard'
-                export_dir (str): export dir (default crytic-export)
+            Export to json. The json format can be crytic-compile, solc or truffle.
         """
         export_format = kwargs.get("export_format", None)
         if export_format is None:
@@ -924,8 +961,8 @@ def compile_all(target: str, **kwargs: str) -> List[CryticCompile]:
     """
     Given a direct or glob pattern target, compiles all underlying sources and returns
     all the relevant instances of CryticCompile.
-    :param target: A string representing a file/directory path
-    or glob pattern denoting where compilation shouldoccur.
+
+    :param target: A string representing a file/directory path or glob pattern denoting where compilation shouldoccur.
     :param kwargs: The remainder of the arguments passed through to all compilation steps.
     :return: Returns a list of CryticCompile instances for all compilations which occurred.
     """

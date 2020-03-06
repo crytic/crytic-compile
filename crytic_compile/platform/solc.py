@@ -32,6 +32,7 @@ LOGGER = logging.getLogger("CryticCompile")
 def export_to_solc(crytic_compile: "CryticCompile", **kwargs: str) -> Union[str, None]:
     """
     Export the project to the solc format
+
     :param crytic_compile:
     :param kwargs:
     :return:
@@ -89,6 +90,7 @@ class Solc(AbstractPlatform):
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str):
         """
         Compile the target
+
         :param crytic_compile:
         :param kwargs:
         :return:
@@ -204,6 +206,7 @@ class Solc(AbstractPlatform):
     def is_supported(target: str, **kwargs: str) -> bool:
         """
         Check if the target is a solc project
+
         :param target:
         :return:
         """
@@ -212,6 +215,7 @@ class Solc(AbstractPlatform):
     def is_dependency(self, _path: str) -> bool:
         """
         Always return false
+
         :param _path:
         :return:
         """
@@ -220,6 +224,7 @@ class Solc(AbstractPlatform):
     def _guessed_tests(self) -> List[str]:
         """
         Guess the potential unit tests commands
+
         :return:
         """
         return []
@@ -228,6 +233,7 @@ class Solc(AbstractPlatform):
 def get_version(solc: str) -> str:
     """
     Get the compiler verison used
+
     :param solc:
     :return:
     """
@@ -247,6 +253,7 @@ def get_version(solc: str) -> str:
 def is_optimized(solc_arguments: str) -> bool:
     """
     Check if optimization are used
+
     :param solc_arguments:
     :return:
     """
@@ -267,6 +274,7 @@ def _run_solc(
 ):
     """
     Note: Ensure that crytic_compile.compiler_version is set prior calling _run_solc
+
     :param crytic_compile:
     :param filename:
     :param solc:
@@ -480,6 +488,7 @@ def _guess_solc(target, solc_working_dir):
 def relative_to_short(relative):
     """
     Convert relative to short
+
     :param relative:
     :return:
     """

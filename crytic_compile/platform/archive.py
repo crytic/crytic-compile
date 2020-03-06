@@ -20,6 +20,7 @@ if TYPE_CHECKING:
 def export_to_archive(crytic_compile: "CryticCompile", **kwargs) -> str:
     """
     Export the archive
+
     :param crytic_compile:
     :param kwargs:
     :return:
@@ -54,6 +55,7 @@ class Archive(AbstractPlatform):
     def __init__(self, target: str, **kwargs: str):
         """
         Initializes an object which represents solc standard json
+
         :param target: A string path to a standard json
         """
         super().__init__(str(target), **kwargs)
@@ -63,6 +65,7 @@ class Archive(AbstractPlatform):
     def compile(self, crytic_compile: "CryticCompile", **_kwargs):
         """
         Compile
+
         :param crytic_compile:
         :param _kwargs:
         :return:
@@ -87,6 +90,7 @@ class Archive(AbstractPlatform):
     def is_supported(target: str, **kwargs: str) -> bool:
         """
         Check if the target is an archive
+
         :param target:
         :return:
         """
@@ -100,6 +104,7 @@ class Archive(AbstractPlatform):
     def is_dependency(self, _path: str) -> bool:
         """
         Check if the _path is a dependency. Always false
+
         :param _path:
         :return:
         """
@@ -113,6 +118,7 @@ class Archive(AbstractPlatform):
 def generate_archive_export(crytic_compile: "CryticCompile") -> Tuple[Dict, str]:
     """
     Generate the archive export
+
     :param crytic_compile:
     :return:
     """
@@ -129,6 +135,7 @@ def generate_archive_export(crytic_compile: "CryticCompile") -> Tuple[Dict, str]
 def _relative_to_short(relative: Path) -> Path:
     """
     Translate relative path to short. Return the same
+
     :param relative:
     :return:
     """

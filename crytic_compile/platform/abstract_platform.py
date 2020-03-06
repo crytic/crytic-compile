@@ -57,6 +57,7 @@ class AbstractPlatform(metaclass=abc.ABCMeta):
     def target(self) -> str:
         """
         Return the target name
+
         :return:
         """
         return self._target
@@ -65,6 +66,7 @@ class AbstractPlatform(metaclass=abc.ABCMeta):
     def platform_name_used(self) -> str:
         """
         Return the underlying platform used
+
         :return:
         """
         return self.NAME
@@ -73,6 +75,7 @@ class AbstractPlatform(metaclass=abc.ABCMeta):
     def platform_project_url_used(self) -> str:
         """
         Return the underlying platform url used
+
         :return:
         """
         return self.PROJECT_URL
@@ -81,6 +84,7 @@ class AbstractPlatform(metaclass=abc.ABCMeta):
     def platform_type_used(self) -> Type:
         """
         Return the underlying platform url used
+
         :return:
         """
         return self.TYPE
@@ -96,6 +100,7 @@ class AbstractPlatform(metaclass=abc.ABCMeta):
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str):
         """
         Run the compilation
+
         :param crytic_compile:
         :param kwargs:
         :return:
@@ -107,6 +112,7 @@ class AbstractPlatform(metaclass=abc.ABCMeta):
     def is_supported(target: str, **kwargs: str) -> bool:
         """
         Check if the target is a project supported by this platform
+
         :param target:
         :return:
         """
@@ -116,6 +122,7 @@ class AbstractPlatform(metaclass=abc.ABCMeta):
     def is_dependency(self, path: str) -> bool:
         """
         Check if the target is a dependency
+
         :param path:
         :return:
         """
@@ -128,6 +135,7 @@ class AbstractPlatform(metaclass=abc.ABCMeta):
     def _guessed_tests(self) -> List[str]:
         """
         Guess the potential unit tests commands
+
         :return:
         """
         return []
@@ -135,7 +143,8 @@ class AbstractPlatform(metaclass=abc.ABCMeta):
     def guessed_tests(self) -> List[str]:
         """
         Guess the potential unit tests commands
-        :return:
+
+        :return: list of unit tests command guessed
         """
         return guess_tests(self._target) + self._guessed_tests()
 

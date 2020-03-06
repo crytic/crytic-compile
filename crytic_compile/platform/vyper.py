@@ -32,6 +32,7 @@ class Vyper(AbstractPlatform):
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str):
         """
         Compile the target
+
         :param crytic_compile:
         :param target:
         :param kwargs:
@@ -75,6 +76,7 @@ class Vyper(AbstractPlatform):
     def is_dependency(self, _path):
         """
         Always return false
+
         :param _path:
         :return:
         """
@@ -84,6 +86,7 @@ class Vyper(AbstractPlatform):
     def is_supported(target: str, **kwargs: str) -> bool:
         """
         Check if the target is a vyper project
+
         :param target:
         :return:
         """
@@ -95,6 +98,7 @@ class Vyper(AbstractPlatform):
     def _guessed_tests(self) -> List[str]:
         """
         Guess the potential unit tests commands
+
         :return:
         """
         return []

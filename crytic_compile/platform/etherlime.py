@@ -38,6 +38,7 @@ class Etherlime(AbstractPlatform):
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str):
         """
         Compile the target
+
         :param crytic_compile:
         :param target:
         :param kwargs:
@@ -133,6 +134,7 @@ class Etherlime(AbstractPlatform):
     def is_supported(target: str, **kwargs: str) -> bool:
         """
         Check if the target is an etherlime project
+
         :param target:
         :return:
         """
@@ -152,6 +154,7 @@ class Etherlime(AbstractPlatform):
     def is_dependency(self, path: str) -> bool:
         """
         Check if the path is a dependency
+
         :param path:
         :return:
         """
@@ -160,6 +163,7 @@ class Etherlime(AbstractPlatform):
     def _guessed_tests(self) -> List[str]:
         """
         Guess the potential unit tests commands
+
         :return:
         """
         return ["etherlime test"]
@@ -168,6 +172,7 @@ class Etherlime(AbstractPlatform):
 def _is_optimized(compile_arguments: Optional[str]) -> bool:
     """
     Check if the optimization is enabled
+
     :param compile_arguments:
     :return:
     """
@@ -179,6 +184,7 @@ def _is_optimized(compile_arguments: Optional[str]) -> bool:
 def _relative_to_short(relative: Path) -> Path:
     """
     Translate relative to short
+
     :param relative:
     :return:
     """
