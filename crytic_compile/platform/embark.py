@@ -64,7 +64,7 @@ class Embark(AbstractPlatform):
                     raise InvalidCompilation(error)
                 _, stderr = process.communicate()
                 with open(
-                    os.path.join(self._target, "embark.json"), "w", encoding="utf8"
+                        os.path.join(self._target, "embark.json"), "w", encoding="utf8"
                 ) as outfile:
                     json.dump(embark_json, outfile, indent=2)
         else:
@@ -78,12 +78,13 @@ class Embark(AbstractPlatform):
 
         if not embark_ignore_compile:
             try:
-                process = subprocess.Popen(
-                    ["embark", "build", "--contracts"],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    cwd=self._target,
-                )
+                cmd = ["embark", "build", "--contracts"]
+                if not kwargs.get("npx_disable", False):
+                    cmd = ["npx"] + cmd
+                process = subprocess.Popen(cmd,
+                                           stdout=subprocess.PIPE,
+                                           stderr=subprocess.PIPE,
+                                           cwd=self._target)
             except OSError as error:
                 raise InvalidCompilation(error)
             stdout, stderr = process.communicate()

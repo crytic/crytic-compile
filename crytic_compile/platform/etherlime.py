@@ -55,6 +55,9 @@ class Etherlime(AbstractPlatform):
         if not etherlime_ignore_compile:
             cmd = ["etherlime", "compile", self._target]
 
+            if not kwargs.get("npx_disable", False):
+                cmd = ["npx"] + cmd
+
             if compile_arguments:
                 cmd += compile_arguments.split(" ")
 
