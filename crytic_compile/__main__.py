@@ -36,10 +36,10 @@ see https://github.com/crytic/crytic-compile/wiki/Usage""",
 
     parser.add_argument(
         "--config-file",
-        help="Provide a config file (default: crytic.config.json)",
+        help="Provide a config file (default: crytic_compile.config.json)",
         action="store",
         dest="config_file",
-        default="crytic.config.json",
+        default="crytic_compile.config.json",
     )
 
     parser.add_argument(
