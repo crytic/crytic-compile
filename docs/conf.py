@@ -24,6 +24,7 @@ author = 'Trail of Bits'
 # The full version, including alpha/beta/rc tags
 release = '0.1.6'
 
+master_doc = 'index'
 
 # -- General configuration ---------------------------------------------------
 
