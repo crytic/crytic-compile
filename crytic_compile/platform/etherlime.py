@@ -53,7 +53,7 @@ class Etherlime(AbstractPlatform):
         compile_arguments = kwargs.get("etherlime_compile_arguments", None)
 
         if not etherlime_ignore_compile:
-            cmd = ["etherlime", "compile", self._target]
+            cmd = ["etherlime", "compile", self._target, "deleteCompiledFiles=true"]
 
             if not kwargs.get("npx_disable", False):
                 cmd = ["npx"] + cmd
