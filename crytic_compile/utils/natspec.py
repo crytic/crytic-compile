@@ -10,7 +10,11 @@ class UserMethod:
     """
 
     def __init__(self, method):
-        self._notice: Optional[str] = method.get("notice", None)
+        # Constructors dont have "notice: '..'"
+        if isinstance(method, str):
+            self._notice = method
+        else:
+            self._notice: Optional[str] = method.get("notice", None)
 
     @property
     def notice(self):
