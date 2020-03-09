@@ -36,6 +36,7 @@ class Brownie(AbstractPlatform):
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str):
         """
         Compile the target
+
         :param crytic_compile:
         :param target:
         :param kwargs:
@@ -78,6 +79,7 @@ class Brownie(AbstractPlatform):
     def is_supported(target: str, **kwargs: str) -> bool:
         """
         Check if the target is a brownie env
+
         :param target:
         :return:
         """
@@ -93,6 +95,7 @@ class Brownie(AbstractPlatform):
     def is_dependency(self, _path: str) -> bool:
         """
         Check if the path is a dependency
+
         :param _path:
         :return:
         """
@@ -101,6 +104,7 @@ class Brownie(AbstractPlatform):
     def _guessed_tests(self) -> List[str]:
         """
         Guess the potential unit tests commands
+
         :return:
         """
         return ["brownie test"]
@@ -109,6 +113,7 @@ class Brownie(AbstractPlatform):
 def _iterate_over_files(crytic_compile: "CryticCompile", target: str, filenames: List[str]):
     """
     Iterate over the files
+
     :param crytic_compile:
     :param target:
     :param filenames:
@@ -166,6 +171,7 @@ def _iterate_over_files(crytic_compile: "CryticCompile", target: str, filenames:
 def _get_version(compiler: Dict) -> str:
     """
     Parse the compiler version
+
     :param compiler:
     :return:
     """
@@ -178,6 +184,7 @@ def _get_version(compiler: Dict) -> str:
 def _relative_to_short(relative: Path) -> Path:
     """
     Translate relative path to short (do nothing)
+
     :param relative:
     :return:
     """

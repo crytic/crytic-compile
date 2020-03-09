@@ -22,6 +22,7 @@ LOGGER.setLevel(logging.INFO)
 def parse_args():
     """
     Parse the arguments
+
     :return:
     """
     # Create our argument parser
@@ -139,6 +140,7 @@ class ShowPlatforms(argparse.Action):
 def main():
     """
     Main function run from the cli
+
     :return:
     """
     args = parse_args()

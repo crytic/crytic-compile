@@ -35,6 +35,7 @@ class SolcStandardJson(Solc):
     def __init__(self, target: Union[str, dict] = None, **kwargs: str):
         """
         Initializes an object which represents solc standard json
+
         :param target: A string path to a standard json
         """
         super().__init__(str(target), **kwargs)
@@ -85,6 +86,7 @@ class SolcStandardJson(Solc):
     def add_source_file(self, file_path: str):
         """
         Append file
+
         :param file_path:
         :return:
         """
@@ -93,6 +95,7 @@ class SolcStandardJson(Solc):
     def add_remapping(self, remapping: str):
         """
         Append our remappings
+
         :param remapping:
         :return:
         """
@@ -101,6 +104,7 @@ class SolcStandardJson(Solc):
     def to_dict(self) -> Dict:
         """
         Patch in our desired output types
+
         :return:
         """
         return self._json
@@ -108,6 +112,7 @@ class SolcStandardJson(Solc):
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str):
         """
         Compile the target
+
         :param crytic_compile:
         :param target:
         :param kwargs:
@@ -198,6 +203,7 @@ class SolcStandardJson(Solc):
     def _guessed_tests(self) -> List[str]:
         """
         Guess the potential unit tests commands
+
         :return:
         """
         return []
@@ -208,6 +214,7 @@ def _run_solc_standard_json(
 ):
     """
     Note: Ensure that crytic_compile.compiler_version is set prior calling _run_solc
+
     :param solc_input:
     :param solc:
     :param solc_disable_warnings:

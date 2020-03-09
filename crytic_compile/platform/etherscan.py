@@ -80,6 +80,7 @@ class Etherscan(AbstractPlatform):
 
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str):
         """
+
         Compile the tharget
         :param crytic_compile:
         :param target:
@@ -231,6 +232,7 @@ class Etherscan(AbstractPlatform):
     def is_supported(target: str, **kwargs: str) -> bool:
         """
         Check if the target is an etherscan address
+
         :param target:
         :return:
         """
@@ -244,6 +246,7 @@ class Etherscan(AbstractPlatform):
     def is_dependency(self, _path: str) -> bool:
         """
         Always return false
+
         :param _path:
         :return:
         """
@@ -252,6 +255,7 @@ class Etherscan(AbstractPlatform):
     def _guessed_tests(self) -> List[str]:
         """
         Guess the potential unit tests commands
+
         :return:
         """
         return []

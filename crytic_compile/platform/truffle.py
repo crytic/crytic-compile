@@ -29,6 +29,7 @@ LOGGER = logging.getLogger("CryticCompile")
 def export_to_truffle(crytic_compile: "CryticCompile", **kwargs: str) -> Optional[str]:
     """
     Export to the truffle format
+
     :param crytic_compile:
     :param kwargs:
     :return:
@@ -75,6 +76,7 @@ class Truffle(AbstractPlatform):
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str):
         """
         Compile the target
+
         :param kwargs:
         :return:
         """
@@ -222,6 +224,7 @@ class Truffle(AbstractPlatform):
     def is_supported(target: str, **kwargs: str) -> bool:
         """
         Check if the target is a truffle project
+
         :param target:
         :return:
         """
@@ -235,6 +238,7 @@ class Truffle(AbstractPlatform):
     def is_dependency(self, path: str) -> bool:
         """
         Check if the target is a dependency
+
         :param path:
         :return:
         """
@@ -243,6 +247,7 @@ class Truffle(AbstractPlatform):
     def _guessed_tests(self) -> List[str]:
         """
         Guess the potential unit tests commands
+
         :return:
         """
         return ["truffle test"]
@@ -251,6 +256,7 @@ class Truffle(AbstractPlatform):
 def _get_version_from_config(target: str) -> Optional[Tuple[str, str]]:
     """
     Naive check on the truffleconfig file to get the version
+
     :param target:
     :return: (version, compiler) | None
     """

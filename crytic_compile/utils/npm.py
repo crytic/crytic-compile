@@ -13,6 +13,7 @@ if TYPE_CHECKING:
 def get_package_name(target_txt: Union[str, "SolcStandardJson"]) -> Optional[str]:
     """
     Return the package's name
+
     :param target_txt:
     :return: str or None
     """

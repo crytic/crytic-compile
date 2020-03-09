@@ -9,6 +9,7 @@ from crytic_compile.cryticparser import DEFAULTS_FLAG_IN_CONFIG
 def init(parser: ArgumentParser):
     """
     Add crytic-compile arguments to the parser
+
     :param parser:
     :return:
     """

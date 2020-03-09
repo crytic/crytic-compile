@@ -60,6 +60,7 @@ class Standard(AbstractPlatform):
     def __init__(self, target: str, **kwargs: str):
         """
         Initializes an object which represents solc standard json
+
         :param target: A string path to a standard json
         """
         super().__init__(str(target), **kwargs)
@@ -69,6 +70,7 @@ class Standard(AbstractPlatform):
     def compile(self, crytic_compile: "CryticCompile", **_kwargs: str):
         """
         Compile the target (load file)
+
         :param crytic_compile:
         :param target:
         :param kwargs:
@@ -89,6 +91,7 @@ class Standard(AbstractPlatform):
     def is_supported(target: str, **kwargs: str) -> bool:
         """
         Check if the target is the standard crytic compile export
+
         :param target:
         :return:
         """
@@ -102,6 +105,7 @@ class Standard(AbstractPlatform):
     def is_dependency(self, path: str) -> bool:
         """
         Always return False
+
         :param path:
         :return:
         """
@@ -127,6 +131,7 @@ class Standard(AbstractPlatform):
 def generate_standard_export(crytic_compile: "CryticCompile") -> Dict:
     """
     Export the standard crytic compile export
+
     :param crytic_compile:
     :return:
     """
@@ -176,6 +181,7 @@ def generate_standard_export(crytic_compile: "CryticCompile") -> Dict:
 def load_from_compile(crytic_compile: "CryticCompile", loaded_json: Dict) -> Tuple[int, List[str]]:
     """
     Load from json
+
     :param crytic_compile:
     :param loaded_json:
     :return:

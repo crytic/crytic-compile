@@ -39,6 +39,7 @@ class Dapp(AbstractPlatform):
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str):
         """
         Compile the target
+
         :param crytic_compile:
         :param target:
         :param kwargs:
@@ -93,6 +94,7 @@ class Dapp(AbstractPlatform):
     def is_supported(target: str, **kwargs: str) -> bool:
         """
         Heuristic used: check if "dapp build" is present in Makefile
+
         :param target:
         :return:
         """
@@ -109,6 +111,7 @@ class Dapp(AbstractPlatform):
     def is_dependency(self, path: str) -> bool:
         """
         Check if the path is a dependency
+
         :param path:
         :return:
         """
@@ -117,6 +120,7 @@ class Dapp(AbstractPlatform):
     def _guessed_tests(self) -> List[str]:
         """
         Guess the potential unit tests commands
+
         :return:
         """
         return ["dapp test"]
@@ -125,6 +129,7 @@ class Dapp(AbstractPlatform):
 def _run_dapp(target: str):
     """
     Run Dapp
+
     :param target:
     :return:
     """
@@ -140,6 +145,7 @@ def _run_dapp(target: str):
 def _get_version(target: str) -> CompilerVersion:
     """
     Get the compiler version used
+
     :param target:
     :return:
     """
@@ -166,6 +172,7 @@ def _get_version(target: str) -> CompilerVersion:
 def _relative_to_short(relative: Path) -> Path:
     """
     Translate relative path to short
+
     :param relative:
     :return:
     """

@@ -39,6 +39,7 @@ def extract_filename(name: str):
 def combine_filename_name(filename: str, name: str):
     """
     Combine the filename with the contract name
+
     :param filename:
     :param name:
     :return:
@@ -57,6 +58,7 @@ def convert_filename(
     The used_filename can be absolute, relative, or missing node_modules/contracts directory
     convert_filename return a tuple(absolute,used),
     where absolute points to the absolute path, and used the original
+
     :param used_filename:
     :param relative_to_short: lambda function
     :param crytic_compile:

@@ -17,6 +17,7 @@ if TYPE_CHECKING:
 def load_from_zip(target: str) -> List["CryticCompile"]:
     """
     Load a file from a zip
+
     :param target:
     :return:
     """
@@ -35,6 +36,7 @@ def load_from_zip(target: str) -> List["CryticCompile"]:
 def save_to_zip(crytic_compiles: List["CryticCompile"], zipfile: str):
     """
     Save projects to a zip
+
     :param crytic_compiles:
     :param zipfile:
     :return:

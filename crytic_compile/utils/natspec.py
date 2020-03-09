@@ -17,16 +17,18 @@ class UserMethod:
             self._notice: Optional[str] = method.get("notice", None)
 
     @property
-    def notice(self):
+    def notice(self) -> Optional[str]:
         """
         Return the method notice
+
         :return: Optional[str]
         """
         return self._notice
 
-    def export(self):
+    def export(self) -> Dict:
         """
         Export to a python dict
+
         :return: Dict
         """
         return {"notice": self.notice}
@@ -44,40 +46,45 @@ class DevMethod:
         self._return: Optional[str] = method.get("return", None)
 
     @property
-    def author(self):
+    def author(self) -> Optional[str]:
         """
         Return the method author
+
         :return: Optional[str]
         """
         return self._author
 
     @property
-    def details(self):
+    def details(self) -> Optional[str]:
         """
         Return the method details
+
         :return: Optional[str]
         """
         return self._details
 
     @property
-    def method_return(self):
+    def method_return(self) -> Optional[str]:
         """
         Return the method return
+
         :return: Optional[str]
         """
         return self._return
 
     @property
-    def params(self):
+    def params(self) -> Dict[str, str]:
         """
         Return the method params
+
         :return: Dict[str, str]
         """
         return self._params
 
-    def export(self):
+    def export(self) -> Dict:
         """
         Export to a python dict
+
         :return: Dict
         """
         return {
@@ -100,24 +107,27 @@ class UserDoc:
         }
 
     @property
-    def notice(self):
+    def notice(self) -> Optional[str]:
         """
         Return the user notice
+
         :return: Optional[str]
         """
         return self._notice
 
     @property
-    def methods(self):
+    def methods(self) -> Dict[str, UserMethod]:
         """
         Return the user methods
+
         :return: Dict[str, UserMethod]
         """
         return self._methods
 
-    def export(self):
+    def export(self) -> Dict:
         """
         Export to a python dict
+
         :return: Dict
         """
         return {
@@ -140,40 +150,45 @@ class DevDoc:
         self._title: Optional[str] = devdoc.get("title", None)
 
     @property
-    def author(self):
+    def author(self) -> Optional[str]:
         """
         Return the dev author
+
         :return: Optional[str]
         """
         return self._author
 
     @property
-    def details(self):
+    def details(self) -> Optional[str]:
         """
         Return the dev details
+
         :return: Optional[str]
         """
         return self._details
 
     @property
-    def methods(self):
+    def methods(self) -> Dict[str, DevMethod]:
         """
          Return the dev methods
+
          :return: Dict[str, DevMethod]
          """
         return self._methods
 
     @property
-    def title(self):
+    def title(self) -> Optional[str]:
         """
         Return the dev title
+
         :return: Optional[str]
         """
         return self._title
 
-    def export(self):
+    def export(self) -> Dict:
         """
         Export to a python dict
+
         :return: Dict
         """
         return {
@@ -194,17 +209,19 @@ class Natspec:
         self._devdoc: DevDoc = DevDoc(devdoc)
 
     @property
-    def userdoc(self):
+    def userdoc(self) -> UserDoc:
         """
         Return the userdoc
+
         :return: UserDoc
         """
         return self._userdoc
 
     @property
-    def devdoc(self):
+    def devdoc(self) -> DevDoc:
         """
         Return the devdoc
+
         :return: DevDoc
         """
         return self._devdoc

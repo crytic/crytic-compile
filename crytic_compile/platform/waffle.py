@@ -38,6 +38,7 @@ class Waffle(AbstractPlatform):
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str):
         """
         Compile the target
+
         :param crytic_compile:
         :param target:
         :param kwargs:
@@ -197,6 +198,7 @@ class Waffle(AbstractPlatform):
     def is_supported(target: str, **kwargs: str) -> bool:
         """
         Check if the target is a waffle project
+
         :param target:
         :return:
         """
@@ -213,6 +215,7 @@ class Waffle(AbstractPlatform):
     def is_dependency(self, path: str) -> bool:
         """
         Check if the path is a dependency
+
         :param path:
         :return:
         """
@@ -221,6 +224,7 @@ class Waffle(AbstractPlatform):
     def _guessed_tests(self) -> List[str]:
         """
         Guess the potential unit tests commands
+
         :return:
         """
         return ["npx mocha"]
@@ -229,6 +233,7 @@ class Waffle(AbstractPlatform):
 def _load_config(config_file: str) -> Dict:
     """
     Load the config file
+
     :param config_file:
     :return:
     """

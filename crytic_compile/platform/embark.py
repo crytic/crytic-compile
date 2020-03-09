@@ -36,6 +36,7 @@ class Embark(AbstractPlatform):
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str):
         """
         Compile the target
+
         :param crytic_compile:
         :param target:
         :param kwargs:
@@ -152,6 +153,7 @@ class Embark(AbstractPlatform):
     def is_supported(target: str, **kwargs: str) -> bool:
         """
         Check if the target is an embark project
+
         :param target:
         :return:
         """
@@ -163,6 +165,7 @@ class Embark(AbstractPlatform):
     def is_dependency(self, path: str) -> bool:
         """
         Check if the path is a dependency
+
         :param path:
         :return:
         """
@@ -171,6 +174,7 @@ class Embark(AbstractPlatform):
     def _guessed_tests(self) -> List[str]:
         """
         Guess the potential unit tests commands
+
         :return:
         """
         return ["embark test"]
@@ -179,6 +183,7 @@ class Embark(AbstractPlatform):
 def _get_version(target: str) -> CompilerVersion:
     """
     Get the compiler version
+
     :param target:
     :return:
     """
@@ -200,6 +205,7 @@ def _get_version(target: str) -> CompilerVersion:
 def _relative_to_short(relative: Path) -> Path:
     """
     Convert relative to short
+
     :param relative:
     :return:
     """
