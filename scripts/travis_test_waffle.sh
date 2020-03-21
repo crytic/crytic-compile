@@ -14,9 +14,7 @@ npm install -g ethereum-waffle
 npm install openzeppelin-solidity
 mkdir contracts
 cd contracts
-echo 'pragma solidity ^0.5.1;
-
-import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+echo 'import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 
 
 // Example class - a mock class using delivering from ERC20
