@@ -14,14 +14,8 @@ npm install -g ethereum-waffle
 npm install openzeppelin-solidity
 mkdir contracts
 cd contracts
-echo 'import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
-
-
-// Example class - a mock class using delivering from ERC20
-contract BasicTokenMock is ERC20 {
-  constructor(address initialAccount, uint256 initialBalance) public {
-    super._mint(initialAccount, initialBalance);
-  }
+echo 'contract Test {
+  constructor() public {}
 }' > token.sol
 
 cd ..
