@@ -36,33 +36,6 @@ $ crytic-compile .
 ```
 
 Crytic-compile will generate `crytic-export/contracts.json` containing the AST/ABI and bytecodes of the contracts.
-The file structure is:
-```json
-{
-    "asts": [],
-    "contracts": {
-        "contract_name": {
-            "abi": [],
-            "bin": "..",
-            "bin-runtime": "..",
-            "srcmap": "..",
-            "srcmap-runtime": "..",
-            "filenames": {
-                "absolute": "..",
-                "relative": "..",
-                "short": "..",
-                "used": ".."
-            }
-        }
-    },
-    "compiler": {
-        "compiler": "solc",
-        "version": "x.x.x",
-        "optimized": false
-    },
-    "working_dir": ".."
-}
-```
 
 Run `crytic-compile --help` for more options.
 
