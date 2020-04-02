@@ -146,7 +146,7 @@ class Truffle(AbstractPlatform):
         if not os.path.isdir(os.path.join(self._target, build_directory)):
             if os.path.isdir(os.path.join(self._target, "node_modules")):
                 raise InvalidCompilation(
-                    f"External dependencies {self._target} not found, please install them. (npm install)"
+                    f"External dependencies {build_directory} {self._target} not found, please install them. (npm install)"
                 )
             raise InvalidCompilation("`truffle compile` failed. Can you run it?")
         filenames = glob.glob(os.path.join(self._target, build_directory, "*.json"))
@@ -180,9 +180,14 @@ class Truffle(AbstractPlatform):
                     continue
 
                 filename = target_loaded["ast"]["absolutePath"]
-                filename = convert_filename(
-                    filename, _relative_to_short, crytic_compile, working_dir=self._target
-                )
+                try:
+                    filename = convert_filename(
+                        filename, _relative_to_short, crytic_compile, working_dir=self._target
+                    )
+                except InvalidCompilation as i:
+                    txt = str(i)
+                    txt += '\nConsider removing the build/contracts content (rm build/contracts/*)'
+                    raise InvalidCompilation(txt)
 
                 crytic_compile.asts[filename.absolute] = target_loaded["ast"]
                 crytic_compile.filenames.add(filename)
