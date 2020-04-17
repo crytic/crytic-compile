@@ -225,7 +225,7 @@ def load_from_compile(crytic_compile: "CryticCompile", loaded_json: Dict) -> Tup
 
     crytic_compile.working_dir = loaded_json["working_dir"]
 
-    return (loaded_json["type"], loaded_json["unit_tests"])
+    return loaded_json["type"], loaded_json.get("unit_tests", [])
 
 
 def _relative_to_short(relative):
