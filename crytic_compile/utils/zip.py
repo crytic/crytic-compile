@@ -14,6 +14,12 @@ if TYPE_CHECKING:
     from crytic_compile import CryticCompile
 
 
+def _to_str(txt):
+    if isinstance(txt, bytes):
+        return txt.decode('utf8')
+    return txt
+
+
 def load_from_zip(target: str) -> List["CryticCompile"]:
     """
     Load a file from a zip
@@ -27,7 +33,7 @@ def load_from_zip(target: str) -> List["CryticCompile"]:
     with ZipFile(target, "r") as file_desc:
         for project in file_desc.namelist():
             compilations.append(
-                CryticCompile(str(file_desc.read(project)), compile_force_framework="archive")
+                CryticCompile(_to_str(file_desc.read(project)), compile_force_framework="Archive")
             )
 
     return compilations

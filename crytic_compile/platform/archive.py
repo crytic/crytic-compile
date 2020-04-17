@@ -58,7 +58,7 @@ class Archive(AbstractPlatform):
 
         :param target: A string path to a standard json
         """
-        super().__init__(str(target), **kwargs)
+        super().__init__(target, **kwargs)
         self._underlying_platform: Type[AbstractPlatform] = Archive
         self._unit_tests: List[str] = []
 
