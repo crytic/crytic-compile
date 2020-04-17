@@ -72,6 +72,7 @@ class CryticCompile:
         self._runtime_bytecodes: Dict = {}
         self._init_bytecodes: Dict = {}
         self._hashes: Dict = {}
+        self._events: Dict = {}
         self._srcmaps: Dict[str, List[str]] = {}
         self._srcmaps_runtime: Dict[str, List[str]] = {}
         self._src_content: Dict = {}
@@ -649,7 +650,7 @@ class CryticCompile:
         return new_names
 
     def _library_name_lookup(
-        self, lib_name: str, original_contract: str
+            self, lib_name: str, original_contract: str
     ) -> Optional[Tuple[str, str]]:
         """
         Convert a library name to the contract
@@ -681,14 +682,14 @@ class CryticCompile:
 
             # Solidity 0.4 with filename
             solidity_0_4_filename = (
-                "__" + name_with_absolute_filename + "_" * (38 - len(name_with_absolute_filename))
+                    "__" + name_with_absolute_filename + "_" * (38 - len(name_with_absolute_filename))
             )
             if solidity_0_4_filename == lib_name:
                 return name, solidity_0_4_filename
 
             # Solidity 0.4 with filename
             solidity_0_4_filename = (
-                "__" + name_with_used_filename + "_" * (38 - len(name_with_used_filename))
+                    "__" + name_with_used_filename + "_" * (38 - len(name_with_used_filename))
             )
             if solidity_0_4_filename == lib_name:
                 return name, solidity_0_4_filename
@@ -762,7 +763,7 @@ class CryticCompile:
         return self._libraries[name]
 
     def _update_bytecode_with_libraries(
-        self, bytecode: str, libraries: Union[None, Dict[str, str]]
+            self, bytecode: str, libraries: Union[None, Dict[str, str]]
     ) -> str:
         """
         Patch the bytecode
@@ -811,6 +812,37 @@ class CryticCompile:
                     sha3_result = sha3.keccak_256()
                     sha3_result.update(sig.encode("utf-8"))
                     self._hashes[name][sig] = int("0x" + sha3_result.hexdigest()[:8], 16)
+
+    # endregion
+    ###################################################################################
+    ###################################################################################
+    # region Events
+    ###################################################################################
+    ###################################################################################
+
+    def events_topics(self, name: str) -> Dict[str, Tuple[int, List[bool]]]:
+        """
+        Return the topics of the contract'sevents
+        :param name: contract
+        :return: A dictionary {event signature -> topic hash, [is_indexed for each parameter]}
+        """
+        if not name in self._events:
+            self._compute_topics_events(name)
+        return self._events[name]
+
+    def _compute_topics_events(self, name: str):
+        self._events[name] = {}
+        for sig in self.abi(name):
+            if "type" in sig:
+                if sig["type"] == "event":
+                    sig_name = sig["name"]
+                    arguments = ",".join([x["type"] for x in sig["inputs"]])
+                    indexes = [x.get("indexed", False) for x in sig["inputs"]]
+                    sig = f"{sig_name}({arguments})"
+                    sha3_result = sha3.keccak_256()
+                    sha3_result.update(sig.encode("utf-8"))
+
+                    self._events[name][sig] = (int("0x" + sha3_result.hexdigest()[:8], 16), indexes)
 
     # endregion
     ###################################################################################
