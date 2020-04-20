@@ -21,6 +21,7 @@ class Type(IntEnum):
     WAFFLE = 8
     BROWNIE = 9
     SOLC_STANDARD_JSON = 10
+    BUILDER = 11
 
     STANDARD = 100
     ARCHIVE = 101

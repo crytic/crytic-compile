@@ -13,3 +13,4 @@ from .vyper import Vyper
 from .waffle import Waffle
 from .standard import Standard
 from .archive import Archive
+from .buidler import Buidler
