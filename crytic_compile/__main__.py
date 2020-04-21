@@ -12,7 +12,7 @@ from pkg_resources import require
 from crytic_compile.crytic_compile import compile_all, get_platforms
 from crytic_compile.cryticparser import cryticparser, DEFAULTS_FLAG_IN_CONFIG
 from crytic_compile.platform import InvalidCompilation
-from crytic_compile.utils.zip import save_to_zip
+from crytic_compile.utils.zip import save_to_zip, ZIP_TYPES_ACCEPTED
 
 logging.basicConfig()
 LOGGER = logging.getLogger("CryticCompile")
@@ -73,6 +73,14 @@ see https://github.com/crytic/crytic-compile/wiki/Usage""",
         help="Export all the projects to a zip file",
         action="store",
         dest="export_to_zip",
+        default=None,
+    )
+
+    parser.add_argument(
+        "--export-zip-type",
+        help=f"Zip compression type. One of {','.join(ZIP_TYPES_ACCEPTED.keys())}. Default lzma",
+        action="store",
+        dest="export_to_zip_type",
         default=None,
     )
 
@@ -171,7 +179,7 @@ def main():
                     compilation.export(**vars(args))
 
         if args.export_to_zip:
-            save_to_zip(compilations, args.export_to_zip)
+            save_to_zip(compilations, args.export_to_zip, args.export_to_zip_type)
 
     except InvalidCompilation as exception:
         LOGGER.error(exception)
