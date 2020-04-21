@@ -45,8 +45,9 @@ class Buidler(AbstractPlatform):
         :return:
         """
 
-        cache_directory = kwargs.get("buidler_cache_directory")
-        target_file = os.path.join(cache_directory, "solc-output.json")
+        cache_directory = kwargs.get("buidler_cache_directory", "")
+        target_solc_file = os.path.join(cache_directory, "solc-output.json")
+        target_vyper_file = os.path.join(cache_directory, "vyper-docker-updates.json")
         buidler_ignore_compile = kwargs.get("buidler_ignore_compile", False) or kwargs.get(
             "buidler_compile", False
         )
@@ -78,13 +79,15 @@ class Buidler(AbstractPlatform):
             if stderr:
                 LOGGER.error(stderr)
 
-        if not os.path.isfile(os.path.join(self._target, target_file)):
-            raise InvalidCompilation("`buidler compile` failed. Can you run it?")
+        if not os.path.isfile(os.path.join(self._target, target_solc_file)):
+            if os.path.isfile(os.path.join(self._target, target_vyper_file)):
+                txt = 'Vyper not yet supported with buidler.'
+                txt += ' Please open an issue in https://github.com/crytic/crytic-compile'
+                raise InvalidCompilation(txt)
+            txt = f"`buidler compile` failed. Can you run it?\n{os.path.join(self._target, target_solc_file)} not found"
+            raise InvalidCompilation(txt)
 
-        # TODO: find a better way to get this information
-        compiler = "solc"
-
-        (version_from_config, optimized) = _get_version_from_config(cache_directory)
+        (compiler, version_from_config, optimized) = _get_version_from_config(cache_directory)
 
         crytic_compile.compiler_version = CompilerVersion(
             compiler=compiler, version=version_from_config, optimized=optimized
@@ -94,7 +97,7 @@ class Buidler(AbstractPlatform):
             f"0.4.{x}" for x in range(0, 10)
         ]
 
-        with open(target_file, encoding="utf8") as file_desc:
+        with open(target_solc_file, encoding="utf8") as file_desc:
             targets_json = json.load(file_desc)
 
             if "contracts" in targets_json:
@@ -138,8 +141,6 @@ class Buidler(AbstractPlatform):
                     crytic_compile.filenames.add(path)
                     crytic_compile.asts[path.absolute] = info["ast"]
 
-
-
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:
         """
@@ -171,17 +172,22 @@ class Buidler(AbstractPlatform):
         return ["truffle test"]
 
 
-def _get_version_from_config(builder_directory: Path) -> Optional[Tuple[str, str]]:
+def _get_version_from_config(builder_directory: Path) -> Optional[Tuple[str, str, bool]]:
     """
     :return: (version, optimized)
     """
     config = Path(builder_directory, "last-solc-config.json")
     if not config.exists():
-        raise InvalidCompilation(f"{config} not found")
+        config = Path(builder_directory, "last-vyper-config.json")
+        if not config.exists():
+            raise InvalidCompilation(f"{config} not found")
+        with open(config) as config_f:
+            version = config_f.read()
+            return 'vyper', version, False
     with open(config) as config_f:
         config = json.load(config_f)
 
     version = config['solc']['version']
 
     optimized = 'optimizer' in config['solc'] and config['solc']['optimizer']
-    return version, optimized
+    return 'solc', version, optimized
