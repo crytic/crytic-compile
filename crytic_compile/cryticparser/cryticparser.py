@@ -18,7 +18,7 @@ def init(parser: ArgumentParser):
     group_solc.add_argument(
         "--compile-force-framework",
         help="Force the compile to a given framework "
-        "(truffle, embark, dapp, etherlime, etherscan, waffle)",
+             "(truffle, embark, dapp, etherlime, etherscan, waffle)",
         action="store",
         default=DEFAULTS_FLAG_IN_CONFIG["compile_force_framework"],
     )
@@ -53,6 +53,7 @@ def init(parser: ArgumentParser):
     _init_etherscan(parser)
     _init_waffle(parser)
     _init_npx(parser)
+    _init_buidler(parser)
 
 
 def _init_solc(parser):
@@ -71,7 +72,7 @@ def _init_solc(parser):
     group_solc.add_argument(
         "--solc-args",
         help="Add custom solc arguments. Example: --solc-args"
-        ' "--allow-path /tmp --evm-version byzantium".',
+             ' "--allow-path /tmp --evm-version byzantium".',
         action="store",
         default=DEFAULTS_FLAG_IN_CONFIG["solc_args"],
     )
@@ -100,7 +101,7 @@ def _init_solc(parser):
     group_solc.add_argument(
         "--solc-solcs-bin",
         help="Specify different solc version to try (path config)."
-        " Example: --solc-solcs-bin solc-0.4.24,solc-0.5.3",
+             " Example: --solc-solcs-bin solc-0.4.24,solc-0.5.3",
         action="store",
         default=DEFAULTS_FLAG_IN_CONFIG["solc_solcs_bin"],
     )
@@ -211,7 +212,7 @@ def _init_etherlime(parser):
     group_etherlime.add_argument(
         "--etherlime-compile-arguments",
         help="Add arbitrary arguments to etherlime compile "
-        "(note: [dir] is the the directory provided to crytic-compile)",
+             "(note: [dir] is the the directory provided to crytic-compile)",
         action="store_true",
         dest="etherlime_compile_arguments",
         default=DEFAULTS_FLAG_IN_CONFIG["etherlime_compile_arguments"],
@@ -254,3 +255,24 @@ def _init_npx(parser):
         dest="npx_disable",
         default=DEFAULTS_FLAG_IN_CONFIG["npx_disable"],
     )
+
+
+def _init_buidler(parser):
+    group_buidler = parser.add_argument_group("Buidler options")
+    group_buidler.add_argument(
+        "--buidler-ignore-compile",
+        help="Do not run buidler compile",
+        action="store_true",
+        dest="buidler_ignore_compile",
+        default=DEFAULTS_FLAG_IN_CONFIG["buidler_ignore_compile"],
+    )
+
+    group_buidler.add_argument(
+        "--buidler-cache-directory",
+        help="Use an alternative buidler cache directory (default ./cache)",
+        action="store",
+        dest="buidler_cache_directory",
+        default=DEFAULTS_FLAG_IN_CONFIG["buidler_cache_directory"],
+    )
+
+    return group_buidler
