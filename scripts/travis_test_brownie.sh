@@ -4,7 +4,7 @@ pip install eth-brownie
 brownie bake token
 cd token
 
-crytic-compile . 
+crytic-compile . --compile-force-framework Brownie
 
 if [ $? -ne 0 ]
 then
