@@ -12,6 +12,7 @@ Library to help smart contract compilation. It includes support for:
 - [Etherscan](https://etherscan.io/)
 - [Brownie](https://github.com/iamdefinitelyahuman/brownie)
 - [Waffle](https://github.com/EthWorks/Waffle)
+- [Buidler](https://github.com/nomiclabs/buidler)
 
 See the [Configuration](https://github.com/crytic/crytic-compile/wiki/Configuration) documentation for advanced usages.
 
