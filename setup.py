@@ -14,5 +14,6 @@ setup(
     install_requires=["pysha3>=1.0.2"],
     license="AGPL-3.0",
     long_description=open("README.md", encoding="utf8").read(),
+    package_data={"crytic_compile": ["py.typed"]},
     entry_points={"console_scripts": ["crytic-compile = crytic_compile.__main__:main"]},
 )
