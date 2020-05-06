@@ -49,4 +49,8 @@ class Type(IntEnum):
             return "Archive"
         if self == Type.WAFFLE:
             return "Waffle"
+        if self == Type.BUILDER:
+            return "Builder"
+        if self == Type.BROWNIE:
+            return "Browner"
         raise ValueError
