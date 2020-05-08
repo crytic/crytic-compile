@@ -7,7 +7,9 @@ import logging
 import os
 import platform
 import re
+import shutil
 import subprocess
+import uuid
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional, Tuple, List, Dict
 
@@ -93,6 +95,8 @@ class Truffle(AbstractPlatform):
         # truffle.cmd. Reference:
         # https://truffleframework.com/docs/truffle/reference/configuration#resolving-naming-conflicts-on-windows
 
+        truffle_overwrite_config = kwargs.get("truffle_overwrite_config", False)
+
         if platform.system() == "Windows":
             base_cmd = ["truffle.cmd"]
         elif kwargs.get("npx_disable", False):
@@ -130,6 +134,22 @@ class Truffle(AbstractPlatform):
                 " ".join(cmd),
             )
 
+            config_used = None
+            config_saved = None
+            if truffle_overwrite_config:
+                overwritten_version = kwargs.get("truffle_overwrite_version", None)
+                # If the version is not provided, we try to guess it with the config file
+                if overwritten_version is None:
+                    version_from_config = _get_version_from_config(self._target)
+                    if version_from_config:
+                        overwritten_version, _ = version_from_config
+
+                # Save the config file, and write our temporary config
+                config_used, config_saved = _save_config(Path(self._target))
+                if config_used is None:
+                    config_used = Path('truffle-config.js')
+                _write_config(Path(self._target), config_used, overwritten_version)
+
             process = subprocess.Popen(
                 cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self._target
             )
@@ -139,6 +159,9 @@ class Truffle(AbstractPlatform):
                 stdout_bytes.decode(),
                 stderr_bytes.decode(),
             )  # convert bytestrings to unicode strings
+
+            if truffle_overwrite_config:
+                _reload_config(Path(self._target), config_saved, config_used)
 
             LOGGER.info(stdout)
             if stderr:
@@ -212,7 +235,7 @@ class Truffle(AbstractPlatform):
                 if version is None:
                     version = target_loaded.get("compiler", {}).get("version", None)
                     if "+" in version:
-                        version = version[0 : version.find("+")]
+                        version = version[0: version.find("+")]
 
         if version is None or compiler is None:
             version_from_config = _get_version_from_config(self._target)
@@ -283,7 +306,7 @@ def _get_version_from_config(target: str) -> Optional[Tuple[str, str]]:
     return None
 
 
-def _get_version(truffle_call, cwd):
+def _get_version(truffle_call: List[str], cwd: str) -> Tuple[str, str]:
     cmd = truffle_call + ["version"]
     try:
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd)
@@ -301,9 +324,70 @@ def _get_version(truffle_call, cwd):
             version = re.findall(r"\d+\.\d+\.\d+", line)[0]
             compiler = re.findall(r"(solc[a-z\-]*)", line)
             if len(compiler) > 0:
-                return version, compiler
+                return version, compiler[0]
 
     raise InvalidCompilation(f"Solidity version not found {stdout}")
+
+
+def _save_config(cwd: Path) -> Tuple[Optional[Path], Optional[Path]]:
+    """
+    Save truffle-config.js / truffle.js to a temporary file.
+    Return (original_config_name, temporary_file)
+    Return None, None if there was no configuration file
+
+    :param cwd:
+    :return:
+    """
+    unique_filename = str(uuid.uuid4())
+    while Path(cwd, unique_filename).exists():
+        unique_filename = str(uuid.uuid4())
+
+    if Path(cwd, 'truffle-config.js').exists():
+        shutil.move(Path(cwd, 'truffle-config.js'), Path(cwd, unique_filename))
+        return Path('truffle-config.js'), Path(unique_filename)
+
+    if Path(cwd, 'truffle.js').exists():
+        shutil.move(Path(cwd, 'truffle.js'), Path(cwd, unique_filename))
+        return Path('truffle.js'), Path(unique_filename)
+    return None, None
+
+
+def _reload_config(cwd: Path, original_config: Optional[Path], tmp_config: Path):
+    """
+    Restore the original config
+
+    :param cwd:
+    :param original_config:
+    :param tmp_config:
+    :return:
+    """
+    os.remove(Path(cwd, tmp_config))
+    if original_config is not None:
+        shutil.move(Path(cwd, original_config), Path(cwd, tmp_config))
+
+
+def _write_config(cwd: Path, original_config: Path, version: Optional[str]):
+    """
+    Write the config file
+
+    :param cwd:
+    :param original_config:
+    :param version:
+    :return:
+    """
+    txt = ''
+    if version:
+        txt = f'''
+    module.exports = {{
+      compilers: {{
+        solc: {{
+          version: "{version}"
+        }}
+      }}
+    }}
+    '''
+    with open(Path(cwd, original_config), 'w') as f:
+        f.write(txt)
 
 
 def _relative_to_short(relative):
