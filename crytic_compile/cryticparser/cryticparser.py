@@ -156,6 +156,21 @@ def _init_truffle(parser):
         action="store",
         default=DEFAULTS_FLAG_IN_CONFIG["truffle_version"],
     )
+
+    group_truffle.add_argument(
+        "--truffle-overwrite-config",
+        help="Use a simplified version of truffle-config.js for compilation",
+        action="store_true",
+        default=DEFAULTS_FLAG_IN_CONFIG["truffle_overwrite_config"],
+    )
+
+    group_truffle.add_argument(
+        "--truffle-overwrite-version",
+        help="Overwrite solc version in truffle-config.js (only if --truffle-overwrite-config)",
+        action="store",
+        default=DEFAULTS_FLAG_IN_CONFIG["truffle_overwrite_version"],
+    )
+
     return group_truffle
 
 

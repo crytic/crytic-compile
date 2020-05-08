@@ -17,6 +17,8 @@ DEFAULTS_FLAG_IN_CONFIG = {
     "truffle_version": None,
     "truffle_ignore_compile": False,
     "truffle_build_directory": "build/contracts",
+    "truffle_overwrite_config": False,
+    "truffle_overwrite_version": None,
     "embark_ignore_compile": False,
     "embark_overwrite_config": False,
     "brownie_ignore_compile": False,
