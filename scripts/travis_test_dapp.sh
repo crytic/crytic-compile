@@ -9,7 +9,7 @@ git config --global user.email "ci@trailofbits.com"
 git config --global user.name "CI User"
 
 
-curl https://nixos.org/nix/install | sh
+curl https://nixos.org/nix/install | sudo sh
 # shellcheck disable=SC1090
 . "$HOME/.nix-profile/etc/profile.d/nix.sh"
 nix-env -iA nixpkgs.cachix
