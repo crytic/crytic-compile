@@ -63,7 +63,7 @@ class Etherlime(AbstractPlatform):
                 cmd += compile_arguments.split(" ")
 
             try:
-                process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self._target)
             except OSError as error:
                 raise InvalidCompilation(error)
 
@@ -142,12 +142,17 @@ class Etherlime(AbstractPlatform):
         if etherlime_ignore:
             return False
         if os.path.isfile(os.path.join(target, "package.json")):
-            with open("package.json", encoding="utf8") as file_desc:
+            with open(os.path.join(target, "package.json"), encoding="utf8") as file_desc:
                 package = json.load(file_desc)
             if "dependencies" in package:
                 return (
                     "etherlime-lib" in package["dependencies"]
                     or "etherlime" in package["dependencies"]
+                )
+            if "devDependencies" in package:
+                return (
+                        "etherlime-lib" in package["devDependencies"]
+                        or "etherlime" in package["devDependencies"]
                 )
         return False
 

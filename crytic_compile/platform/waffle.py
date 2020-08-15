@@ -62,6 +62,11 @@ class Waffle(AbstractPlatform):
 
         config_file = kwargs.get("waffle_config_file", None)
 
+        if config_file is None:
+            potential_config_files = list(Path(target).rglob("*waffle*.json"))
+            if potential_config_files and len(potential_config_files) == 1:
+                config_file = potential_config_files[0]
+
         # Read config file
         if config_file:
             config = _load_config(config_file)
@@ -122,11 +127,12 @@ class Waffle(AbstractPlatform):
             config["compilerOptions"] = needed_config["compilerOptions"]
 
         if not waffle_ignore_compile:
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".json") as file_desc:
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".json", dir=target) as file_desc:
                 json.dump(config, file_desc)
                 file_desc.flush()
 
-                cmd += [os.path.relpath(file_desc.name)]
+                #cmd += [os.path.relpath(file_desc.name)]
+                cmd += [Path(file_desc.name).name]
 
                 LOGGER.info("Temporary file created: %s", file_desc.name)
                 LOGGER.info("'%s running", " ".join(cmd))
@@ -159,9 +165,8 @@ class Waffle(AbstractPlatform):
         for contract in target_all["contracts"]:
             target_loaded = target_all["contracts"][contract]
             contract = contract.split(":")
-            filename_rel = os.path.join(target, contract[0])
             filename = convert_filename(
-                filename_rel, _relative_to_short, crytic_compile, working_dir=target
+                contract[0], _relative_to_short, crytic_compile, working_dir=target
             )
 
             contract_name = contract[1]
@@ -206,10 +211,13 @@ class Waffle(AbstractPlatform):
         if waffle_ignore:
             return False
         if os.path.isfile(os.path.join(target, "package.json")):
-            with open("package.json", encoding="utf8") as file_desc:
+            with open(os.path.join(target, "package.json"), encoding="utf8") as file_desc:
                 package = json.load(file_desc)
             if "dependencies" in package:
                 return "ethereum-waffle" in package["dependencies"]
+            if "devDependencies" in package:
+                return "ethereum-waffle" in package["devDependencies"]
+
         return False
 
     def is_dependency(self, path: str) -> bool:
