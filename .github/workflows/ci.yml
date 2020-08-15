@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        type: ["solc", "truffle", "embark", "dapp", "etherlime", "etherscan", "brownie", "waffle", "buidler"]
+        type: ["solc", "truffle", "embark", "etherlime", "etherscan", "brownie", "waffle", "buidler"]
     steps:
     - uses: actions/checkout@v1
     - name: Set up Python 3.6
