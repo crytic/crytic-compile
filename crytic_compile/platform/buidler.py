@@ -1,5 +1,5 @@
 """
-Truffle platform
+Builder platform
 """
 import glob
 import json
@@ -144,7 +144,7 @@ class Buidler(AbstractPlatform):
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:
         """
-        Check if the target is a truffle project
+        Check if the target is a buidler project
 
         :param target:
         :return:
@@ -152,7 +152,9 @@ class Buidler(AbstractPlatform):
         buidler_ignore = kwargs.get("buidler_ignore", False)
         if buidler_ignore:
             return False
-        return os.path.isfile(os.path.join(target, "buidler.config.js"))
+        is_javascript = os.path.isfile(os.path.join(target, "buidler.config.js"))
+        is_typescript = os.path.isfile(os.path.join(target, "buidler.config.ts"))
+        return is_javascript or is_typescript
 
     def is_dependency(self, path: str) -> bool:
         """
@@ -169,7 +171,7 @@ class Buidler(AbstractPlatform):
 
         :return:
         """
-        return ["truffle test"]
+        return ["buidler test"]
 
 
 def _get_version_from_config(builder_directory: Path) -> Optional[Tuple[str, str, bool]]:
