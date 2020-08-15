@@ -4,6 +4,7 @@ Module handling the cli arguments
 from argparse import ArgumentParser
 
 from crytic_compile.cryticparser import DEFAULTS_FLAG_IN_CONFIG
+from crytic_compile.crytic_compile import get_platforms
 
 
 def init(parser: ArgumentParser):
@@ -15,10 +16,14 @@ def init(parser: ArgumentParser):
     """
 
     group_solc = parser.add_argument_group("Compile options")
+
+    platforms = get_platforms()
+
+
     group_solc.add_argument(
         "--compile-force-framework",
         help="Force the compile to a given framework "
-             "(truffle, embark, dapp, etherlime, etherscan, waffle)",
+             f"({','.join([x.NAME.lower() for x in platforms])})",
         action="store",
         default=DEFAULTS_FLAG_IN_CONFIG["compile_force_framework"],
     )
