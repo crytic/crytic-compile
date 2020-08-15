@@ -904,7 +904,7 @@ class CryticCompile:
         compile_force_framework: Union[str, None] = kwargs.get("compile_force_framework", None)
         if compile_force_framework:
             platform = next(
-                (p(target) for p in platforms if p.NAME == compile_force_framework), None
+                (p(target) for p in platforms if p.NAME.lower() == compile_force_framework.lower()), None
             )
 
         if not platform:
