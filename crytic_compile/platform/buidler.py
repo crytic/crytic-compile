@@ -120,8 +120,8 @@ class Buidler(AbstractPlatform):
                         crytic_compile.bytecodes_runtime[contract_name] = info["evm"]["deployedBytecode"]["object"]
                         crytic_compile.srcmaps_init[contract_name] = info["evm"]["bytecode"]["sourceMap"].split(";")
                         crytic_compile.srcmaps_runtime[contract_name] = info["evm"]["bytecode"]["sourceMap"].split(";")
-                        userdoc = json.loads(info.get("userdoc", "{}"))
-                        devdoc = json.loads(info.get("devdoc", "{}"))
+                        userdoc = info.get("userdoc", {})
+                        devdoc = info.get("devdoc", {})
                         natspec = Natspec(userdoc, devdoc)
                         crytic_compile.natspec[contract_name] = natspec
 
