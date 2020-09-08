@@ -2,7 +2,7 @@
 
 ### Test dapp integration
 
-cd tests/buidler
+cd tests/buidler || exit -1
 
 
 curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.34.0/install.sh | bash

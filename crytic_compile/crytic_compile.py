@@ -63,10 +63,10 @@ class CryticCompile:
 
     def __init__(self, target: Union[str, AbstractPlatform], **kwargs: str):
         """
-            Args:
-                target (str|SolcStandardJson)
-            Keyword Args:
-                See https://github.com/crytic/crytic-compile/wiki/Configuration
+        Args:
+            target (str|SolcStandardJson)
+        Keyword Args:
+            See https://github.com/crytic/crytic-compile/wiki/Configuration
         """
         # ASTS are indexed by absolute path
         self._asts: Dict = {}
@@ -184,19 +184,19 @@ class CryticCompile:
     def filename_of_contract(self, name: str) -> Filename:
         """
         :return: utils.namings.Filename
-         """
+        """
         return self._contracts_filenames[name]
 
     def absolute_filename_of_contract(self, name: str) -> str:
         """
         :return: Absolute filename
-         """
+        """
         return self._contracts_filenames[name].absolute
 
     def used_filename_of_contract(self, name: str) -> str:
         """
         :return: Used filename
-         """
+        """
         return self._contracts_filenames[name].used
 
     def find_absolute_filename_from_used_filename(self, used_filename: str) -> str:
@@ -885,7 +885,7 @@ class CryticCompile:
 
     def export(self, **kwargs: str) -> Optional[str]:
         """
-            Export to json. The json format can be crytic-compile, solc or truffle.
+        Export to json. The json format can be crytic-compile, solc or truffle.
         """
         export_format = kwargs.get("export_format", None)
         if export_format is None:
@@ -957,9 +957,9 @@ class CryticCompile:
 
     def _remove_metadata(self):
         """
-            Init bytecode contains metadata that needs to be removed
-            see
-            http://solidity.readthedocs.io/en/v0.4.24/metadata.html#encoding-of-the-metadata-hash-in-the-bytecode
+        Init bytecode contains metadata that needs to be removed
+        see
+        http://solidity.readthedocs.io/en/v0.4.24/metadata.html#encoding-of-the-metadata-hash-in-the-bytecode
         """
         self._init_bytecodes = {
             key: re.sub(r"a165627a7a72305820.{64}0029", r"", bytecode)

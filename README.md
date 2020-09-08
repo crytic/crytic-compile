@@ -25,7 +25,7 @@ The plugin is used in Crytic tools, including:
 
 ## Installation
 
-```
+```bash
 pip3 install crytic-compile
 ```
 

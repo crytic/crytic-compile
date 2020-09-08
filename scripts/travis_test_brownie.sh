@@ -2,7 +2,7 @@
 
 pip install eth-brownie
 brownie bake token
-cd token
+cd token || exit -1
 
 crytic-compile . --compile-force-framework Brownie
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 cp tests/contract.sol /tmp
-cd /tmp
+cd /tmp || exit -1
 crytic-compile contract.sol --compile-remove-metadata
 
 cd -

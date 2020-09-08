@@ -3,7 +3,7 @@
 ### Test dapp integration
 
 mkdir /tmp/dapp
-cd /tmp/dapp
+cd /tmp/dapp || exit -1
 # The dapp init process makes a temporary local git repo and needs certain values to be set
 git config --global user.email "ci@trailofbits.com"
 git config --global user.name "CI User"

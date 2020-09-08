@@ -3,7 +3,7 @@
 ### Test etherscan integration
 
 mkdir /tmp/etherscan
-cd /tmp/etherscan
+cd /tmp/etherscan  || exit -1
 
 wget -O solc-0.4.25 https://github.com/ethereum/solidity/releases/download/v0.4.25/solc-static-linux
 chmod +x solc-0.4.25

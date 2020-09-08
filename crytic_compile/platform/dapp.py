@@ -136,6 +136,7 @@ def _run_dapp(target: str):
     """
     # pylint: disable=import-outside-toplevel
     from crytic_compile import InvalidCompilation
+
     cmd = ["dapp", "build"]
 
     try:

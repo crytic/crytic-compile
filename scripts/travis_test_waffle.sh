@@ -3,7 +3,7 @@
 ### Test truffle integration
 
 mkdir /tmp/waffle
-cd /tmp/waffle
+cd /tmp/waffle || exit -1
 
 curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.34.0/install.sh | bash
 source ~/.nvm/nvm.sh
