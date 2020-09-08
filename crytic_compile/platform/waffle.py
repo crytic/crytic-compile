@@ -35,6 +35,7 @@ class Waffle(AbstractPlatform):
     PROJECT_URL = "https://github.com/EthWorks/Waffle"
     TYPE = Type.WAFFLE
 
+    # pylint: disable=too-many-locals,too-many-branches,too-many-statements
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str):
         """
         Compile the target
@@ -142,6 +143,7 @@ class Waffle(AbstractPlatform):
                         cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=target
                     )
                 except OSError as error:
+                    # pylint: disable=raise-missing-from
                     raise InvalidCompilation(error)
 
                 stdout, stderr = process.communicate()
@@ -266,6 +268,7 @@ def _get_version(compiler: str, cwd: str, config=None) -> str:
         try:
             process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd)
         except OSError as error:
+            # pylint: disable=raise-missing-from
             raise InvalidCompilation(error)
         stdout_bytes, _ = process.communicate()
         stdout_txt = stdout_bytes.decode()  # convert bytestrings to unicode strings
@@ -279,6 +282,7 @@ def _get_version(compiler: str, cwd: str, config=None) -> str:
         try:
             process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd)
         except OSError as error:
+            # pylint: disable=raise-missing-from
             raise InvalidCompilation(error)
         stdout_bytes, _ = process.communicate()
         stdout_txt = stdout_bytes.decode()  # convert bytestrings to unicode strings

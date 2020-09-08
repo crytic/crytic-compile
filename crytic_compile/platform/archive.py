@@ -70,6 +70,7 @@ class Archive(AbstractPlatform):
         :param _kwargs:
         :return:
         """
+        # pylint: disable=import-outside-toplevel
         from crytic_compile.crytic_compile import get_platforms
 
         if isinstance(self._target, str) and os.path.isfile(self._target):

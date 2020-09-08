@@ -1,24 +1,19 @@
 """
 Builder platform
 """
-import glob
 import json
 import logging
 import os
-import platform
-import re
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, Tuple, List, Dict
+from typing import TYPE_CHECKING, Optional, Tuple, List
 
-from crytic_compile.platform.types import Type
-from crytic_compile.platform.exceptions import InvalidCompilation
-from crytic_compile.utils.naming import convert_filename, extract_name, extract_filename
 from crytic_compile.compiler.compiler import CompilerVersion
-from crytic_compile.platform import solc
+from crytic_compile.platform.exceptions import InvalidCompilation
+from crytic_compile.platform.types import Type
+from crytic_compile.utils.naming import convert_filename, extract_name
 from crytic_compile.utils.natspec import Natspec
 from .abstract_platform import AbstractPlatform
-
 # Handle cycle
 from .solc import relative_to_short
 
@@ -37,6 +32,7 @@ class Buidler(AbstractPlatform):
     PROJECT_URL = "https://github.com/nomiclabs/buidler"
     TYPE = Type.BUILDER
 
+    # pylint: disable=too-many-locals,too-many-statements
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str):
         """
         Compile the target

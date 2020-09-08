@@ -33,6 +33,7 @@ class Embark(AbstractPlatform):
     PROJECT_URL = "https://github.com/embarklabs/embark"
     TYPE = Type.EMBARK
 
+    # pylint:disable=too-many-branches,too-many-statements,too-many-locals
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str):
         """
         Compile the target
@@ -62,6 +63,7 @@ class Embark(AbstractPlatform):
                 try:
                     process = subprocess.Popen(["npm", "install", plugin_name], cwd=self._target)
                 except OSError as error:
+                    # pylint: disable=raise-missing-from
                     raise InvalidCompilation(error)
                 _, stderr = process.communicate()
                 with open(
@@ -86,6 +88,7 @@ class Embark(AbstractPlatform):
                     cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self._target
                 )
             except OSError as error:
+                # pylint: disable=raise-missing-from
                 raise InvalidCompilation(error)
             stdout, stderr = process.communicate()
             LOGGER.info("%s\n", stdout.decode())

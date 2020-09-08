@@ -54,7 +54,7 @@ class SolcStandardJson(Solc):
         #        elif isinstance(target, SolcStandardJson):
         #            self._json = target._json
         else:
-            raise ValueError(f"Invalid target for solc standard json input.")
+            raise ValueError("Invalid target for solc standard json input.")
 
         # Set some default values if they are not provided
         if "language" not in self._json:
@@ -109,6 +109,7 @@ class SolcStandardJson(Solc):
         """
         return self._json
 
+    # pylint: disable=too-many-locals
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str):
         """
         Compile the target
@@ -208,7 +209,7 @@ class SolcStandardJson(Solc):
         """
         return []
 
-
+# pylint: disable=too-many-locals
 def _run_solc_standard_json(
     solc_input: Dict, solc: str, solc_disable_warnings=False, working_dir=None
 ):
@@ -233,6 +234,7 @@ def _run_solc_standard_json(
             **additional_kwargs,
         )
     except OSError as error:
+        # pylint: disable=raise-missing-from
         raise InvalidCompilation(error)
     stdout_b, stderr_b = process.communicate(json.dumps(solc_input).encode("utf-8"))
     stdout, stderr = (
@@ -265,4 +267,5 @@ def _run_solc_standard_json(
 
         return solc_json_output
     except json.decoder.JSONDecodeError:
+        # pylint: disable=raise-missing-from
         raise InvalidCompilation(f"Invalid solc compilation {stderr}")

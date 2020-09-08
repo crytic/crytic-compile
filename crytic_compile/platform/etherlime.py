@@ -35,6 +35,7 @@ class Etherlime(AbstractPlatform):
     PROJECT_URL = "https://github.com/LimeChain/etherlime"
     TYPE = Type.ETHERLIME
 
+    # pylint: disable=too-many-locals
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str):
         """
         Compile the target
@@ -67,6 +68,7 @@ class Etherlime(AbstractPlatform):
                     cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self._target
                 )
             except OSError as error:
+                # pylint: disable=raise-missing-from
                 raise InvalidCompilation(error)
 
             stdout_bytes, stderr_bytes = process.communicate()

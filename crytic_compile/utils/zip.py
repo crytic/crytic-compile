@@ -28,6 +28,7 @@ def load_from_zip(target: str) -> List["CryticCompile"]:
     :param target:
     :return:
     """
+    # pylint: disable=import-outside-toplevel
     from crytic_compile.crytic_compile import CryticCompile
 
     compilations = []

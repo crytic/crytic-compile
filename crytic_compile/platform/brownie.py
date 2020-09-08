@@ -56,6 +56,7 @@ class Brownie(AbstractPlatform):
                     cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self._target
                 )
             except OSError as error:
+                # pylint: disable=raise-missing-from
                 raise InvalidCompilation(error)
 
             stdout_bytes, stderr_bytes = process.communicate()
@@ -110,6 +111,7 @@ class Brownie(AbstractPlatform):
         return ["brownie test"]
 
 
+# pylint: disable=too-many-locals
 def _iterate_over_files(crytic_compile: "CryticCompile", target: str, filenames: List[str]):
     """
     Iterate over the files

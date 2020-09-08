@@ -12,23 +12,25 @@ from typing import Dict, List, Union, Set, Tuple, Optional, Type, TYPE_CHECKING
 from pathlib import Path
 import sha3
 
-from .platform import solc_standard_json, all_platforms
-from .platform.abstract_platform import AbstractPlatform
-from .platform.all_export import PLATFORMS_EXPORT
-from .platform.solc import Solc
-from .platform.standard import export_to_standard
-from .utils.naming import Filename
-from .utils.natspec import Natspec
-from .utils.zip import load_from_zip
-from .utils.npm import get_package_name
+from crytic_compile.platform import solc_standard_json, all_platforms
+from crytic_compile.platform.abstract_platform import AbstractPlatform
+from crytic_compile.platform.all_export import PLATFORMS_EXPORT
+from crytic_compile.platform.solc import Solc
+from crytic_compile.platform.standard import export_to_standard
+from crytic_compile.utils.naming import Filename
+from crytic_compile.utils.natspec import Natspec
+from crytic_compile.utils.zip import load_from_zip
+from crytic_compile.utils.npm import get_package_name
 
 # Cycle dependency
 if TYPE_CHECKING:
-    from .compiler.compiler import CompilerVersion
+    from crytic_compile.compiler.compiler import CompilerVersion
 
 LOGGER = logging.getLogger("CryticCompile")
 logging.basicConfig()
 
+
+# pylint: disable=too-many-lines
 
 def get_platforms() -> List[Type[AbstractPlatform]]:
     """
@@ -51,7 +53,7 @@ def is_supported(target: str) -> bool:
     platforms = get_platforms()
     return any(platform.is_supported(target) for platform in platforms) or target.endswith(".zip")
 
-
+# pylint: disable=too-many-instance-attributes,too-many-public-methods
 class CryticCompile:
     """
     Main class.
@@ -897,6 +899,7 @@ class CryticCompile:
     ###################################################################################
     ###################################################################################
 
+    # pylint: disable=no-self-use
     def _init_platform(self, target: str, **kwargs: str) -> AbstractPlatform:
         platforms = get_platforms()
         platform = None

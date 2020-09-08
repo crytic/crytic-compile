@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.abspath('../'))
 # -- Project information -----------------------------------------------------
 
 project = 'crytic-compile'
-copyright = '2020, Trail of Bits'
+copyright = '2020, Trail of Bits'  # pylint: disable=redefined-builtin
 author = 'Trail of Bits'
 
 # The full version, including alpha/beta/rc tags
