@@ -13,7 +13,7 @@ nvm use --lts
 npm install -g ethereum-waffle
 npm install openzeppelin-solidity
 mkdir contracts
-cd contracts
+cd contracts || exit 255
 echo 'contract Test {
   constructor() public {}
 }' > token.sol

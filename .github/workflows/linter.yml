@@ -76,4 +76,4 @@ jobs:
           VALIDATE_DOCKERFILE: false
           VALIDATE_DOCKERFILE_HADOLINT: false
           VALIDATE_EDITORCONFIG: false
-          SHELLCHECK_OPTS: "-e SC1090"
+          SHELLCHECK_OPTS: "-e SC1090 -e SC2181 -e SC2103"

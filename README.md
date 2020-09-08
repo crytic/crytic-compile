@@ -33,7 +33,7 @@ pip3 install crytic-compile
 
 ### Standalone
 ```bash
-$ crytic-compile .
+crytic-compile .
 ```
 
 Crytic-compile will generate `crytic-export/contracts.json` containing the AST/ABI and bytecodes of the contracts.

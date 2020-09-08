@@ -11,7 +11,7 @@ nvm use 10.17.0
 
 npm install -g embark@4.2.0
 embark demo
-cd /tmp/embark_demo
+cd /tmp/embark_demo || exot 255
 npm install
 crytic-compile . --embark-overwrite-config --compile-remove-metadata
 
