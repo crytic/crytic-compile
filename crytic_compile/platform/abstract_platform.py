@@ -15,6 +15,7 @@ class IncorrectPlatformInitialization(Exception):
     """
     Exception raises if a platform was not properly defined
     """
+
     # pylint: disable=unnecessary-pass
     pass
 

@@ -32,6 +32,7 @@ logging.basicConfig()
 
 # pylint: disable=too-many-lines
 
+
 def get_platforms() -> List[Type[AbstractPlatform]]:
     """
     Return the available platforms classes
@@ -52,6 +53,7 @@ def is_supported(target: str) -> bool:
     """
     platforms = get_platforms()
     return any(platform.is_supported(target) for platform in platforms) or target.endswith(".zip")
+
 
 # pylint: disable=too-many-instance-attributes,too-many-public-methods
 class CryticCompile:

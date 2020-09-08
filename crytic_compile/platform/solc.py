@@ -263,6 +263,7 @@ def is_optimized(solc_arguments: str) -> bool:
         return "--optimize" in solc_arguments
     return False
 
+
 # pylint: disable=too-many-arguments,too-many-locals,too-many-branches
 def _run_solc(
     crytic_compile: "CryticCompile",
@@ -362,6 +363,7 @@ def _run_solc(
         # pylint: disable=raise-missing-from
         raise InvalidCompilation(f"Invalid solc compilation {stderr}")
 
+
 # pylint: disable=too-many-arguments
 def _run_solcs_path(
     crytic_compile,
@@ -417,6 +419,7 @@ def _run_solcs_path(
         )
 
     return targets_json
+
 
 # pylint: disable=too-many-arguments
 def _run_solcs_env(

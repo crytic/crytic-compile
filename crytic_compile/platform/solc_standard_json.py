@@ -209,6 +209,7 @@ class SolcStandardJson(Solc):
         """
         return []
 
+
 # pylint: disable=too-many-locals
 def _run_solc_standard_json(
     solc_input: Dict, solc: str, solc_disable_warnings=False, working_dir=None
