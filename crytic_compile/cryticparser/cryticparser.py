@@ -19,11 +19,10 @@ def init(parser: ArgumentParser):
 
     platforms = get_platforms()
 
-
     group_solc.add_argument(
         "--compile-force-framework",
         help="Force the compile to a given framework "
-             f"({','.join([x.NAME.lower() for x in platforms])})",
+        f"({','.join([x.NAME.lower() for x in platforms])})",
         action="store",
         default=DEFAULTS_FLAG_IN_CONFIG["compile_force_framework"],
     )
@@ -77,7 +76,7 @@ def _init_solc(parser):
     group_solc.add_argument(
         "--solc-args",
         help="Add custom solc arguments. Example: --solc-args"
-             ' "--allow-path /tmp --evm-version byzantium".',
+        ' "--allow-path /tmp --evm-version byzantium".',
         action="store",
         default=DEFAULTS_FLAG_IN_CONFIG["solc_args"],
     )
@@ -106,7 +105,7 @@ def _init_solc(parser):
     group_solc.add_argument(
         "--solc-solcs-bin",
         help="Specify different solc version to try (path config)."
-             " Example: --solc-solcs-bin solc-0.4.24,solc-0.5.3",
+        " Example: --solc-solcs-bin solc-0.4.24,solc-0.5.3",
         action="store",
         default=DEFAULTS_FLAG_IN_CONFIG["solc_solcs_bin"],
     )
@@ -232,7 +231,7 @@ def _init_etherlime(parser):
     group_etherlime.add_argument(
         "--etherlime-compile-arguments",
         help="Add arbitrary arguments to etherlime compile "
-             "(note: [dir] is the the directory provided to crytic-compile)",
+        "(note: [dir] is the the directory provided to crytic-compile)",
         action="store_true",
         dest="etherlime_compile_arguments",
         default=DEFAULTS_FLAG_IN_CONFIG["etherlime_compile_arguments"],

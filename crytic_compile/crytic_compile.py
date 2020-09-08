@@ -650,7 +650,7 @@ class CryticCompile:
         return new_names
 
     def _library_name_lookup(
-            self, lib_name: str, original_contract: str
+        self, lib_name: str, original_contract: str
     ) -> Optional[Tuple[str, str]]:
         """
         Convert a library name to the contract
@@ -682,14 +682,14 @@ class CryticCompile:
 
             # Solidity 0.4 with filename
             solidity_0_4_filename = (
-                    "__" + name_with_absolute_filename + "_" * (38 - len(name_with_absolute_filename))
+                "__" + name_with_absolute_filename + "_" * (38 - len(name_with_absolute_filename))
             )
             if solidity_0_4_filename == lib_name:
                 return name, solidity_0_4_filename
 
             # Solidity 0.4 with filename
             solidity_0_4_filename = (
-                    "__" + name_with_used_filename + "_" * (38 - len(name_with_used_filename))
+                "__" + name_with_used_filename + "_" * (38 - len(name_with_used_filename))
             )
             if solidity_0_4_filename == lib_name:
                 return name, solidity_0_4_filename
@@ -763,7 +763,7 @@ class CryticCompile:
         return self._libraries[name]
 
     def _update_bytecode_with_libraries(
-            self, bytecode: str, libraries: Union[None, Dict[str, str]]
+        self, bytecode: str, libraries: Union[None, Dict[str, str]]
     ) -> str:
         """
         Patch the bytecode
@@ -904,7 +904,8 @@ class CryticCompile:
         compile_force_framework: Union[str, None] = kwargs.get("compile_force_framework", None)
         if compile_force_framework:
             platform = next(
-                (p(target) for p in platforms if p.NAME.lower() == compile_force_framework.lower()), None
+                (p(target) for p in platforms if p.NAME.lower() == compile_force_framework.lower()),
+                None,
             )
 
         if not platform:

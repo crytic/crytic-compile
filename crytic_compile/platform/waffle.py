@@ -131,7 +131,7 @@ class Waffle(AbstractPlatform):
                 json.dump(config, file_desc)
                 file_desc.flush()
 
-                #cmd += [os.path.relpath(file_desc.name)]
+                # cmd += [os.path.relpath(file_desc.name)]
                 cmd += [Path(file_desc.name).name]
 
                 LOGGER.info("Temporary file created: %s", file_desc.name)

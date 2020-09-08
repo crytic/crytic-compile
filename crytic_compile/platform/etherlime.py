@@ -63,7 +63,9 @@ class Etherlime(AbstractPlatform):
                 cmd += compile_arguments.split(" ")
 
             try:
-                process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self._target)
+                process = subprocess.Popen(
+                    cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self._target
+                )
             except OSError as error:
                 raise InvalidCompilation(error)
 
@@ -151,8 +153,8 @@ class Etherlime(AbstractPlatform):
                 )
             if "devDependencies" in package:
                 return (
-                        "etherlime-lib" in package["devDependencies"]
-                        or "etherlime" in package["devDependencies"]
+                    "etherlime-lib" in package["devDependencies"]
+                    or "etherlime" in package["devDependencies"]
                 )
         return False
 

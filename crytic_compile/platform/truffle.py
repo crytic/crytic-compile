@@ -147,7 +147,7 @@ class Truffle(AbstractPlatform):
                 # Save the config file, and write our temporary config
                 config_used, config_saved = _save_config(Path(self._target))
                 if config_used is None:
-                    config_used = Path('truffle-config.js')
+                    config_used = Path("truffle-config.js")
                 _write_config(Path(self._target), config_used, overwritten_version)
 
             process = subprocess.Popen(
@@ -209,7 +209,7 @@ class Truffle(AbstractPlatform):
                     )
                 except InvalidCompilation as i:
                     txt = str(i)
-                    txt += '\nConsider removing the build/contracts content (rm build/contracts/*)'
+                    txt += "\nConsider removing the build/contracts content (rm build/contracts/*)"
                     raise InvalidCompilation(txt)
 
                 crytic_compile.asts[filename.absolute] = target_loaded["ast"]
@@ -235,7 +235,7 @@ class Truffle(AbstractPlatform):
                 if version is None:
                     version = target_loaded.get("compiler", {}).get("version", None)
                     if "+" in version:
-                        version = version[0: version.find("+")]
+                        version = version[0 : version.find("+")]
 
         if version is None or compiler is None:
             version_from_config = _get_version_from_config(self._target)
@@ -342,13 +342,13 @@ def _save_config(cwd: Path) -> Tuple[Optional[Path], Optional[Path]]:
     while Path(cwd, unique_filename).exists():
         unique_filename = str(uuid.uuid4())
 
-    if Path(cwd, 'truffle-config.js').exists():
-        shutil.move(Path(cwd, 'truffle-config.js'), Path(cwd, unique_filename))
-        return Path('truffle-config.js'), Path(unique_filename)
+    if Path(cwd, "truffle-config.js").exists():
+        shutil.move(Path(cwd, "truffle-config.js"), Path(cwd, unique_filename))
+        return Path("truffle-config.js"), Path(unique_filename)
 
-    if Path(cwd, 'truffle.js').exists():
-        shutil.move(Path(cwd, 'truffle.js'), Path(cwd, unique_filename))
-        return Path('truffle.js'), Path(unique_filename)
+    if Path(cwd, "truffle.js").exists():
+        shutil.move(Path(cwd, "truffle.js"), Path(cwd, unique_filename))
+        return Path("truffle.js"), Path(unique_filename)
     return None, None
 
 
@@ -375,9 +375,9 @@ def _write_config(cwd: Path, original_config: Path, version: Optional[str]):
     :param version:
     :return:
     """
-    txt = ''
+    txt = ""
     if version:
-        txt = f'''
+        txt = f"""
     module.exports = {{
       compilers: {{
         solc: {{
@@ -385,8 +385,8 @@ def _write_config(cwd: Path, original_config: Path, version: Optional[str]):
         }}
       }}
     }}
-    '''
-    with open(Path(cwd, original_config), 'w') as f:
+    """
+    with open(Path(cwd, original_config), "w") as f:
         f.write(txt)
 
 

@@ -33,5 +33,5 @@ DEFAULTS_FLAG_IN_CONFIG = {
     "npx_disable": False,
     "ignore_compile": False,
     "buidler_ignore_compile": False,
-    "buidler_cache_directory": "cache"
+    "buidler_cache_directory": "cache",
 }
