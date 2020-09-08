@@ -1,21 +1,17 @@
 """
 Builder platform
 """
-import glob
 import json
 import logging
 import os
-import platform
-import re
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, Tuple, List, Dict
+from typing import TYPE_CHECKING, Optional, Tuple, List
 
-from crytic_compile.platform.types import Type
-from crytic_compile.platform.exceptions import InvalidCompilation
-from crytic_compile.utils.naming import convert_filename, extract_name, extract_filename
 from crytic_compile.compiler.compiler import CompilerVersion
-from crytic_compile.platform import solc
+from crytic_compile.platform.exceptions import InvalidCompilation
+from crytic_compile.platform.types import Type
+from crytic_compile.utils.naming import convert_filename, extract_name
 from crytic_compile.utils.natspec import Natspec
 from .abstract_platform import AbstractPlatform
 
@@ -37,6 +33,7 @@ class Buidler(AbstractPlatform):
     PROJECT_URL = "https://github.com/nomiclabs/buidler"
     TYPE = Type.BUILDER
 
+    # pylint: disable=too-many-locals,too-many-statements
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str):
         """
         Compile the target
@@ -81,8 +78,8 @@ class Buidler(AbstractPlatform):
 
         if not os.path.isfile(os.path.join(self._target, target_solc_file)):
             if os.path.isfile(os.path.join(self._target, target_vyper_file)):
-                txt = 'Vyper not yet supported with buidler.'
-                txt += ' Please open an issue in https://github.com/crytic/crytic-compile'
+                txt = "Vyper not yet supported with buidler."
+                txt += " Please open an issue in https://github.com/crytic/crytic-compile"
                 raise InvalidCompilation(txt)
             txt = f"`buidler compile` failed. Can you run it?\n{os.path.join(self._target, target_solc_file)} not found"
             raise InvalidCompilation(txt)
@@ -116,10 +113,18 @@ class Buidler(AbstractPlatform):
                         crytic_compile.contracts_filenames[contract_name] = contract_filename
 
                         crytic_compile.abis[contract_name] = info["abi"]
-                        crytic_compile.bytecodes_init[contract_name] = info["evm"]["bytecode"]["object"]
-                        crytic_compile.bytecodes_runtime[contract_name] = info["evm"]["deployedBytecode"]["object"]
-                        crytic_compile.srcmaps_init[contract_name] = info["evm"]["bytecode"]["sourceMap"].split(";")
-                        crytic_compile.srcmaps_runtime[contract_name] = info["evm"]["bytecode"]["sourceMap"].split(";")
+                        crytic_compile.bytecodes_init[contract_name] = info["evm"]["bytecode"][
+                            "object"
+                        ]
+                        crytic_compile.bytecodes_runtime[contract_name] = info["evm"][
+                            "deployedBytecode"
+                        ]["object"]
+                        crytic_compile.srcmaps_init[contract_name] = info["evm"]["bytecode"][
+                            "sourceMap"
+                        ].split(";")
+                        crytic_compile.srcmaps_runtime[contract_name] = info["evm"]["bytecode"][
+                            "sourceMap"
+                        ].split(";")
                         userdoc = info.get("userdoc", {})
                         devdoc = info.get("devdoc", {})
                         natspec = Natspec(userdoc, devdoc)
@@ -185,11 +190,11 @@ def _get_version_from_config(builder_directory: Path) -> Optional[Tuple[str, str
             raise InvalidCompilation(f"{config} not found")
         with open(config) as config_f:
             version = config_f.read()
-            return 'vyper', version, False
+            return "vyper", version, False
     with open(config) as config_f:
         config = json.load(config_f)
 
-    version = config['solc']['version']
+    version = config["solc"]["version"]
 
-    optimized = 'optimizer' in config['solc'] and config['solc']['optimizer']
-    return 'solc', version, optimized
+    optimized = "optimizer" in config["solc"] and config["solc"]["optimizer"]
+    return "solc", version, optimized

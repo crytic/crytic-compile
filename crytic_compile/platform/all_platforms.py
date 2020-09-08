@@ -1,6 +1,7 @@
 """
 Module containing all the platforms
 """
+# pylint: disable=unused-import
 from .truffle import Truffle
 from .solc import Solc
 from .solc_standard_json import SolcStandardJson

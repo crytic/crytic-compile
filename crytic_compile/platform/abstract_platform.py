@@ -16,6 +16,7 @@ class IncorrectPlatformInitialization(Exception):
     Exception raises if a platform was not properly defined
     """
 
+    # pylint: disable=unnecessary-pass
     pass
 
 
@@ -30,7 +31,7 @@ class AbstractPlatform(metaclass=abc.ABCMeta):
 
     HIDE = False  # True if the class is not meant for direct user manipulation
 
-    def __init__(self, target: str, **kwargs: str):
+    def __init__(self, target: str, **_kwargs: str):
         if not self.NAME:
             raise IncorrectPlatformInitialization(
                 "NAME is not initialized {}".format(self.__class__.__name__)

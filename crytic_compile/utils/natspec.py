@@ -170,10 +170,10 @@ class DevDoc:
     @property
     def methods(self) -> Dict[str, DevMethod]:
         """
-         Return the dev methods
+        Return the dev methods
 
-         :return: Dict[str, DevMethod]
-         """
+        :return: Dict[str, DevMethod]
+        """
         return self._methods
 
     @property

@@ -87,6 +87,7 @@ class Solc(AbstractPlatform):
     PROJECT_URL = "https://github.com/ethereum/solidity"
     TYPE = Type.SOLC
 
+    # pylint: disable=too-many-locals
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str):
         """
         Compile the target
@@ -241,6 +242,7 @@ def get_version(solc: str) -> str:
     try:
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     except OSError as error:
+        # pylint: disable=raise-missing-from
         raise InvalidCompilation(error)
     stdout_bytes, _ = process.communicate()
     stdout = stdout_bytes.decode()  # convert bytestrings to unicode strings
@@ -262,6 +264,7 @@ def is_optimized(solc_arguments: str) -> bool:
     return False
 
 
+# pylint: disable=too-many-arguments,too-many-locals,too-many-branches
 def _run_solc(
     crytic_compile: "CryticCompile",
     filename: str,
@@ -345,6 +348,7 @@ def _run_solc(
                 cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **additional_kwargs
             )
     except OSError as error:
+        # pylint: disable=raise-missing-from
         raise InvalidCompilation(error)
     stdout, stderr = process.communicate()
     stdout, stderr = (stdout.decode(), stderr.decode())  # convert bytestrings to unicode strings
@@ -356,9 +360,11 @@ def _run_solc(
         ret = json.loads(stdout)
         return ret
     except json.decoder.JSONDecodeError:
+        # pylint: disable=raise-missing-from
         raise InvalidCompilation(f"Invalid solc compilation {stderr}")
 
 
+# pylint: disable=too-many-arguments
 def _run_solcs_path(
     crytic_compile,
     filename,
@@ -415,6 +421,7 @@ def _run_solcs_path(
     return targets_json
 
 
+# pylint: disable=too-many-arguments
 def _run_solcs_env(
     crytic_compile,
     filename,

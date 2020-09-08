@@ -118,6 +118,7 @@ def _run_vyper(filename: str, vyper: str, env: Dict = None, working_dir: str = N
             cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env, **additional_kwargs
         )
     except OSError as error:
+        # pylint: disable=raise-missing-from
         raise InvalidCompilation(error)
 
     stdout, stderr = process.communicate()
@@ -128,6 +129,7 @@ def _run_vyper(filename: str, vyper: str, env: Dict = None, working_dir: str = N
         return json.loads(res)
 
     except json.decoder.JSONDecodeError:
+        # pylint: disable=raise-missing-from
         raise InvalidCompilation(f"Invalid vyper compilation\n{stderr}")
 
 
@@ -145,6 +147,7 @@ def _get_vyper_ast(filename: str, vyper: str, env=None, working_dir=None) -> Dic
             cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env, **additional_kwargs
         )
     except Exception as exception:
+        # pylint: disable=raise-missing-from
         raise InvalidCompilation(exception)
 
     stdout, stderr = process.communicate()
@@ -155,6 +158,7 @@ def _get_vyper_ast(filename: str, vyper: str, env=None, working_dir=None) -> Dic
         return json.loads(res)
 
     except json.decoder.JSONDecodeError:
+        # pylint: disable=raise-missing-from
         raise InvalidCompilation(f"Invalid vyper compilation\n{stderr}")
 
 

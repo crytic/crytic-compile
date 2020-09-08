@@ -33,6 +33,7 @@ class Embark(AbstractPlatform):
     PROJECT_URL = "https://github.com/embarklabs/embark"
     TYPE = Type.EMBARK
 
+    # pylint:disable=too-many-branches,too-many-statements,too-many-locals
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str):
         """
         Compile the target
@@ -62,10 +63,11 @@ class Embark(AbstractPlatform):
                 try:
                     process = subprocess.Popen(["npm", "install", plugin_name], cwd=self._target)
                 except OSError as error:
+                    # pylint: disable=raise-missing-from
                     raise InvalidCompilation(error)
                 _, stderr = process.communicate()
                 with open(
-                        os.path.join(self._target, "embark.json"), "w", encoding="utf8"
+                    os.path.join(self._target, "embark.json"), "w", encoding="utf8"
                 ) as outfile:
                     json.dump(embark_json, outfile, indent=2)
         else:
@@ -82,11 +84,11 @@ class Embark(AbstractPlatform):
                 cmd = ["embark", "build", "--contracts"]
                 if not kwargs.get("npx_disable", False):
                     cmd = ["npx"] + cmd
-                process = subprocess.Popen(cmd,
-                                           stdout=subprocess.PIPE,
-                                           stderr=subprocess.PIPE,
-                                           cwd=self._target)
+                process = subprocess.Popen(
+                    cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self._target
+                )
             except OSError as error:
+                # pylint: disable=raise-missing-from
                 raise InvalidCompilation(error)
             stdout, stderr = process.communicate()
             LOGGER.info("%s\n", stdout.decode())

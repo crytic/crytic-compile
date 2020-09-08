@@ -3,7 +3,7 @@
 ### Test truffle integration
 
 mkdir /tmp/truffle
-cd /tmp/truffle
+cd /tmp/truffle || exit 255
 
 curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.34.0/install.sh | bash
 source ~/.nvm/nvm.sh
@@ -17,7 +17,7 @@ crytic-compile . --compile-remove-metadata
 if [ $? -ne 0 ]
 then
     echo "Truffle test failed"
-    exit -1
+    exit 255
 fi
 # TODO: for some reason truffle output is not deterministc
 # The assigned id changes
@@ -28,6 +28,6 @@ fi
 #then  
 #    echo "Truffle test failed"
 #    echo $DIFF
-#    exit -1
+#    exit 255
 #fi
 

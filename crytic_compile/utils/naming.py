@@ -22,14 +22,14 @@ Filename = namedtuple("Filename", ["absolute", "used", "relative", "short"])
 
 def extract_name(name: str):
     """
-        Convert '/path:Contract' to Contract
+    Convert '/path:Contract' to Contract
     """
     return name[name.rfind(":") + 1 :]
 
 
 def extract_filename(name: str):
     """
-        Convert '/path:Contract' to /path
+    Convert '/path:Contract' to /path
     """
     if not ":" in name:
         return name
@@ -47,6 +47,7 @@ def combine_filename_name(filename: str, name: str):
     return filename + ":" + name
 
 
+# pylint: disable=too-many-branches
 def convert_filename(
     used_filename: Union[str, Path],
     relative_to_short,

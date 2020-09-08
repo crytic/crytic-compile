@@ -78,6 +78,7 @@ class Etherscan(AbstractPlatform):
     PROJECT_URL = "https://etherscan.io/"
     TYPE = Type.ETHERSCAN
 
+    # pylint: disable=too-many-locals,too-many-branches,too-many-statements
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str):
         """
 
@@ -156,7 +157,7 @@ class Etherscan(AbstractPlatform):
             _handle_bytecode(crytic_compile, target, html)
             return
 
-        elif source_code == "":
+        if source_code == "":
             LOGGER.error("Contract has no public source code")
             raise InvalidCompilation("Contract has no public source code: " + etherscan_url)
 

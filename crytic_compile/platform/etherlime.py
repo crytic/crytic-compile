@@ -35,6 +35,7 @@ class Etherlime(AbstractPlatform):
     PROJECT_URL = "https://github.com/LimeChain/etherlime"
     TYPE = Type.ETHERLIME
 
+    # pylint: disable=too-many-locals
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str):
         """
         Compile the target
@@ -63,8 +64,11 @@ class Etherlime(AbstractPlatform):
                 cmd += compile_arguments.split(" ")
 
             try:
-                process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self._target)
+                process = subprocess.Popen(
+                    cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self._target
+                )
             except OSError as error:
+                # pylint: disable=raise-missing-from
                 raise InvalidCompilation(error)
 
             stdout_bytes, stderr_bytes = process.communicate()
@@ -151,8 +155,8 @@ class Etherlime(AbstractPlatform):
                 )
             if "devDependencies" in package:
                 return (
-                        "etherlime-lib" in package["devDependencies"]
-                        or "etherlime" in package["devDependencies"]
+                    "etherlime-lib" in package["devDependencies"]
+                    or "etherlime" in package["devDependencies"]
                 )
         return False
 

@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 def _to_str(txt):
     if isinstance(txt, bytes):
-        return txt.decode('utf8')
+        return txt.decode("utf8")
     return txt
 
 
@@ -28,6 +28,7 @@ def load_from_zip(target: str) -> List["CryticCompile"]:
     :param target:
     :return:
     """
+    # pylint: disable=import-outside-toplevel
     from crytic_compile.crytic_compile import CryticCompile
 
     compilations = []
@@ -41,10 +42,12 @@ def load_from_zip(target: str) -> List["CryticCompile"]:
 
 
 # https://docs.python.org/3/library/zipfile.html#zipfile-objects
-ZIP_TYPES_ACCEPTED = {'lzma': zipfile.ZIP_LZMA,
-                      'stored': zipfile.ZIP_STORED,
-                      'deflated': zipfile.ZIP_DEFLATED,
-                      'bzip2': zipfile.ZIP_BZIP2}
+ZIP_TYPES_ACCEPTED = {
+    "lzma": zipfile.ZIP_LZMA,
+    "stored": zipfile.ZIP_STORED,
+    "deflated": zipfile.ZIP_DEFLATED,
+    "bzip2": zipfile.ZIP_BZIP2,
+}
 
 
 def save_to_zip(crytic_compiles: List["CryticCompile"], zip_filename: str, zip_type: str = "lzma"):
@@ -56,7 +59,9 @@ def save_to_zip(crytic_compiles: List["CryticCompile"], zip_filename: str, zip_t
     :param zip_filename:
     :return:
     """
-    with ZipFile(zip_filename, "w", compression=ZIP_TYPES_ACCEPTED.get(zip_type, zipfile.ZIP_LZMA)) as file_desc:
+    with ZipFile(
+        zip_filename, "w", compression=ZIP_TYPES_ACCEPTED.get(zip_type, zipfile.ZIP_LZMA)
+    ) as file_desc:
         for crytic_compile in crytic_compiles:
             output, target_name = generate_archive_export(crytic_compile)
             file_desc.writestr(target_name, json.dumps(output))

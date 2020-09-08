@@ -22,7 +22,7 @@ from crytic_compile.utils.naming import extract_filename, extract_name, convert_
 from crytic_compile.utils.natspec import Natspec
 
 if TYPE_CHECKING:
-    from crytic_compile import CryticCompile, InvalidCompilation
+    from crytic_compile import CryticCompile
 
 LOGGER = logging.getLogger("CryticCompile")
 
@@ -36,6 +36,7 @@ class Dapp(AbstractPlatform):
     PROJECT_URL = "https://github.com/dapphub/dapptools"
     TYPE = Type.DAPP
 
+    # pylint: disable=too-many-locals
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str):
         """
         Compile the target
@@ -133,11 +134,15 @@ def _run_dapp(target: str):
     :param target:
     :return:
     """
+    # pylint: disable=import-outside-toplevel
+    from crytic_compile import InvalidCompilation
+
     cmd = ["dapp", "build"]
 
     try:
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=target)
     except OSError as error:
+        # pylint: disable=raise-missing-from
         raise InvalidCompilation(error)
     _, _ = process.communicate()
 

@@ -12,22 +12,25 @@ from typing import Dict, List, Union, Set, Tuple, Optional, Type, TYPE_CHECKING
 from pathlib import Path
 import sha3
 
-from .platform import solc_standard_json, all_platforms
-from .platform.abstract_platform import AbstractPlatform
-from .platform.all_export import PLATFORMS_EXPORT
-from .platform.solc import Solc
-from .platform.standard import export_to_standard
-from .utils.naming import Filename
-from .utils.natspec import Natspec
-from .utils.zip import load_from_zip
-from .utils.npm import get_package_name
+from crytic_compile.platform import solc_standard_json, all_platforms
+from crytic_compile.platform.abstract_platform import AbstractPlatform
+from crytic_compile.platform.all_export import PLATFORMS_EXPORT
+from crytic_compile.platform.solc import Solc
+from crytic_compile.platform.standard import export_to_standard
+from crytic_compile.utils.naming import Filename
+from crytic_compile.utils.natspec import Natspec
+from crytic_compile.utils.zip import load_from_zip
+from crytic_compile.utils.npm import get_package_name
 
 # Cycle dependency
 if TYPE_CHECKING:
-    from .compiler.compiler import CompilerVersion
+    from crytic_compile.compiler.compiler import CompilerVersion
 
 LOGGER = logging.getLogger("CryticCompile")
 logging.basicConfig()
+
+
+# pylint: disable=too-many-lines
 
 
 def get_platforms() -> List[Type[AbstractPlatform]]:
@@ -52,6 +55,7 @@ def is_supported(target: str) -> bool:
     return any(platform.is_supported(target) for platform in platforms) or target.endswith(".zip")
 
 
+# pylint: disable=too-many-instance-attributes,too-many-public-methods
 class CryticCompile:
     """
     Main class.
@@ -59,10 +63,10 @@ class CryticCompile:
 
     def __init__(self, target: Union[str, AbstractPlatform], **kwargs: str):
         """
-            Args:
-                target (str|SolcStandardJson)
-            Keyword Args:
-                See https://github.com/crytic/crytic-compile/wiki/Configuration
+        Args:
+            target (str|SolcStandardJson)
+        Keyword Args:
+            See https://github.com/crytic/crytic-compile/wiki/Configuration
         """
         # ASTS are indexed by absolute path
         self._asts: Dict = {}
@@ -180,19 +184,19 @@ class CryticCompile:
     def filename_of_contract(self, name: str) -> Filename:
         """
         :return: utils.namings.Filename
-         """
+        """
         return self._contracts_filenames[name]
 
     def absolute_filename_of_contract(self, name: str) -> str:
         """
         :return: Absolute filename
-         """
+        """
         return self._contracts_filenames[name].absolute
 
     def used_filename_of_contract(self, name: str) -> str:
         """
         :return: Used filename
-         """
+        """
         return self._contracts_filenames[name].used
 
     def find_absolute_filename_from_used_filename(self, used_filename: str) -> str:
@@ -650,7 +654,7 @@ class CryticCompile:
         return new_names
 
     def _library_name_lookup(
-            self, lib_name: str, original_contract: str
+        self, lib_name: str, original_contract: str
     ) -> Optional[Tuple[str, str]]:
         """
         Convert a library name to the contract
@@ -682,14 +686,14 @@ class CryticCompile:
 
             # Solidity 0.4 with filename
             solidity_0_4_filename = (
-                    "__" + name_with_absolute_filename + "_" * (38 - len(name_with_absolute_filename))
+                "__" + name_with_absolute_filename + "_" * (38 - len(name_with_absolute_filename))
             )
             if solidity_0_4_filename == lib_name:
                 return name, solidity_0_4_filename
 
             # Solidity 0.4 with filename
             solidity_0_4_filename = (
-                    "__" + name_with_used_filename + "_" * (38 - len(name_with_used_filename))
+                "__" + name_with_used_filename + "_" * (38 - len(name_with_used_filename))
             )
             if solidity_0_4_filename == lib_name:
                 return name, solidity_0_4_filename
@@ -763,7 +767,7 @@ class CryticCompile:
         return self._libraries[name]
 
     def _update_bytecode_with_libraries(
-            self, bytecode: str, libraries: Union[None, Dict[str, str]]
+        self, bytecode: str, libraries: Union[None, Dict[str, str]]
     ) -> str:
         """
         Patch the bytecode
@@ -881,7 +885,7 @@ class CryticCompile:
 
     def export(self, **kwargs: str) -> Optional[str]:
         """
-            Export to json. The json format can be crytic-compile, solc or truffle.
+        Export to json. The json format can be crytic-compile, solc or truffle.
         """
         export_format = kwargs.get("export_format", None)
         if export_format is None:
@@ -897,6 +901,7 @@ class CryticCompile:
     ###################################################################################
     ###################################################################################
 
+    # pylint: disable=no-self-use
     def _init_platform(self, target: str, **kwargs: str) -> AbstractPlatform:
         platforms = get_platforms()
         platform = None
@@ -904,7 +909,8 @@ class CryticCompile:
         compile_force_framework: Union[str, None] = kwargs.get("compile_force_framework", None)
         if compile_force_framework:
             platform = next(
-                (p(target) for p in platforms if p.NAME.lower() == compile_force_framework.lower()), None
+                (p(target) for p in platforms if p.NAME.lower() == compile_force_framework.lower()),
+                None,
             )
 
         if not platform:
@@ -951,9 +957,9 @@ class CryticCompile:
 
     def _remove_metadata(self):
         """
-            Init bytecode contains metadata that needs to be removed
-            see
-            http://solidity.readthedocs.io/en/v0.4.24/metadata.html#encoding-of-the-metadata-hash-in-the-bytecode
+        Init bytecode contains metadata that needs to be removed
+        see
+        http://solidity.readthedocs.io/en/v0.4.24/metadata.html#encoding-of-the-metadata-hash-in-the-bytecode
         """
         self._init_bytecodes = {
             key: re.sub(r"a165627a7a72305820.{64}0029", r"", bytecode)
