@@ -17,7 +17,6 @@ from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform.abstract_platform import AbstractPlatform
 from crytic_compile.platform.types import Type
 from crytic_compile.utils.naming import extract_filename, extract_name, convert_filename
-from crytic_compile import InvalidCompilation
 
 # Handle cycle
 from crytic_compile.utils.natspec import Natspec
@@ -135,6 +134,8 @@ def _run_dapp(target: str):
     :param target:
     :return:
     """
+    # pylint: disable=import-outside-toplevel
+    from crytic_compile import InvalidCompilation
     cmd = ["dapp", "build"]
 
     try:
