@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 cp tests/contract.sol /tmp
-cd /tmp || exit -1
+cd /tmp || exit 255
 crytic-compile contract.sol --compile-remove-metadata
 
 cd -
@@ -10,7 +10,7 @@ if [ "$DIFF" != "" ]
 then  
     echo "solc test failed"
     echo $DIFF
-    exit -1
+    exit 255
 fi
 
 
