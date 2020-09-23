@@ -102,6 +102,7 @@ class Solc(AbstractPlatform):
         solc_arguments = kwargs.get("solc_args", "")
         solc_remaps = kwargs.get("solc_remaps", None)
         solc_working_dir = kwargs.get("solc_working_dir", None)
+        force_legacy_json = kwargs.get("solc_force_legacy_json", False)
 
         crytic_compile.compiler_version = CompilerVersion(
             compiler="solc", version=get_version(solc), optimized=is_optimized(solc_arguments)
@@ -126,6 +127,7 @@ class Solc(AbstractPlatform):
                 solc_arguments,
                 solc_remaps=solc_remaps,
                 working_dir=solc_working_dir,
+                force_legacy_json=force_legacy_json,
             )
 
         elif solcs_env:
@@ -139,6 +141,7 @@ class Solc(AbstractPlatform):
                 solcs_env=solcs_env_list,
                 solc_remaps=solc_remaps,
                 working_dir=solc_working_dir,
+                force_legacy_json=force_legacy_json,
             )
 
         else:
@@ -150,6 +153,7 @@ class Solc(AbstractPlatform):
                 solc_arguments,
                 solc_remaps=solc_remaps,
                 working_dir=solc_working_dir,
+                force_legacy_json=force_legacy_json,
             )
 
         skip_filename = crytic_compile.compiler_version.version in [
@@ -274,6 +278,7 @@ def _run_solc(
     solc_remaps=None,
     env=None,
     working_dir=None,
+    force_legacy_json=False,
 ):
     """
     Note: Ensure that crytic_compile.compiler_version is set prior calling _run_solc
@@ -301,6 +306,10 @@ def _run_solc(
     old_04_versions = [f"0.4.{x}" for x in range(0, 12)]
     if compiler_version.version in old_04_versions or compiler_version.version.startswith("0.3"):
         options = "abi,ast,bin,bin-runtime,srcmap,srcmap-runtime,userdoc,devdoc"
+    elif force_legacy_json:
+        options = (
+            "abi,ast,bin,bin-runtime,srcmap,srcmap-runtime,userdoc,devdoc,hashes"
+        )
     else:
         options = (
             "abi,ast,bin,bin-runtime,srcmap,srcmap-runtime,userdoc,devdoc,hashes,compact-format"
@@ -374,6 +383,7 @@ def _run_solcs_path(
     solc_remaps=None,
     env=None,
     working_dir=None,
+    force_legacy_json=False,
 ):
     targets_json = None
     if isinstance(solcs_path, dict):
@@ -391,6 +401,7 @@ def _run_solcs_path(
                     solc_remaps=solc_remaps,
                     env=env,
                     working_dir=working_dir,
+                    force_legacy_json=force_legacy_json,
                 )
             except InvalidCompilation:
                 pass
@@ -409,6 +420,7 @@ def _run_solcs_path(
                     solc_remaps=solc_remaps,
                     env=env,
                     working_dir=working_dir,
+                    force_legacy_json=force_legacy_json,
                 )
             except InvalidCompilation:
                 pass
@@ -432,6 +444,7 @@ def _run_solcs_env(
     env=None,
     working_dir=None,
     solcs_env=None,
+    force_legacy_json=False,
 ):
     env = dict(os.environ) if env is None else env
     targets_json = None
@@ -450,6 +463,7 @@ def _run_solcs_env(
                 solc_remaps=solc_remaps,
                 env=env,
                 working_dir=working_dir,
+                force_legacy_json=force_legacy_json,
             )
         except InvalidCompilation:
             pass
@@ -469,6 +483,7 @@ def _run_solcs_env(
                     solc_remaps=solc_remaps,
                     env=env,
                     working_dir=working_dir,
+                    force_legacy_json=force_legacy_json,
                 )
             except InvalidCompilation:
                 pass
