@@ -307,9 +307,7 @@ def _run_solc(
     if compiler_version.version in old_04_versions or compiler_version.version.startswith("0.3"):
         options = "abi,ast,bin,bin-runtime,srcmap,srcmap-runtime,userdoc,devdoc"
     elif force_legacy_json:
-        options = (
-            "abi,ast,bin,bin-runtime,srcmap,srcmap-runtime,userdoc,devdoc,hashes"
-        )
+        options = "abi,ast,bin,bin-runtime,srcmap,srcmap-runtime,userdoc,devdoc,hashes"
     else:
         options = (
             "abi,ast,bin,bin-runtime,srcmap,srcmap-runtime,userdoc,devdoc,hashes,compact-format"
