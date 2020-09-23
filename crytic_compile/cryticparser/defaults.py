@@ -14,6 +14,7 @@ DEFAULTS_FLAG_IN_CONFIG = {
     "solc_solcs_select": None,
     "solc_solcs_bin": None,
     "solc_standard_json": False,
+    "solc_force_legacy_json": False,
     "truffle_version": None,
     "truffle_ignore_compile": False,
     "truffle_build_directory": "build/contracts",
