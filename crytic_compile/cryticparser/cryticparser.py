@@ -117,6 +117,13 @@ def _init_solc(parser):
         default=DEFAULTS_FLAG_IN_CONFIG["solc_standard_json"],
     )
 
+    group_solc.add_argument(
+        "--solc-force-legacy-json",
+        help="Force the solc compiler to use the legacy json ast format over the compact json ast format",
+        action="store_true",
+        default=DEFAULTS_FLAG_IN_CONFIG["solc_force_legacy_json"],
+    )
+
 
 def _init_waffle(parser):
     group_waffle = parser.add_argument_group("Waffle options")
