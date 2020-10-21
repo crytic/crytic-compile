@@ -43,3 +43,7 @@ Run `crytic-compile --help` for more options.
 ### As a library
 
 See the [library documentation](https://github.com/crytic/crytic-compile/wiki/Library-Documentation).
+
+### For users of Buidler
+
+As explained in this [thread](https://github.com/crytic/crytic-compile/issues/116), Buidler has a bug activated when the "paths.root" field is set in `buidler.config.ts`. The "root" of a Buidler project is implicit to where the configuration file is found, so you usually don't need to set this field. For troubleshooting, you should ask the Buidler team directly.
