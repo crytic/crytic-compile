@@ -174,7 +174,7 @@ class Waffle(AbstractPlatform):
             contract_name = contract[1]
 
             crytic_compile.asts[filename.absolute] = target_all["sources"][contract[0]]["AST"]
-            crytic_compile.filenames.add(filename)
+            crytic_compile.add_filename(filename)
             crytic_compile.contracts_filenames[contract_name] = filename
             crytic_compile.contracts_names.add(contract_name)
             crytic_compile.abis[contract_name] = target_loaded["abi"]

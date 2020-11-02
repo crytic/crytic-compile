@@ -144,7 +144,7 @@ def _iterate_over_files(crytic_compile: "CryticCompile", target: str, filenames:
             )
 
             crytic_compile.asts[filename.absolute] = target_loaded["ast"]
-            crytic_compile.filenames.add(filename)
+            crytic_compile.add_filename(filename)
             contract_name = target_loaded["contractName"]
             crytic_compile.contracts_filenames[contract_name] = filename
             crytic_compile.contracts_names.add(contract_name)

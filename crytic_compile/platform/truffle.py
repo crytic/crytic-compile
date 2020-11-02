@@ -215,7 +215,7 @@ class Truffle(AbstractPlatform):
                     raise InvalidCompilation(txt)
 
                 crytic_compile.asts[filename.absolute] = target_loaded["ast"]
-                crytic_compile.filenames.add(filename)
+                crytic_compile.add_filename(filename)
                 contract_name = target_loaded["contractName"]
                 crytic_compile.natspec[contract_name] = natspec
                 crytic_compile.contracts_filenames[contract_name] = filename

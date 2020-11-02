@@ -8,9 +8,11 @@ import glob
 import logging
 import re
 import subprocess
-from typing import Dict, List, Union, Set, Tuple, Optional, Type, TYPE_CHECKING
+from typing import Dict, List, Union, Set, Tuple, Optional, Type, TYPE_CHECKING, MutableMapping
 from pathlib import Path
 import sha3
+from collections import OrderedDict # note: this can be removed if we use python >= 3.7
+
 
 from crytic_compile.platform import solc_standard_json, all_platforms
 from crytic_compile.platform.abstract_platform import AbstractPlatform
@@ -89,9 +91,11 @@ class CryticCompile:
         self._contracts_name_without_libraries: Optional[Set[str]] = None
 
         # set containing all the filenames
-        self._filenames: Set[Filename] = set()
+        # The list keeps the order of insertion, but prevents duplicate
+        # We need to keep the order for Echidna
+        self._filenames: List[Filename] = []
         # mapping from contract name to filename (naming.Filename)
-        self._contracts_filenames: Dict[str, Filename] = {}
+        self._contracts_filenames: OrderedDict[str, Filename] = OrderedDict()
 
         # Libraries used by the contract
         # contract_name -> (library, pattern)
@@ -153,18 +157,20 @@ class CryticCompile:
     ###################################################################################
 
     @property
-    def filenames(self) -> Set[Filename]:
+    def filenames(self) -> List[Filename]:
         """
         :return: set(naming.Filename)
         """
         return self._filenames
 
     @filenames.setter
-    def filenames(self, all_filenames: Set[Filename]):
+    def filenames(self, all_filenames: List[Filename]):
         self._filenames = all_filenames
 
+    # contracts_filenames should return an OrderedDict, but OrderedDict[str, Filename]
+    # does not work with python 3.6. 3.7.2 introduced typing.OrderedDict
     @property
-    def contracts_filenames(self) -> Dict[str, Filename]:
+    def contracts_filenames(self) -> MutableMapping[str, Filename]:
         """
         Return a dict contract_name -> Filename namedtuple (absolute, used)
 
@@ -180,6 +186,11 @@ class CryticCompile:
         :return:
         """
         return {k: f.absolute for (k, f) in self._contracts_filenames.items()}
+
+    def add_filename(self, filename: str):
+        if filename in self._filenames:
+            return
+        self._filenames.append((filename))
 
     def filename_of_contract(self, name: str) -> Filename:
         """

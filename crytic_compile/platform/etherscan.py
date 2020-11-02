@@ -226,7 +226,7 @@ class Etherscan(AbstractPlatform):
 
         for path, info in targets_json["sources"].items():
             path = convert_filename(path, _relative_to_short, crytic_compile)
-            crytic_compile.filenames.add(path)
+            crytic_compile.add_filename(path)
             crytic_compile.asts[path.absolute] = info["AST"]
 
     @staticmethod

@@ -88,7 +88,7 @@ class Dapp(AbstractPlatform):
                 path = convert_filename(
                     path, _relative_to_short, crytic_compile, working_dir=self._target
                 )
-                crytic_compile.filenames.add(path)
+                crytic_compile.add_filename(path)
                 crytic_compile.asts[path.absolute] = info["AST"]
 
     @staticmethod

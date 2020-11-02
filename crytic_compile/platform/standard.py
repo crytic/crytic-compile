@@ -222,7 +222,7 @@ def load_from_compile(crytic_compile: "CryticCompile", loaded_json: Dict) -> Tup
             crytic_compile.dependencies.add(filename.used)
 
     # Set our filenames
-    crytic_compile.filenames = set(crytic_compile.contracts_filenames.values())
+    crytic_compile.filenames = crytic_compile.contracts_filenames.values()
 
     crytic_compile.working_dir = loaded_json["working_dir"]
 

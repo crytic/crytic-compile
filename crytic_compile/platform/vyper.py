@@ -65,7 +65,7 @@ class Vyper(AbstractPlatform):
         crytic_compile.srcmaps_init[contract_name] = []
         crytic_compile.srcmaps_runtime[contract_name] = []
 
-        crytic_compile.filenames.add(contract_filename)
+        crytic_compile.add_filename(contract_filename)
 
         # Natspec not yet handled for vyper
         crytic_compile.natspec[contract_name] = Natspec({}, {})

@@ -143,7 +143,7 @@ class Buidler(AbstractPlatform):
                         path = convert_filename(
                             path, relative_to_short, crytic_compile, working_dir=buidler_working_dir
                         )
-                    crytic_compile.filenames.add(path)
+                    crytic_compile.add_filename(path)
                     crytic_compile.asts[path.absolute] = info["ast"]
 
     @staticmethod

@@ -109,7 +109,7 @@ class Etherlime(AbstractPlatform):
                 filename_txt = target_loaded["ast"]["absolutePath"]
                 filename = convert_filename(filename_txt, _relative_to_short, crytic_compile)
                 crytic_compile.asts[filename.absolute] = target_loaded["ast"]
-                crytic_compile.filenames.add(filename)
+                crytic_compile.add_filename(filename)
                 contract_name = target_loaded["contractName"]
                 crytic_compile.contracts_filenames[contract_name] = filename
                 crytic_compile.contracts_names.add(contract_name)
