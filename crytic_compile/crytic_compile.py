@@ -11,7 +11,7 @@ import subprocess
 from typing import Dict, List, Union, Set, Tuple, Optional, Type, TYPE_CHECKING, MutableMapping
 from pathlib import Path
 import sha3
-from collections import OrderedDict # note: this can be removed if we use python >= 3.7
+from collections import OrderedDict  # note: this can be removed if we use python >= 3.7
 
 
 from crytic_compile.platform import solc_standard_json, all_platforms
