@@ -28,6 +28,7 @@ jobs:
         run: |
           pip install .
           pip install deepdiff numpy
+          pip install black --upgrade
 
           mkdir -p .github/linters
           cp pyproject.toml .github/linters
