@@ -3,12 +3,10 @@ Handle ZIP operations
 """
 import json
 import zipfile
-from typing import List
-
 # Cycle dependency
-from typing import TYPE_CHECKING
-
+from typing import TYPE_CHECKING, List
 from zipfile import ZipFile
+
 from crytic_compile.platform.archive import generate_archive_export
 
 if TYPE_CHECKING:

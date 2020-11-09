@@ -13,8 +13,8 @@ from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform.abstract_platform import AbstractPlatform
 from crytic_compile.platform.exceptions import InvalidCompilation
 from crytic_compile.platform.types import Type
-from crytic_compile.utils.naming import extract_filename, extract_name, convert_filename
-
+from crytic_compile.utils.naming import (convert_filename, extract_filename,
+                                         extract_name)
 # Cycle dependency
 from crytic_compile.utils.natspec import Natspec
 

@@ -6,15 +6,15 @@ import logging
 import os
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, Tuple, List
+from typing import TYPE_CHECKING, List, Optional, Tuple
 
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform.exceptions import InvalidCompilation
 from crytic_compile.platform.types import Type
 from crytic_compile.utils.naming import convert_filename, extract_name
 from crytic_compile.utils.natspec import Natspec
-from .abstract_platform import AbstractPlatform
 
+from .abstract_platform import AbstractPlatform
 # Handle cycle
 from .solc import relative_to_short
 

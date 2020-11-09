@@ -7,14 +7,13 @@ import logging
 import os
 import subprocess
 from pathlib import Path
-from typing import Dict, List, TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, List
 
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform.abstract_platform import AbstractPlatform
 from crytic_compile.platform.exceptions import InvalidCompilation
 from crytic_compile.platform.types import Type
-from crytic_compile.utils.naming import convert_filename, Filename
-
+from crytic_compile.utils.naming import Filename, convert_filename
 # Cycle dependency
 from crytic_compile.utils.natspec import Natspec
 

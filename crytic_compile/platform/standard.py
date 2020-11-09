@@ -4,13 +4,12 @@ Standard crytic-compile export
 import json
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, Type, List, Tuple
+from typing import TYPE_CHECKING, Dict, List, Tuple, Type
 
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform import Type as PlatformType
 from crytic_compile.platform.abstract_platform import AbstractPlatform
 from crytic_compile.utils.naming import Filename
-
 # Cycle dependency
 from crytic_compile.utils.natspec import Natspec
 
