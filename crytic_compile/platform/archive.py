@@ -4,11 +4,13 @@ It is similar to the standard platform, except that the file generated
 contains a "source_content" field
 Which is a map: filename -> sourcecode
 """
-import os
 import json
-from typing import Dict, Tuple, TYPE_CHECKING, List, Type
+import os
 from pathlib import Path
-from crytic_compile.platform import standard, Type as TypePlatform
+from typing import TYPE_CHECKING, Dict, List, Tuple, Type
+
+from crytic_compile.platform import Type as TypePlatform
+from crytic_compile.platform import standard
 
 # Cycle dependency
 from crytic_compile.platform.abstract_platform import AbstractPlatform

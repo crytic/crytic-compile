@@ -29,5 +29,6 @@ To run them locally:
 - `pylint crytic_compile --rconfig pyproject.toml`
 - `black crytic_compile --config pyproject.toml`
 
+We use black `19.10b0`.
 ## Development Environment
 Instructions for installing a development version of crytic-compile can be found in our [wiki](https://github.com/crytic/crytic-compile/wiki/Developer-installation).
