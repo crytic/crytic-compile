@@ -1,7 +1,7 @@
 """
 Natspec module https://solidity.readthedocs.io/en/latest/natspec-format.html
 """
-from typing import Optional, Dict
+from typing import Dict, Optional
 
 
 class UserMethod:

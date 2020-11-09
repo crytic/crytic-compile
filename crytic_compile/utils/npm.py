@@ -3,7 +3,7 @@ Module handling NPM related features
 """
 import json
 from pathlib import Path
-from typing import Union, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional, Union
 
 # Cycle dependency
 if TYPE_CHECKING:

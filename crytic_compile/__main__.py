@@ -10,9 +10,9 @@ import sys
 from pkg_resources import require
 
 from crytic_compile.crytic_compile import compile_all, get_platforms
-from crytic_compile.cryticparser import cryticparser, DEFAULTS_FLAG_IN_CONFIG
+from crytic_compile.cryticparser import DEFAULTS_FLAG_IN_CONFIG, cryticparser
 from crytic_compile.platform import InvalidCompilation
-from crytic_compile.utils.zip import save_to_zip, ZIP_TYPES_ACCEPTED
+from crytic_compile.utils.zip import ZIP_TYPES_ACCEPTED, save_to_zip
 
 logging.basicConfig()
 LOGGER = logging.getLogger("CryticCompile")
