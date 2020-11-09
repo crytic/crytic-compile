@@ -8,14 +8,14 @@ import os
 import re
 import urllib.request
 from pathlib import Path
-from typing import TYPE_CHECKING, Union, Dict, List
+from typing import TYPE_CHECKING, Dict, List, Union
 
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform.abstract_platform import AbstractPlatform
 from crytic_compile.platform.exceptions import InvalidCompilation
 from crytic_compile.platform.solc import _run_solc
 from crytic_compile.platform.types import Type
-from crytic_compile.utils.naming import extract_filename, extract_name, convert_filename, Filename
+from crytic_compile.utils.naming import Filename, convert_filename, extract_filename, extract_name
 
 # Cycle dependency
 from crytic_compile.utils.natspec import Natspec

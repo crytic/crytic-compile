@@ -2,20 +2,20 @@
 Etherlime platform. https://github.com/LimeChain/etherlime
 """
 
-import os
+import glob
 import json
 import logging
-import subprocess
-import glob
+import os
 import re
+import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, List
+from typing import TYPE_CHECKING, List, Optional
 
-from crytic_compile.platform.abstract_platform import AbstractPlatform
-from crytic_compile.platform.types import Type
-from crytic_compile.platform.exceptions import InvalidCompilation
-from crytic_compile.utils.naming import convert_filename
 from crytic_compile.compiler.compiler import CompilerVersion
+from crytic_compile.platform.abstract_platform import AbstractPlatform
+from crytic_compile.platform.exceptions import InvalidCompilation
+from crytic_compile.platform.types import Type
+from crytic_compile.utils.naming import convert_filename
 
 # Cycle dependency
 from crytic_compile.utils.natspec import Natspec
