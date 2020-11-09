@@ -10,6 +10,7 @@ from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform import Type as PlatformType
 from crytic_compile.platform.abstract_platform import AbstractPlatform
 from crytic_compile.utils.naming import Filename
+
 # Cycle dependency
 from crytic_compile.utils.natspec import Natspec
 

@@ -15,6 +15,7 @@ from crytic_compile.utils.naming import convert_filename, extract_name
 from crytic_compile.utils.natspec import Natspec
 
 from .abstract_platform import AbstractPlatform
+
 # Handle cycle
 from .solc import relative_to_short
 

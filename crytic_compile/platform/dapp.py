@@ -9,14 +9,15 @@ import os
 import re
 import subprocess
 from pathlib import Path
+
 # Cycle dependency
 from typing import TYPE_CHECKING, List
 
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform.abstract_platform import AbstractPlatform
 from crytic_compile.platform.types import Type
-from crytic_compile.utils.naming import (convert_filename, extract_filename,
-                                         extract_name)
+from crytic_compile.utils.naming import convert_filename, extract_filename, extract_name
+
 # Handle cycle
 from crytic_compile.utils.natspec import Natspec
 

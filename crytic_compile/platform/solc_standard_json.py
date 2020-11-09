@@ -9,10 +9,10 @@ from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform.exceptions import InvalidCompilation
-from crytic_compile.platform.solc import (Solc, get_version, is_optimized,
-                                          relative_to_short)
+from crytic_compile.platform.solc import Solc, get_version, is_optimized, relative_to_short
 from crytic_compile.platform.types import Type
 from crytic_compile.utils.naming import convert_filename
+
 # Cycle dependency
 from crytic_compile.utils.natspec import Natspec
 

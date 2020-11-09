@@ -28,7 +28,6 @@ To run them locally:
 
 - `pylint crytic_compile --rconfig pyproject.toml`
 - `black crytic_compile --config pyproject.toml`
-- `isort crytic_compile`
 
 We use black `19.10b0`.
 ## Development Environment

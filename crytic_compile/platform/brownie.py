@@ -14,6 +14,7 @@ from crytic_compile.platform.abstract_platform import AbstractPlatform
 from crytic_compile.platform.exceptions import InvalidCompilation
 from crytic_compile.platform.types import Type
 from crytic_compile.utils.naming import Filename, convert_filename
+
 # Cycle dependency
 from crytic_compile.utils.natspec import Natspec
 

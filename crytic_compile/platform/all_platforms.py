@@ -1,6 +1,7 @@
 """
 Module containing all the platforms
 """
+# pylint: disable=unused-import
 from .archive import Archive
 from .brownie import Brownie
 from .buidler import Buidler
@@ -11,7 +12,6 @@ from .etherscan import Etherscan
 from .solc import Solc
 from .solc_standard_json import SolcStandardJson
 from .standard import Standard
-# pylint: disable=unused-import
 from .truffle import Truffle
 from .vyper import Vyper
 from .waffle import Waffle

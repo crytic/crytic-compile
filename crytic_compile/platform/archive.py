@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Dict, List, Tuple, Type
 
 from crytic_compile.platform import Type as TypePlatform
 from crytic_compile.platform import standard
+
 # Cycle dependency
 from crytic_compile.platform.abstract_platform import AbstractPlatform
 
