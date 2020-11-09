@@ -60,6 +60,7 @@ def export_to_solc(crytic_compile: "CryticCompile", **kwargs: str) -> Union[str,
     # Create additional informational objects.
     sources = {filename: {"AST": ast} for (filename, ast) in crytic_compile.asts.items()}
     source_list = [x.absolute for x in crytic_compile.filenames]
+    source_list.sort()  # needed for Echidna, see https://github.com/crytic/crytic-compile/issues/112
 
     # Create our root object to contain the contracts and other information.
     output = {"sources": sources, "sourceList": source_list, "contracts": contracts}

@@ -58,26 +58,34 @@ class Waffle(AbstractPlatform):
         # Default behaviour (without any config_file)
         build_directory = os.path.join("build")
         compiler = "native"
-        version = _get_version(compiler, target)
         config: Dict = dict()
 
-        config_file = kwargs.get("waffle_config_file", None)
+        config_file = kwargs.get("waffle_config_file", "waffle.json")
 
-        if config_file is None:
-            potential_config_files = list(Path(target).rglob("*waffle*.json"))
-            if potential_config_files and len(potential_config_files) == 1:
-                config_file = potential_config_files[0]
+        potential_config_files = list(Path(target).rglob("*waffle*.json"))
+        if potential_config_files and len(potential_config_files) == 1:
+            config_file = potential_config_files[0]
 
         # Read config file
         if config_file:
             config = _load_config(config_file)
-            version = _get_version(compiler, target, config=config)
+
+            # old version
+            if "compiler" in config:
+                compiler = config["compiler"]
+            if "compilerType" in config:
+                compiler = config["compilerType"]
+
+            if "compilerVersion" in config:
+                version = config["compilerVersion"]
+            else:
+                version = _get_version(compiler, target, config=config)
 
             if "targetPath" in config:
                 build_directory = config["targetPath"]
 
-            if "compiler" in config:
-                compiler = config["compiler"]
+        else:
+            version = _get_version(compiler, target)
 
         if "outputType" not in config or config["outputType"] != "all":
             config["outputType"] = "all"
@@ -217,6 +225,9 @@ class Waffle(AbstractPlatform):
         if os.path.isfile(os.path.join(target, "hardhat.config.js")):
             return False
 
+        if os.path.isfile(os.path.join(target, "waffle.json")):
+            return True
+
         if os.path.isfile(os.path.join(target, "package.json")):
             with open(os.path.join(target, "package.json"), encoding="utf8") as file_desc:
                 package = json.load(file_desc)
@@ -282,7 +293,7 @@ def _get_version(compiler: str, cwd: str, config=None) -> str:
             if "Version" in line:
                 version = re.findall(r"\d+\.\d+\.\d+", line)[0]
 
-    elif compiler == "solc-js":
+    elif compiler in ["solc-js"]:
         cmd = ["solcjs", "--version"]
         try:
             process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd)
