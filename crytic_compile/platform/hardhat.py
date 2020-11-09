@@ -1,5 +1,5 @@
 """
-Builder platform
+Hardhat platform
 """
 import json
 import logging
@@ -24,14 +24,14 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger("CryticCompile")
 
 
-class Buidler(AbstractPlatform):
+class Hardhat(AbstractPlatform):
     """
     Builder platform
     """
 
-    NAME = "Buidler"
-    PROJECT_URL = "https://github.com/nomiclabs/buidler"
-    TYPE = Type.BUILDER
+    NAME = "Hardhat"
+    PROJECT_URL = "https://github.com/nomiclabs/hardhat"
+    TYPE = Type.HARDHAT
 
     # pylint: disable=too-many-locals,too-many-statements
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str):
@@ -42,19 +42,22 @@ class Buidler(AbstractPlatform):
         :return:
         """
 
-        cache_directory = kwargs.get("buidler_cache_directory", "")
-        target_solc_file = os.path.join(cache_directory, "solc-output.json")
-        target_vyper_file = os.path.join(cache_directory, "vyper-docker-updates.json")
-        buidler_ignore_compile = kwargs.get("buidler_ignore_compile", False) or kwargs.get(
+        hardhat_ignore_compile = kwargs.get("hardhat_ignore_compile", False) or kwargs.get(
             "ignore_compile", False
         )
-        buidler_working_dir = kwargs.get("buidler_working_dir", None)
 
-        base_cmd = ["buidler"]
+        cache_directory = kwargs.get("hardhat_cache_directory", "cache")
+        config_file = Path(cache_directory, "solidity-files-cache.json")
+
+        build_directory = Path(kwargs.get("hardhat_cache_directory", "artifacts/build-info"))
+
+        buidler_working_dir = kwargs.get("hardhat_working_dir", None)
+
+        base_cmd = ["hardhat"]
         if not kwargs.get("npx_disable", False):
             base_cmd = ["npx"] + base_cmd
 
-        if not buidler_ignore_compile:
+        if not hardhat_ignore_compile:
             cmd = base_cmd + ["compile"]
 
             LOGGER.info(
@@ -75,15 +78,7 @@ class Buidler(AbstractPlatform):
             if stderr:
                 LOGGER.error(stderr)
 
-        if not os.path.isfile(os.path.join(self._target, target_solc_file)):
-            if os.path.isfile(os.path.join(self._target, target_vyper_file)):
-                txt = "Vyper not yet supported with buidler."
-                txt += " Please open an issue in https://github.com/crytic/crytic-compile"
-                raise InvalidCompilation(txt)
-            txt = f"`buidler compile` failed. Can you run it?\n{os.path.join(self._target, target_solc_file)} not found"
-            raise InvalidCompilation(txt)
-
-        (compiler, version_from_config, optimized) = _get_version_from_config(cache_directory)
+        (compiler, version_from_config, optimized) = _get_version_from_config(config_file)
 
         crytic_compile.compiler_version = CompilerVersion(
             compiler=compiler, version=version_from_config, optimized=optimized
@@ -93,8 +88,16 @@ class Buidler(AbstractPlatform):
             f"0.4.{x}" for x in range(0, 10)
         ]
 
-        with open(target_solc_file, encoding="utf8") as file_desc:
-            targets_json = json.load(file_desc)
+        files = sorted(
+            os.listdir(build_directory), key=lambda x: os.path.getmtime(Path(build_directory, x))
+        )
+        if not files:
+            txt = f"`hardhat compile` failed. Can you run it?\n{build_directory} is empty"
+            raise InvalidCompilation(txt)
+
+        build_info = Path(build_directory, files[0])
+        with open(build_info, encoding="utf8") as file_desc:
+            targets_json = json.load(file_desc)["output"]
 
             if "contracts" in targets_json:
                 for original_filename, contracts_info in targets_json["contracts"].items():
@@ -156,9 +159,7 @@ class Buidler(AbstractPlatform):
         buidler_ignore = kwargs.get("buidler_ignore", False)
         if buidler_ignore:
             return False
-        is_javascript = os.path.isfile(os.path.join(target, "buidler.config.js"))
-        is_typescript = os.path.isfile(os.path.join(target, "buidler.config.ts"))
-        return is_javascript or is_typescript
+        return os.path.isfile(os.path.join(target, "hardhat.config.js"))
 
     def is_dependency(self, path: str) -> bool:
         """
@@ -175,25 +176,20 @@ class Buidler(AbstractPlatform):
 
         :return:
         """
-        return ["buidler test"]
+        return ["hardhat test"]
 
 
-def _get_version_from_config(builder_directory: Path) -> Optional[Tuple[str, str, bool]]:
+def _get_version_from_config(config: Path) -> Optional[Tuple[str, str, bool]]:
     """
     :return: (version, optimized)
     """
-    config = Path(builder_directory, "last-solc-config.json")
     if not config.exists():
-        config = Path(builder_directory, "last-vyper-config.json")
-        if not config.exists():
-            raise InvalidCompilation(f"{config} not found")
-        with open(config) as config_f:
-            version = config_f.read()
-            return "vyper", version, False
+        raise InvalidCompilation(f"{config} not found")
     with open(config) as config_f:
         config = json.load(config_f)
 
-    version = config["solc"]["version"]
+    # hardhat supports multiple config file, we dont at the moment
+    version = list(config["files"].values())[0]["solcConfig"]["version"]
 
-    optimized = "optimizer" in config["solc"] and config["solc"]["optimizer"]
+    optimized = list(config["files"].values())[0]["solcConfig"]["settings"]["optimizer"]["enabled"]
     return "solc", version, optimized
