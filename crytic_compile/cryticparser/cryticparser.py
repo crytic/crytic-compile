@@ -3,8 +3,8 @@ Module handling the cli arguments
 """
 from argparse import ArgumentParser
 
-from crytic_compile.cryticparser import DEFAULTS_FLAG_IN_CONFIG
 from crytic_compile.crytic_compile import get_platforms
+from crytic_compile.cryticparser import DEFAULTS_FLAG_IN_CONFIG
 
 
 def init(parser: ArgumentParser):

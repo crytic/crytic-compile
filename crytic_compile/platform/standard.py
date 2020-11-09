@@ -4,7 +4,7 @@ Standard crytic-compile export
 import json
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, Type, List, Tuple
+from typing import TYPE_CHECKING, Dict, List, Tuple, Type
 
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform import Type as PlatformType

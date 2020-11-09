@@ -11,15 +11,15 @@ import shutil
 import subprocess
 import uuid
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, Tuple, List, Dict
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
 
-from crytic_compile.platform.types import Type
-from crytic_compile.platform.exceptions import InvalidCompilation
-from crytic_compile.utils.naming import convert_filename
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform import solc
-from crytic_compile.utils.natspec import Natspec
 from crytic_compile.platform.abstract_platform import AbstractPlatform
+from crytic_compile.platform.exceptions import InvalidCompilation
+from crytic_compile.platform.types import Type
+from crytic_compile.utils.naming import convert_filename
+from crytic_compile.utils.natspec import Natspec
 
 # Handle cycle
 if TYPE_CHECKING:
