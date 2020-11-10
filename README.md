@@ -13,6 +13,7 @@ Library to help smart contract compilation. It includes support for:
 - [Brownie](https://github.com/iamdefinitelyahuman/brownie)
 - [Waffle](https://github.com/EthWorks/Waffle)
 - [Buidler](https://github.com/nomiclabs/buidler)
+- [Hardhat](https://github.com/nomiclabs/hardhat)
 
 See the [Configuration](https://github.com/crytic/crytic-compile/wiki/Configuration) documentation for advanced usages.
 

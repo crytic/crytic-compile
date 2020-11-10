@@ -1,26 +1,27 @@
 """
 CryticCompile main module. Handle the compilation.
 """
-import inspect
-import os
-import json
 import glob
+import inspect
+import json
 import logging
+import os
 import re
 import subprocess
-from typing import Dict, List, Union, Set, Tuple, Optional, Type, TYPE_CHECKING
 from pathlib import Path
+from typing import TYPE_CHECKING, Dict, List, Optional, Set, Tuple, Type, Union
+
 import sha3
 
-from crytic_compile.platform import solc_standard_json, all_platforms
+from crytic_compile.platform import all_platforms, solc_standard_json
 from crytic_compile.platform.abstract_platform import AbstractPlatform
 from crytic_compile.platform.all_export import PLATFORMS_EXPORT
 from crytic_compile.platform.solc import Solc
 from crytic_compile.platform.standard import export_to_standard
 from crytic_compile.utils.naming import Filename
 from crytic_compile.utils.natspec import Natspec
-from crytic_compile.utils.zip import load_from_zip
 from crytic_compile.utils.npm import get_package_name
+from crytic_compile.utils.zip import load_from_zip
 
 # Cycle dependency
 if TYPE_CHECKING:

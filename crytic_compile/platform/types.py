@@ -22,6 +22,7 @@ class Type(IntEnum):
     BROWNIE = 9
     SOLC_STANDARD_JSON = 10
     BUILDER = 11
+    HARDHAT = 11
 
     STANDARD = 100
     ARCHIVE = 101

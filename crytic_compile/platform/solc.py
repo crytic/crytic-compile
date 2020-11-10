@@ -1,24 +1,23 @@
 """
 Solc platform
 """
-import os
 import json
 import logging
-import subprocess
+import os
 import re
+import subprocess
+from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
-from typing import TYPE_CHECKING, Union, List, Dict, Optional
-
+from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform.abstract_platform import AbstractPlatform
+from crytic_compile.platform.exceptions import InvalidCompilation
 from crytic_compile.platform.types import Type
 from crytic_compile.utils.naming import (
-    extract_filename,
-    extract_name,
     combine_filename_name,
     convert_filename,
+    extract_filename,
+    extract_name,
 )
-from crytic_compile.platform.exceptions import InvalidCompilation
-from crytic_compile.compiler.compiler import CompilerVersion
 
 # Cycle dependency
 from crytic_compile.utils.natspec import Natspec
@@ -61,7 +60,7 @@ def export_to_solc(crytic_compile: "CryticCompile", **kwargs: str) -> Union[str,
     # Create additional informational objects.
     sources = {filename: {"AST": ast} for (filename, ast) in crytic_compile.asts.items()}
     source_list = [x.absolute for x in crytic_compile.filenames]
-    source_list.sort() # needed for Echidna, see https://github.com/crytic/crytic-compile/issues/112
+    source_list.sort()  # needed for Echidna, see https://github.com/crytic/crytic-compile/issues/112
 
     # Create our root object to contain the contracts and other information.
     output = {"sources": sources, "sourceList": source_list, "contracts": contracts}

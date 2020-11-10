@@ -2,11 +2,11 @@
 Module handling the file naming operation (relative -> absolute, etc)
 """
 
-import platform
-import os.path
 import logging
-from pathlib import Path
+import os.path
+import platform
 from collections import namedtuple
+from pathlib import Path
 from typing import TYPE_CHECKING, Union
 
 from crytic_compile.platform.exceptions import InvalidCompilation
