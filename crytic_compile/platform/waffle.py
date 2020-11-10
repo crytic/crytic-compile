@@ -220,8 +220,14 @@ class Waffle(AbstractPlatform):
         waffle_ignore = kwargs.get("waffle_ignore", False)
         if waffle_ignore:
             return False
+
+        # Avoid conflicts
+        if os.path.isfile(os.path.join(target, "hardhat.config.js")):
+            return False
+
         if os.path.isfile(os.path.join(target, "waffle.json")):
             return True
+
         if os.path.isfile(os.path.join(target, "package.json")):
             with open(os.path.join(target, "package.json"), encoding="utf8") as file_desc:
                 package = json.load(file_desc)
