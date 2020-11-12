@@ -34,7 +34,7 @@ class Buidler(AbstractPlatform):
     PROJECT_URL = "https://github.com/nomiclabs/buidler"
     TYPE = Type.BUILDER
 
-    # pylint: disable=too-many-locals,too-many-statements
+    # pylint: disable=too-many-locals,too-many-statements,too-many-branches
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str):
         """
         Compile the target
@@ -104,8 +104,11 @@ class Buidler(AbstractPlatform):
                     for original_contract_name, info in contracts_info.items():
                         contract_name = extract_name(original_contract_name)
 
-                        if original_filename.startswith('ontracts/') and not skip_directory_name_fix:
-                            original_filename = 'c' + original_filename
+                        if (
+                            original_filename.startswith("ontracts/")
+                            and not skip_directory_name_fix
+                        ):
+                            original_filename = "c" + original_filename
 
                         contract_filename = convert_filename(
                             original_filename,
@@ -138,8 +141,8 @@ class Buidler(AbstractPlatform):
             if "sources" in targets_json:
                 for path, info in targets_json["sources"].items():
 
-                    if path.startswith('ontracts/') and not skip_directory_name_fix:
-                        path = 'c' + path
+                    if path.startswith("ontracts/") and not skip_directory_name_fix:
+                        path = "c" + path
 
                     if skip_filename:
                         path = convert_filename(
