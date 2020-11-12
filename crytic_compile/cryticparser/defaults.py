@@ -35,4 +35,5 @@ DEFAULTS_FLAG_IN_CONFIG = {
     "ignore_compile": False,
     "buidler_ignore_compile": False,
     "buidler_cache_directory": "cache",
+    "buidler_skip_directory_name_fix": False,
 }
