@@ -301,4 +301,12 @@ def _init_buidler(parser):
         default=DEFAULTS_FLAG_IN_CONFIG["buidler_cache_directory"],
     )
 
+    group_buidler.add_argument(
+        "--buidler-skip-directory-name-fix",
+        help="Disable directory name fix (see https://github.com/crytic/crytic-compile/issues/116)",
+        action="store_true",
+        dest="buidler_skip_directory_name_fix",
+        default=DEFAULTS_FLAG_IN_CONFIG["buidler_skip_directory_name_fix"],
+    )
+
     return group_buidler

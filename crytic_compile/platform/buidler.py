@@ -50,6 +50,8 @@ class Buidler(AbstractPlatform):
             "ignore_compile", False
         )
         buidler_working_dir = kwargs.get("buidler_working_dir", None)
+        # See https://github.com/crytic/crytic-compile/issues/116
+        skip_directory_name_fix = kwargs.get("buidler_skip_directory_name_fix", False)
 
         base_cmd = ["buidler"]
         if not kwargs.get("npx_disable", False):
@@ -102,6 +104,9 @@ class Buidler(AbstractPlatform):
                     for original_contract_name, info in contracts_info.items():
                         contract_name = extract_name(original_contract_name)
 
+                        if original_filename.startswith('ontracts/') and not skip_directory_name_fix:
+                            original_filename = 'c' + original_filename
+
                         contract_filename = convert_filename(
                             original_filename,
                             relative_to_short,
@@ -132,6 +137,10 @@ class Buidler(AbstractPlatform):
 
             if "sources" in targets_json:
                 for path, info in targets_json["sources"].items():
+
+                    if path.startswith('ontracts/') and not skip_directory_name_fix:
+                        path = 'c' + path
+
                     if skip_filename:
                         path = convert_filename(
                             self._target,
