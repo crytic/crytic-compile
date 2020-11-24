@@ -93,6 +93,8 @@ class CryticCompile:
         self._filenames: Set[Filename] = set()
         # mapping from contract name to filename (naming.Filename)
         self._contracts_filenames: Dict[str, Filename] = {}
+        # mapping from absolute/relative/used to filename
+        self._filenames_lookup: Optional[Dict[str, Filename]] = None
 
         # Libraries used by the contract
         # contract_name -> (library, pattern)
@@ -235,14 +237,15 @@ class CryticCompile:
         :param filename: str
         :return: crytic_compile.naming.Filename
         """
-        d_file = {}
-        for file in self._filenames:
-            d_file[file.absolute] = file
-            d_file[file.relative] = file
-            d_file[file.used] = file
-        if filename not in d_file:
-            raise ValueError(f"{filename} does not exist in {d_file}")
-        return d_file[filename]
+        if self._filenames_lookup is None:
+            self._filenames_lookup = {}
+            for file in self._filenames:
+                self._filenames_lookup[file.absolute] = file
+                self._filenames_lookup[file.relative] = file
+                self._filenames_lookup[file.used] = file
+        if filename not in self._filenames_lookup:
+            raise ValueError(f"{filename} does not exist in {self._filenames_lookup}")
+        return self._filenames_lookup[filename]
 
     @property
     def dependencies(self) -> Set[str]:
