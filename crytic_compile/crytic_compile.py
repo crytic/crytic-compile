@@ -96,6 +96,13 @@ class CryticCompile:
         # mapping from absolute/relative/used to filename
         self._filenames_lookup: Optional[Dict[str, Filename]] = None
 
+        # Mapping each file to
+        #  offset -> line, column
+        # This is not memory optimized, but allow an offset lookup in O(1)
+        # Because we frequently do this lookup in Slither during the AST parsing
+        # We decided to favor the running time versus memory
+        self._cached_offset_to_line: Dict[Filename, Dict[int, Tuple[int, int]]] = dict()
+
         # Libraries used by the contract
         # contract_name -> (library, pattern)
         self._libraries: Dict[str, List[Tuple[str, str]]] = {}
@@ -286,6 +293,27 @@ class CryticCompile:
     @working_dir.setter
     def working_dir(self, path: Path):
         self._working_dir = path
+
+    def _get_cached_offset_to_line(self, file: Filename):
+        source_code = self.src_content[file.absolute]
+        source_code = source_code.encode("utf-8")
+        source_code = source_code.splitlines(True)
+        acc = 0
+        lines_delimiters: Dict[int, Tuple[int, acc]] = dict()
+        for line_number, x in enumerate(source_code):
+            for i in range(acc, acc + len(x)):
+                lines_delimiters[i] = (line_number + 1, i - acc + 1)
+            acc += len(x)
+        lines_delimiters[acc] = (len(source_code) + 1, 0)
+        self._cached_offset_to_line[file] = lines_delimiters
+
+    def get_line_from_offset(self, filename: str, offset: int) -> Tuple[int, int]:
+        file = self.filename_lookup(filename)
+        if file not in self._cached_offset_to_line:
+            self._get_cached_offset_to_line(file)
+
+        lines_delimiters = self._cached_offset_to_line[file]
+        return lines_delimiters[offset]
 
     # endregion
     ###################################################################################
@@ -504,8 +532,7 @@ class CryticCompile:
         """
         # If we have no source code loaded yet, load it for every contract.
         if not self._src_content:
-            for name in self.contracts_names:
-                filename = self.filename_of_contract(name)
+            for filename in self.filenames:
                 if filename.absolute not in self._src_content and os.path.isfile(filename.absolute):
                     with open(filename.absolute, encoding="utf8", newline="") as source_file:
                         self._src_content[filename.absolute] = source_file.read()
