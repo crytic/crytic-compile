@@ -101,7 +101,7 @@ class CryticCompile:
         # This is not memory optimized, but allow an offset lookup in O(1)
         # Because we frequently do this lookup in Slither during the AST parsing
         # We decided to favor the running time versus memory
-        self._cached_lines_delimiters: Dict[Filename, Dict[int, Tuple[int, int]]] = dict()
+        self._cached_offset_to_line: Dict[Filename, Dict[int, Tuple[int, int]]] = dict()
 
         # Libraries used by the contract
         # contract_name -> (library, pattern)
@@ -294,7 +294,7 @@ class CryticCompile:
     def working_dir(self, path: Path):
         self._working_dir = path
 
-    def _get_cached_lines_delimiters(self, file: Filename):
+    def _get_cached_offset_to_line(self, file: Filename):
         source_code = self.src_content[file.absolute]
         source_code = source_code.encode("utf-8")
         source_code = source_code.splitlines(True)
@@ -305,14 +305,14 @@ class CryticCompile:
                 lines_delimiters[i] = (line_number + 1, i - acc + 1)
             acc += len(x)
         lines_delimiters[acc] = (len(source_code) + 1, 0)
-        self._cached_lines_delimiters[file] = lines_delimiters
+        self._cached_offset_to_line[file] = lines_delimiters
 
     def get_line_from_offset(self, filename: str, offset: int) -> Tuple[int, int]:
         file = self.filename_lookup(filename)
-        if file not in self._cached_lines_delimiters:
-            self._get_cached_lines_delimiters(file)
+        if file not in self._cached_offset_to_line:
+            self._get_cached_offset_to_line(file)
 
-        lines_delimiters = self._cached_lines_delimiters[file]
+        lines_delimiters = self._cached_offset_to_line[file]
         return lines_delimiters[offset]
 
     # endregion
