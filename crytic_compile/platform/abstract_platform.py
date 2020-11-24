@@ -2,7 +2,8 @@
 Abstract Platform
 """
 import abc
-from typing import TYPE_CHECKING, List
+from pathlib import Path
+from typing import TYPE_CHECKING, List, Dict
 
 from crytic_compile.platform import Type
 from crytic_compile.utils.unit_tests import guess_tests
@@ -48,6 +49,7 @@ class AbstractPlatform(metaclass=abc.ABCMeta):
             )
 
         self._target: str = target
+        self._cached_dependencies: Dict[Path, bool] = dict()
 
     # region Properties.
     ###################################################################################
