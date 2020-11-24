@@ -61,8 +61,7 @@ class Buidler(AbstractPlatform):
             cmd = base_cmd + ["compile"]
 
             LOGGER.info(
-                "'%s' running",
-                " ".join(cmd),
+                "'%s' running", " ".join(cmd),
             )
 
             process = subprocess.Popen(
