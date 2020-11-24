@@ -96,7 +96,12 @@ class CryticCompile:
         # mapping from absolute/relative/used to filename
         self._filenames_lookup: Optional[Dict[str, Filename]] = None
 
-        self._cached_lines_delimiters: Dict[Filename, List[int]] = dict()
+        # Mapping each file to
+        #  offset -> line, column
+        # This is not memory optimized, but allow an offset lookup in O(1)
+        # Because we frequently do this lookup in Slither during the AST parsing
+        # We decided to favor the running time versus memory
+        self._cached_lines_delimiters: Dict[Filename, Dict[int, Tuple[int, int]]] = dict()
 
         # Libraries used by the contract
         # contract_name -> (library, pattern)
@@ -293,7 +298,13 @@ class CryticCompile:
         source_code = self.src_content[file.absolute]
         source_code = source_code.encode("utf-8")
         source_code = source_code.splitlines(True)
-        lines_delimiters = [len(x) for x in source_code]
+        acc = 0
+        lines_delimiters: Dict[int, Tuple[int, acc]] = dict()
+        for line_number, x in enumerate(source_code):
+            for i in range(acc, acc + len(x)):
+                lines_delimiters[i] = (line_number + 1, i - acc + 1)
+            acc += len(x)
+        lines_delimiters[acc] = (len(source_code) + 1, 0)
         self._cached_lines_delimiters[file] = lines_delimiters
 
     def get_line_from_offset(self, filename: str, offset: int) -> Tuple[int, int]:
@@ -302,16 +313,7 @@ class CryticCompile:
             self._get_cached_lines_delimiters(file)
 
         lines_delimiters = self._cached_lines_delimiters[file]
-        acc = 0
-        line_number = 0
-        for line_number, line_length in enumerate(lines_delimiters):
-            if acc + line_length <= offset:
-                acc += line_length
-                continue
-            return line_number + 1, offset - acc + 1
-        if acc == offset:
-            return line_number + 1, offset - acc + 1
-        raise ValueError(f'Offset {offset} is outside {filename}')
+        return lines_delimiters[offset]
 
     # endregion
     ###################################################################################
