@@ -96,6 +96,8 @@ class CryticCompile:
         # mapping from absolute/relative/used to filename
         self._filenames_lookup: Optional[Dict[str, Filename]] = None
 
+        self._cached_lines_delimiters: Dict[Filename, List[int]] = dict()
+
         # Libraries used by the contract
         # contract_name -> (library, pattern)
         self._libraries: Dict[str, List[Tuple[str, str]]] = {}
@@ -286,6 +288,30 @@ class CryticCompile:
     @working_dir.setter
     def working_dir(self, path: Path):
         self._working_dir = path
+
+    def _get_cached_lines_delimiters(self, file: Filename):
+        source_code = self.src_content[file.absolute]
+        source_code = source_code.encode("utf-8")
+        source_code = source_code.splitlines(True)
+        lines_delimiters = [len(x) for x in source_code]
+        self._cached_lines_delimiters[file] = lines_delimiters
+
+    def get_line_from_offset(self, filename: str, offset: int) -> Tuple[int, int]:
+        file = self.filename_lookup(filename)
+        if file not in self._cached_lines_delimiters:
+            self._get_cached_lines_delimiters(file)
+
+        lines_delimiters = self._cached_lines_delimiters[file]
+        acc = 0
+        line_number = 0
+        for line_number, line_length in enumerate(lines_delimiters):
+            if acc + line_length <= offset:
+                acc += line_length
+                continue
+            return line_number + 1, offset - acc + 1
+        if acc == offset:
+            return line_number + 1, offset - acc + 1
+        raise ValueError(f'Offset {offset} is outside {filename}')
 
     # endregion
     ###################################################################################
@@ -504,8 +530,7 @@ class CryticCompile:
         """
         # If we have no source code loaded yet, load it for every contract.
         if not self._src_content:
-            for name in self.contracts_names:
-                filename = self.filename_of_contract(name)
+            for filename in self.filenames:
                 if filename.absolute not in self._src_content and os.path.isfile(filename.absolute):
                     with open(filename.absolute, encoding="utf8", newline="") as source_file:
                         self._src_content[filename.absolute] = source_file.read()
@@ -658,7 +683,7 @@ class CryticCompile:
         return new_names
 
     def _library_name_lookup(
-        self, lib_name: str, original_contract: str
+            self, lib_name: str, original_contract: str
     ) -> Optional[Tuple[str, str]]:
         """
         Convert a library name to the contract
@@ -690,14 +715,14 @@ class CryticCompile:
 
             # Solidity 0.4 with filename
             solidity_0_4_filename = (
-                "__" + name_with_absolute_filename + "_" * (38 - len(name_with_absolute_filename))
+                    "__" + name_with_absolute_filename + "_" * (38 - len(name_with_absolute_filename))
             )
             if solidity_0_4_filename == lib_name:
                 return name, solidity_0_4_filename
 
             # Solidity 0.4 with filename
             solidity_0_4_filename = (
-                "__" + name_with_used_filename + "_" * (38 - len(name_with_used_filename))
+                    "__" + name_with_used_filename + "_" * (38 - len(name_with_used_filename))
             )
             if solidity_0_4_filename == lib_name:
                 return name, solidity_0_4_filename
@@ -771,7 +796,7 @@ class CryticCompile:
         return self._libraries[name]
 
     def _update_bytecode_with_libraries(
-        self, bytecode: str, libraries: Union[None, Dict[str, str]]
+            self, bytecode: str, libraries: Union[None, Dict[str, str]]
     ) -> str:
         """
         Patch the bytecode
