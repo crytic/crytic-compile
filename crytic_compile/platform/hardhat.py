@@ -51,7 +51,7 @@ class Hardhat(AbstractPlatform):
 
         build_directory = Path(kwargs.get("hardhat_cache_directory", "artifacts/build-info"))
 
-        buidler_working_dir = kwargs.get("hardhat_working_dir", None)
+        hardhat_working_dir = kwargs.get("hardhat_working_dir", None)
 
         base_cmd = ["hardhat"]
         if not kwargs.get("npx_disable", False):
@@ -108,7 +108,7 @@ class Hardhat(AbstractPlatform):
                             original_filename,
                             relative_to_short,
                             crytic_compile,
-                            working_dir=buidler_working_dir,
+                            working_dir=hardhat_working_dir,
                         )
 
                         crytic_compile.contracts_names.add(contract_name)
@@ -139,11 +139,11 @@ class Hardhat(AbstractPlatform):
                             self._target,
                             relative_to_short,
                             crytic_compile,
-                            working_dir=buidler_working_dir,
+                            working_dir=hardhat_working_dir,
                         )
                     else:
                         path = convert_filename(
-                            path, relative_to_short, crytic_compile, working_dir=buidler_working_dir
+                            path, relative_to_short, crytic_compile, working_dir=hardhat_working_dir
                         )
                     crytic_compile.filenames.add(path)
                     crytic_compile.asts[path.absolute] = info["ast"]
@@ -151,15 +151,17 @@ class Hardhat(AbstractPlatform):
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:
         """
-        Check if the target is a buidler project
+        Check if the target is a hardhat project
 
         :param target:
         :return:
         """
-        buidler_ignore = kwargs.get("buidler_ignore", False)
-        if buidler_ignore:
+        hardhat_ignore = kwargs.get("hardhat_ignore", False)
+        if hardhat_ignore:
             return False
-        return os.path.isfile(os.path.join(target, "hardhat.config.js"))
+        return os.path.isfile(os.path.join(target, "hardhat.config.js")) | os.path.isfile(
+            os.path.join(target, "hardhat.config.ts")
+        )
 
     def is_dependency(self, path: str) -> bool:
         """
