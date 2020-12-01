@@ -130,7 +130,7 @@ class Buidler(AbstractPlatform):
                         crytic_compile.srcmaps_init[contract_name] = info["evm"]["bytecode"][
                             "sourceMap"
                         ].split(";")
-                        crytic_compile.srcmaps_runtime[contract_name] = info["evm"]["bytecode"][
+                        crytic_compile.srcmaps_runtime[contract_name] = info["evm"]["deployedBytecode"][
                             "sourceMap"
                         ].split(";")
                         userdoc = info.get("userdoc", {})
