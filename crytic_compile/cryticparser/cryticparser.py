@@ -312,6 +312,7 @@ def _init_buidler(parser):
 
     return group_buidler
 
+
 def _init_hardhat(parser):
     group_hardhat = parser.add_argument_group("hardhat options")
     group_hardhat.add_argument(
