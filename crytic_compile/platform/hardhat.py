@@ -49,7 +49,7 @@ class Hardhat(AbstractPlatform):
         cache_directory = kwargs.get("hardhat_cache_directory", "cache")
         config_file = Path(cache_directory, "solidity-files-cache.json")
 
-        build_directory = Path(kwargs.get("hardhat_cache_directory", "artifacts/build-info"))
+        build_directory = Path(kwargs.get("hardhat_artifacts_directory", "artifacts"), "build-info")
 
         hardhat_working_dir = kwargs.get("hardhat_working_dir", None)
 

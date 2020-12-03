@@ -261,6 +261,13 @@ class Truffle(AbstractPlatform):
         truffle_ignore = kwargs.get("truffle_ignore", False)
         if truffle_ignore:
             return False
+
+        # Avoid conflicts with hardhat
+        if os.path.isfile(os.path.join(target, "hardhat.config.js")) | os.path.isfile(
+            os.path.join(target, "hardhat.config.ts")
+        ):
+            return False
+
         return os.path.isfile(os.path.join(target, "truffle.js")) or os.path.isfile(
             os.path.join(target, "truffle-config.js")
         )

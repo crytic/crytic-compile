@@ -58,6 +58,7 @@ def init(parser: ArgumentParser):
     _init_waffle(parser)
     _init_npx(parser)
     _init_buidler(parser)
+    _init_hardhat(parser)
 
 
 def _init_solc(parser):
@@ -310,3 +311,31 @@ def _init_buidler(parser):
     )
 
     return group_buidler
+
+def _init_hardhat(parser):
+    group_hardhat = parser.add_argument_group("hardhat options")
+    group_hardhat.add_argument(
+        "--hardhat-ignore-compile",
+        help="Do not run hardhat compile",
+        action="store_true",
+        dest="hardhat_ignore_compile",
+        default=DEFAULTS_FLAG_IN_CONFIG["hardhat_ignore_compile"],
+    )
+
+    group_hardhat.add_argument(
+        "--hardhat-cache-directory",
+        help="Use an alternative hardhat cache directory (default ./cache)",
+        action="store",
+        dest="hardhat_cache_directory",
+        default=DEFAULTS_FLAG_IN_CONFIG["hardhat_cache_directory"],
+    )
+
+    group_hardhat.add_argument(
+        "--hardhat-artifacts-directory",
+        help="Use an alternative hardhat artifacts directory (default ./artifacts)",
+        action="store",
+        dest="hardhat_artifacts_directory",
+        default=DEFAULTS_FLAG_IN_CONFIG["hardhat_artifacts_directory"],
+    )
+
+    return group_hardhat

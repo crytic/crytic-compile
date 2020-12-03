@@ -36,4 +36,7 @@ DEFAULTS_FLAG_IN_CONFIG = {
     "buidler_ignore_compile": False,
     "buidler_cache_directory": "cache",
     "buidler_skip_directory_name_fix": False,
+    "hardhat_ignore_compile": False,
+    "hardhat_cache_directory": "cache",
+    "hardhat_artifacts_directory": "artifacts",
 }
