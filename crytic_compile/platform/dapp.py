@@ -116,6 +116,10 @@ class Dapp(AbstractPlatform):
         :param path:
         :return:
         """
+        if path in self._cached_dependencies:
+            return self._cached_dependencies[path]
+        ret = "node_modules" in Path(path).parts
+        self._cached_dependencies[path] = ret
         return "lib" in Path(path).parts
 
     def _guessed_tests(self) -> List[str]:
