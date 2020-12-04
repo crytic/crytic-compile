@@ -22,6 +22,10 @@ jobs:
       uses: actions/setup-python@v1
       with:
         python-version: 3.6
+    - uses: cachix/install-nix-action@v12
+      with:
+        nix_path: nixpkgs=channel:nixos-unstable
+    - run: nix-build
     - name: Install dependencies
       run: |
         sudo wget -O /usr/bin/solc https://github.com/ethereum/solidity/releases/download/v0.5.7/solc-static-linux
