@@ -104,10 +104,6 @@ class Solc(AbstractPlatform):
         solc_working_dir = kwargs.get("solc_working_dir", None)
         force_legacy_json = kwargs.get("solc_force_legacy_json", False)
 
-        crytic_compile.compiler_version = CompilerVersion(
-            compiler="solc", version=get_version(solc), optimized=is_optimized(solc_arguments)
-        )
-
         # From config file, solcs is a dict (version -> path)
         # From command line, solc is a list
         # The guessing of version only works from config file
@@ -235,16 +231,16 @@ class Solc(AbstractPlatform):
         return []
 
 
-def get_version(solc: str) -> str:
+def get_version(solc: str, env: Dict[str, str]) -> str:
     """
-    Get the compiler verison used
+    Get the compiler version used
 
     :param solc:
     :return:
     """
     cmd = [solc, "--version"]
     try:
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
     except OSError as error:
         # pylint: disable=raise-missing-from
         raise InvalidCompilation(error)
@@ -300,6 +296,10 @@ def _run_solc(
 
     if not filename.endswith(".sol"):
         raise InvalidCompilation("Incorrect file format")
+
+    crytic_compile.compiler_version = CompilerVersion(
+        compiler="solc", version=get_version(solc, env), optimized=is_optimized(solc_arguments)
+    )
 
     compiler_version = crytic_compile.compiler_version
     assert compiler_version

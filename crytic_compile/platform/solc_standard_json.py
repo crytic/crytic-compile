@@ -128,7 +128,7 @@ class SolcStandardJson(Solc):
         solc_working_dir = kwargs.get("solc_working_dir", None)
 
         crytic_compile.compiler_version = CompilerVersion(
-            compiler="solc", version=get_version(solc), optimized=is_optimized(solc_arguments)
+            compiler="solc", version=get_version(solc, None), optimized=is_optimized(solc_arguments)
         )
 
         skip_filename = crytic_compile.compiler_version.version in [
