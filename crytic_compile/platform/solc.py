@@ -494,7 +494,7 @@ def _run_solcs_env(
     return targets_json
 
 
-PATTERN = re.compile(r"pragma solidity[\^|>=|<=]?[ ]+?(\d+\.\d+\.\d+)")
+PATTERN = re.compile(r"pragma solidity\s*(?:\^|>=|<=)?\s*(\d+\.\d+\.\d+)")
 
 
 def _guess_solc(target, solc_working_dir):
