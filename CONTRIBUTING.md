@@ -26,7 +26,7 @@ Several linters and security checkers are run on the PRs.
 
 To run them locally:
 
-- `pylint crytic_compile --rconfig pyproject.toml`
+- `pylint crytic_compile --rcfile pyproject.toml`
 - `black crytic_compile --config pyproject.toml`
 
 We use black `19.10b0`.
