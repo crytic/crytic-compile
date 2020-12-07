@@ -57,15 +57,22 @@ class Dapp(AbstractPlatform):
 
         crytic_compile.compiler_version = _get_version(self._target)
 
-        files = glob.glob(directory + "/**/*.sol.json", recursive=True)
-        for file in files:
-            with open(file, encoding="utf8") as file_desc:
-                targets_json = json.load(file_desc)
+        optimized = False
 
-            if not "contracts" in targets_json:
-                continue
+        with open(os.path.join(directory, "dapp.sol.json")) as file_desc:
+            targets_json = json.load(file_desc)
+
+            version = re.findall(r"\d+\.\d+\.\d+", targets_json["version"])[0]
 
             for original_contract_name, info in targets_json["contracts"].items():
+                if "metadata" in info:
+                    metadata = json.loads(info["metadata"])
+                    if (
+                        "settings" in metadata
+                        and "optimizer" in metadata["settings"]
+                        and "enabled" in metadata["settings"]["optimizer"]
+                    ):
+                        optimized |= metadata["settings"]["optimizer"]["enabled"]
                 contract_name = extract_name(original_contract_name)
                 contract_filename = extract_filename(original_contract_name)
                 contract_filename = convert_filename(
@@ -90,6 +97,10 @@ class Dapp(AbstractPlatform):
                 )
                 crytic_compile.filenames.add(path)
                 crytic_compile.asts[path.absolute] = info["AST"]
+
+        crytic_compile.compiler_version = CompilerVersion(
+            compiler="solc", version=version, optimized=optimized
+        )
 
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:
