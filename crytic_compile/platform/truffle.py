@@ -336,7 +336,7 @@ def _get_version(truffle_call: List[str], cwd: str) -> Tuple[str, str]:
     for line in stdout:
         if "Solidity" in line:
             if "native" in line:
-                return solc.get_version("solc"), "solc-native"
+                return solc.get_version("solc", None), "solc-native"
             version = re.findall(r"\d+\.\d+\.\d+", line)[0]
             compiler = re.findall(r"(solc[a-z\-]*)", line)
             if len(compiler) > 0:
