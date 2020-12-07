@@ -35,4 +35,4 @@ jobs:
         TEST_TYPE: ${{ matrix.type }}
         GITHUB_ETHERSCAN: ${{ secrets.GITHUB_ETHERSCAN }}
       run: |
-        sudo bash scripts/travis_test_${TEST_TYPE}.sh
+        bash scripts/travis_test_${TEST_TYPE}.sh
