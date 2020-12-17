@@ -292,7 +292,7 @@ def _run_solc(
     if (
         not os.path.isfile(filename)
         and not working_dir
-        or not os.path.isfile(os.path.join(working_dir, filename))
+        or not os.path.isfile(os.path.join(str(working_dir), filename))
     ):
         raise InvalidCompilation(
             "{} does not exist (are you in the correct directory?)".format(filename)
