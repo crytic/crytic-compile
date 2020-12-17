@@ -91,7 +91,6 @@ def convert_filename(
             filename = filename.relative_to(Path(crytic_compile.package_name))
         except ValueError:
             pass
-
     if not filename.exists():
         if cwd.joinpath(Path("node_modules"), filename).exists():
             filename = cwd.joinpath("node_modules", filename)
