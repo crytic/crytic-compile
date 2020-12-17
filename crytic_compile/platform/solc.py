@@ -289,10 +289,8 @@ def _run_solc(
     :param working_dir:
     :return:
     """
-    if (
-        not os.path.isfile(filename)
-        and not working_dir
-        or not os.path.isfile(os.path.join(working_dir, filename))
+    if not os.path.isfile(filename) and (
+        not working_dir or not os.path.isfile(os.path.join(str(working_dir), filename))
     ):
         raise InvalidCompilation(
             "{} does not exist (are you in the correct directory?)".format(filename)
