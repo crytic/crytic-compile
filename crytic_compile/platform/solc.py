@@ -289,7 +289,11 @@ def _run_solc(
     :param working_dir:
     :return:
     """
-    if not os.path.isfile(filename):
+    if (
+        not os.path.isfile(filename)
+        and not working_dir
+        or not os.path.isfile(os.path.join(working_dir, filename))
+    ):
         raise InvalidCompilation(
             "{} does not exist (are you in the correct directory?)".format(filename)
         )
@@ -332,7 +336,6 @@ def _run_solc(
         cmd += solc_args
 
     additional_kwargs = {"cwd": working_dir} if working_dir else {}
-
     if not compiler_version.version in [f"0.4.{x}" for x in range(0, 11)]:
         # Add . as default allowed path
         if "--allow-paths" not in cmd:

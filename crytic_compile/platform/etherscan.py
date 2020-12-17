@@ -7,8 +7,9 @@ import logging
 import os
 import re
 import urllib.request
+from json.decoder import JSONDecodeError
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Union
+from typing import TYPE_CHECKING, Dict, List, Union, Tuple
 
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform.abstract_platform import AbstractPlatform
@@ -67,6 +68,56 @@ def _handle_bytecode(crytic_compile: "CryticCompile", target: str, result_b: byt
     )
 
     crytic_compile.bytecode_only = True
+
+
+# def _etherscan_single_file():
+
+
+def _handle_single_file(source_code: str, addr: str, prefix: str, contract_name: str) -> str:
+    if prefix:
+        filename = os.path.join(
+            "crytic-export", "etherscan_contracts", f"{addr}{prefix}-{contract_name}.sol"
+        )
+    else:
+        filename = os.path.join(
+            "crytic-export", "etherscan_contracts", f"{addr}-{contract_name}.sol"
+        )
+
+    with open(filename, "w", encoding="utf8") as file_desc:
+        file_desc.write(source_code)
+
+    return filename
+
+
+def _handle_multiple_files(dict_source_code: Dict, addr: str, prefix: str) -> Tuple[str, str]:
+    if prefix:
+        directory = os.path.join("crytic-export", "etherscan_contracts", f"{addr}{prefix}")
+    else:
+        directory = os.path.join("crytic-export", "etherscan_contracts", f"{addr}")
+
+    source_codes = dict_source_code["sources"]
+
+    returned_filename = None
+
+    for filename, source_code in source_codes.items():
+        path_filename = Path(filename)
+        if "contracts" in path_filename.parts and not filename.startswith("@"):
+            path_filename = Path(*path_filename.parts[path_filename.parts.index("contracts") :])
+
+        # For now we assume that the targeted file is the first one returned
+        # This work on the initial tests, but might not be true
+        if returned_filename is None:
+            returned_filename = path_filename
+
+        path_filename = Path(directory, path_filename)
+
+        if not os.path.exists(path_filename.parent):
+            os.makedirs(path_filename.parent)
+        with open(path_filename, "w", encoding="utf8") as file_desc:
+            file_desc.write(source_code["content"])
+
+    assert returned_filename is not None
+    return str(returned_filename), directory
 
 
 class Etherscan(AbstractPlatform):
@@ -141,7 +192,6 @@ class Etherscan(AbstractPlatform):
             # Assert to help mypy
             assert isinstance(result["SourceCode"], str)
             assert isinstance(result["ContractName"], str)
-
             source_code = result["SourceCode"]
             contract_name = result["ContractName"]
 
@@ -161,23 +211,11 @@ class Etherscan(AbstractPlatform):
             LOGGER.error("Contract has no public source code")
             raise InvalidCompilation("Contract has no public source code: " + etherscan_url)
 
-        if prefix:
-            filename = os.path.join(
-                "crytic-export", "etherscan_contracts", f"{addr}{prefix}-{contract_name}.sol"
-            )
-        else:
-            filename = os.path.join(
-                "crytic-export", "etherscan_contracts", f"{addr}-{contract_name}.sol"
-            )
-
         if not os.path.exists("crytic-export"):
             os.makedirs("crytic-export")
 
         if not os.path.exists(os.path.join("crytic-export", "etherscan_contracts")):
             os.makedirs(os.path.join("crytic-export", "etherscan_contracts"))
-
-        with open(filename, "w", encoding="utf8") as file_desc:
-            file_desc.write(source_code)
 
         # Assert to help mypy
         assert isinstance(result["CompilerVersion"], str)
@@ -185,6 +223,7 @@ class Etherscan(AbstractPlatform):
         compiler_version = re.findall(r"\d+\.\d+\.\d+", convert_version(result["CompilerVersion"]))[
             0
         ]
+
         optimization_used: bool = result["OptimizationUsed"] == "1"
 
         solc_arguments = None
@@ -196,6 +235,13 @@ class Etherscan(AbstractPlatform):
             compiler="solc", version=compiler_version, optimized=optimization_used
         )
 
+        working_dir = None
+        try:
+            dict_source_code = json.loads(source_code[1:-1])
+            filename, working_dir = _handle_multiple_files(dict_source_code, addr, prefix)
+        except JSONDecodeError:
+            filename = _handle_single_file(source_code, addr, prefix, contract_name)
+
         targets_json = _run_solc(
             crytic_compile,
             filename,
@@ -203,13 +249,14 @@ class Etherscan(AbstractPlatform):
             solc_disable_warnings=False,
             solc_arguments=solc_arguments,
             env=dict(os.environ, SOLC_VERSION=compiler_version),
+            working_dir=working_dir,
         )
 
         for original_contract_name, info in targets_json["contracts"].items():
             contract_name = extract_name(original_contract_name)
             contract_filename = extract_filename(original_contract_name)
             contract_filename = convert_filename(
-                contract_filename, _relative_to_short, crytic_compile
+                contract_filename, _relative_to_short, crytic_compile, working_dir=working_dir
             )
             crytic_compile.contracts_names.add(contract_name)
             crytic_compile.contracts_filenames[contract_name] = contract_filename
@@ -225,7 +272,9 @@ class Etherscan(AbstractPlatform):
             crytic_compile.natspec[contract_name] = natspec
 
         for path, info in targets_json["sources"].items():
-            path = convert_filename(path, _relative_to_short, crytic_compile)
+            path = convert_filename(
+                path, _relative_to_short, crytic_compile, working_dir=working_dir
+            )
             crytic_compile.filenames.add(path)
             crytic_compile.asts[path.absolute] = info["AST"]
 
