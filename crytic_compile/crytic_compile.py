@@ -103,6 +103,10 @@ class CryticCompile:
         # We decided to favor the running time versus memory
         self._cached_offset_to_line: Dict[Filename, Dict[int, Tuple[int, int]]] = dict()
 
+        # Return the line from the line number
+        # Note: line 1 is at index 0
+        self._cached_line_to_code: Dict[Filename, List[bytes]] = dict()
+
         # Libraries used by the contract
         # contract_name -> (library, pattern)
         self._libraries: Dict[str, List[Tuple[str, str]]] = {}
@@ -295,9 +299,10 @@ class CryticCompile:
         self._working_dir = path
 
     def _get_cached_offset_to_line(self, file: Filename):
-        source_code = self.src_content[file.absolute]
-        source_code = source_code.encode("utf-8")
-        source_code = source_code.splitlines(True)
+        if file not in self._cached_line_to_code:
+            self._get_cached_line_to_code(file)
+
+        source_code = self._cached_line_to_code[file]
         acc = 0
         lines_delimiters: Dict[int, Tuple[int, acc]] = dict()
         for line_number, x in enumerate(source_code):
@@ -314,6 +319,27 @@ class CryticCompile:
 
         lines_delimiters = self._cached_offset_to_line[file]
         return lines_delimiters[offset]
+
+    def _get_cached_line_to_code(self, file: Filename):
+        source_code = self.src_content[file.absolute]
+        source_code_encoded = source_code.encode("utf-8")
+        source_code_list = source_code_encoded.splitlines(True)
+        self._cached_line_to_code[file] = source_code_list
+
+    def get_code_from_line(self, filename: str, line: int) -> Optional[bytes]:
+        """
+        Return the line from the file. Start at line = 1.
+        Return None if the line is not in the file
+
+        """
+        file = self.filename_lookup(filename)
+        if file not in self._cached_line_to_code:
+            self._get_cached_line_to_code(file)
+
+        lines = self._cached_line_to_code[file]
+        if line - 1 < 0 or line - 1 >= len(lines):
+            return None
+        return lines[line - 1]
 
     # endregion
     ###################################################################################
