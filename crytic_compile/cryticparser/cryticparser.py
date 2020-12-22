@@ -272,6 +272,14 @@ def _init_etherscan(parser):
         default=DEFAULTS_FLAG_IN_CONFIG["etherscan_api_key"],
     )
 
+    group_etherscan.add_argument(
+        "--etherscan-export-directory",
+        help="Directory in which to save the analyzed contracts.",
+        action="store",
+        dest="etherscan_export_dir",
+        default=DEFAULTS_FLAG_IN_CONFIG["etherscan_export_directory"],
+    )
+
 
 def _init_npx(parser):
     group_npx = parser.add_argument_group("NPX options")

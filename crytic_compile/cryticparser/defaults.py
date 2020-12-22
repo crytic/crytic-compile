@@ -1,3 +1,5 @@
+import os
+
 """
 Default value for options
 """
@@ -29,6 +31,7 @@ DEFAULTS_FLAG_IN_CONFIG = {
     "etherscan_only_source_code": False,
     "etherscan_only_bytecode": False,
     "etherscan_api_key": None,
+    "etherscan_export_directory": os.path.join("crytic-export", "etherscan-contracts"),
     "waffle_ignore_compile": False,
     "waffle_config_file": None,
     "npx_disable": False,
