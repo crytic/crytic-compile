@@ -89,11 +89,11 @@ def _handle_single_file(source_code: str, addr: str, prefix: str, contract_name:
     return filename
 
 
-def _handle_multiple_files(dict_source_code: Dict, addr: str, prefix: str, export_dir: str) -> Tuple[str, str]:
+def _handle_multiple_files(dict_source_code: Dict, addr: str, prefix: str, contract_name: str, export_dir: str) -> Tuple[str, str]:
     if prefix:
-        directory = os.path.join(export_dir, f"{addr}{prefix}")
+        directory = os.path.join(export_dir, f"{addr}{prefix}-{contract_name}")
     else:
-        directory = os.path.join(export_dir, f"{addr}")
+        directory = os.path.join(export_dir, f"{addr}-{contract_name}")
 
     if "sources" in dict_source_code:
         # etherscan might return an object with a sources prop, which contains an object with contract names as keys
@@ -243,12 +243,12 @@ class Etherscan(AbstractPlatform):
         try:
             # etherscan might return an object with two curly braces, {{ content }}
             dict_source_code = json.loads(source_code[1:-1])
-            filename, working_dir = _handle_multiple_files(dict_source_code, addr, prefix, export_dir)
+            filename, working_dir = _handle_multiple_files(dict_source_code, addr, prefix, contract_name, export_dir)
         except JSONDecodeError:
             try:
                 # or etherscan might return an object with single curly braces, { content }
                 dict_source_code = json.loads(source_code)
-                filename, working_dir = _handle_multiple_files(dict_source_code, addr, prefix, export_dir)
+                filename, working_dir = _handle_multiple_files(dict_source_code, addr, prefix, contract_name, export_dir)
             except JSONDecodeError:
                 filename = _handle_single_file(source_code, addr, prefix, contract_name, export_dir)
         
