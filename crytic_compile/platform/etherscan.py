@@ -73,15 +73,13 @@ def _handle_bytecode(crytic_compile: "CryticCompile", target: str, result_b: byt
 # def _etherscan_single_file():
 
 
-def _handle_single_file(source_code: str, addr: str, prefix: str, contract_name: str, export_dir: str) -> str:
+def _handle_single_file(
+    source_code: str, addr: str, prefix: str, contract_name: str, export_dir: str
+) -> str:
     if prefix:
-        filename = os.path.join(
-            export_dir, f"{addr}{prefix}-{contract_name}.sol"
-        )
+        filename = os.path.join(export_dir, f"{addr}{prefix}-{contract_name}.sol")
     else:
-        filename = os.path.join(
-            export_dir, f"{addr}-{contract_name}.sol"
-        )
+        filename = os.path.join(export_dir, f"{addr}-{contract_name}.sol")
 
     with open(filename, "w", encoding="utf8") as file_desc:
         file_desc.write(source_code)
@@ -89,7 +87,9 @@ def _handle_single_file(source_code: str, addr: str, prefix: str, contract_name:
     return filename
 
 
-def _handle_multiple_files(dict_source_code: Dict, addr: str, prefix: str, contract_name: str, export_dir: str) -> Tuple[str, str]:
+def _handle_multiple_files(
+    dict_source_code: Dict, addr: str, prefix: str, contract_name: str, export_dir: str
+) -> Tuple[str, str]:
     if prefix:
         directory = os.path.join(export_dir, f"{addr}{prefix}-{contract_name}")
     else:
@@ -166,9 +166,9 @@ class Etherscan(AbstractPlatform):
         only_bytecode = kwargs.get("etherscan_only_bytecode", False)
 
         etherscan_api_key = kwargs.get("etherscan_api_key", None)
-        
+
         export_dir = kwargs.get("etherscan_export_dir")
-        
+
         if etherscan_api_key:
             etherscan_url += f"&apikey={etherscan_api_key}"
             etherscan_bytecode_url += f"&apikey={etherscan_api_key}"
@@ -243,15 +243,19 @@ class Etherscan(AbstractPlatform):
         try:
             # etherscan might return an object with two curly braces, {{ content }}
             dict_source_code = json.loads(source_code[1:-1])
-            filename, working_dir = _handle_multiple_files(dict_source_code, addr, prefix, contract_name, export_dir)
+            filename, working_dir = _handle_multiple_files(
+                dict_source_code, addr, prefix, contract_name, export_dir
+            )
         except JSONDecodeError:
             try:
                 # or etherscan might return an object with single curly braces, { content }
                 dict_source_code = json.loads(source_code)
-                filename, working_dir = _handle_multiple_files(dict_source_code, addr, prefix, contract_name, export_dir)
+                filename, working_dir = _handle_multiple_files(
+                    dict_source_code, addr, prefix, contract_name, export_dir
+                )
             except JSONDecodeError:
                 filename = _handle_single_file(source_code, addr, prefix, contract_name, export_dir)
-        
+
         targets_json = _run_solc(
             crytic_compile,
             filename,
