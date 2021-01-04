@@ -1,8 +1,9 @@
-import os
-
 """
 Default value for options
 """
+
+import os
+
 # Those are the flags shared by the command line and the config file
 DEFAULTS_FLAG_IN_CONFIG = {
     "compile_force_framework": None,
