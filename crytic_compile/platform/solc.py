@@ -193,12 +193,12 @@ class Solc(AbstractPlatform):
                 userdoc = (
                     json.loads(info.get("userdoc", "{}"))
                     if not self.is_at_or_above_minor_version(crytic_compile, 8)
-                    else info["userdoc"]
+                    else info.get("userdoc", "{}")
                 )
                 devdoc = (
                     json.loads(info.get("devdoc", "{}"))
                     if not self.is_at_or_above_minor_version(crytic_compile, 8)
-                    else info["devdoc"]
+                    else info.get("devdoc", "{}")
                 )
                 natspec = Natspec(userdoc, devdoc)
                 crytic_compile.natspec[contract_name] = natspec
