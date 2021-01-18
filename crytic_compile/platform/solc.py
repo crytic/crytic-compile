@@ -87,7 +87,7 @@ class Solc(AbstractPlatform):
     PROJECT_URL = "https://github.com/ethereum/solidity"
     TYPE = Type.SOLC
 
-    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-locals,too-many-branches
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str):
         """
         Compile the target
@@ -152,6 +152,10 @@ class Solc(AbstractPlatform):
                 force_legacy_json=force_legacy_json,
             )
 
+        # there have been a couple of changes in solc starting from 0.8.x,
+        if self.is_at_or_above_minor_version(crytic_compile, 8) and force_legacy_json:
+            raise InvalidCompilation("legacy JSON not supported from 0.8.x onwards")
+
         skip_filename = crytic_compile.compiler_version.version in [
             f"0.4.{x}" for x in range(0, 10)
         ]
@@ -177,13 +181,25 @@ class Solc(AbstractPlatform):
                     )
                 crytic_compile.contracts_names.add(contract_name)
                 crytic_compile.contracts_filenames[contract_name] = contract_filename
-                crytic_compile.abis[contract_name] = json.loads(info["abi"])
+                crytic_compile.abis[contract_name] = (
+                    json.loads(info["abi"])
+                    if not self.is_at_or_above_minor_version(crytic_compile, 8)
+                    else info["abi"]
+                )
                 crytic_compile.bytecodes_init[contract_name] = info["bin"]
                 crytic_compile.bytecodes_runtime[contract_name] = info["bin-runtime"]
                 crytic_compile.srcmaps_init[contract_name] = info["srcmap"].split(";")
                 crytic_compile.srcmaps_runtime[contract_name] = info["srcmap-runtime"].split(";")
-                userdoc = json.loads(info.get("userdoc", "{}"))
-                devdoc = json.loads(info.get("devdoc", "{}"))
+                userdoc = (
+                    json.loads(info.get("userdoc", "{}"))
+                    if not self.is_at_or_above_minor_version(crytic_compile, 8)
+                    else info["userdoc"]
+                )
+                devdoc = (
+                    json.loads(info.get("devdoc", "{}"))
+                    if not self.is_at_or_above_minor_version(crytic_compile, 8)
+                    else info["devdoc"]
+                )
                 natspec = Natspec(userdoc, devdoc)
                 crytic_compile.natspec[contract_name] = natspec
 
@@ -202,6 +218,18 @@ class Solc(AbstractPlatform):
                     )
                 crytic_compile.filenames.add(path)
                 crytic_compile.asts[path.absolute] = info["AST"]
+
+    @staticmethod
+    def is_at_or_above_minor_version(crytic_compile: "CryticCompile", version: int) -> bool:
+        """
+        Checks if the solc version is at or above(=newer) a given minor (0.x.0) version
+
+        :param crytic_compile:
+        :param version:
+        :return:
+
+        """
+        return int(crytic_compile.compiler_version.version.split(".")[1]) >= version
 
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:
