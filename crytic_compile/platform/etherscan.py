@@ -274,14 +274,26 @@ class Etherscan(AbstractPlatform):
             )
             crytic_compile.contracts_names.add(contract_name)
             crytic_compile.contracts_filenames[contract_name] = contract_filename
-            crytic_compile.abis[contract_name] = json.loads(info["abi"])
+            crytic_compile.abis[contract_name] = (
+                json.loads(info["abi"])
+                if not self.is_at_or_above_minor_version(crytic_compile, 8)
+                else info["abi"]
+            )
             crytic_compile.bytecodes_init[contract_name] = info["bin"]
             crytic_compile.bytecodes_runtime[contract_name] = info["bin-runtime"]
             crytic_compile.srcmaps_init[contract_name] = info["srcmap"].split(";")
             crytic_compile.srcmaps_runtime[contract_name] = info["srcmap-runtime"].split(";")
 
-            userdoc = json.loads(info.get("userdoc", "{}"))
-            devdoc = json.loads(info.get("devdoc", "{}"))
+            userdoc = (
+                json.loads(info.get("userdoc", "{}"))
+                if not self.is_at_or_above_minor_version(crytic_compile, 8)
+                else info.get("userdoc", "{}")
+            )
+            devdoc = (
+                json.loads(info.get("devdoc", "{}"))
+                if not self.is_at_or_above_minor_version(crytic_compile, 8)
+                else info.get("devdoc", "{}")
+            )
             natspec = Natspec(userdoc, devdoc)
             crytic_compile.natspec[contract_name] = natspec
 
