@@ -305,6 +305,18 @@ class Etherscan(AbstractPlatform):
             crytic_compile.asts[path.absolute] = info["AST"]
 
     @staticmethod
+    def is_at_or_above_minor_version(crytic_compile: "CryticCompile", version: int) -> bool:
+        """
+        Checks if the solc version is at or above(=newer) a given minor (0.x.0) version
+
+        :param crytic_compile:
+        :param version:
+        :return:
+
+        """
+        return int(crytic_compile.compiler_version.version.split(".")[1]) >= version
+
+    @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:
         """
         Check if the target is an etherscan address
