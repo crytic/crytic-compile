@@ -73,15 +73,13 @@ def _handle_bytecode(crytic_compile: "CryticCompile", target: str, result_b: byt
 # def _etherscan_single_file():
 
 
-def _handle_single_file(source_code: str, addr: str, prefix: str, contract_name: str) -> str:
+def _handle_single_file(
+    source_code: str, addr: str, prefix: str, contract_name: str, export_dir: str
+) -> str:
     if prefix:
-        filename = os.path.join(
-            "crytic-export", "etherscan_contracts", f"{addr}{prefix}-{contract_name}.sol"
-        )
+        filename = os.path.join(export_dir, f"{addr}{prefix}-{contract_name}.sol")
     else:
-        filename = os.path.join(
-            "crytic-export", "etherscan_contracts", f"{addr}-{contract_name}.sol"
-        )
+        filename = os.path.join(export_dir, f"{addr}-{contract_name}.sol")
 
     with open(filename, "w", encoding="utf8") as file_desc:
         file_desc.write(source_code)
@@ -89,13 +87,20 @@ def _handle_single_file(source_code: str, addr: str, prefix: str, contract_name:
     return filename
 
 
-def _handle_multiple_files(dict_source_code: Dict, addr: str, prefix: str) -> Tuple[str, str]:
+def _handle_multiple_files(
+    dict_source_code: Dict, addr: str, prefix: str, contract_name: str, export_dir: str
+) -> Tuple[str, str]:
     if prefix:
-        directory = os.path.join("crytic-export", "etherscan_contracts", f"{addr}{prefix}")
+        directory = os.path.join(export_dir, f"{addr}{prefix}-{contract_name}")
     else:
-        directory = os.path.join("crytic-export", "etherscan_contracts", f"{addr}")
+        directory = os.path.join(export_dir, f"{addr}-{contract_name}")
 
-    source_codes = dict_source_code["sources"]
+    if "sources" in dict_source_code:
+        # etherscan might return an object with a sources prop, which contains an object with contract names as keys
+        source_codes = dict_source_code["sources"]
+    else:
+        # or etherscan might return an object with contract names as keys
+        source_codes = dict_source_code
 
     returned_filename = None
 
@@ -162,6 +167,8 @@ class Etherscan(AbstractPlatform):
 
         etherscan_api_key = kwargs.get("etherscan_api_key", None)
 
+        export_dir = kwargs.get("etherscan_export_dir")
+
         if etherscan_api_key:
             etherscan_url += f"&apikey={etherscan_api_key}"
             etherscan_bytecode_url += f"&apikey={etherscan_api_key}"
@@ -211,11 +218,8 @@ class Etherscan(AbstractPlatform):
             LOGGER.error("Contract has no public source code")
             raise InvalidCompilation("Contract has no public source code: " + etherscan_url)
 
-        if not os.path.exists("crytic-export"):
-            os.makedirs("crytic-export")
-
-        if not os.path.exists(os.path.join("crytic-export", "etherscan_contracts")):
-            os.makedirs(os.path.join("crytic-export", "etherscan_contracts"))
+        if not os.path.exists(export_dir):
+            os.makedirs(export_dir)
 
         # Assert to help mypy
         assert isinstance(result["CompilerVersion"], str)
@@ -237,10 +241,20 @@ class Etherscan(AbstractPlatform):
 
         working_dir = None
         try:
+            # etherscan might return an object with two curly braces, {{ content }}
             dict_source_code = json.loads(source_code[1:-1])
-            filename, working_dir = _handle_multiple_files(dict_source_code, addr, prefix)
+            filename, working_dir = _handle_multiple_files(
+                dict_source_code, addr, prefix, contract_name, export_dir
+            )
         except JSONDecodeError:
-            filename = _handle_single_file(source_code, addr, prefix, contract_name)
+            try:
+                # or etherscan might return an object with single curly braces, { content }
+                dict_source_code = json.loads(source_code)
+                filename, working_dir = _handle_multiple_files(
+                    dict_source_code, addr, prefix, contract_name, export_dir
+                )
+            except JSONDecodeError:
+                filename = _handle_single_file(source_code, addr, prefix, contract_name, export_dir)
 
         targets_json = _run_solc(
             crytic_compile,
