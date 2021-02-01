@@ -167,7 +167,10 @@ class Etherscan(AbstractPlatform):
 
         etherscan_api_key = kwargs.get("etherscan_api_key", None)
 
-        export_dir = kwargs.get("etherscan_export_dir")
+        export_dir = kwargs.get("export_dir", "crytic-export")
+        export_dir = os.path.join(
+            export_dir, kwargs.get("etherscan_export_dir", "etherscan-contracts")
+        )
 
         if etherscan_api_key:
             etherscan_url += f"&apikey={etherscan_api_key}"
