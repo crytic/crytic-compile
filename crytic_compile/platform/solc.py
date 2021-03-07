@@ -227,7 +227,10 @@ def _handle_contracts(
             # for solc < 0.4.10 we cant retrieve the filename from the ast
             if skip_filename:
                 contract_filename = convert_filename(
-                    target, relative_to_short, crytic_compile, working_dir=solc_working_dir,
+                    target,
+                    relative_to_short,
+                    crytic_compile,
+                    working_dir=solc_working_dir,
                 )
             else:
                 contract_filename = convert_filename(
