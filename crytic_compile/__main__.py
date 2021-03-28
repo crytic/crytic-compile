@@ -65,7 +65,7 @@ see https://github.com/crytic/crytic-compile/wiki/Usage""",
         help="Export directory (default: crytic-export)",
         action="store",
         dest="export_dir",
-        default="crytic-export",
+        default=DEFAULTS_FLAG_IN_CONFIG["export_dir"],
     )
 
     parser.add_argument(

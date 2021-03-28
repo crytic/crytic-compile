@@ -2,7 +2,6 @@
 Default value for options
 """
 
-import os
 
 # Those are the flags shared by the command line and the config file
 DEFAULTS_FLAG_IN_CONFIG = {
@@ -32,7 +31,7 @@ DEFAULTS_FLAG_IN_CONFIG = {
     "etherscan_only_source_code": False,
     "etherscan_only_bytecode": False,
     "etherscan_api_key": None,
-    "etherscan_export_directory": os.path.join("crytic-export", "etherscan-contracts"),
+    "etherscan_export_directory": "etherscan-contracts",
     "waffle_ignore_compile": False,
     "waffle_config_file": None,
     "npx_disable": False,
@@ -43,4 +42,5 @@ DEFAULTS_FLAG_IN_CONFIG = {
     "hardhat_ignore_compile": False,
     "hardhat_cache_directory": "cache",
     "hardhat_artifacts_directory": "artifacts",
+    "export_dir": "crytic-export",
 }
