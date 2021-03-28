@@ -6,6 +6,7 @@
 git config --global user.email "ci@trailofbits.com"
 git config --global user.name "CI User"
 
+curl -L https://nixos.org/nix/install | sh
 curl https://dapp.tools/install | sh
 
 dapp init
