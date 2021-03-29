@@ -60,7 +60,13 @@ def export_to_solc(crytic_compile: "CryticCompile", **kwargs: str) -> Union[str,
     # Create additional informational objects.
     sources = {filename: {"AST": ast} for (filename, ast) in crytic_compile.asts.items()}
     source_list = [x.absolute for x in crytic_compile.filenames]
-    source_list.sort()  # needed for Echidna, see https://github.com/crytic/crytic-compile/issues/112
+
+    # needed for Echidna, see https://github.com/crytic/crytic-compile/issues/112
+    first_source_list = list(filter(lambda f: "@" in f, source_list))
+    second_source_list = list(filter(lambda f: "@" not in f, source_list))
+    first_source_list.sort()
+    second_source_list.sort()
+    source_list = first_source_list + second_source_list
 
     # Create our root object to contain the contracts and other information.
     output = {"sources": sources, "sourceList": source_list, "contracts": contracts}
@@ -87,7 +93,6 @@ class Solc(AbstractPlatform):
     PROJECT_URL = "https://github.com/ethereum/solidity"
     TYPE = Type.SOLC
 
-    # pylint: disable=too-many-locals
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str):
         """
         Compile the target
@@ -97,95 +102,22 @@ class Solc(AbstractPlatform):
         :return:
         """
 
-        solc = kwargs.get("solc", "solc")
-        solc_disable_warnings = kwargs.get("solc_disable_warnings", False)
-        solc_arguments = kwargs.get("solc_args", "")
-        solc_remaps = kwargs.get("solc_remaps", None)
         solc_working_dir = kwargs.get("solc_working_dir", None)
         force_legacy_json = kwargs.get("solc_force_legacy_json", False)
 
-        # From config file, solcs is a dict (version -> path)
-        # From command line, solc is a list
-        # The guessing of version only works from config file
-        # This is to prevent too complex command line
-        solcs_path: Optional[Union[str, Dict, List[str]]] = kwargs.get("solc_solcs_bin")
-        # solcs_env is always a list. It matches solc-select list
-        solcs_env = kwargs.get("solc_solcs_select")
+        targets_json = _get_targets_json(crytic_compile, self._target, **kwargs)
 
-        if solcs_path:
-            if isinstance(solcs_path, str):
-                solcs_path = solcs_path.split(",")
-            targets_json = _run_solcs_path(
-                crytic_compile,
-                self._target,
-                solcs_path,
-                solc_disable_warnings,
-                solc_arguments,
-                solc_remaps=solc_remaps,
-                working_dir=solc_working_dir,
-                force_legacy_json=force_legacy_json,
-            )
-
-        elif solcs_env:
-            solcs_env_list = solcs_env.split(",")
-            targets_json = _run_solcs_env(
-                crytic_compile,
-                self._target,
-                solc,
-                solc_disable_warnings,
-                solc_arguments,
-                solcs_env=solcs_env_list,
-                solc_remaps=solc_remaps,
-                working_dir=solc_working_dir,
-                force_legacy_json=force_legacy_json,
-            )
-
-        else:
-            targets_json = _run_solc(
-                crytic_compile,
-                self._target,
-                solc,
-                solc_disable_warnings,
-                solc_arguments,
-                solc_remaps=solc_remaps,
-                working_dir=solc_working_dir,
-                force_legacy_json=force_legacy_json,
-            )
+        # there have been a couple of changes in solc starting from 0.8.x,
+        if force_legacy_json and _is_at_or_above_minor_version(crytic_compile, 8):
+            raise InvalidCompilation("legacy JSON not supported from 0.8.x onwards")
 
         skip_filename = crytic_compile.compiler_version.version in [
             f"0.4.{x}" for x in range(0, 10)
         ]
 
-        if "contracts" in targets_json:
-            for original_contract_name, info in targets_json["contracts"].items():
-                contract_name = extract_name(original_contract_name)
-                contract_filename = extract_filename(original_contract_name)
-                # for solc < 0.4.10 we cant retrieve the filename from the ast
-                if skip_filename:
-                    contract_filename = convert_filename(
-                        self._target,
-                        relative_to_short,
-                        crytic_compile,
-                        working_dir=solc_working_dir,
-                    )
-                else:
-                    contract_filename = convert_filename(
-                        contract_filename,
-                        relative_to_short,
-                        crytic_compile,
-                        working_dir=solc_working_dir,
-                    )
-                crytic_compile.contracts_names.add(contract_name)
-                crytic_compile.contracts_filenames[contract_name] = contract_filename
-                crytic_compile.abis[contract_name] = json.loads(info["abi"])
-                crytic_compile.bytecodes_init[contract_name] = info["bin"]
-                crytic_compile.bytecodes_runtime[contract_name] = info["bin-runtime"]
-                crytic_compile.srcmaps_init[contract_name] = info["srcmap"].split(";")
-                crytic_compile.srcmaps_runtime[contract_name] = info["srcmap-runtime"].split(";")
-                userdoc = json.loads(info.get("userdoc", "{}"))
-                devdoc = json.loads(info.get("devdoc", "{}"))
-                natspec = Natspec(userdoc, devdoc)
-                crytic_compile.natspec[contract_name] = natspec
+        _handle_contracts(
+            targets_json, skip_filename, crytic_compile, self._target, solc_working_dir
+        )
 
         if "sources" in targets_json:
             for path, info in targets_json["sources"].items():
@@ -229,6 +161,115 @@ class Solc(AbstractPlatform):
         :return:
         """
         return []
+
+
+def _get_targets_json(crytic_compile: "CryticCompile", target: str, **kwargs):
+    solc = kwargs.get("solc", "solc")
+    solc_disable_warnings = kwargs.get("solc_disable_warnings", False)
+    solc_arguments = kwargs.get("solc_args", "")
+    solc_remaps = kwargs.get("solc_remaps", None)
+    # From config file, solcs is a dict (version -> path)
+    # From command line, solc is a list
+    # The guessing of version only works from config file
+    # This is to prevent too complex command line
+    solcs_path: Optional[Union[str, Dict, List[str]]] = kwargs.get("solc_solcs_bin")
+    # solcs_env is always a list. It matches solc-select list
+    solcs_env = kwargs.get("solc_solcs_select")
+    solc_working_dir = kwargs.get("solc_working_dir", None)
+    force_legacy_json = kwargs.get("solc_force_legacy_json", False)
+
+    if solcs_path:
+        if isinstance(solcs_path, str):
+            solcs_path = solcs_path.split(",")
+        return _run_solcs_path(
+            crytic_compile,
+            target,
+            solcs_path,
+            solc_disable_warnings,
+            solc_arguments,
+            solc_remaps=solc_remaps,
+            working_dir=solc_working_dir,
+            force_legacy_json=force_legacy_json,
+        )
+
+    if solcs_env:
+        solcs_env_list = solcs_env.split(",")
+        return _run_solcs_env(
+            crytic_compile,
+            target,
+            solc,
+            solc_disable_warnings,
+            solc_arguments,
+            solcs_env=solcs_env_list,
+            solc_remaps=solc_remaps,
+            working_dir=solc_working_dir,
+            force_legacy_json=force_legacy_json,
+        )
+
+    return _run_solc(
+        crytic_compile,
+        target,
+        solc,
+        solc_disable_warnings,
+        solc_arguments,
+        solc_remaps=solc_remaps,
+        working_dir=solc_working_dir,
+        force_legacy_json=force_legacy_json,
+    )
+
+
+def _handle_contracts(
+    targets_json: Dict,
+    skip_filename: bool,
+    crytic_compile: "CryticCompile",
+    target: str,
+    solc_working_dir: Optional[str],
+):
+    is_above_0_8 = _is_at_or_above_minor_version(crytic_compile, 8)
+    if "contracts" in targets_json:
+        for original_contract_name, info in targets_json["contracts"].items():
+            contract_name = extract_name(original_contract_name)
+            contract_filename = extract_filename(original_contract_name)
+            # for solc < 0.4.10 we cant retrieve the filename from the ast
+            if skip_filename:
+                contract_filename = convert_filename(
+                    target,
+                    relative_to_short,
+                    crytic_compile,
+                    working_dir=solc_working_dir,
+                )
+            else:
+                contract_filename = convert_filename(
+                    contract_filename,
+                    relative_to_short,
+                    crytic_compile,
+                    working_dir=solc_working_dir,
+                )
+            crytic_compile.contracts_names.add(contract_name)
+            crytic_compile.contracts_filenames[contract_name] = contract_filename
+            crytic_compile.abis[contract_name] = (
+                json.loads(info["abi"]) if not is_above_0_8 else info["abi"]
+            )
+            crytic_compile.bytecodes_init[contract_name] = info["bin"]
+            crytic_compile.bytecodes_runtime[contract_name] = info["bin-runtime"]
+            crytic_compile.srcmaps_init[contract_name] = info["srcmap"].split(";")
+            crytic_compile.srcmaps_runtime[contract_name] = info["srcmap-runtime"].split(";")
+            userdoc = json.loads(info.get("userdoc", "{}")) if not is_above_0_8 else info["userdoc"]
+            devdoc = json.loads(info.get("devdoc", "{}")) if not is_above_0_8 else info["devdoc"]
+            natspec = Natspec(userdoc, devdoc)
+            crytic_compile.natspec[contract_name] = natspec
+
+
+def _is_at_or_above_minor_version(crytic_compile: "CryticCompile", version: int) -> bool:
+    """
+    Checks if the solc version is at or above(=newer) a given minor (0.x.0) version
+
+    :param crytic_compile:
+    :param version:
+    :return:
+
+    """
+    return int(crytic_compile.compiler_version.version.split(".")[1]) >= version
 
 
 def get_version(solc: str, env: Dict[str, str]) -> str:

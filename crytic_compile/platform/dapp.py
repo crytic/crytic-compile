@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING, List
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform.abstract_platform import AbstractPlatform
 from crytic_compile.platform.types import Type
-from crytic_compile.utils.naming import convert_filename, extract_filename, extract_name
+from crytic_compile.utils.naming import convert_filename, extract_name
 
 # Handle cycle
 from crytic_compile.utils.natspec import Natspec
@@ -62,41 +62,50 @@ class Dapp(AbstractPlatform):
         with open(os.path.join(directory, "dapp.sol.json")) as file_desc:
             targets_json = json.load(file_desc)
 
-            version = re.findall(r"\d+\.\d+\.\d+", targets_json["version"])[0]
+            version = None
+            if "version" in targets_json:
+                version = re.findall(r"\d+\.\d+\.\d+", targets_json["version"])[0]
 
-            for original_contract_name, info in targets_json["contracts"].items():
-                if "metadata" in info:
-                    metadata = json.loads(info["metadata"])
-                    if (
-                        "settings" in metadata
-                        and "optimizer" in metadata["settings"]
-                        and "enabled" in metadata["settings"]["optimizer"]
-                    ):
-                        optimized |= metadata["settings"]["optimizer"]["enabled"]
-                contract_name = extract_name(original_contract_name)
-                contract_filename = extract_filename(original_contract_name)
-                contract_filename = convert_filename(
-                    contract_filename, _relative_to_short, crytic_compile, working_dir=self._target
-                )
-                crytic_compile.contracts_names.add(contract_name)
-                crytic_compile.contracts_filenames[contract_name] = contract_filename
-                crytic_compile.abis[contract_name] = json.loads(info["abi"])
-                crytic_compile.bytecodes_init[contract_name] = info["bin"]
-                crytic_compile.bytecodes_runtime[contract_name] = info["bin-runtime"]
-                crytic_compile.srcmaps_init[contract_name] = info["srcmap"].split(";")
-                crytic_compile.srcmaps_runtime[contract_name] = info["srcmap-runtime"].split(";")
+            for original_filename, contracts_info in targets_json["contracts"].items():
+                for original_contract_name, info in contracts_info.items():
+                    if "metadata" in info:
+                        metadata = json.loads(info["metadata"])
+                        if (
+                            "settings" in metadata
+                            and "optimizer" in metadata["settings"]
+                            and "enabled" in metadata["settings"]["optimizer"]
+                        ):
+                            optimized |= metadata["settings"]["optimizer"]["enabled"]
+                    contract_name = extract_name(original_contract_name)
+                    crytic_compile.contracts_names.add(contract_name)
+                    crytic_compile.contracts_filenames[contract_name] = original_filename
 
-                userdoc = json.loads(info.get("userdoc", "{}"))
-                devdoc = json.loads(info.get("devdoc", "{}"))
-                natspec = Natspec(userdoc, devdoc)
-                crytic_compile.natspec[contract_name] = natspec
+                    crytic_compile.abis[contract_name] = info["abi"]
+                    crytic_compile.bytecodes_init[contract_name] = info["evm"]["bytecode"]["object"]
+                    crytic_compile.bytecodes_runtime[contract_name] = info["evm"][
+                        "deployedBytecode"
+                    ]["object"]
+                    crytic_compile.srcmaps_init[contract_name] = info["evm"]["bytecode"][
+                        "sourceMap"
+                    ].split(";")
+                    crytic_compile.srcmaps_runtime[contract_name] = info["evm"]["bytecode"][
+                        "sourceMap"
+                    ].split(";")
+                    userdoc = info.get("userdoc", {})
+                    devdoc = info.get("devdoc", {})
+                    natspec = Natspec(userdoc, devdoc)
+                    crytic_compile.natspec[contract_name] = natspec
+
+                    if version is None:
+                        metadata = json.loads(info["metadata"])
+                        version = re.findall(r"\d+\.\d+\.\d+", metadata["compiler"]["version"])[0]
 
             for path, info in targets_json["sources"].items():
                 path = convert_filename(
                     path, _relative_to_short, crytic_compile, working_dir=self._target
                 )
                 crytic_compile.filenames.add(path)
-                crytic_compile.asts[path.absolute] = info["AST"]
+                crytic_compile.asts[path.absolute] = info["ast"]
 
         crytic_compile.compiler_version = CompilerVersion(
             compiler="solc", version=version, optimized=optimized
@@ -117,7 +126,7 @@ class Dapp(AbstractPlatform):
         if os.path.isfile(makefile):
             with open(makefile, encoding="utf8") as file_desc:
                 txt = file_desc.read()
-                return "dapp build" in txt
+                return "dapp " in txt
         return False
 
     def is_dependency(self, path: str) -> bool:
