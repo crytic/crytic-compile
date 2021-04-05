@@ -1,7 +1,6 @@
 """
 Brownie platform. https://github.com/iamdefinitelyahuman/brownie
 """
-import glob
 import json
 import logging
 import os
@@ -72,7 +71,7 @@ class Brownie(AbstractPlatform):
         if not os.path.isdir(os.path.join(self._target, build_directory)):
             raise InvalidCompilation("`brownie compile` failed. Can you run it?")
 
-        filenames = glob.glob(os.path.join(self._target, build_directory, "*.json"))
+        filenames = list(Path(self._target, build_directory).rglob("*.json"))
 
         _iterate_over_files(crytic_compile, self._target, filenames)
 
@@ -112,7 +111,7 @@ class Brownie(AbstractPlatform):
 
 
 # pylint: disable=too-many-locals
-def _iterate_over_files(crytic_compile: "CryticCompile", target: str, filenames: List[str]):
+def _iterate_over_files(crytic_compile: "CryticCompile", target: str, filenames: List[Path]):
     """
     Iterate over the files
 
@@ -129,14 +128,23 @@ def _iterate_over_files(crytic_compile: "CryticCompile", target: str, filenames:
         with open(original_filename, encoding="utf8") as f_file:
             target_loaded: Dict = json.load(f_file)
 
-            if not "ast" in target_loaded:
+            if "ast" not in target_loaded:
                 continue
 
             if optimized is None:
+                # Old brownie
                 if compiler in target_loaded:
                     compiler_d: Dict = target_loaded["compiler"]
                     optimized = compiler_d.get("optimize", False)
                     version = _get_version(compiler_d)
+                if "compiler" in target_loaded:
+                    compiler_d: Dict = target_loaded["compiler"]
+                    optimized = compiler_d.get("optimize", False)
+                    version = _get_version(compiler_d)
+
+            # Filter out vyper files
+            if "absolutePath" not in target_loaded["ast"]:
+                continue
 
             filename_txt = target_loaded["ast"]["absolutePath"]
             filename: Filename = convert_filename(
