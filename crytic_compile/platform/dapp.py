@@ -13,6 +13,7 @@ from pathlib import Path
 # Cycle dependency
 from typing import TYPE_CHECKING, List
 
+from crytic_compile.compilation_unit import CompilationUnit
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform.abstract_platform import AbstractPlatform
 from crytic_compile.platform.types import Type
@@ -55,7 +56,9 @@ class Dapp(AbstractPlatform):
         if not dapp_ignore_compile:
             _run_dapp(self._target)
 
-        crytic_compile.compiler_version = _get_version(self._target)
+        compilation_unit = CompilationUnit(crytic_compile, str(self._target))
+
+        compilation_unit.compiler_version = _get_version(self._target)
 
         optimized = False
 
@@ -77,24 +80,26 @@ class Dapp(AbstractPlatform):
                         ):
                             optimized |= metadata["settings"]["optimizer"]["enabled"]
                     contract_name = extract_name(original_contract_name)
-                    crytic_compile.contracts_names.add(contract_name)
-                    crytic_compile.contracts_filenames[contract_name] = original_filename
+                    compilation_unit.contracts_names.add(contract_name)
+                    compilation_unit.contracts_filenames[contract_name] = original_filename
 
-                    crytic_compile.abis[contract_name] = info["abi"]
-                    crytic_compile.bytecodes_init[contract_name] = info["evm"]["bytecode"]["object"]
-                    crytic_compile.bytecodes_runtime[contract_name] = info["evm"][
+                    compilation_unit.abis[contract_name] = info["abi"]
+                    compilation_unit.bytecodes_init[contract_name] = info["evm"]["bytecode"][
+                        "object"
+                    ]
+                    compilation_unit.bytecodes_runtime[contract_name] = info["evm"][
                         "deployedBytecode"
                     ]["object"]
-                    crytic_compile.srcmaps_init[contract_name] = info["evm"]["bytecode"][
+                    compilation_unit.srcmaps_init[contract_name] = info["evm"]["bytecode"][
                         "sourceMap"
                     ].split(";")
-                    crytic_compile.srcmaps_runtime[contract_name] = info["evm"]["bytecode"][
+                    compilation_unit.srcmaps_runtime[contract_name] = info["evm"]["bytecode"][
                         "sourceMap"
                     ].split(";")
                     userdoc = info.get("userdoc", {})
                     devdoc = info.get("devdoc", {})
                     natspec = Natspec(userdoc, devdoc)
-                    crytic_compile.natspec[contract_name] = natspec
+                    compilation_unit.natspec[contract_name] = natspec
 
                     if version is None:
                         metadata = json.loads(info["metadata"])
@@ -105,9 +110,9 @@ class Dapp(AbstractPlatform):
                     path, _relative_to_short, crytic_compile, working_dir=self._target
                 )
                 crytic_compile.filenames.add(path)
-                crytic_compile.asts[path.absolute] = info["ast"]
+                compilation_unit.asts[path.absolute] = info["ast"]
 
-        crytic_compile.compiler_version = CompilerVersion(
+        compilation_unit.compiler_version = CompilerVersion(
             compiler="solc", version=version, optimized=optimized
         )
 

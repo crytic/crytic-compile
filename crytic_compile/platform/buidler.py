@@ -6,18 +6,18 @@ import logging
 import os
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional, Tuple
+from typing import TYPE_CHECKING, List, Tuple
 
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform.exceptions import InvalidCompilation
 from crytic_compile.platform.types import Type
 from crytic_compile.utils.naming import convert_filename, extract_name
 from crytic_compile.utils.natspec import Natspec
-
 from .abstract_platform import AbstractPlatform
 
 # Handle cycle
 from .solc import relative_to_short
+from ..compilation_unit import CompilationUnit
 
 if TYPE_CHECKING:
     from crytic_compile import CryticCompile
@@ -87,13 +87,15 @@ class Buidler(AbstractPlatform):
             txt = f"`buidler compile` failed. Can you run it?\n{os.path.join(self._target, target_solc_file)} not found"
             raise InvalidCompilation(txt)
 
-        (compiler, version_from_config, optimized) = _get_version_from_config(cache_directory)
+        compilation_unit = CompilationUnit(crytic_compile, str(target_solc_file))
 
-        crytic_compile.compiler_version = CompilerVersion(
+        (compiler, version_from_config, optimized) = _get_version_from_config(Path(cache_directory))
+
+        compilation_unit.compiler_version = CompilerVersion(
             compiler=compiler, version=version_from_config, optimized=optimized
         )
 
-        skip_filename = crytic_compile.compiler_version.version in [
+        skip_filename = compilation_unit.compiler_version.version in [
             f"0.4.{x}" for x in range(0, 10)
         ]
 
@@ -118,26 +120,26 @@ class Buidler(AbstractPlatform):
                             working_dir=buidler_working_dir,
                         )
 
-                        crytic_compile.contracts_names.add(contract_name)
-                        crytic_compile.contracts_filenames[contract_name] = contract_filename
+                        compilation_unit.contracts_names.add(contract_name)
+                        compilation_unit.contracts_filenames[contract_name] = contract_filename
 
-                        crytic_compile.abis[contract_name] = info["abi"]
-                        crytic_compile.bytecodes_init[contract_name] = info["evm"]["bytecode"][
+                        compilation_unit.abis[contract_name] = info["abi"]
+                        compilation_unit.bytecodes_init[contract_name] = info["evm"]["bytecode"][
                             "object"
                         ]
-                        crytic_compile.bytecodes_runtime[contract_name] = info["evm"][
+                        compilation_unit.bytecodes_runtime[contract_name] = info["evm"][
                             "deployedBytecode"
                         ]["object"]
-                        crytic_compile.srcmaps_init[contract_name] = info["evm"]["bytecode"][
+                        compilation_unit.srcmaps_init[contract_name] = info["evm"]["bytecode"][
                             "sourceMap"
                         ].split(";")
-                        crytic_compile.srcmaps_runtime[contract_name] = info["evm"][
+                        compilation_unit.srcmaps_runtime[contract_name] = info["evm"][
                             "deployedBytecode"
                         ]["sourceMap"].split(";")
                         userdoc = info.get("userdoc", {})
                         devdoc = info.get("devdoc", {})
                         natspec = Natspec(userdoc, devdoc)
-                        crytic_compile.natspec[contract_name] = natspec
+                        compilation_unit.natspec[contract_name] = natspec
 
             if "sources" in targets_json:
                 for path, info in targets_json["sources"].items():
@@ -157,7 +159,7 @@ class Buidler(AbstractPlatform):
                             path, relative_to_short, crytic_compile, working_dir=buidler_working_dir
                         )
                     crytic_compile.filenames.add(path)
-                    crytic_compile.asts[path.absolute] = info["ast"]
+                    compilation_unit.asts[path.absolute] = info["ast"]
 
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:
@@ -196,7 +198,7 @@ class Buidler(AbstractPlatform):
         return ["buidler test"]
 
 
-def _get_version_from_config(builder_directory: Path) -> Optional[Tuple[str, str, bool]]:
+def _get_version_from_config(builder_directory: Path) -> Tuple[str, str, bool]:
     """
     :return: (version, optimized)
     """

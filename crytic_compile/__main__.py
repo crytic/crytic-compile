@@ -6,6 +6,7 @@ import json
 import logging
 import os
 import sys
+from typing import TYPE_CHECKING
 
 from pkg_resources import require
 
@@ -13,6 +14,10 @@ from crytic_compile.crytic_compile import compile_all, get_platforms
 from crytic_compile.cryticparser import DEFAULTS_FLAG_IN_CONFIG, cryticparser
 from crytic_compile.platform import InvalidCompilation
 from crytic_compile.utils.zip import ZIP_TYPES_ACCEPTED, save_to_zip
+
+if TYPE_CHECKING:
+    from crytic_compile import CryticCompile
+
 
 logging.basicConfig()
 LOGGER = logging.getLogger("CryticCompile")
@@ -145,6 +150,21 @@ class ShowPlatforms(argparse.Action):  # pylint: disable=too-few-public-methods
         parser.exit()
 
 
+def _print_filenames(compilation: "CryticCompile"):
+    printed_filenames = set()
+    for compilation_id, compilation_unit in compilation.compilation_units.items():
+        print(f"Compilation unit: {compilation_id} ({len(compilation_unit.contracts_names)} files)")
+        for contract in compilation_unit.contracts_names:
+            filename = compilation_unit.filename_of_contract(contract)
+            unique_id = f"{contract} - {filename} - {compilation_id}"
+            if unique_id not in printed_filenames:
+                print(f"\t{contract} -> \n\tAbsolute: {filename.absolute}")
+                print(f"\t\tRelative: {filename.relative}")
+                print(f"\t\tShort: {filename.short}")
+                print(f"\t\tUsed: {filename.used}")
+                printed_filenames.add(unique_id)
+
+
 def main():
     """
     Main function run from the cli
@@ -157,19 +177,11 @@ def main():
         compilations = compile_all(**vars(args))
 
         # Perform relevant tasks for each compilation
-        printed_filenames = set()
+        # print(compilations[0].compilation_units)
         for compilation in compilations:
             # Print the filename of each contract (no duplicates).
             if args.print_filename:
-                for contract in compilation.contracts_names:
-                    filename = compilation.filename_of_contract(contract)
-                    unique_id = f"{contract} - {filename}"
-                    if unique_id not in printed_filenames:
-                        print(f"{contract} -> \n\tAbsolute: {filename.absolute}")
-                        print(f"\tRelative: {filename.relative}")
-                        print(f"\tShort: {filename.short}")
-                        print(f"\tUsed: {filename.used}")
-                        printed_filenames.add(unique_id)
+                _print_filenames(compilation)
             if args.export_format:
                 compilation.export(**vars(args))
 
