@@ -153,7 +153,9 @@ class ShowPlatforms(argparse.Action):  # pylint: disable=too-few-public-methods
 def _print_filenames(compilation: "CryticCompile"):
     printed_filenames = set()
     for compilation_id, compilation_unit in compilation.compilation_units.items():
-        print(f"Compilation unit: {compilation_id} ({len(compilation_unit.contracts_names)} files, solc {compilation_unit.compiler_version.version})")
+        print(
+            f"Compilation unit: {compilation_id} ({len(compilation_unit.contracts_names)} files, solc {compilation_unit.compiler_version.version})"
+        )
         for contract in compilation_unit.contracts_names:
             filename = compilation_unit.filename_of_contract(contract)
             unique_id = f"{contract} - {filename} - {compilation_id}"
