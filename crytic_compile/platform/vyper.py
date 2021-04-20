@@ -62,8 +62,8 @@ class Vyper(AbstractPlatform):
         crytic_compile.abis[contract_name] = info["abi"]
         crytic_compile.bytecodes_init[contract_name] = info["bytecode"].replace("0x", "")
         crytic_compile.bytecodes_runtime[contract_name] = info["bytecode_runtime"].replace("0x", "")
-        crytic_compile.srcmaps_init[contract_name] = []
-        crytic_compile.srcmaps_runtime[contract_name] = []
+        crytic_compile.srcmaps_init[contract_name] = [info["source_map"]["pc_pos_map_compressed"]]
+        crytic_compile.srcmaps_runtime[contract_name] = [info["source_map"]["pc_pos_map_compressed"]]
 
         crytic_compile.filenames.add(contract_filename)
 
