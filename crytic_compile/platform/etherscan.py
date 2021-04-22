@@ -14,12 +14,14 @@ from typing import TYPE_CHECKING, Dict, List, Union, Tuple
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform.abstract_platform import AbstractPlatform
 from crytic_compile.platform.exceptions import InvalidCompilation
-from crytic_compile.platform.solc import _run_solc
+from crytic_compile.platform.solc import (
+    _run_solc,
+    solc_handle_contracts,
+)
 from crytic_compile.platform.types import Type
-from crytic_compile.utils.naming import Filename, convert_filename, extract_filename, extract_name
+from crytic_compile.utils.naming import Filename, convert_filename
 
 # Cycle dependency
-from crytic_compile.utils.natspec import Natspec
 
 if TYPE_CHECKING:
     from crytic_compile import CryticCompile
@@ -273,24 +275,7 @@ class Etherscan(AbstractPlatform):
             working_dir=working_dir,
         )
 
-        for original_contract_name, info in targets_json["contracts"].items():
-            contract_name = extract_name(original_contract_name)
-            contract_filename = extract_filename(original_contract_name)
-            contract_filename = convert_filename(
-                contract_filename, _relative_to_short, crytic_compile, working_dir=working_dir
-            )
-            crytic_compile.contracts_names.add(contract_name)
-            crytic_compile.contracts_filenames[contract_name] = contract_filename
-            crytic_compile.abis[contract_name] = json.loads(info["abi"])
-            crytic_compile.bytecodes_init[contract_name] = info["bin"]
-            crytic_compile.bytecodes_runtime[contract_name] = info["bin-runtime"]
-            crytic_compile.srcmaps_init[contract_name] = info["srcmap"].split(";")
-            crytic_compile.srcmaps_runtime[contract_name] = info["srcmap-runtime"].split(";")
-
-            userdoc = json.loads(info.get("userdoc", "{}"))
-            devdoc = json.loads(info.get("devdoc", "{}"))
-            natspec = Natspec(userdoc, devdoc)
-            crytic_compile.natspec[contract_name] = natspec
+        solc_handle_contracts(targets_json, False, crytic_compile, "", working_dir)
 
         for path, info in targets_json["sources"].items():
             path = convert_filename(
