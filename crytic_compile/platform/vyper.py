@@ -67,8 +67,16 @@ class Vyper(AbstractPlatform):
         compilation_unit.bytecodes_runtime[contract_name] = info["bytecode_runtime"].replace(
             "0x", ""
         )
+        # Vyper does not provide the source mapping for the init bytecode
         compilation_unit.srcmaps_init[contract_name] = []
-        compilation_unit.srcmaps_runtime[contract_name] = []
+        # info["source_map"]["pc_pos_map"] contains the source mapping in a simpler format
+        # However pc_pos_map_compressed" seems to follow solc's format, so for convenience
+        # We store the same
+        # TODO: create SourceMapping class, so that srcmaps_runtime would store an class
+        # That will give more flexebility to different compilers
+        compilation_unit.srcmaps_runtime[contract_name] = info["source_map"][
+            "pc_pos_map_compressed"
+        ]
 
         crytic_compile.filenames.add(contract_filename)
 

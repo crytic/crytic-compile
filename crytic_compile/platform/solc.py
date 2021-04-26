@@ -131,7 +131,7 @@ class Solc(AbstractPlatform):
             f"0.4.{x}" for x in range(0, 10)
         ]
 
-        _handle_contracts(
+        solc_handle_contracts(
             targets_json, skip_filename, compilation_unit, self._target, solc_working_dir
         )
 
@@ -234,7 +234,7 @@ def _get_targets_json(compilation_unit: "CompilationUnit", target: str, **kwargs
     )
 
 
-def _handle_contracts(
+def solc_handle_contracts(
     targets_json: Dict,
     skip_filename: bool,
     compilation_unit: "CompilationUnit",
