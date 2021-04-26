@@ -58,7 +58,7 @@ class Hardhat(AbstractPlatform):
             base_cmd = ["npx"] + base_cmd
 
         if not hardhat_ignore_compile:
-            cmd = base_cmd + ["compile"]
+            cmd = base_cmd + ["compile", "--force"]
 
             LOGGER.info(
                 "'%s' running",
