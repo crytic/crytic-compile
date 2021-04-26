@@ -88,10 +88,16 @@ def export_to_solc(crytic_compile: "CryticCompile", **kwargs: str) -> List[str]:
     :return:
     """
     # Obtain objects to represent each contract
-
-    paths = []
     export_dir = kwargs.get("export_dir", "crytic-export")
 
+    if len(crytic_compile.compilation_units) == 1:
+        compilation_unit = list(crytic_compile.compilation_units.values())[0]
+        path = export_to_solc_from_compilation_unit(compilation_unit, "combined_solc", export_dir)
+        if path:
+            return [path]
+        return []
+
+    paths = []
     for key, compilation_unit in crytic_compile.compilation_units.items():
         path = export_to_solc_from_compilation_unit(compilation_unit, key, export_dir)
         if path:
