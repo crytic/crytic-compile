@@ -123,6 +123,17 @@ class CryticCompile:
         """
         return self._compilation_units
 
+    def is_in_multiple_compilation_unit(self, contract: str) -> bool:
+        """
+        Check if the contract is share by multiple compilation unit
+
+        """
+        count = 0
+        for compilation_unit in self._compilation_units.values():
+            if contract in compilation_unit.contracts_names:
+                count += 1
+        return count >= 2
+
     ###################################################################################
     ###################################################################################
     # region Filenames
