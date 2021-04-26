@@ -1,4 +1,5 @@
 import re
+import uuid
 from typing import TYPE_CHECKING, Dict, List, Optional, Set, Tuple, Union
 
 import sha3
@@ -47,6 +48,10 @@ class CompilationUnit:
         )
 
         self._crytic_compile: "CryticCompile" = crytic_compile
+
+        if unique_id == ".":
+            unique_id = uuid.uuid4()
+
         crytic_compile.compilation_units[unique_id] = self
 
         self._unique_id = unique_id
