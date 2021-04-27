@@ -11,6 +11,7 @@ import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional
 
+from crytic_compile.compilation_unit import CompilationUnit
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform.abstract_platform import AbstractPlatform
 from crytic_compile.platform.exceptions import InvalidCompilation
@@ -92,6 +93,8 @@ class Etherlime(AbstractPlatform):
         version = None
         compiler = "solc-js"
 
+        compilation_unit = CompilationUnit(crytic_compile, str(self._target))
+
         for file in filenames:
             with open(file, encoding="utf8") as file_desc:
                 target_loaded = json.load(file_desc)
@@ -108,29 +111,29 @@ class Etherlime(AbstractPlatform):
 
                 filename_txt = target_loaded["ast"]["absolutePath"]
                 filename = convert_filename(filename_txt, _relative_to_short, crytic_compile)
-                crytic_compile.asts[filename.absolute] = target_loaded["ast"]
+                compilation_unit.asts[filename.absolute] = target_loaded["ast"]
                 crytic_compile.filenames.add(filename)
                 contract_name = target_loaded["contractName"]
-                crytic_compile.contracts_filenames[contract_name] = filename
-                crytic_compile.contracts_names.add(contract_name)
-                crytic_compile.abis[contract_name] = target_loaded["abi"]
-                crytic_compile.bytecodes_init[contract_name] = target_loaded["bytecode"].replace(
+                compilation_unit.contracts_filenames[contract_name] = filename
+                compilation_unit.contracts_names.add(contract_name)
+                compilation_unit.abis[contract_name] = target_loaded["abi"]
+                compilation_unit.bytecodes_init[contract_name] = target_loaded["bytecode"].replace(
                     "0x", ""
                 )
-                crytic_compile.bytecodes_runtime[contract_name] = target_loaded[
+                compilation_unit.bytecodes_runtime[contract_name] = target_loaded[
                     "deployedBytecode"
                 ].replace("0x", "")
-                crytic_compile.srcmaps_init[contract_name] = target_loaded["sourceMap"].split(";")
-                crytic_compile.srcmaps_runtime[contract_name] = target_loaded[
+                compilation_unit.srcmaps_init[contract_name] = target_loaded["sourceMap"].split(";")
+                compilation_unit.srcmaps_runtime[contract_name] = target_loaded[
                     "deployedSourceMap"
                 ].split(";")
 
                 userdoc = target_loaded.get("userdoc", {})
                 devdoc = target_loaded.get("devdoc", {})
                 natspec = Natspec(userdoc, devdoc)
-                crytic_compile.natspec[contract_name] = natspec
+                compilation_unit.natspec[contract_name] = natspec
 
-        crytic_compile.compiler_version = CompilerVersion(
+        compilation_unit.compiler_version = CompilerVersion(
             compiler=compiler, version=version, optimized=_is_optimized(compile_arguments)
         )
 

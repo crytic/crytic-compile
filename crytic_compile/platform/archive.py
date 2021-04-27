@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from crytic_compile import CryticCompile
 
 
-def export_to_archive(crytic_compile: "CryticCompile", **kwargs) -> str:
+def export_to_archive(crytic_compile: "CryticCompile", **kwargs) -> List[str]:
     """
     Export the archive
 
@@ -40,7 +40,7 @@ def export_to_archive(crytic_compile: "CryticCompile", **kwargs) -> str:
     with open(path, "w", encoding="utf8") as f_path:
         json.dump(output, f_path)
 
-    return path
+    return [path]
 
 
 class Archive(AbstractPlatform):

@@ -9,6 +9,7 @@ import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING, List
 
+from crytic_compile.compilation_unit import CompilationUnit
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform.abstract_platform import AbstractPlatform
 from crytic_compile.platform.exceptions import InvalidCompilation
@@ -101,8 +102,9 @@ class Embark(AbstractPlatform):
                 "Embark did not generate the AST file. Is Embark installed "
                 "(npm install -g embark)? Is embark-contract-info installed? (npm install -g embark)."
             )
+        compilation_unit = CompilationUnit(crytic_compile, str(self._target))
 
-        crytic_compile.compiler_version = _get_version(self._target)
+        compilation_unit.compiler_version = _get_version(self._target)
 
         with open(infile, "r", encoding="utf8") as file_desc:
             targets_loaded = json.load(file_desc)
@@ -110,7 +112,7 @@ class Embark(AbstractPlatform):
                 filename = convert_filename(
                     k, _relative_to_short, crytic_compile, working_dir=self._target
                 )
-                crytic_compile.asts[filename.absolute] = ast
+                compilation_unit.asts[filename.absolute] = ast
                 crytic_compile.filenames.add(filename)
 
             if not "contracts" in targets_loaded:
@@ -128,28 +130,28 @@ class Embark(AbstractPlatform):
                     contract_filename, _relative_to_short, crytic_compile, working_dir=self._target
                 )
 
-                crytic_compile.contracts_filenames[contract_name] = contract_filename
-                crytic_compile.contracts_names.add(contract_name)
+                compilation_unit.contracts_filenames[contract_name] = contract_filename
+                compilation_unit.contracts_names.add(contract_name)
 
                 if "abi" in info:
-                    crytic_compile.abis[contract_name] = info["abi"]
+                    compilation_unit.abis[contract_name] = info["abi"]
                 if "bin" in info:
-                    crytic_compile.bytecodes_init[contract_name] = info["bin"].replace("0x", "")
+                    compilation_unit.bytecodes_init[contract_name] = info["bin"].replace("0x", "")
                 if "bin-runtime" in info:
-                    crytic_compile.bytecodes_runtime[contract_name] = info["bin-runtime"].replace(
+                    compilation_unit.bytecodes_runtime[contract_name] = info["bin-runtime"].replace(
                         "0x", ""
                     )
                 if "srcmap" in info:
-                    crytic_compile.srcmaps_init[contract_name] = info["srcmap"].split(";")
+                    compilation_unit.srcmaps_init[contract_name] = info["srcmap"].split(";")
                 if "srcmap-runtime" in info:
-                    crytic_compile.srcmaps_runtime[contract_name] = info["srcmap-runtime"].split(
+                    compilation_unit.srcmaps_runtime[contract_name] = info["srcmap-runtime"].split(
                         ";"
                     )
 
                 userdoc = info.get("userdoc", {})
                 devdoc = info.get("devdoc", {})
                 natspec = Natspec(userdoc, devdoc)
-                crytic_compile.natspec[contract_name] = natspec
+                compilation_unit.natspec[contract_name] = natspec
 
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:

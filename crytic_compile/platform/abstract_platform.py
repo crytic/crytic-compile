@@ -2,7 +2,6 @@
 Abstract Platform
 """
 import abc
-from pathlib import Path
 from typing import TYPE_CHECKING, List, Dict
 
 from crytic_compile.platform import Type
@@ -49,7 +48,7 @@ class AbstractPlatform(metaclass=abc.ABCMeta):
             )
 
         self._target: str = target
-        self._cached_dependencies: Dict[Path, bool] = dict()
+        self._cached_dependencies: Dict[str, bool] = dict()
 
     # region Properties.
     ###################################################################################

@@ -11,6 +11,7 @@ from json.decoder import JSONDecodeError
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, List, Union, Tuple
 
+from crytic_compile.compilation_unit import CompilationUnit
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform.abstract_platform import AbstractPlatform
 from crytic_compile.platform.exceptions import InvalidCompilation
@@ -57,15 +58,17 @@ def _handle_bytecode(crytic_compile: "CryticCompile", target: str, result_b: byt
 
     contract_filename = Filename(absolute="", relative="", short="", used="")
 
-    crytic_compile.contracts_names.add(contract_name)
-    crytic_compile.contracts_filenames[contract_name] = contract_filename
-    crytic_compile.abis[contract_name] = {}
-    crytic_compile.bytecodes_init[contract_name] = bytecode
-    crytic_compile.bytecodes_runtime[contract_name] = ""
-    crytic_compile.srcmaps_init[contract_name] = []
-    crytic_compile.srcmaps_runtime[contract_name] = []
+    compilation_unit = CompilationUnit(crytic_compile, str(target))
 
-    crytic_compile.compiler_version = CompilerVersion(
+    compilation_unit.contracts_names.add(contract_name)
+    compilation_unit.contracts_filenames[contract_name] = contract_filename
+    compilation_unit.abis[contract_name] = {}
+    compilation_unit.bytecodes_init[contract_name] = bytecode
+    compilation_unit.bytecodes_runtime[contract_name] = ""
+    compilation_unit.srcmaps_init[contract_name] = []
+    compilation_unit.srcmaps_runtime[contract_name] = []
+
+    compilation_unit.compiler_version = CompilerVersion(
         compiler="unknown", version="", optimized=None
     )
 
@@ -244,10 +247,6 @@ class Etherscan(AbstractPlatform):
             optimized_run = int(result["Runs"])
             solc_arguments = f"--optimize --optimize-runs {optimized_run}"
 
-        crytic_compile.compiler_version = CompilerVersion(
-            compiler="solc", version=compiler_version, optimized=optimization_used
-        )
-
         working_dir = None
         try:
             # etherscan might return an object with two curly braces, {{ content }}
@@ -265,8 +264,10 @@ class Etherscan(AbstractPlatform):
             except JSONDecodeError:
                 filename = _handle_single_file(source_code, addr, prefix, contract_name, export_dir)
 
+        compilation_unit = CompilationUnit(crytic_compile, str(filename))
+
         targets_json = _run_solc(
-            crytic_compile,
+            compilation_unit,
             filename,
             solc=solc,
             solc_disable_warnings=False,
@@ -275,14 +276,18 @@ class Etherscan(AbstractPlatform):
             working_dir=working_dir,
         )
 
-        solc_handle_contracts(targets_json, False, crytic_compile, "", working_dir)
+        compilation_unit.compiler_version = CompilerVersion(
+            compiler="solc", version=compiler_version, optimized=optimization_used
+        )
+
+        solc_handle_contracts(targets_json, False, compilation_unit, "", working_dir)
 
         for path, info in targets_json["sources"].items():
             path = convert_filename(
                 path, _relative_to_short, crytic_compile, working_dir=working_dir
             )
             crytic_compile.filenames.add(path)
-            crytic_compile.asts[path.absolute] = info["AST"]
+            compilation_unit.asts[path.absolute] = info["AST"]
 
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:

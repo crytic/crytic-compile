@@ -7,6 +7,7 @@ import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, List
 
+from crytic_compile.compilation_unit import CompilationUnit
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform.abstract_platform import AbstractPlatform
 from crytic_compile.platform.exceptions import InvalidCompilation
@@ -46,7 +47,9 @@ class Vyper(AbstractPlatform):
         targets_json = _run_vyper(target, vyper)
 
         assert "version" in targets_json
-        crytic_compile.compiler_version = CompilerVersion(
+        compilation_unit = CompilationUnit(crytic_compile, str(target))
+
+        compilation_unit.compiler_version = CompilerVersion(
             compiler="vyper", version=targets_json["version"], optimized=False
         )
 
@@ -57,27 +60,31 @@ class Vyper(AbstractPlatform):
 
         contract_name = Path(target).parts[-1]
 
-        crytic_compile.contracts_names.add(contract_name)
-        crytic_compile.contracts_filenames[contract_name] = contract_filename
-        crytic_compile.abis[contract_name] = info["abi"]
-        crytic_compile.bytecodes_init[contract_name] = info["bytecode"].replace("0x", "")
-        crytic_compile.bytecodes_runtime[contract_name] = info["bytecode_runtime"].replace("0x", "")
+        compilation_unit.contracts_names.add(contract_name)
+        compilation_unit.contracts_filenames[contract_name] = contract_filename
+        compilation_unit.abis[contract_name] = info["abi"]
+        compilation_unit.bytecodes_init[contract_name] = info["bytecode"].replace("0x", "")
+        compilation_unit.bytecodes_runtime[contract_name] = info["bytecode_runtime"].replace(
+            "0x", ""
+        )
         # Vyper does not provide the source mapping for the init bytecode
-        crytic_compile.srcmaps_init[contract_name] = []
+        compilation_unit.srcmaps_init[contract_name] = []
         # info["source_map"]["pc_pos_map"] contains the source mapping in a simpler format
         # However pc_pos_map_compressed" seems to follow solc's format, so for convenience
         # We store the same
         # TODO: create SourceMapping class, so that srcmaps_runtime would store an class
         # That will give more flexebility to different compilers
-        crytic_compile.srcmaps_runtime[contract_name] = info["source_map"]["pc_pos_map_compressed"]
+        compilation_unit.srcmaps_runtime[contract_name] = info["source_map"][
+            "pc_pos_map_compressed"
+        ]
 
         crytic_compile.filenames.add(contract_filename)
 
         # Natspec not yet handled for vyper
-        crytic_compile.natspec[contract_name] = Natspec({}, {})
+        compilation_unit.natspec[contract_name] = Natspec({}, {})
 
         ast = _get_vyper_ast(target, vyper)
-        crytic_compile.asts[contract_filename.absolute] = ast
+        compilation_unit.asts[contract_filename.absolute] = ast
 
     def is_dependency(self, _path):
         """

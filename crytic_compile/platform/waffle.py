@@ -11,6 +11,7 @@ import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, List
 
+from crytic_compile.compilation_unit import CompilationUnit
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform.abstract_platform import AbstractPlatform
 from crytic_compile.platform.exceptions import InvalidCompilation
@@ -64,7 +65,7 @@ class Waffle(AbstractPlatform):
 
         potential_config_files = list(Path(target).rglob("*waffle*.json"))
         if potential_config_files and len(potential_config_files) == 1:
-            config_file = potential_config_files[0]
+            config_file = str(potential_config_files[0])
 
         # Read config file
         if config_file:
@@ -172,6 +173,8 @@ class Waffle(AbstractPlatform):
 
         optimized = None
 
+        compilation_unit = CompilationUnit(crytic_compile, str(target))
+
         for contract in target_all["contracts"]:
             target_loaded = target_all["contracts"][contract]
             contract = contract.split(":")
@@ -181,31 +184,31 @@ class Waffle(AbstractPlatform):
 
             contract_name = contract[1]
 
-            crytic_compile.asts[filename.absolute] = target_all["sources"][contract[0]]["AST"]
+            compilation_unit.asts[filename.absolute] = target_all["sources"][contract[0]]["AST"]
             crytic_compile.filenames.add(filename)
-            crytic_compile.contracts_filenames[contract_name] = filename
-            crytic_compile.contracts_names.add(contract_name)
-            crytic_compile.abis[contract_name] = target_loaded["abi"]
+            compilation_unit.contracts_filenames[contract_name] = filename
+            compilation_unit.contracts_names.add(contract_name)
+            compilation_unit.abis[contract_name] = target_loaded["abi"]
 
             userdoc = target_loaded.get("userdoc", {})
             devdoc = target_loaded.get("devdoc", {})
             natspec = Natspec(userdoc, devdoc)
-            crytic_compile.natspec[contract_name] = natspec
+            compilation_unit.natspec[contract_name] = natspec
 
-            crytic_compile.bytecodes_init[contract_name] = target_loaded["evm"]["bytecode"][
+            compilation_unit.bytecodes_init[contract_name] = target_loaded["evm"]["bytecode"][
                 "object"
             ]
-            crytic_compile.srcmaps_init[contract_name] = target_loaded["evm"]["bytecode"][
+            compilation_unit.srcmaps_init[contract_name] = target_loaded["evm"]["bytecode"][
                 "sourceMap"
             ].split(";")
-            crytic_compile.bytecodes_runtime[contract_name] = target_loaded["evm"][
+            compilation_unit.bytecodes_runtime[contract_name] = target_loaded["evm"][
                 "deployedBytecode"
             ]["object"]
-            crytic_compile.srcmaps_runtime[contract_name] = target_loaded["evm"][
+            compilation_unit.srcmaps_runtime[contract_name] = target_loaded["evm"][
                 "deployedBytecode"
             ]["sourceMap"].split(";")
 
-        crytic_compile.compiler_version = CompilerVersion(
+        compilation_unit.compiler_version = CompilerVersion(
             compiler=compiler, version=version, optimized=optimized
         )
 

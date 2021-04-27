@@ -8,6 +8,7 @@ import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, List
 
+from crytic_compile.compilation_unit import CompilationUnit
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform.abstract_platform import AbstractPlatform
 from crytic_compile.platform.exceptions import InvalidCompilation
@@ -124,6 +125,9 @@ def _iterate_over_files(crytic_compile: "CryticCompile", target: str, filenames:
     compiler = "solc"
     version = None
 
+    compilation_unit = CompilationUnit(crytic_compile, str(target))
+    crytic_compile.compilation_units[str(target)] = compilation_unit
+
     for original_filename in filenames:
         with open(original_filename, encoding="utf8") as f_file:
             target_loaded: Dict = json.load(f_file)
@@ -138,7 +142,7 @@ def _iterate_over_files(crytic_compile: "CryticCompile", target: str, filenames:
                     optimized = compiler_d.get("optimize", False)
                     version = _get_version(compiler_d)
                 if "compiler" in target_loaded:
-                    compiler_d: Dict = target_loaded["compiler"]
+                    compiler_d = target_loaded["compiler"]
                     optimized = compiler_d.get("optimize", False)
                     version = _get_version(compiler_d)
 
@@ -151,29 +155,29 @@ def _iterate_over_files(crytic_compile: "CryticCompile", target: str, filenames:
                 filename_txt, _relative_to_short, crytic_compile, working_dir=target
             )
 
-            crytic_compile.asts[filename.absolute] = target_loaded["ast"]
+            compilation_unit.asts[filename.absolute] = target_loaded["ast"]
             crytic_compile.filenames.add(filename)
             contract_name = target_loaded["contractName"]
-            crytic_compile.contracts_filenames[contract_name] = filename
-            crytic_compile.contracts_names.add(contract_name)
-            crytic_compile.abis[contract_name] = target_loaded["abi"]
-            crytic_compile.bytecodes_init[contract_name] = target_loaded["bytecode"].replace(
+            compilation_unit.contracts_filenames[contract_name] = filename
+            compilation_unit.contracts_names.add(contract_name)
+            compilation_unit.abis[contract_name] = target_loaded["abi"]
+            compilation_unit.bytecodes_init[contract_name] = target_loaded["bytecode"].replace(
                 "0x", ""
             )
-            crytic_compile.bytecodes_runtime[contract_name] = target_loaded[
+            compilation_unit.bytecodes_runtime[contract_name] = target_loaded[
                 "deployedBytecode"
             ].replace("0x", "")
-            crytic_compile.srcmaps_init[contract_name] = target_loaded["sourceMap"].split(";")
-            crytic_compile.srcmaps_runtime[contract_name] = target_loaded[
+            compilation_unit.srcmaps_init[contract_name] = target_loaded["sourceMap"].split(";")
+            compilation_unit.srcmaps_runtime[contract_name] = target_loaded[
                 "deployedSourceMap"
             ].split(";")
 
             userdoc = target_loaded.get("userdoc", {})
             devdoc = target_loaded.get("devdoc", {})
             natspec = Natspec(userdoc, devdoc)
-            crytic_compile.natspec[contract_name] = natspec
+            compilation_unit.natspec[contract_name] = natspec
 
-    crytic_compile.compiler_version = CompilerVersion(
+    compilation_unit.compiler_version = CompilerVersion(
         compiler=compiler, version=version, optimized=optimized
     )
 

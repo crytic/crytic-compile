@@ -7,6 +7,7 @@ import os
 import subprocess
 from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
+from crytic_compile.compilation_unit import CompilationUnit
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform.exceptions import InvalidCompilation
 from crytic_compile.platform.solc import Solc, get_version, is_optimized, relative_to_short
@@ -127,11 +128,15 @@ class SolcStandardJson(Solc):
         solc_remaps: Optional[Union[str, List[str]]] = kwargs.get("solc_remaps", None)
         solc_working_dir = kwargs.get("solc_working_dir", None)
 
-        crytic_compile.compiler_version = CompilerVersion(
-            compiler="solc", version=get_version(solc, None), optimized=is_optimized(solc_arguments)
+        compilation_unit = CompilationUnit(crytic_compile, "standard_json")
+
+        compilation_unit.compiler_version = CompilerVersion(
+            compiler="solc",
+            version=get_version(solc, dict()),
+            optimized=is_optimized(solc_arguments),
         )
 
-        skip_filename = crytic_compile.compiler_version.version in [
+        skip_filename = compilation_unit.compiler_version.version in [
             f"0.4.{x}" for x in range(0, 10)
         ]
 
@@ -165,25 +170,27 @@ class SolcStandardJson(Solc):
                             crytic_compile,
                             working_dir=solc_working_dir,
                         )
-                    crytic_compile.contracts_names.add(contract_name)
-                    crytic_compile.contracts_filenames[contract_name] = contract_filename
-                    crytic_compile.abis[contract_name] = info["abi"]
+                    compilation_unit.contracts_names.add(contract_name)
+                    compilation_unit.contracts_filenames[contract_name] = contract_filename
+                    compilation_unit.abis[contract_name] = info["abi"]
 
                     userdoc = info.get("userdoc", {})
                     devdoc = info.get("devdoc", {})
                     natspec = Natspec(userdoc, devdoc)
-                    crytic_compile.natspec[contract_name] = natspec
+                    compilation_unit.natspec[contract_name] = natspec
 
-                    crytic_compile.bytecodes_init[contract_name] = info["evm"]["bytecode"]["object"]
-                    crytic_compile.bytecodes_runtime[contract_name] = info["evm"][
+                    compilation_unit.bytecodes_init[contract_name] = info["evm"]["bytecode"][
+                        "object"
+                    ]
+                    compilation_unit.bytecodes_runtime[contract_name] = info["evm"][
                         "deployedBytecode"
                     ]["object"]
-                    crytic_compile.srcmaps_init[contract_name] = info["evm"]["bytecode"][
+                    compilation_unit.srcmaps_init[contract_name] = info["evm"]["bytecode"][
                         "sourceMap"
                     ].split(";")
-                    crytic_compile.srcmaps_runtime[contract_name] = info["evm"]["deployedBytecode"][
-                        "sourceMap"
-                    ].split(";")
+                    compilation_unit.srcmaps_runtime[contract_name] = info["evm"][
+                        "deployedBytecode"
+                    ]["sourceMap"].split(";")
 
         if "sources" in targets_json:
             for path, info in targets_json["sources"].items():
@@ -199,7 +206,7 @@ class SolcStandardJson(Solc):
                         path, relative_to_short, crytic_compile, working_dir=solc_working_dir
                     )
                 crytic_compile.filenames.add(path)
-                crytic_compile.asts[path.absolute] = info["ast"]
+                compilation_unit.asts[path.absolute] = info["ast"]
 
     def _guessed_tests(self) -> List[str]:
         """

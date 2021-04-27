@@ -13,6 +13,7 @@ import uuid
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
 
+from crytic_compile.compilation_unit import CompilationUnit
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform import solc
 from crytic_compile.platform.abstract_platform import AbstractPlatform
@@ -28,7 +29,7 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger("CryticCompile")
 
 
-def export_to_truffle(crytic_compile: "CryticCompile", **kwargs: str) -> Optional[str]:
+def export_to_truffle(crytic_compile: "CryticCompile", **kwargs: str) -> List[str]:
     """
     Export to the truffle format
 
@@ -41,19 +42,24 @@ def export_to_truffle(crytic_compile: "CryticCompile", **kwargs: str) -> Optiona
     if export_dir and not os.path.exists(export_dir):
         os.makedirs(export_dir)
 
+    compilation_units = list(crytic_compile.compilation_units.values())
+    if len(compilation_units) != 1:
+        raise InvalidCompilation("Truffle export require 1 compilation unit")
+    compilation_unit = compilation_units[0]
+
     # Loop for each contract filename.
     results: List[Dict] = []
-    for contract_name in crytic_compile.contracts_names:
+    for contract_name in compilation_unit.contracts_names:
         # Create the informational object to output for this contract
-        filename = crytic_compile.contracts_filenames[contract_name]
+        filename = compilation_unit.contracts_filenames[contract_name]
         output = {
             "contractName": contract_name,
-            "abi": crytic_compile.abi(contract_name),
-            "bytecode": "0x" + crytic_compile.bytecode_init(contract_name),
-            "deployedBytecode": "0x" + crytic_compile.bytecode_runtime(contract_name),
-            "ast": crytic_compile.ast(filename.absolute),
-            "userdoc": crytic_compile.natspec[contract_name].userdoc.export(),
-            "devdoc": crytic_compile.natspec[contract_name].devdoc.export(),
+            "abi": compilation_unit.abi(contract_name),
+            "bytecode": "0x" + compilation_unit.bytecode_init(contract_name),
+            "deployedBytecode": "0x" + compilation_unit.bytecode_runtime(contract_name),
+            "ast": compilation_unit.ast(filename.absolute),
+            "userdoc": compilation_unit.natspec[contract_name].userdoc.export(),
+            "devdoc": compilation_unit.natspec[contract_name].devdoc.export(),
         }
         results.append(output)
 
@@ -63,7 +69,7 @@ def export_to_truffle(crytic_compile: "CryticCompile", **kwargs: str) -> Optiona
         with open(path, "w", encoding="utf8") as file_desc:
             json.dump(output, file_desc)
 
-    return export_dir
+    return [export_dir]
 
 
 class Truffle(AbstractPlatform):
@@ -162,6 +168,7 @@ class Truffle(AbstractPlatform):
             )  # convert bytestrings to unicode strings
 
             if truffle_overwrite_config:
+                assert config_used
                 _reload_config(Path(self._target), config_saved, config_used)
 
             LOGGER.info(stdout)
@@ -179,6 +186,7 @@ class Truffle(AbstractPlatform):
 
         version = None
         compiler = None
+        compilation_unit = CompilationUnit(crytic_compile, str(self._target))
 
         for filename_txt in filenames:
             with open(filename_txt, encoding="utf8") as file_desc:
@@ -214,21 +222,21 @@ class Truffle(AbstractPlatform):
                     # pylint: disable=raise-missing-from
                     raise InvalidCompilation(txt)
 
-                crytic_compile.asts[filename.absolute] = target_loaded["ast"]
+                compilation_unit.asts[filename.absolute] = target_loaded["ast"]
                 crytic_compile.filenames.add(filename)
                 contract_name = target_loaded["contractName"]
-                crytic_compile.natspec[contract_name] = natspec
-                crytic_compile.contracts_filenames[contract_name] = filename
-                crytic_compile.contracts_names.add(contract_name)
-                crytic_compile.abis[contract_name] = target_loaded["abi"]
-                crytic_compile.bytecodes_init[contract_name] = target_loaded["bytecode"].replace(
+                compilation_unit.natspec[contract_name] = natspec
+                compilation_unit.contracts_filenames[contract_name] = filename
+                compilation_unit.contracts_names.add(contract_name)
+                compilation_unit.abis[contract_name] = target_loaded["abi"]
+                compilation_unit.bytecodes_init[contract_name] = target_loaded["bytecode"].replace(
                     "0x", ""
                 )
-                crytic_compile.bytecodes_runtime[contract_name] = target_loaded[
+                compilation_unit.bytecodes_runtime[contract_name] = target_loaded[
                     "deployedBytecode"
                 ].replace("0x", "")
-                crytic_compile.srcmaps_init[contract_name] = target_loaded["sourceMap"].split(";")
-                crytic_compile.srcmaps_runtime[contract_name] = target_loaded[
+                compilation_unit.srcmaps_init[contract_name] = target_loaded["sourceMap"].split(";")
+                compilation_unit.srcmaps_runtime[contract_name] = target_loaded[
                     "deployedSourceMap"
                 ].split(";")
 
@@ -246,7 +254,7 @@ class Truffle(AbstractPlatform):
             else:
                 version, compiler = _get_version(base_cmd, cwd=self._target)
 
-        crytic_compile.compiler_version = CompilerVersion(
+        compilation_unit.compiler_version = CompilerVersion(
             compiler=compiler, version=version, optimized=optimized
         )
 
@@ -328,15 +336,15 @@ def _get_version(truffle_call: List[str], cwd: str) -> Tuple[str, str]:
     except OSError as error:
         # pylint: disable=raise-missing-from
         raise InvalidCompilation(f"Truffle failed: {error}")
-    stdout, _ = process.communicate()
-    stdout = stdout.decode()  # convert bytestrings to unicode strings
-    if not stdout:
+    sstdout, _ = process.communicate()
+    ssstdout = sstdout.decode()  # convert bytestrings to unicode strings
+    if not ssstdout:
         raise InvalidCompilation("Truffle failed to run: 'truffle version'")
-    stdout = stdout.split("\n")
+    stdout = ssstdout.split("\n")
     for line in stdout:
         if "Solidity" in line:
             if "native" in line:
-                return solc.get_version("solc", None), "solc-native"
+                return solc.get_version("solc", dict()), "solc-native"
             version = re.findall(r"\d+\.\d+\.\d+", line)[0]
             compiler = re.findall(r"(solc[a-z\-]*)", line)
             if len(compiler) > 0:
@@ -359,11 +367,11 @@ def _save_config(cwd: Path) -> Tuple[Optional[Path], Optional[Path]]:
         unique_filename = str(uuid.uuid4())
 
     if Path(cwd, "truffle-config.js").exists():
-        shutil.move(Path(cwd, "truffle-config.js"), Path(cwd, unique_filename))
+        shutil.move(str(Path(cwd, "truffle-config.js")), str(Path(cwd, unique_filename)))
         return Path("truffle-config.js"), Path(unique_filename)
 
     if Path(cwd, "truffle.js").exists():
-        shutil.move(Path(cwd, "truffle.js"), Path(cwd, unique_filename))
+        shutil.move(str(Path(cwd, "truffle.js")), str(Path(cwd, unique_filename)))
         return Path("truffle.js"), Path(unique_filename)
     return None, None
 
@@ -379,7 +387,7 @@ def _reload_config(cwd: Path, original_config: Optional[Path], tmp_config: Path)
     """
     os.remove(Path(cwd, tmp_config))
     if original_config is not None:
-        shutil.move(Path(cwd, original_config), Path(cwd, tmp_config))
+        shutil.move(str(Path(cwd, original_config)), str(Path(cwd, tmp_config)))
 
 
 def _write_config(cwd: Path, original_config: Path, version: Optional[str]):
