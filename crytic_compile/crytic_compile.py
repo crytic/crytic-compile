@@ -1,12 +1,14 @@
 """
 CryticCompile main module. Handle the compilation.
 """
+import base64
 import glob
 import inspect
 import json
 import logging
 import os
 import subprocess
+import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, List, Optional, Set, Tuple, Type, Union
 
@@ -478,6 +480,11 @@ def compile_all(target: str, **kwargs: str) -> List[CryticCompile]:
     if os.path.isfile(target) or is_supported(target):
         if target.endswith(".zip"):
             compilations = load_from_zip(target)
+        elif target.endswith(".zip.base64"):
+            with tempfile.NamedTemporaryFile() as tmp:
+                with open(target) as target_file:
+                    tmp.write(base64.b64decode(target_file.read()))
+                    compilations = load_from_zip(tmp.name)
         else:
             compilations.append(CryticCompile(target, **kwargs))
     elif os.path.isdir(target) or len(globbed_targets) > 0:
