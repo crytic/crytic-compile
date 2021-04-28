@@ -237,14 +237,14 @@ def load_from_compile(crytic_compile: "CryticCompile", loaded_json: Dict) -> Tup
         _load_from_compile_legacy(crytic_compile, loaded_json)
 
     else:
-        for key, compilation_unit in loaded_json["compilation_units"]:
+        for key, compilation_unit_json in loaded_json["compilation_units"].items():
             compilation_unit = CompilationUnit(crytic_compile, key)
             compilation_unit.compiler_version = CompilerVersion(
-                compiler=loaded_json["compiler"]["compiler"],
-                version=loaded_json["compiler"]["version"],
-                optimized=loaded_json["compiler"]["optimized"],
+                compiler=compilation_unit_json["compiler"]["compiler"],
+                version=compilation_unit_json["compiler"]["version"],
+                optimized=compilation_unit_json["compiler"]["optimized"],
             )
-            for contract_name, contract in loaded_json["contracts"].items():
+            for contract_name, contract in compilation_unit_json["contracts"].items():
                 compilation_unit.contracts_names.add(contract_name)
                 filename = Filename(
                     absolute=contract["filenames"]["absolute"],
@@ -272,7 +272,7 @@ def load_from_compile(crytic_compile: "CryticCompile", loaded_json: Dict) -> Tup
                     crytic_compile.dependencies.add(filename.relative)
                     crytic_compile.dependencies.add(filename.short)
                     crytic_compile.dependencies.add(filename.used)
-            compilation_unit.asts = loaded_json["asts"]
+            compilation_unit.asts = compilation_unit_json["asts"]
 
     # Set our filenames
     for compilation_unit in crytic_compile.compilation_units.values():
