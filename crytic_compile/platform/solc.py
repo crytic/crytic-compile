@@ -71,7 +71,10 @@ def export_to_solc_from_compilation_unit(
     if export_dir:
         if not os.path.exists(export_dir):
             os.makedirs(export_dir)
-        path = os.path.join(export_dir, f"{key}.json")
+
+        if not key.endswith(".json"):
+            key = key + ".json"
+        path = os.path.join(export_dir, f"{key}")
 
         with open(path, "w", encoding="utf8") as file_desc:
             json.dump(output, file_desc)
