@@ -126,7 +126,6 @@ def _iterate_over_files(crytic_compile: "CryticCompile", target: str, filenames:
     version = None
 
     compilation_unit = CompilationUnit(crytic_compile, str(target))
-    crytic_compile.compilation_units[str(target)] = compilation_unit
 
     for original_filename in filenames:
         with open(original_filename, encoding="utf8") as f_file:
