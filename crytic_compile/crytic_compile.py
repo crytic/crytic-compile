@@ -425,16 +425,16 @@ class CryticCompile:
     def _run_custom_build(custom_build: str):
         cmd = custom_build.split(" ")
 
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout_bytes, stderr_bytes = process.communicate()
-        stdout, stderr = (
-            stdout_bytes.decode(),
-            stderr_bytes.decode(),
-        )  # convert bytestrings to unicode strings
+        with subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
+            stdout_bytes, stderr_bytes = process.communicate()
+            stdout, stderr = (
+                stdout_bytes.decode(),
+                stderr_bytes.decode(),
+            )  # convert bytestrings to unicode strings
 
-        LOGGER.info(stdout)
-        if stderr:
-            LOGGER.error("Custom build error: \n%s", stderr)
+            LOGGER.info(stdout)
+            if stderr:
+                LOGGER.error("Custom build error: \n%s", stderr)
 
     # endregion
     ###################################################################################

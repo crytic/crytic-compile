@@ -157,23 +157,23 @@ class Truffle(AbstractPlatform):
                     config_used = Path("truffle-config.js")
                 _write_config(Path(self._target), config_used, overwritten_version)
 
-            process = subprocess.Popen(
+            with subprocess.Popen(
                 cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self._target
-            )
+            ) as process:
 
-            stdout_bytes, stderr_bytes = process.communicate()
-            stdout, stderr = (
-                stdout_bytes.decode(),
-                stderr_bytes.decode(),
-            )  # convert bytestrings to unicode strings
+                stdout_bytes, stderr_bytes = process.communicate()
+                stdout, stderr = (
+                    stdout_bytes.decode(),
+                    stderr_bytes.decode(),
+                )  # convert bytestrings to unicode strings
 
-            if truffle_overwrite_config:
-                assert config_used
-                _reload_config(Path(self._target), config_saved, config_used)
+                if truffle_overwrite_config:
+                    assert config_used
+                    _reload_config(Path(self._target), config_saved, config_used)
 
-            LOGGER.info(stdout)
-            if stderr:
-                LOGGER.error(stderr)
+                LOGGER.info(stdout)
+                if stderr:
+                    LOGGER.error(stderr)
         if not os.path.isdir(os.path.join(self._target, build_directory)):
             if os.path.isdir(os.path.join(self._target, "node_modules")):
                 raise InvalidCompilation(
@@ -332,25 +332,27 @@ def _get_version_from_config(target: str) -> Optional[Tuple[str, str]]:
 def _get_version(truffle_call: List[str], cwd: str) -> Tuple[str, str]:
     cmd = truffle_call + ["version"]
     try:
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd)
+        with subprocess.Popen(
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd
+        ) as process:
+            sstdout, _ = process.communicate()
+            ssstdout = sstdout.decode()  # convert bytestrings to unicode strings
+            if not ssstdout:
+                raise InvalidCompilation("Truffle failed to run: 'truffle version'")
+            stdout = ssstdout.split("\n")
+            for line in stdout:
+                if "Solidity" in line:
+                    if "native" in line:
+                        return solc.get_version("solc", dict()), "solc-native"
+                    version = re.findall(r"\d+\.\d+\.\d+", line)[0]
+                    compiler = re.findall(r"(solc[a-z\-]*)", line)
+                    if len(compiler) > 0:
+                        return version, compiler[0]
+
+            raise InvalidCompilation(f"Solidity version not found {stdout}")
     except OSError as error:
         # pylint: disable=raise-missing-from
         raise InvalidCompilation(f"Truffle failed: {error}")
-    sstdout, _ = process.communicate()
-    ssstdout = sstdout.decode()  # convert bytestrings to unicode strings
-    if not ssstdout:
-        raise InvalidCompilation("Truffle failed to run: 'truffle version'")
-    stdout = ssstdout.split("\n")
-    for line in stdout:
-        if "Solidity" in line:
-            if "native" in line:
-                return solc.get_version("solc", dict()), "solc-native"
-            version = re.findall(r"\d+\.\d+\.\d+", line)[0]
-            compiler = re.findall(r"(solc[a-z\-]*)", line)
-            if len(compiler) > 0:
-                return version, compiler[0]
-
-    raise InvalidCompilation(f"Solidity version not found {stdout}")
 
 
 def _save_config(cwd: Path) -> Tuple[Optional[Path], Optional[Path]]:

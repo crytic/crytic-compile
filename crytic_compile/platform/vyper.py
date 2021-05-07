@@ -127,20 +127,16 @@ def _run_vyper(filename: str, vyper: str, env: Dict = None, working_dir: str = N
 
     additional_kwargs: Dict = {"cwd": working_dir} if working_dir else {}
     try:
-        process = subprocess.Popen(
+        with subprocess.Popen(
             cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env, **additional_kwargs
-        )
+        ) as process:
+            stdout, stderr = process.communicate()
+            res = stdout.split(b"\n")
+            res = res[-2]
+            return json.loads(res)
     except OSError as error:
         # pylint: disable=raise-missing-from
         raise InvalidCompilation(error)
-
-    stdout, stderr = process.communicate()
-
-    try:
-        res = stdout.split(b"\n")
-        res = res[-2]
-        return json.loads(res)
-
     except json.decoder.JSONDecodeError:
         # pylint: disable=raise-missing-from
         raise InvalidCompilation(f"Invalid vyper compilation\n{stderr}")
@@ -156,23 +152,19 @@ def _get_vyper_ast(filename: str, vyper: str, env=None, working_dir=None) -> Dic
 
     additional_kwargs = {"cwd": working_dir} if working_dir else {}
     try:
-        process = subprocess.Popen(
+        with subprocess.Popen(
             cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env, **additional_kwargs
-        )
-    except Exception as exception:
-        # pylint: disable=raise-missing-from
-        raise InvalidCompilation(exception)
-
-    stdout, stderr = process.communicate()
-
-    try:
-        res = stdout.split(b"\n")
-        res = res[-2]
-        return json.loads(res)
-
+        ) as process:
+            stdout, stderr = process.communicate()
+            res = stdout.split(b"\n")
+            res = res[-2]
+            return json.loads(res)
     except json.decoder.JSONDecodeError:
         # pylint: disable=raise-missing-from
         raise InvalidCompilation(f"Invalid vyper compilation\n{stderr}")
+    except Exception as exception:
+        # pylint: disable=raise-missing-from
+        raise InvalidCompilation(exception)
 
 
 def _relative_to_short(relative):

@@ -62,15 +62,18 @@ class Embark(AbstractPlatform):
                 write_embark_json = True
             if write_embark_json:
                 try:
-                    process = subprocess.Popen(["npm", "install", plugin_name], cwd=self._target)
+                    with subprocess.Popen(
+                        ["npm", "install", plugin_name], cwd=self._target
+                    ) as process:
+                        _, stderr = process.communicate()
+                        with open(
+                            os.path.join(self._target, "embark.json"), "w", encoding="utf8"
+                        ) as outfile:
+                            json.dump(embark_json, outfile, indent=2)
                 except OSError as error:
                     # pylint: disable=raise-missing-from
                     raise InvalidCompilation(error)
-                _, stderr = process.communicate()
-                with open(
-                    os.path.join(self._target, "embark.json"), "w", encoding="utf8"
-                ) as outfile:
-                    json.dump(embark_json, outfile, indent=2)
+
         else:
             if (not "plugins" in embark_json) or (not plugin_name in embark_json["plugins"]):
                 raise InvalidCompilation(
@@ -85,6 +88,7 @@ class Embark(AbstractPlatform):
                 cmd = ["embark", "build", "--contracts"]
                 if not kwargs.get("npx_disable", False):
                     cmd = ["npx"] + cmd
+                # pylint: disable=consider-using-with
                 process = subprocess.Popen(
                     cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self._target
                 )
