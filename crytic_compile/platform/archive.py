@@ -86,6 +86,7 @@ class Archive(AbstractPlatform):
         platform = next((p for p in platforms if p.TYPE == underlying_type), Archive)
         self._underlying_platform = platform
         self._unit_tests = unit_tests
+        self._target = "tmp.zip"
 
         crytic_compile.src_content = loaded_json["source_content"]
 

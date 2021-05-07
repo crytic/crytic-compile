@@ -234,46 +234,47 @@ def _run_solc_standard_json(
     additional_kwargs = {"cwd": working_dir} if working_dir else {}
 
     try:
-        process = subprocess.Popen(
+        with subprocess.Popen(
             cmd,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             **additional_kwargs,
-        )
+        ) as process:
+            stdout_b, stderr_b = process.communicate(json.dumps(solc_input).encode("utf-8"))
+            stdout, stderr = (
+                stdout_b.decode(),
+                stderr_b.decode(),
+            )  # convert bytestrings to unicode strings
+
+            solc_json_output = json.loads(stdout)
+
+            # Check for errors and raise them if any exist.
+            solc_errors = solc_json_output.get("errors", [])
+            if solc_errors:
+                solc_error_occurred = False
+                solc_exception_str = ""
+                for solc_error in solc_errors:
+                    if solc_error["severity"] != "warning":
+                        solc_error_occurred = True
+                    elif solc_disable_warnings:
+                        continue
+                    solc_exception_str += (
+                        f"{solc_error.get('type', 'UnknownExceptionType')}: "
+                        f"{solc_error.get('formattedMessage', 'N/A')}\n"
+                    )
+
+                if solc_error_occurred:
+                    raise InvalidCompilation(solc_exception_str)
+                if solc_exception_str:
+                    LOGGER.warning(solc_exception_str)
+
+            return solc_json_output
+
     except OSError as error:
         # pylint: disable=raise-missing-from
         raise InvalidCompilation(error)
-    stdout_b, stderr_b = process.communicate(json.dumps(solc_input).encode("utf-8"))
-    stdout, stderr = (
-        stdout_b.decode(),
-        stderr_b.decode(),
-    )  # convert bytestrings to unicode strings
 
-    try:
-        solc_json_output = json.loads(stdout)
-
-        # Check for errors and raise them if any exist.
-        solc_errors = solc_json_output.get("errors", [])
-        if solc_errors:
-            solc_error_occurred = False
-            solc_exception_str = ""
-            for solc_error in solc_errors:
-                if solc_error["severity"] != "warning":
-                    solc_error_occurred = True
-                elif solc_disable_warnings:
-                    continue
-                solc_exception_str += (
-                    f"{solc_error.get('type', 'UnknownExceptionType')}: "
-                    f"{solc_error.get('formattedMessage', 'N/A')}\n"
-                )
-
-            if solc_error_occurred:
-                raise InvalidCompilation(solc_exception_str)
-            if solc_exception_str:
-                LOGGER.warning(solc_exception_str)
-
-        return solc_json_output
     except json.decoder.JSONDecodeError:
         # pylint: disable=raise-missing-from
         raise InvalidCompilation(f"Invalid solc compilation {stderr}")

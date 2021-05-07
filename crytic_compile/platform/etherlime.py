@@ -65,23 +65,22 @@ class Etherlime(AbstractPlatform):
                 cmd += compile_arguments.split(" ")
 
             try:
-                process = subprocess.Popen(
+                with subprocess.Popen(
                     cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self._target
-                )
+                ) as process:
+                    stdout_bytes, stderr_bytes = process.communicate()
+                    stdout, stderr = (
+                        stdout_bytes.decode(),
+                        stderr_bytes.decode(),
+                    )  # convert bytestrings to unicode strings
+
+                    LOGGER.info(stdout)
+
+                    if stderr:
+                        LOGGER.error(stderr)
             except OSError as error:
                 # pylint: disable=raise-missing-from
                 raise InvalidCompilation(error)
-
-            stdout_bytes, stderr_bytes = process.communicate()
-            stdout, stderr = (
-                stdout_bytes.decode(),
-                stderr_bytes.decode(),
-            )  # convert bytestrings to unicode strings
-
-            LOGGER.info(stdout)
-
-            if stderr:
-                LOGGER.error(stderr)
 
         # similar to truffle
         if not os.path.isdir(os.path.join(self._target, build_directory)):

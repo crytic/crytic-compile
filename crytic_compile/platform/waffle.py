@@ -148,18 +148,17 @@ class Waffle(AbstractPlatform):
                 LOGGER.info("'%s running", " ".join(cmd))
 
                 try:
-                    process = subprocess.Popen(
+                    with subprocess.Popen(
                         cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=target
-                    )
+                    ) as process:
+                        stdout, stderr = process.communicate()
+                        if stdout:
+                            LOGGER.info(stdout.decode())
+                        if stderr:
+                            LOGGER.error(stderr.decode())
                 except OSError as error:
                     # pylint: disable=raise-missing-from
                     raise InvalidCompilation(error)
-
-                stdout, stderr = process.communicate()
-                if stdout:
-                    LOGGER.info(stdout.decode())
-                if stderr:
-                    LOGGER.error(stderr.decode())
 
         if not os.path.isdir(os.path.join(target, build_directory)):
             raise InvalidCompilation("`waffle` compilation failed: build directory not found")
@@ -291,27 +290,31 @@ def _get_version(compiler: str, cwd: str, config=None) -> str:
     elif compiler == "native":
         cmd = ["solc", "--version"]
         try:
-            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd)
+            with subprocess.Popen(
+                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd
+            ) as process:
+                stdout_bytes, _ = process.communicate()
+                stdout_txt = stdout_bytes.decode()  # convert bytestrings to unicode strings
+                stdout = stdout_txt.split("\n")
+                for line in stdout:
+                    if "Version" in line:
+                        version = re.findall(r"\d+\.\d+\.\d+", line)[0]
         except OSError as error:
             # pylint: disable=raise-missing-from
             raise InvalidCompilation(error)
-        stdout_bytes, _ = process.communicate()
-        stdout_txt = stdout_bytes.decode()  # convert bytestrings to unicode strings
-        stdout = stdout_txt.split("\n")
-        for line in stdout:
-            if "Version" in line:
-                version = re.findall(r"\d+\.\d+\.\d+", line)[0]
 
     elif compiler in ["solc-js"]:
         cmd = ["solcjs", "--version"]
         try:
-            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd)
+            with subprocess.Popen(
+                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd
+            ) as process:
+                stdout_bytes, _ = process.communicate()
+                stdout_txt = stdout_bytes.decode()  # convert bytestrings to unicode strings
+                version = re.findall(r"\d+\.\d+\.\d+", stdout_txt)[0]
         except OSError as error:
             # pylint: disable=raise-missing-from
             raise InvalidCompilation(error)
-        stdout_bytes, _ = process.communicate()
-        stdout_txt = stdout_bytes.decode()  # convert bytestrings to unicode strings
-        version = re.findall(r"\d+\.\d+\.\d+", stdout_txt)[0]
 
     else:
         raise InvalidCompilation(f"Solidity version not found {compiler}")

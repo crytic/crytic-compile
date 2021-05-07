@@ -65,19 +65,19 @@ class Buidler(AbstractPlatform):
                 " ".join(cmd),
             )
 
-            process = subprocess.Popen(
+            with subprocess.Popen(
                 cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self._target
-            )
+            ) as process:
 
-            stdout_bytes, stderr_bytes = process.communicate()
-            stdout, stderr = (
-                stdout_bytes.decode(),
-                stderr_bytes.decode(),
-            )  # convert bytestrings to unicode strings
+                stdout_bytes, stderr_bytes = process.communicate()
+                stdout, stderr = (
+                    stdout_bytes.decode(),
+                    stderr_bytes.decode(),
+                )  # convert bytestrings to unicode strings
 
-            LOGGER.info(stdout)
-            if stderr:
-                LOGGER.error(stderr)
+                LOGGER.info(stdout)
+                if stderr:
+                    LOGGER.error(stderr)
 
         if not os.path.isfile(os.path.join(self._target, target_solc_file)):
             if os.path.isfile(os.path.join(self._target, target_vyper_file)):

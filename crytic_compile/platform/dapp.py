@@ -169,11 +169,13 @@ def _run_dapp(target: str):
     cmd = ["dapp", "build"]
 
     try:
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=target)
+        with subprocess.Popen(
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=target
+        ) as process:
+            _, _ = process.communicate()
     except OSError as error:
         # pylint: disable=raise-missing-from
         raise InvalidCompilation(error)
-    _, _ = process.communicate()
 
 
 def _get_version(target: str) -> CompilerVersion:

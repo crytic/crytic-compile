@@ -305,16 +305,18 @@ def get_version(solc: str, env: Dict[str, str]) -> str:
     """
     cmd = [solc, "--version"]
     try:
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
+        with subprocess.Popen(
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
+        ) as process:
+            stdout_bytes, _ = process.communicate()
+            stdout = stdout_bytes.decode()  # convert bytestrings to unicode strings
+            version = re.findall(r"\d+\.\d+\.\d+", stdout)
+            if len(version) == 0:
+                raise InvalidCompilation(f"Solidity version not found: {stdout}")
+            return version[0]
     except OSError as error:
         # pylint: disable=raise-missing-from
         raise InvalidCompilation(error)
-    stdout_bytes, _ = process.communicate()
-    stdout = stdout_bytes.decode()  # convert bytestrings to unicode strings
-    version = re.findall(r"\d+\.\d+\.\d+", stdout)
-    if len(version) == 0:
-        raise InvalidCompilation(f"Solidity version not found: {stdout}")
-    return version[0]
 
 
 def is_optimized(solc_arguments: str) -> bool:
@@ -412,6 +414,7 @@ def _run_solc(
 
             cmd += ["--allow-paths", ".", relative_filepath]
     try:
+        # pylint: disable=consider-using-with
         if env:
             process = subprocess.Popen(
                 cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env, **additional_kwargs

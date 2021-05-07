@@ -1,12 +1,14 @@
 """
 CryticCompile main module. Handle the compilation.
 """
+import base64
 import glob
 import inspect
 import json
 import logging
 import os
 import subprocess
+import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, List, Optional, Set, Tuple, Type, Union
 
@@ -423,16 +425,16 @@ class CryticCompile:
     def _run_custom_build(custom_build: str):
         cmd = custom_build.split(" ")
 
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout_bytes, stderr_bytes = process.communicate()
-        stdout, stderr = (
-            stdout_bytes.decode(),
-            stderr_bytes.decode(),
-        )  # convert bytestrings to unicode strings
+        with subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
+            stdout_bytes, stderr_bytes = process.communicate()
+            stdout, stderr = (
+                stdout_bytes.decode(),
+                stderr_bytes.decode(),
+            )  # convert bytestrings to unicode strings
 
-        LOGGER.info(stdout)
-        if stderr:
-            LOGGER.error("Custom build error: \n%s", stderr)
+            LOGGER.info(stdout)
+            if stderr:
+                LOGGER.error("Custom build error: \n%s", stderr)
 
     # endregion
     ###################################################################################
@@ -478,6 +480,11 @@ def compile_all(target: str, **kwargs: str) -> List[CryticCompile]:
     if os.path.isfile(target) or is_supported(target):
         if target.endswith(".zip"):
             compilations = load_from_zip(target)
+        elif target.endswith(".zip.base64"):
+            with tempfile.NamedTemporaryFile() as tmp:
+                with open(target) as target_file:
+                    tmp.write(base64.b64decode(target_file.read()))
+                    compilations = load_from_zip(tmp.name)
         else:
             compilations.append(CryticCompile(target, **kwargs))
     elif os.path.isdir(target) or len(globbed_targets) > 0:
