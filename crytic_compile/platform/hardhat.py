@@ -89,7 +89,7 @@ class Hardhat(AbstractPlatform):
             build_info = Path(build_directory, file)
 
             # The file here should always ends .json, but just in case use ife
-            uniq_id = file if '.json' not in file else file[0: -5]
+            uniq_id = file if ".json" not in file else file[0:-5]
             compilation_unit = CompilationUnit(crytic_compile, uniq_id)
 
             with open(build_info, encoding="utf8") as file_desc:
