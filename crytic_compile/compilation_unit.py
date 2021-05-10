@@ -50,7 +50,7 @@ class CompilationUnit:
         self._crytic_compile: "CryticCompile" = crytic_compile
 
         if unique_id == ".":
-            unique_id = uuid.uuid4()
+            unique_id = str(uuid.uuid4())
 
         crytic_compile.compilation_units[unique_id] = self
 
