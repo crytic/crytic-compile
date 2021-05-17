@@ -164,8 +164,8 @@ class Etherscan(AbstractPlatform):
             etherscan_bytecode_url = ETHERSCAN_BASE_BYTECODE % (prefix_bytecode, addr)
 
         else:
-            etherscan_url = ETHERSCAN_BASE % ("", target)
-            etherscan_bytecode_url = ETHERSCAN_BASE_BYTECODE % ("", target)
+            etherscan_url = ETHERSCAN_BASE % (".etherscan.io", target)
+            etherscan_bytecode_url = ETHERSCAN_BASE_BYTECODE % ("etherscan.io", target)
             addr = target
             prefix = None
 
