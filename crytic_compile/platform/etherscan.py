@@ -42,6 +42,11 @@ SUPPORTED_NETWORK = {
     "goerli:": ("-goerli", "goerli."),
     "tobalaba:": ("-tobalaba", "tobalaba."),
 }
+ALT_NETWORK = {
+    # Key, (ETHERSCAN_BASE, ETHERSCAN_BASE_BYTECODE)
+    "BSC:": ("https://api.bscscan.com/api?module=contract&action=getsourcecode&address=%s", "https://bscscan.com/address/%s#code"),
+    "HEC:": ("https://api.hecoinfo.com/api?module=contract&action=getsourcecode&address=%s", "https://hecoinfo.com/address/%s#code"),
+}
 
 
 def _handle_bytecode(crytic_compile: "CryticCompile", target: str, result_b: bytes):
@@ -160,6 +165,14 @@ class Etherscan(AbstractPlatform):
             addr = target[target.find(":") + 1 :]
             etherscan_url = ETHERSCAN_BASE % (prefix, addr)
             etherscan_bytecode_url = ETHERSCAN_BASE_BYTECODE % (prefix_bytecode, addr)
+
+        elif target.startswith(tuple(ALT_NETWORK)):
+            temp_url = ALT_NETWORK[target[: target.find(":") + 1]][0]
+            temp_bytecode_url = ALT_NETWORK[target[: target.find(":") + 1]][1]
+            addr = target[target.find(":") + 1 :]
+            prefix = None
+            etherscan_url = temp_url % (addr)
+            etherscan_bytecode_url = temp_bytecode_url % (addr)
 
         else:
             etherscan_url = ETHERSCAN_BASE % ("", target)
@@ -301,6 +314,8 @@ class Etherscan(AbstractPlatform):
         if etherscan_ignore:
             return False
         if target.startswith(tuple(SUPPORTED_NETWORK)):
+            target = target[target.find(":") + 1 :]
+        elif target.startswith(tuple(ALT_NETWORK)):
             target = target[target.find(":") + 1 :]
         return bool(re.match(r"^\s*0x[a-zA-Z0-9]{40}\s*$", target))
 
