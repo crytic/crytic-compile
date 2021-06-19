@@ -16,3 +16,4 @@ from .standard import Standard
 from .truffle import Truffle
 from .vyper import Vyper
 from .waffle import Waffle
+from .bscscan import BscScan

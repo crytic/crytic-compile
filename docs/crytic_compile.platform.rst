@@ -140,6 +140,14 @@ crytic\_compile.platform.waffle module
    :undoc-members:
    :show-inheritance:
 
+crytic\_compile.platform.bscscan module
+-----------------------------------------
+
+.. automodule:: crytic_compile.platform.bscscan
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 
 Module contents
 ---------------

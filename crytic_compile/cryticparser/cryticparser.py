@@ -55,6 +55,7 @@ def init(parser: ArgumentParser):
     _init_dapp(parser)
     _init_etherlime(parser)
     _init_etherscan(parser)
+    _init_bscscan(parser)
     _init_waffle(parser)
     _init_npx(parser)
     _init_buidler(parser)
@@ -348,3 +349,38 @@ def _init_hardhat(parser):
     )
 
     return group_hardhat
+
+
+def _init_bscscan(parser):
+    group_bscscan = parser.add_argument_group("BscScan options")
+    group_bscscan.add_argument(
+        "--bscscan-only-source-code",
+        help="Only compile if the source code is available.",
+        action="store_true",
+        dest="bscscan_only_source_code",
+        default=DEFAULTS_FLAG_IN_CONFIG["bscscan_only_source_code"],
+    )
+
+    group_bscscan.add_argument(
+        "--bscscan-only-bytecode",
+        help="Only looks for bytecode.",
+        action="store_true",
+        dest="bscscan_only_bytecode",
+        default=DEFAULTS_FLAG_IN_CONFIG["bscscan_only_bytecode"],
+    )
+
+    group_bscscan.add_argument(
+        "--bscscan-apikey",
+        help="BscScan API key.",
+        action="store",
+        dest="bscscan_api_key",
+        default=DEFAULTS_FLAG_IN_CONFIG["bscscan_api_key"],
+    )
+
+    group_bscscan.add_argument(
+        "--bscscan-export-directory",
+        help="Directory in which to save the analyzed contracts.",
+        action="store",
+        dest="bscscan_export_dir",
+        default=DEFAULTS_FLAG_IN_CONFIG["bscscan_export_directory"],
+    )

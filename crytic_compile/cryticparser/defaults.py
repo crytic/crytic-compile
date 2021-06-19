@@ -43,4 +43,8 @@ DEFAULTS_FLAG_IN_CONFIG = {
     "hardhat_cache_directory": "cache",
     "hardhat_artifacts_directory": "artifacts",
     "export_dir": "crytic-export",
+    "bscscan_only_source_code": False,
+    "bscscan_only_bytecode": False,
+    "bscscan_api_key": None,
+    "bscscan_export_directory": "bscscan-contracts",
 }

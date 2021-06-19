@@ -23,6 +23,7 @@ class Type(IntEnum):
     SOLC_STANDARD_JSON = 10
     BUILDER = 11
     HARDHAT = 11
+    BSCSCAN = 12
 
     STANDARD = 100
     ARCHIVE = 101
