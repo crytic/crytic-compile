@@ -121,7 +121,9 @@ def _handle_multiple_files(
         elif path_filename.name == f"{contract_name}.sol":
             if returned_filename.name == path_filename.name:
                 # if there are multiple contracts with the same name as the targeted file, we cannot know which one to pick
-                LOGGER.error("Duplicate contract name in etherscan results, couldn't decide on contract to use")
+                LOGGER.error(
+                    "Duplicate contract name in etherscan results, couldn't decide on contract to use"
+                )
                 raise InvalidCompilation("Duplicate contract name in etherscan results of " + addr)
             returned_filename = path_filename
 
