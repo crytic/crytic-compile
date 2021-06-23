@@ -43,6 +43,7 @@ SUPPORTED_NETWORK = {
     "goerli:": ("-goerli.etherscan.io", "goerli.etherscan.io"),
     "tobalaba:": ("-tobalaba.etherscan.io", "tobalaba.etherscan.io"),
     "bsc:": (".bscscan.com", "bscscan.com"),
+    "testnet.bsc:": ("-testnet.bscscan.com", "testnet.bscscan.com"),
 }
 
 
