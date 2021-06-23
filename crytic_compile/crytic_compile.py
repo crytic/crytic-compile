@@ -243,7 +243,6 @@ class CryticCompile:
 
         return self._cached_line_to_offset[file][line]
 
-
     def _get_cached_line_to_code(self, file: Filename):
         source_code = self.src_content[file.absolute]
         source_code_encoded = source_code.encode("utf-8")
