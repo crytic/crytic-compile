@@ -29,18 +29,20 @@ if TYPE_CHECKING:
 
 LOGGER = logging.getLogger("CryticCompile")
 
-ETHERSCAN_BASE = "https://api%s.etherscan.io/api?module=contract&action=getsourcecode&address=%s"
 
-ETHERSCAN_BASE_BYTECODE = "https://%setherscan.io/address/%s#code"
+ETHERSCAN_BASE = "https://api%s/api?module=contract&action=getsourcecode&address=%s"
+
+ETHERSCAN_BASE_BYTECODE = "https://%s/address/%s#code"
 
 SUPPORTED_NETWORK = {
     # Key, (prefix_base, perfix_bytecode)
-    "mainet:": ("", ""),
-    "ropsten:": ("-ropsten", "ropsten."),
-    "kovan:": ("-kovan", "kovan."),
-    "rinkeby:": ("-rinkeby", "rinkeby."),
-    "goerli:": ("-goerli", "goerli."),
-    "tobalaba:": ("-tobalaba", "tobalaba."),
+    "mainet:": (".etherscan.io", "etherscan.io"),
+    "ropsten:": ("-ropsten.etherscan.io", "ropsten.etherscan.io"),
+    "kovan:": ("-kovan.etherscan.io", "kovan.etherscan.io"),
+    "rinkeby:": ("-rinkeby.etherscan.io", "rinkeby.etherscan.io"),
+    "goerli:": ("-goerli.etherscan.io", "goerli.etherscan.io"),
+    "tobalaba:": ("-tobalaba.etherscan.io", "tobalaba.etherscan.io"),
+    "bsc:": (".bscscan.com", "bscscan.com"),
 }
 
 
@@ -170,8 +172,8 @@ class Etherscan(AbstractPlatform):
             etherscan_bytecode_url = ETHERSCAN_BASE_BYTECODE % (prefix_bytecode, addr)
 
         else:
-            etherscan_url = ETHERSCAN_BASE % ("", target)
-            etherscan_bytecode_url = ETHERSCAN_BASE_BYTECODE % ("", target)
+            etherscan_url = ETHERSCAN_BASE % (".etherscan.io", target)
+            etherscan_bytecode_url = ETHERSCAN_BASE_BYTECODE % ("etherscan.io", target)
             addr = target
             prefix = None
 
