@@ -296,12 +296,13 @@ def _is_at_or_above_minor_version(compilation_unit: "CompilationUnit", version: 
     return int(compilation_unit.compiler_version.version.split(".")[1]) >= version
 
 
-def get_version(solc: str, env: Dict[str, str]) -> str:
+def get_version(solc: str, env: Optional[Dict[str, str]]) -> str:
     """
-    Get the compiler version used
+    Obtains the version of the solc executable specified.
 
-    :param solc:
-    :return:
+    :param solc: The solc executable name to invoke.
+    :param env: An optional environment key-value store which can be used when invoking the solc executable.
+    :return: Returns the version of the provided solc executable.
     """
     cmd = [solc, "--version"]
     try:

@@ -132,7 +132,7 @@ class SolcStandardJson(Solc):
 
         compilation_unit.compiler_version = CompilerVersion(
             compiler="solc",
-            version=get_version(solc, dict()),
+            version=get_version(solc, None),
             optimized=is_optimized(solc_arguments),
         )
 
