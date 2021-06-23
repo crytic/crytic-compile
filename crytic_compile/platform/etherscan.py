@@ -114,9 +114,17 @@ def _handle_multiple_files(
         if "contracts" in path_filename.parts and not filename.startswith("@"):
             path_filename = Path(*path_filename.parts[path_filename.parts.index("contracts") :])
 
-        # For now we assume that the targeted file is the first one returned
-        # This work on the initial tests, but might not be true
+        # start by assuming that the targeted file is the first one returned
         if returned_filename is None:
+            returned_filename = path_filename
+        # but if later on a file exists whose name matches the contract name reported by Etherscan, use that
+        elif path_filename.name == f"{contract_name}.sol":
+            if returned_filename.name == path_filename.name:
+                # if there are multiple contracts with the same name as the targeted file, we cannot know which one to pick
+                LOGGER.error(
+                    "Duplicate contract name in etherscan results, couldn't decide on contract to use"
+                )
+                raise InvalidCompilation("Duplicate contract name in etherscan results of " + addr)
             returned_filename = path_filename
 
         path_filename = Path(directory, path_filename)
