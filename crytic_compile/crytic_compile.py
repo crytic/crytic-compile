@@ -9,6 +9,7 @@ import logging
 import os
 import subprocess
 import tempfile
+from collections import defaultdict
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, List, Optional, Set, Tuple, Type, Union
 
@@ -86,6 +87,8 @@ class CryticCompile:
         # Because we frequently do this lookup in Slither during the AST parsing
         # We decided to favor the running time versus memory
         self._cached_offset_to_line: Dict[Filename, Dict[int, Tuple[int, int]]] = dict()
+        # Lines are indexed from 1
+        self._cached_line_to_offset: Dict[Filename, Dict[int, int]] = defaultdict(dict)
 
         # Return the line from the line number
         # Note: line 1 is at index 0
@@ -218,19 +221,27 @@ class CryticCompile:
         acc = 0
         lines_delimiters: Dict[int, Tuple[int, int]] = dict()
         for line_number, x in enumerate(source_code):
+            self._cached_line_to_offset[file][line_number + 1] = acc
+
             for i in range(acc, acc + len(x)):
                 lines_delimiters[i] = (line_number + 1, i - acc + 1)
+
             acc += len(x)
         lines_delimiters[acc] = (len(source_code) + 1, 0)
         self._cached_offset_to_line[file] = lines_delimiters
 
-    def get_line_from_offset(self, filename: str, offset: int) -> Tuple[int, int]:
-        file = self.filename_lookup(filename)
+    def get_line_from_offset(self, file: Filename, offset: int) -> Tuple[int, int]:
         if file not in self._cached_offset_to_line:
             self._get_cached_offset_to_line(file)
 
         lines_delimiters = self._cached_offset_to_line[file]
         return lines_delimiters[offset]
+
+    def get_global_offset_from_line(self, file: Filename, line: int) -> int:
+        if file not in self._cached_line_to_offset:
+            self._get_cached_offset_to_line(file)
+
+        return self._cached_line_to_offset[file][line]
 
     def _get_cached_line_to_code(self, file: Filename):
         source_code = self.src_content[file.absolute]
