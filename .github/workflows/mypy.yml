@@ -28,6 +28,7 @@ jobs:
         run: |
           pip install .
           pip install types-setuptools
+          pip install --upgrade mypy
 
           mkdir -p .github/linters
           cp pyproject.toml .github/linters
