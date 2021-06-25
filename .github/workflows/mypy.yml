@@ -28,10 +28,9 @@ jobs:
         run: |
           pip install .
           pip install types-setuptools
-          pip install --upgrade mypy
 
           mkdir -p .github/linters
-          cp pyproject.toml .github/linters
+          cp mypy.ini .github/linters
 
       - name: Mypy
         uses: docker://github/super-linter:v3
@@ -43,4 +42,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Run only black
           VALIDATE_PYTHON_MYPY: true
-          PYTHON_MYPY_CONFIG_FILE: pyproject.toml
+          PYTHON_MYPY_CONFIG_FILE: mypy.ini
