@@ -99,7 +99,7 @@ class AbstractPlatform(metaclass=abc.ABCMeta):
     ###################################################################################
 
     @abc.abstractmethod
-    def compile(self, crytic_compile: "CryticCompile", **kwargs: str):
+    def compile(self, crytic_compile: "CryticCompile", **kwargs: str) -> None:
         """
         Run the compilation
 

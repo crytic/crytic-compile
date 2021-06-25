@@ -68,7 +68,7 @@ class Standard(AbstractPlatform):
         self._underlying_platform: Type[AbstractPlatform] = Standard
         self._unit_tests: List[str] = []
 
-    def compile(self, crytic_compile: "CryticCompile", **_kwargs: str):
+    def compile(self, crytic_compile: "CryticCompile", **_kwargs: str) -> None:
         """
         Compile the target (load file)
 
@@ -118,15 +118,15 @@ class Standard(AbstractPlatform):
         return self._unit_tests
 
     @property
-    def platform_name_used(self):
+    def platform_name_used(self) -> str:
         return self._underlying_platform.NAME
 
     @property
-    def platform_project_url_used(self):
+    def platform_project_url_used(self) -> str:
         return self._underlying_platform.PROJECT_URL
 
     @property
-    def platform_type_used(self):
+    def platform_type_used(self) -> PlatformType:
         return self._underlying_platform.TYPE
 
 
@@ -187,7 +187,7 @@ def generate_standard_export(crytic_compile: "CryticCompile") -> Dict:
     return output
 
 
-def _load_from_compile_legacy(crytic_compile: "CryticCompile", loaded_json: Dict):
+def _load_from_compile_legacy(crytic_compile: "CryticCompile", loaded_json: Dict) -> None:
     compilation_unit = CompilationUnit(crytic_compile, "legacy")
     compilation_unit.asts = loaded_json["asts"]
     compilation_unit.compiler_version = CompilerVersion(
@@ -283,7 +283,7 @@ def load_from_compile(crytic_compile: "CryticCompile", loaded_json: Dict) -> Tup
     return loaded_json["type"], loaded_json.get("unit_tests", [])
 
 
-def _relative_to_short(relative):
+def _relative_to_short(relative: Path) -> Path:
     """
 
     :param relative:

@@ -9,7 +9,7 @@ import re
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List
+from typing import TYPE_CHECKING, Dict, List, Optional
 
 from crytic_compile.compilation_unit import CompilationUnit
 from crytic_compile.compiler.compiler import CompilerVersion
@@ -37,7 +37,7 @@ class Waffle(AbstractPlatform):
     TYPE = Type.WAFFLE
 
     # pylint: disable=too-many-locals,too-many-branches,too-many-statements
-    def compile(self, crytic_compile: "CryticCompile", **kwargs: str):
+    def compile(self, crytic_compile: "CryticCompile", **kwargs: str) -> None:
         """
         Compile the target
 
@@ -279,12 +279,12 @@ def _load_config(config_file: str) -> Dict:
     return json.loads(content)
 
 
-def _get_version(compiler: str, cwd: str, config=None) -> str:
+def _get_version(compiler: str, cwd: str, config: Optional[Dict] = None) -> str:
     version = ""
     if config is not None and "solcVersion" in config:
         version = re.findall(r"\d+\.\d+\.\d+", config["solcVersion"])[0]
 
-    elif compiler == "dockerized-solc":
+    elif config is not None and compiler == "dockerized-solc":
         version = config["docker-tag"]
 
     elif compiler == "native":

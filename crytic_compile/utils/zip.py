@@ -5,7 +5,7 @@ import json
 import zipfile
 
 # Cycle dependency
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, Union
 from zipfile import ZipFile
 
 from crytic_compile.platform.archive import generate_archive_export
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from crytic_compile import CryticCompile
 
 
-def _to_str(txt):
+def _to_str(txt: Union[bytes, str]) -> str:
     if isinstance(txt, bytes):
         return txt.decode("utf8")
     return txt
@@ -49,7 +49,9 @@ ZIP_TYPES_ACCEPTED = {
 }
 
 
-def save_to_zip(crytic_compiles: List["CryticCompile"], zip_filename: str, zip_type: str = "lzma"):
+def save_to_zip(
+    crytic_compiles: List["CryticCompile"], zip_filename: str, zip_type: str = "lzma"
+) -> None:
     """
     Save projects to a zip
 

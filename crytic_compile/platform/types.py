@@ -27,7 +27,7 @@ class Type(IntEnum):
     STANDARD = 100
     ARCHIVE = 101
 
-    def __str__(self):  # pylint: disable=too-many-branches
+    def __str__(self) -> str:  # pylint: disable=too-many-branches
         if self == Type.SOLC:
             return "solc"
         if self == Type.SOLC_STANDARD_JSON:

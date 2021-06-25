@@ -7,7 +7,7 @@ Which is a map: filename -> sourcecode
 import json
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Tuple, Type
+from typing import TYPE_CHECKING, Dict, List, Tuple, Type, Any
 
 from crytic_compile.platform import Type as TypePlatform
 from crytic_compile.platform import standard
@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from crytic_compile import CryticCompile
 
 
-def export_to_archive(crytic_compile: "CryticCompile", **kwargs) -> List[str]:
+def export_to_archive(crytic_compile: "CryticCompile", **kwargs: Any) -> List[str]:
     """
     Export the archive
 
@@ -31,7 +31,7 @@ def export_to_archive(crytic_compile: "CryticCompile", **kwargs) -> List[str]:
 
     output, target = generate_archive_export(crytic_compile)
 
-    export_dir = kwargs.get("export_dir", "crytic-export")
+    export_dir: str = kwargs.get("export_dir", "crytic-export")
 
     if not os.path.exists(export_dir):
         os.makedirs(export_dir)
@@ -64,7 +64,7 @@ class Archive(AbstractPlatform):
         self._underlying_platform: Type[AbstractPlatform] = Archive
         self._unit_tests: List[str] = []
 
-    def compile(self, crytic_compile: "CryticCompile", **_kwargs):
+    def compile(self, crytic_compile: "CryticCompile", **_kwargs: str) -> None:
         """
         Compile
 
