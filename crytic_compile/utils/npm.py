@@ -3,7 +3,7 @@ Module handling NPM related features
 """
 import json
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Optional, Union, Dict
 
 # Cycle dependency
 if TYPE_CHECKING:
@@ -30,7 +30,7 @@ def get_package_name(target_txt: Union[str, "SolcStandardJson"]) -> Optional[str
             if package.exists():
                 with open(package) as file_desc:
                     try:
-                        package_dict = json.load(file_desc)
+                        package_dict: Dict[str, str] = json.load(file_desc)
                         return package_dict.get("name", None)
                     except json.JSONDecodeError:
                         return None

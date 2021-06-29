@@ -37,7 +37,7 @@ class Etherlime(AbstractPlatform):
     TYPE = Type.ETHERLIME
 
     # pylint: disable=too-many-locals
-    def compile(self, crytic_compile: "CryticCompile", **kwargs: str):
+    def compile(self, crytic_compile: "CryticCompile", **kwargs: str) -> None:
         """
         Compile the target
 

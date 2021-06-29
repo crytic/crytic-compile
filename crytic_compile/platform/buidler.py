@@ -13,11 +13,11 @@ from crytic_compile.platform.exceptions import InvalidCompilation
 from crytic_compile.platform.types import Type
 from crytic_compile.utils.naming import convert_filename, extract_name
 from crytic_compile.utils.natspec import Natspec
+from crytic_compile.compilation_unit import CompilationUnit
 from .abstract_platform import AbstractPlatform
 
 # Handle cycle
 from .solc import relative_to_short
-from ..compilation_unit import CompilationUnit
 
 if TYPE_CHECKING:
     from crytic_compile import CryticCompile
@@ -35,7 +35,7 @@ class Buidler(AbstractPlatform):
     TYPE = Type.BUILDER
 
     # pylint: disable=too-many-locals,too-many-statements,too-many-branches
-    def compile(self, crytic_compile: "CryticCompile", **kwargs: str):
+    def compile(self, crytic_compile: "CryticCompile", **kwargs: str) -> None:
         """
         Compile the target
 
@@ -202,15 +202,15 @@ def _get_version_from_config(builder_directory: Path) -> Tuple[str, str, bool]:
     """
     :return: (version, optimized)
     """
-    config = Path(builder_directory, "last-solc-config.json")
-    if not config.exists():
-        config = Path(builder_directory, "last-vyper-config.json")
-        if not config.exists():
-            raise InvalidCompilation(f"{config} not found")
-        with open(config) as config_f:
+    path_config = Path(builder_directory, "last-solc-config.json")
+    if not path_config.exists():
+        path_config = Path(builder_directory, "last-vyper-config.json")
+        if not path_config.exists():
+            raise InvalidCompilation(f"{path_config} not found")
+        with open(path_config) as config_f:
             version = config_f.read()
             return "vyper", version, False
-    with open(config) as config_f:
+    with open(path_config) as config_f:
         config = json.load(config_f)
 
     version = config["solc"]["version"]

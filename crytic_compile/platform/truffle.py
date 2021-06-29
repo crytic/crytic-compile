@@ -82,7 +82,7 @@ class Truffle(AbstractPlatform):
     TYPE = Type.TRUFFLE
 
     # pylint: disable=too-many-locals,too-many-statements,too-many-branches
-    def compile(self, crytic_compile: "CryticCompile", **kwargs: str):
+    def compile(self, crytic_compile: "CryticCompile", **kwargs: str) -> None:
         """
         Compile the target
 
@@ -378,7 +378,7 @@ def _save_config(cwd: Path) -> Tuple[Optional[Path], Optional[Path]]:
     return None, None
 
 
-def _reload_config(cwd: Path, original_config: Optional[Path], tmp_config: Path):
+def _reload_config(cwd: Path, original_config: Optional[Path], tmp_config: Path) -> None:
     """
     Restore the original config
 
@@ -392,7 +392,7 @@ def _reload_config(cwd: Path, original_config: Optional[Path], tmp_config: Path)
         shutil.move(str(Path(cwd, original_config)), str(Path(cwd, tmp_config)))
 
 
-def _write_config(cwd: Path, original_config: Path, version: Optional[str]):
+def _write_config(cwd: Path, original_config: Path, version: Optional[str]) -> None:
     """
     Write the config file
 
@@ -416,7 +416,7 @@ def _write_config(cwd: Path, original_config: Path, version: Optional[str]):
         f.write(txt)
 
 
-def _relative_to_short(relative):
+def _relative_to_short(relative: Path) -> Path:
     short = relative
     try:
         short = short.relative_to(Path("contracts"))

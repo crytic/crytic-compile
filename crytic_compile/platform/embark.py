@@ -35,7 +35,7 @@ class Embark(AbstractPlatform):
     TYPE = Type.EMBARK
 
     # pylint:disable=too-many-branches,too-many-statements,too-many-locals
-    def compile(self, crytic_compile: "CryticCompile", **kwargs: str):
+    def compile(self, crytic_compile: "CryticCompile", **kwargs: str) -> None:
         """
         Compile the target
 
@@ -129,9 +129,11 @@ class Embark(AbstractPlatform):
 
             for original_contract_name, info in targets_loaded["contracts"].items():
                 contract_name = extract_name(original_contract_name)
-                contract_filename = extract_filename(original_contract_name)
                 contract_filename = convert_filename(
-                    contract_filename, _relative_to_short, crytic_compile, working_dir=self._target
+                    extract_filename(original_contract_name),
+                    _relative_to_short,
+                    crytic_compile,
+                    working_dir=self._target,
                 )
 
                 compilation_unit.contracts_filenames[contract_name] = contract_filename

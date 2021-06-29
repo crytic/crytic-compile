@@ -5,7 +5,7 @@ import json
 import os
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List
+from typing import TYPE_CHECKING, Dict, List, Optional
 
 from crytic_compile.compilation_unit import CompilationUnit
 from crytic_compile.compiler.compiler import CompilerVersion
@@ -30,7 +30,7 @@ class Vyper(AbstractPlatform):
     PROJECT_URL = "https://github.com/vyperlang/vyper"
     TYPE = Type.VYPER
 
-    def compile(self, crytic_compile: "CryticCompile", **kwargs: str):
+    def compile(self, crytic_compile: "CryticCompile", **kwargs: str) -> None:
         """
         Compile the target
 
@@ -86,7 +86,7 @@ class Vyper(AbstractPlatform):
         ast = _get_vyper_ast(target, vyper)
         compilation_unit.asts[contract_filename.absolute] = ast
 
-    def is_dependency(self, _path):
+    def is_dependency(self, _path: str) -> bool:
         """
         Always return false
 
@@ -142,7 +142,9 @@ def _run_vyper(filename: str, vyper: str, env: Dict = None, working_dir: str = N
         raise InvalidCompilation(f"Invalid vyper compilation\n{stderr}")
 
 
-def _get_vyper_ast(filename: str, vyper: str, env=None, working_dir=None) -> Dict:
+def _get_vyper_ast(
+    filename: str, vyper: str, env: Optional[Dict] = None, working_dir: Optional[str] = None
+) -> Dict:
     if not os.path.isfile(filename):
         raise InvalidCompilation(
             "{} does not exist (are you in the correct directory?)".format(filename)
@@ -150,7 +152,7 @@ def _get_vyper_ast(filename: str, vyper: str, env=None, working_dir=None) -> Dic
 
     cmd = [vyper, filename, "-f", "ast"]
 
-    additional_kwargs = {"cwd": working_dir} if working_dir else {}
+    additional_kwargs: Dict = {"cwd": working_dir} if working_dir else {}
     try:
         with subprocess.Popen(
             cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env, **additional_kwargs
@@ -167,5 +169,5 @@ def _get_vyper_ast(filename: str, vyper: str, env=None, working_dir=None) -> Dic
         raise InvalidCompilation(exception)
 
 
-def _relative_to_short(relative):
+def _relative_to_short(relative: Path) -> Path:
     return relative

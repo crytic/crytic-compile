@@ -9,7 +9,7 @@ import re
 import urllib.request
 from json.decoder import JSONDecodeError
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Union, Tuple
+from typing import TYPE_CHECKING, Dict, List, Union, Tuple, Optional
 
 from crytic_compile.compilation_unit import CompilationUnit
 from crytic_compile.compiler.compiler import CompilerVersion
@@ -47,7 +47,7 @@ SUPPORTED_NETWORK = {
 }
 
 
-def _handle_bytecode(crytic_compile: "CryticCompile", target: str, result_b: bytes):
+def _handle_bytecode(crytic_compile: "CryticCompile", target: str, result_b: bytes) -> None:
     # There is no direct API to get the bytecode from etherscan
     # The page changes from time to time, we use for now a simple parsing, it will not be robust
     begin = """Search Algorithm">\nSimilar Contracts</button>\n"""
@@ -82,7 +82,7 @@ def _handle_bytecode(crytic_compile: "CryticCompile", target: str, result_b: byt
 
 
 def _handle_single_file(
-    source_code: str, addr: str, prefix: str, contract_name: str, export_dir: str
+    source_code: str, addr: str, prefix: Optional[str], contract_name: str, export_dir: str
 ) -> str:
     if prefix:
         filename = os.path.join(export_dir, f"{addr}{prefix}-{contract_name}.sol")
@@ -96,7 +96,7 @@ def _handle_single_file(
 
 
 def _handle_multiple_files(
-    dict_source_code: Dict, addr: str, prefix: str, contract_name: str, export_dir: str
+    dict_source_code: Dict, addr: str, prefix: Optional[str], contract_name: str, export_dir: str
 ) -> Tuple[str, str]:
     if prefix:
         directory = os.path.join(export_dir, f"{addr}{prefix}-{contract_name}")
@@ -110,7 +110,7 @@ def _handle_multiple_files(
         # or etherscan might return an object with contract names as keys
         source_codes = dict_source_code
 
-    returned_filename = None
+    returned_filename: Optional[Path] = None
 
     for filename, source_code in source_codes.items():
         path_filename = Path(filename)
@@ -151,7 +151,7 @@ class Etherscan(AbstractPlatform):
     TYPE = Type.ETHERSCAN
 
     # pylint: disable=too-many-locals,too-many-branches,too-many-statements
-    def compile(self, crytic_compile: "CryticCompile", **kwargs: str):
+    def compile(self, crytic_compile: "CryticCompile", **kwargs: str) -> None:
         """
 
         Compile the tharget

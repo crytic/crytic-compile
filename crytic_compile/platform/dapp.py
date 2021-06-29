@@ -38,7 +38,7 @@ class Dapp(AbstractPlatform):
     TYPE = Type.DAPP
 
     # pylint: disable=too-many-locals
-    def compile(self, crytic_compile: "CryticCompile", **kwargs: str):
+    def compile(self, crytic_compile: "CryticCompile", **kwargs: str) -> None:
         """
         Compile the target
 
@@ -156,7 +156,7 @@ class Dapp(AbstractPlatform):
         return ["dapp test"]
 
 
-def _run_dapp(target: str):
+def _run_dapp(target: str) -> None:
     """
     Run Dapp
 

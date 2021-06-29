@@ -33,7 +33,7 @@ class Brownie(AbstractPlatform):
     PROJECT_URL = "https://github.com/iamdefinitelyahuman/brownie"
     TYPE = Type.BROWNIE
 
-    def compile(self, crytic_compile: "CryticCompile", **kwargs: str):
+    def compile(self, crytic_compile: "CryticCompile", **kwargs: str) -> None:
         """
         Compile the target
 
@@ -74,7 +74,7 @@ class Brownie(AbstractPlatform):
 
         filenames = list(Path(self._target, build_directory).rglob("*.json"))
 
-        _iterate_over_files(crytic_compile, self._target, filenames)
+        _iterate_over_files(crytic_compile, Path(self._target), filenames)
 
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:
@@ -112,7 +112,9 @@ class Brownie(AbstractPlatform):
 
 
 # pylint: disable=too-many-locals
-def _iterate_over_files(crytic_compile: "CryticCompile", target: str, filenames: List[Path]):
+def _iterate_over_files(
+    crytic_compile: "CryticCompile", target: Path, filenames: List[Path]
+) -> None:
     """
     Iterate over the files
 
