@@ -230,14 +230,22 @@ class CryticCompile:
         lines_delimiters[acc] = (len(source_code) + 1, 0)
         self._cached_offset_to_line[file] = lines_delimiters
 
-    def get_line_from_offset(self, file: Filename, offset: int) -> Tuple[int, int]:
+    def get_line_from_offset(self, filename: Union[Filename, str], offset: int) -> Tuple[int, int]:
+        if isinstance(filename, str):
+            file = self.filename_lookup(filename)
+        else:
+            file = filename
         if file not in self._cached_offset_to_line:
             self._get_cached_offset_to_line(file)
 
         lines_delimiters = self._cached_offset_to_line[file]
         return lines_delimiters[offset]
 
-    def get_global_offset_from_line(self, file: Filename, line: int) -> int:
+    def get_global_offset_from_line(self, filename: Union[Filename, str], line: int) -> int:
+        if isinstance(filename, str):
+            file = self.filename_lookup(filename)
+        else:
+            file = filename
         if file not in self._cached_line_to_offset:
             self._get_cached_offset_to_line(file)
 
@@ -249,13 +257,16 @@ class CryticCompile:
         source_code_list = source_code_encoded.splitlines(True)
         self._cached_line_to_code[file] = source_code_list
 
-    def get_code_from_line(self, filename: str, line: int) -> Optional[bytes]:
+    def get_code_from_line(self, filename: Union[Filename, str], line: int) -> Optional[bytes]:
         """
         Return the line from the file. Start at line = 1.
         Return None if the line is not in the file
 
         """
-        file = self.filename_lookup(filename)
+        if isinstance(filename, str):
+            file = self.filename_lookup(filename)
+        else:
+            file = filename
         if file not in self._cached_line_to_code:
             self._get_cached_line_to_code(file)
 
