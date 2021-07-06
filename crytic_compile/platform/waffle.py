@@ -229,7 +229,9 @@ class Waffle(AbstractPlatform):
         ):
             return False
 
-        if os.path.isfile(os.path.join(target, "waffle.json")):
+        if os.path.isfile(os.path.join(target, "waffle.json")) or os.path.isfile(
+            os.path.join(target, ".waffle.json")
+        ):
             return True
 
         if os.path.isfile(os.path.join(target, "package.json")):
