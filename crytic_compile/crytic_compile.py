@@ -88,7 +88,7 @@ class CryticCompile:
         # We decided to favor the running time versus memory
         self._cached_offset_to_line: Dict[Filename, Dict[int, Tuple[int, int]]] = dict()
         # Lines are indexed from 1
-        self._cached_line_to_offset: Dict[Filename, Dict[int, int]] = defaultdict(dict)
+        self._cached_line_to_offset: Dict[Filename, Dict[Tuple[int, int], int]] = defaultdict(dict)
 
         # Return the line from the line number
         # Note: line 1 is at index 0
@@ -221,10 +221,11 @@ class CryticCompile:
         acc = 0
         lines_delimiters: Dict[int, Tuple[int, int]] = dict()
         for line_number, x in enumerate(source_code):
-            self._cached_line_to_offset[file][line_number + 1] = acc
 
             for i in range(acc, acc + len(x)):
-                lines_delimiters[i] = (line_number + 1, i - acc + 1)
+                line_and_char_position = (line_number + 1, i - acc + 1)
+                lines_delimiters[i] = line_and_char_position
+                self._cached_line_to_offset[file][line_and_char_position] = i
 
             acc += len(x)
         lines_delimiters[acc] = (len(source_code) + 1, 0)
@@ -237,11 +238,11 @@ class CryticCompile:
         lines_delimiters = self._cached_offset_to_line[file]
         return lines_delimiters[offset]
 
-    def get_global_offset_from_line(self, file: Filename, line: int) -> int:
+    def get_global_offset_from_line_and_character(self, file: Filename, line: int, char_position: int = 1) -> int:
         if file not in self._cached_line_to_offset:
             self._get_cached_offset_to_line(file)
 
-        return self._cached_line_to_offset[file][line]
+        return self._cached_line_to_offset[file][(line, char_position)]
 
     def _get_cached_line_to_code(self, file: Filename):
         source_code = self.src_content[file.absolute]
