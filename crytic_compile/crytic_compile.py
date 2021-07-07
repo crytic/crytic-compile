@@ -231,7 +231,7 @@ class CryticCompile:
         lines_delimiters[acc] = (len(source_code) + 1, 0)
         self._cached_offset_to_line[file] = lines_delimiters
 
-    def get_line_from_offset(self, file: Filename, offset: int) -> Tuple[int, int]:
+    def get_line_and_character_from_offset(self, file: Filename, offset: int) -> Tuple[int, int]:
         if file not in self._cached_offset_to_line:
             self._get_cached_offset_to_line(file)
 
