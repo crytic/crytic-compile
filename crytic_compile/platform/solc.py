@@ -196,7 +196,7 @@ def _get_targets_json(compilation_unit: "CompilationUnit", target: str, **kwargs
     # The guessing of version only works from config file
     # This is to prevent too complex command line
     solcs_path_: Optional[Union[str, Dict, List[str]]] = kwargs.get("solc_solcs_bin")
-    solcs_path: Optional[Union[Dict, List[str]]]
+    solcs_path: Optional[Union[Dict, List[str]]] = None
     if solcs_path_:
         if isinstance(solcs_path_, str):
             solcs_path = solcs_path_.split(",")
