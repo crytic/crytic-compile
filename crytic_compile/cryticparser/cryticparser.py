@@ -7,7 +7,7 @@ from crytic_compile.crytic_compile import get_platforms
 from crytic_compile.cryticparser import DEFAULTS_FLAG_IN_CONFIG
 
 
-def init(parser: ArgumentParser):
+def init(parser: ArgumentParser) -> None:
     """
     Add crytic-compile arguments to the parser
 
@@ -61,7 +61,7 @@ def init(parser: ArgumentParser):
     _init_hardhat(parser)
 
 
-def _init_solc(parser):
+def _init_solc(parser: ArgumentParser) -> None:
     group_solc = parser.add_argument_group("Solc options")
     group_solc.add_argument(
         "--solc", help="solc path", action="store", default=DEFAULTS_FLAG_IN_CONFIG["solc"]
@@ -126,7 +126,7 @@ def _init_solc(parser):
     )
 
 
-def _init_waffle(parser):
+def _init_waffle(parser: ArgumentParser) -> None:
     group_waffle = parser.add_argument_group("Waffle options")
     group_waffle.add_argument(
         "--waffle-ignore-compile",
@@ -144,7 +144,7 @@ def _init_waffle(parser):
     )
 
 
-def _init_truffle(parser):
+def _init_truffle(parser: ArgumentParser) -> None:
     group_truffle = parser.add_argument_group("Truffle options")
     group_truffle.add_argument(
         "--truffle-ignore-compile",
@@ -183,10 +183,8 @@ def _init_truffle(parser):
         default=DEFAULTS_FLAG_IN_CONFIG["truffle_overwrite_version"],
     )
 
-    return group_truffle
 
-
-def _init_embark(parser):
+def _init_embark(parser: ArgumentParser) -> None:
     group_embark = parser.add_argument_group("Embark options")
     group_embark.add_argument(
         "--embark-ignore-compile",
@@ -204,7 +202,7 @@ def _init_embark(parser):
     )
 
 
-def _init_brownie(parser):
+def _init_brownie(parser: ArgumentParser) -> None:
     group_embark = parser.add_argument_group("Brownie options")
     group_embark.add_argument(
         "--brownie-ignore-compile",
@@ -215,7 +213,7 @@ def _init_brownie(parser):
     )
 
 
-def _init_dapp(parser):
+def _init_dapp(parser: ArgumentParser) -> None:
     group_dapp = parser.add_argument_group("Dapp options")
     group_dapp.add_argument(
         "--dapp-ignore-compile",
@@ -226,7 +224,7 @@ def _init_dapp(parser):
     )
 
 
-def _init_etherlime(parser):
+def _init_etherlime(parser: ArgumentParser) -> None:
     group_etherlime = parser.add_argument_group("Etherlime options")
     group_etherlime.add_argument(
         "--etherlime-ignore-compile",
@@ -246,7 +244,7 @@ def _init_etherlime(parser):
     )
 
 
-def _init_etherscan(parser):
+def _init_etherscan(parser: ArgumentParser) -> None:
     group_etherscan = parser.add_argument_group("Etherscan options")
     group_etherscan.add_argument(
         "--etherscan-only-source-code",
@@ -281,7 +279,7 @@ def _init_etherscan(parser):
     )
 
 
-def _init_npx(parser):
+def _init_npx(parser: ArgumentParser) -> None:
     group_npx = parser.add_argument_group("NPX options")
     group_npx.add_argument(
         "--npx-disable",
@@ -292,7 +290,7 @@ def _init_npx(parser):
     )
 
 
-def _init_buidler(parser):
+def _init_buidler(parser: ArgumentParser) -> None:
     group_buidler = parser.add_argument_group("Buidler options")
     group_buidler.add_argument(
         "--buidler-ignore-compile",
@@ -318,10 +316,8 @@ def _init_buidler(parser):
         default=DEFAULTS_FLAG_IN_CONFIG["buidler_skip_directory_name_fix"],
     )
 
-    return group_buidler
 
-
-def _init_hardhat(parser):
+def _init_hardhat(parser: ArgumentParser) -> None:
     group_hardhat = parser.add_argument_group("hardhat options")
     group_hardhat.add_argument(
         "--hardhat-ignore-compile",
@@ -346,5 +342,3 @@ def _init_hardhat(parser):
         dest="hardhat_artifacts_directory",
         default=DEFAULTS_FLAG_IN_CONFIG["hardhat_artifacts_directory"],
     )
-
-    return group_hardhat

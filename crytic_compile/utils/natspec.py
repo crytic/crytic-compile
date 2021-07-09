@@ -1,7 +1,7 @@
 """
 Natspec module https://solidity.readthedocs.io/en/latest/natspec-format.html
 """
-from typing import Dict, Optional
+from typing import Dict, Optional, Union
 
 
 class UserMethod:
@@ -9,12 +9,12 @@ class UserMethod:
     Model the user method
     """
 
-    def __init__(self, method):
+    def __init__(self, method: Union[Dict, str]) -> None:
         # Constructors dont have "notice: '..'"
         if isinstance(method, str):
-            self._notice = method
+            self._notice: Optional[str] = method
         else:
-            self._notice: Optional[str] = method.get("notice", None)
+            self._notice = method.get("notice", None)
 
     @property
     def notice(self) -> Optional[str]:
@@ -39,7 +39,7 @@ class DevMethod:
     Model the dev method
     """
 
-    def __init__(self, method):
+    def __init__(self, method: Dict) -> None:
         self._author: Optional[str] = method.get("author", None)
         self._details: Optional[str] = method.get("details", None)
         self._params: Dict[str, str] = method.get("params", {})

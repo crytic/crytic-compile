@@ -6,7 +6,7 @@ import json
 import logging
 import os
 import sys
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Optional
 
 from pkg_resources import require
 
@@ -24,7 +24,7 @@ LOGGER = logging.getLogger("CryticCompile")
 LOGGER.setLevel(logging.INFO)
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     """
     Parse the arguments
 
@@ -144,13 +144,19 @@ class ShowPlatforms(argparse.Action):  # pylint: disable=too-few-public-methods
     See --supported-platforms
     """
 
-    def __call__(self, parser, args, values, option_string=None):
+    def __call__(
+        self,
+        parser: argparse.ArgumentParser,
+        args: Any,
+        values: Any,
+        option_string: Optional[str] = None,
+    ) -> None:
         platforms = get_platforms()
         LOGGER.info("\n" + "\n".join([f"- {x.NAME}: {x.PROJECT_URL}" for x in platforms]))
         parser.exit()
 
 
-def _print_filenames(compilation: "CryticCompile"):
+def _print_filenames(compilation: "CryticCompile") -> None:
     printed_filenames = set()
     for compilation_id, compilation_unit in compilation.compilation_units.items():
         print(
@@ -167,7 +173,7 @@ def _print_filenames(compilation: "CryticCompile"):
                 printed_filenames.add(unique_id)
 
 
-def main():
+def main() -> None:
     """
     Main function run from the cli
 

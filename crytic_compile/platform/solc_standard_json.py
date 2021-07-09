@@ -5,7 +5,7 @@ import json
 import logging
 import os
 import subprocess
-from typing import TYPE_CHECKING, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Dict, List, Optional, Union, Any
 
 from crytic_compile.compilation_unit import CompilationUnit
 from crytic_compile.compiler.compiler import CompilerVersion
@@ -84,7 +84,7 @@ class SolcStandardJson(Solc):
                 }
             }
 
-    def add_source_file(self, file_path: str):
+    def add_source_file(self, file_path: str) -> None:
         """
         Append file
 
@@ -93,7 +93,7 @@ class SolcStandardJson(Solc):
         """
         self._json["sources"][file_path] = {"urls": [file_path]}
 
-    def add_remapping(self, remapping: str):
+    def add_remapping(self, remapping: str) -> None:
         """
         Append our remappings
 
@@ -111,7 +111,7 @@ class SolcStandardJson(Solc):
         return self._json
 
     # pylint: disable=too-many-locals
-    def compile(self, crytic_compile: "CryticCompile", **kwargs: str):
+    def compile(self, crytic_compile: "CryticCompile", **kwargs: Any) -> None:
         """
         Compile the target
 
@@ -121,12 +121,12 @@ class SolcStandardJson(Solc):
         :return:
         """
 
-        solc = kwargs.get("solc", "solc")
-        solc_disable_warnings = kwargs.get("solc_disable_warnings", False)
-        solc_arguments = kwargs.get("solc_args", "")
+        solc: str = kwargs.get("solc", "solc")
+        solc_disable_warnings: bool = kwargs.get("solc_disable_warnings", False)
+        solc_arguments: str = kwargs.get("solc_args", "")
 
         solc_remaps: Optional[Union[str, List[str]]] = kwargs.get("solc_remaps", None)
-        solc_working_dir = kwargs.get("solc_working_dir", None)
+        solc_working_dir: Optional[str] = kwargs.get("solc_working_dir", None)
 
         compilation_unit = CompilationUnit(crytic_compile, "standard_json")
 
@@ -219,8 +219,11 @@ class SolcStandardJson(Solc):
 
 # pylint: disable=too-many-locals
 def _run_solc_standard_json(
-    solc_input: Dict, solc: str, solc_disable_warnings=False, working_dir=None
-):
+    solc_input: Dict,
+    solc: str,
+    solc_disable_warnings: bool = False,
+    working_dir: Optional[Dict] = None,
+) -> Dict:
     """
     Note: Ensure that crytic_compile.compiler_version is set prior calling _run_solc
 
@@ -231,7 +234,7 @@ def _run_solc_standard_json(
     :return:
     """
     cmd = [solc, "--standard-json", "--allow-paths", "."]
-    additional_kwargs = {"cwd": working_dir} if working_dir else {}
+    additional_kwargs: Dict = {"cwd": working_dir} if working_dir else {}
 
     try:
         with subprocess.Popen(

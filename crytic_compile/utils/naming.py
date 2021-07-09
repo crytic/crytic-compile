@@ -7,7 +7,7 @@ import os.path
 import platform
 from collections import namedtuple
 from pathlib import Path
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Union, Callable, Optional
 
 from crytic_compile.platform.exceptions import InvalidCompilation
 
@@ -20,14 +20,14 @@ LOGGER = logging.getLogger("CryticCompile")
 Filename = namedtuple("Filename", ["absolute", "used", "relative", "short"])
 
 
-def extract_name(name: str):
+def extract_name(name: str) -> str:
     """
     Convert '/path:Contract' to Contract
     """
     return name[name.rfind(":") + 1 :]
 
 
-def extract_filename(name: str):
+def extract_filename(name: str) -> str:
     """
     Convert '/path:Contract' to /path
     """
@@ -36,7 +36,7 @@ def extract_filename(name: str):
     return name[: name.rfind(":")]
 
 
-def combine_filename_name(filename: str, name: str):
+def combine_filename_name(filename: str, name: str) -> str:
     """
     Combine the filename with the contract name
 
@@ -50,9 +50,9 @@ def combine_filename_name(filename: str, name: str):
 # pylint: disable=too-many-branches
 def convert_filename(
     used_filename: Union[str, Path],
-    relative_to_short,
+    relative_to_short: Callable[[Path], Path],
     crytic_compile: "CryticCompile",
-    working_dir=None,
+    working_dir: Optional[Union[str, Path]] = None,
 ) -> Filename:
     """
     Convert filename.

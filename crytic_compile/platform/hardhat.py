@@ -35,7 +35,7 @@ class Hardhat(AbstractPlatform):
     TYPE = Type.HARDHAT
 
     # pylint: disable=too-many-locals,too-many-statements
-    def compile(self, crytic_compile: "CryticCompile", **kwargs: str):
+    def compile(self, crytic_compile: "CryticCompile", **kwargs: str) -> None:
         """
         Compile the target
 
@@ -199,13 +199,13 @@ class Hardhat(AbstractPlatform):
         return ["hardhat test"]
 
 
-def _get_version_from_config(config: Path) -> Optional[Tuple[str, str, bool]]:
+def _get_version_from_config(path_config: Path) -> Optional[Tuple[str, str, bool]]:
     """
     :return: (version, optimized)
     """
-    if not config.exists():
-        raise InvalidCompilation(f"{config} not found")
-    with open(config) as config_f:
+    if not path_config.exists():
+        raise InvalidCompilation(f"{path_config} not found")
+    with open(path_config) as config_f:
         config = json.load(config_f)
 
     # hardhat supports multiple config file, we dont at the moment

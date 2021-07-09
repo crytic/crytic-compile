@@ -153,7 +153,7 @@ class CryticCompile:
         return self._filenames
 
     @filenames.setter
-    def filenames(self, all_filenames: Set[Filename]):
+    def filenames(self, all_filenames: Set[Filename]) -> None:
         self._filenames = all_filenames
 
     def filename_lookup(self, filename: str) -> Filename:
@@ -210,10 +210,10 @@ class CryticCompile:
         return self._working_dir
 
     @working_dir.setter
-    def working_dir(self, path: Path):
+    def working_dir(self, path: Path) -> None:
         self._working_dir = path
 
-    def _get_cached_offset_to_line(self, file: Filename):
+    def _get_cached_offset_to_line(self, file: Filename) -> None:
         if file not in self._cached_line_to_code:
             self._get_cached_line_to_code(file)
 
@@ -231,32 +231,43 @@ class CryticCompile:
         lines_delimiters[acc] = (len(source_code) + 1, 0)
         self._cached_offset_to_line[file] = lines_delimiters
 
-    def get_line_and_character_from_offset(self, file: Filename, offset: int) -> Tuple[int, int]:
+    def get_line_and_character_from_offset(self, filename: Union[Filename, str], offset: int) -> Tuple[int, int]:
+        if isinstance(filename, str):
+            file = self.filename_lookup(filename)
+        else:
+            file = filename
         if file not in self._cached_offset_to_line:
             self._get_cached_offset_to_line(file)
 
         lines_delimiters = self._cached_offset_to_line[file]
         return lines_delimiters[offset]
 
-    def get_global_offset_from_line_and_character(self, file: Filename, line: int, char_position: int = 1) -> int:
+    def get_global_offset_from_line_and_character(self, filename: Union[Filename, str], line: int, char_position: int = 1) -> int:
+        if isinstance(filename, str):
+            file = self.filename_lookup(filename)
+        else:
+            file = filename
         if file not in self._cached_line_to_offset:
             self._get_cached_offset_to_line(file)
 
         return self._cached_line_to_offset[file][(line, char_position)]
 
-    def _get_cached_line_to_code(self, file: Filename):
+    def _get_cached_line_to_code(self, file: Filename) -> None:
         source_code = self.src_content[file.absolute]
         source_code_encoded = source_code.encode("utf-8")
         source_code_list = source_code_encoded.splitlines(True)
         self._cached_line_to_code[file] = source_code_list
 
-    def get_code_from_line(self, filename: str, line: int) -> Optional[bytes]:
+    def get_code_from_line(self, filename: Union[Filename, str], line: int) -> Optional[bytes]:
         """
         Return the line from the file. Start at line = 1.
         Return None if the line is not in the file
 
         """
-        file = self.filename_lookup(filename)
+        if isinstance(filename, str):
+            file = self.filename_lookup(filename)
+        else:
+            file = filename
         if file not in self._cached_line_to_code:
             self._get_cached_line_to_code(file)
 
@@ -281,7 +292,7 @@ class CryticCompile:
         return self._src_content
 
     @src_content.setter
-    def src_content(self, src):
+    def src_content(self, src: Dict) -> None:
         """
         Set the src_content
 
@@ -344,7 +355,7 @@ class CryticCompile:
         return self._bytecode_only
 
     @bytecode_only.setter
-    def bytecode_only(self, bytecode):
+    def bytecode_only(self, bytecode: bool) -> None:
         self._bytecode_only = bytecode
 
     # endregion
@@ -420,7 +431,7 @@ class CryticCompile:
 
         return platform
 
-    def _compile(self, **kwargs: str):
+    def _compile(self, **kwargs: str) -> None:
         custom_build: Union[None, str] = kwargs.get("compile_custom_build", None)
         if custom_build:
             self._run_custom_build(custom_build)
@@ -434,7 +445,7 @@ class CryticCompile:
                 compilation_unit.remove_metadata()
 
     @staticmethod
-    def _run_custom_build(custom_build: str):
+    def _run_custom_build(custom_build: str) -> None:
         cmd = custom_build.split(" ")
 
         with subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
@@ -463,7 +474,7 @@ class CryticCompile:
         return self._package
 
     @package_name.setter
-    def package_name(self, name: Optional[str]):
+    def package_name(self, name: Optional[str]) -> None:
         self._package = name
 
 

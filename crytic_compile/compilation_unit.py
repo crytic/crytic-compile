@@ -57,7 +57,7 @@ class CompilationUnit:
         self._unique_id = unique_id
 
     @property
-    def unique_id(self):
+    def unique_id(self) -> str:
         return self._unique_id
 
     @property
@@ -71,7 +71,7 @@ class CompilationUnit:
     ###################################################################################
 
     @property
-    def natspec(self):
+    def natspec(self) -> Dict[str, Natspec]:
         """
         Return the natspec of the contractse
 
@@ -166,7 +166,7 @@ class CompilationUnit:
         return self._contracts_name
 
     @contracts_names.setter
-    def contracts_names(self, names: Set[str]):
+    def contracts_names(self, names: Set[str]) -> None:
         """
         Return the contracts names
 
@@ -232,7 +232,7 @@ class CompilationUnit:
         return self._asts
 
     @asts.setter
-    def asts(self, value: Dict):
+    def asts(self, value: Dict) -> None:
         self._asts = value
 
     def ast(self, path: str) -> Union[Dict, None]:
@@ -266,7 +266,7 @@ class CompilationUnit:
         return self._runtime_bytecodes
 
     @bytecodes_runtime.setter
-    def bytecodes_runtime(self, bytecodes: Dict[str, str]):
+    def bytecodes_runtime(self, bytecodes: Dict[str, str]) -> None:
         """
         Return the init bytecodes
 
@@ -284,7 +284,7 @@ class CompilationUnit:
         return self._init_bytecodes
 
     @bytecodes_init.setter
-    def bytecodes_init(self, bytecodes: Dict[str, str]):
+    def bytecodes_init(self, bytecodes: Dict[str, str]) -> None:
         """
         Return the init bytecodes
 
@@ -521,7 +521,7 @@ class CompilationUnit:
             self._libraries[name] = [lib for lib in libraires if lib]
         return [name for (name, pattern) in self._libraries[name]]
 
-    def libraries_names_and_patterns(self, name):
+    def libraries_names_and_patterns(self, name: str) -> List[Tuple[str, str]]:
         """
         Return the name of the libraries used by the contract
 
@@ -552,7 +552,7 @@ class CompilationUnit:
                 if library_found in libraries:
                     bytecode = re.sub(
                         re.escape(library_found),
-                        "{:040x}".format(libraries[library_found]),
+                        "{:040x}".format(int(libraries[library_found])),
                         bytecode,
                     )
         return bytecode
@@ -575,7 +575,7 @@ class CompilationUnit:
             self._compute_hashes(name)
         return self._hashes[name]
 
-    def _compute_hashes(self, name: str):
+    def _compute_hashes(self, name: str) -> None:
         self._hashes[name] = {}
         for sig in self.abi(name):
             if "type" in sig:
@@ -604,7 +604,7 @@ class CompilationUnit:
             self._compute_topics_events(name)
         return self._events[name]
 
-    def _compute_topics_events(self, name: str):
+    def _compute_topics_events(self, name: str) -> None:
         self._events[name] = {}
         for sig in self.abi(name):
             if "type" in sig:
@@ -625,7 +625,7 @@ class CompilationUnit:
     ###################################################################################
     ###################################################################################
 
-    def remove_metadata(self):
+    def remove_metadata(self) -> None:
         """
         Init bytecode contains metadata that needs to be removed
         see
@@ -658,5 +658,5 @@ class CompilationUnit:
         return self._compiler_version
 
     @compiler_version.setter
-    def compiler_version(self, compiler):
+    def compiler_version(self, compiler: CompilerVersion) -> None:
         self._compiler_version = compiler
