@@ -231,7 +231,9 @@ class CryticCompile:
         lines_delimiters[acc] = (len(source_code) + 1, 0)
         self._cached_offset_to_line[file] = lines_delimiters
 
-    def get_line_and_character_from_offset(self, filename: Union[Filename, str], offset: int) -> Tuple[int, int]:
+    def get_line_and_character_from_offset(
+        self, filename: Union[Filename, str], offset: int
+    ) -> Tuple[int, int]:
         if isinstance(filename, str):
             file = self.filename_lookup(filename)
         else:
@@ -242,7 +244,9 @@ class CryticCompile:
         lines_delimiters = self._cached_offset_to_line[file]
         return lines_delimiters[offset]
 
-    def get_global_offset_from_line_and_character(self, filename: Union[Filename, str], line: int, char_position: int = 1) -> int:
+    def get_global_offset_from_line_and_character(
+        self, filename: Union[Filename, str], line: int, char_position: int = 1
+    ) -> int:
         if isinstance(filename, str):
             file = self.filename_lookup(filename)
         else:
