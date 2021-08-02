@@ -216,7 +216,7 @@ class Truffle(AbstractPlatform):
                 # Since truffle 5.3.14, the filenames start with "project:"
                 # See https://github.com/crytic/crytic-compile/issues/199
                 if filename.startswith("project:"):
-                    filename = "." + filename[len("project:"):]
+                    filename = "." + filename[len("project:") :]
 
                 try:
                     filename = convert_filename(
