@@ -212,6 +212,12 @@ class Truffle(AbstractPlatform):
                     continue
 
                 filename = target_loaded["ast"]["absolutePath"]
+
+                # Since truffle 5.3.14, the filenames start with "project:"
+                # See https://github.com/crytic/crytic-compile/issues/199
+                if filename.startswith("project:"):
+                    filename = "." + filename[len("project:"):]
+
                 try:
                     filename = convert_filename(
                         filename, _relative_to_short, crytic_compile, working_dir=self._target
