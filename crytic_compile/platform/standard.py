@@ -230,10 +230,6 @@ def _load_from_compile_legacy(crytic_compile: "CryticCompile", loaded_json: Dict
         version=loaded_json["compiler"]["version"],
         optimized=loaded_json["compiler"]["optimized"],
     )
-    if "filenames" in loaded_json:
-        compilation_unit.filenames = {
-            _convert_dict_to_filename(filename) for filename in loaded_json["filenames"]
-        }
     for contract_name, contract in loaded_json["contracts"].items():
         compilation_unit.contracts_names.add(contract_name)
         filename = _convert_dict_to_filename(contract["filenames"])
@@ -255,6 +251,17 @@ def _load_from_compile_legacy(crytic_compile: "CryticCompile", loaded_json: Dict
             compilation_unit.crytic_compile.dependencies.add(filename.relative)
             compilation_unit.crytic_compile.dependencies.add(filename.short)
             compilation_unit.crytic_compile.dependencies.add(filename.used)
+
+    if "filenames" in loaded_json:
+        compilation_unit.filenames = {
+            _convert_dict_to_filename(filename) for filename in loaded_json["filenames"]
+        }
+    else:
+        # For legay code, we recover the filenames from the contracts list
+        # This is not perfect, as a filename might not be associated to any contract
+        for contract_name, contract in loaded_json["contracts"].items():
+            filename = _convert_dict_to_filename(contract["filenames"])
+            compilation_unit.filenames.add(filename)
 
 
 def load_from_compile(crytic_compile: "CryticCompile", loaded_json: Dict) -> Tuple[int, List[str]]:
