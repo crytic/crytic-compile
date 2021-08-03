@@ -298,6 +298,7 @@ class Etherscan(AbstractPlatform):
                 path, _relative_to_short, crytic_compile, working_dir=working_dir
             )
             crytic_compile.filenames.add(path)
+            compilation_unit.filenames.add(path)
             compilation_unit.asts[path.absolute] = info["AST"]
 
     @staticmethod

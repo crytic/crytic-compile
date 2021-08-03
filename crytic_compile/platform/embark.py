@@ -117,6 +117,7 @@ class Embark(AbstractPlatform):
                     k, _relative_to_short, crytic_compile, working_dir=self._target
                 )
                 compilation_unit.asts[filename.absolute] = ast
+                compilation_unit.filenames.add(filename)
                 crytic_compile.filenames.add(filename)
 
             if not "contracts" in targets_loaded:

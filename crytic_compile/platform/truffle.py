@@ -230,6 +230,7 @@ class Truffle(AbstractPlatform):
 
                 compilation_unit.asts[filename.absolute] = target_loaded["ast"]
                 crytic_compile.filenames.add(filename)
+                compilation_unit.filenames.add(filename)
                 contract_name = target_loaded["contractName"]
                 compilation_unit.natspec[contract_name] = natspec
                 compilation_unit.contracts_filenames[contract_name] = filename

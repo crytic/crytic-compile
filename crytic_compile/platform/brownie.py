@@ -157,6 +157,7 @@ def _iterate_over_files(
             )
 
             compilation_unit.asts[filename.absolute] = target_loaded["ast"]
+            compilation_unit.filenames.add(filename)
             crytic_compile.filenames.add(filename)
             contract_name = target_loaded["contractName"]
             compilation_unit.contracts_filenames[contract_name] = filename
