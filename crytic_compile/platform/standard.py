@@ -230,6 +230,10 @@ def _load_from_compile_legacy(crytic_compile: "CryticCompile", loaded_json: Dict
         version=loaded_json["compiler"]["version"],
         optimized=loaded_json["compiler"]["optimized"],
     )
+    if "filenames" in loaded_json:
+        compilation_unit.filenames = {
+            _convert_dict_to_filename(filename) for filename in loaded_json["filenames"]
+        }
     for contract_name, contract in loaded_json["contracts"].items():
         compilation_unit.contracts_names.add(contract_name)
         filename = _convert_dict_to_filename(contract["filenames"])
