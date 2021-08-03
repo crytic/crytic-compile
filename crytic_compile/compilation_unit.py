@@ -42,6 +42,9 @@ class CompilationUnit:
         # Natspec
         self._natspec: Dict[str, Natspec] = {}
 
+        # set containing all the filenames of this compilation unit
+        self._filenames: Set[Filename] = set()
+
         # compiler.compiler
         self._compiler_version: CompilerVersion = CompilerVersion(
             compiler="N/A", version="N/A", optimized=False
@@ -84,6 +87,17 @@ class CompilationUnit:
     # region Filenames
     ###################################################################################
     ###################################################################################
+
+    @property
+    def filenames(self) -> Set[Filename]:
+        """
+        :return: set(naming.Filename)
+        """
+        return self._filenames
+
+    @filenames.setter
+    def filenames(self, all_filenames: Set[Filename]) -> None:
+        self._filenames = all_filenames
 
     @property
     def contracts_filenames(self) -> Dict[str, Filename]:

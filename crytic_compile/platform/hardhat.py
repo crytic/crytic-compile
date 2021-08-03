@@ -160,6 +160,7 @@ class Hardhat(AbstractPlatform):
                                 working_dir=hardhat_working_dir,
                             )
                         crytic_compile.filenames.add(path)
+                        compilation_unit.filenames.add(path)
                         compilation_unit.asts[path.absolute] = info["ast"]
 
     @staticmethod

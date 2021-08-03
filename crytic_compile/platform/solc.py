@@ -56,7 +56,7 @@ def export_to_solc_from_compilation_unit(
 
     # Create additional informational objects.
     sources = {filename: {"AST": ast} for (filename, ast) in compilation_unit.asts.items()}
-    source_list = [x.absolute for x in compilation_unit.crytic_compile.filenames]
+    source_list = [x.absolute for x in compilation_unit.filenames]
 
     # needed for Echidna, see https://github.com/crytic/crytic-compile/issues/112
     first_source_list = list(filter(lambda f: "@" in f, source_list))
@@ -155,6 +155,7 @@ class Solc(AbstractPlatform):
                     path = convert_filename(
                         path, relative_to_short, crytic_compile, working_dir=solc_working_dir
                     )
+                compilation_unit.filenames.add(path)
                 crytic_compile.filenames.add(path)
                 compilation_unit.asts[path.absolute] = info["AST"]
 

@@ -79,6 +79,7 @@ class Vyper(AbstractPlatform):
         ]
 
         crytic_compile.filenames.add(contract_filename)
+        compilation_unit.filenames.add(contract_filename)
 
         # Natspec not yet handled for vyper
         compilation_unit.natspec[contract_name] = Natspec({}, {})

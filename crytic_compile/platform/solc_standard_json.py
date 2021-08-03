@@ -206,6 +206,7 @@ class SolcStandardJson(Solc):
                         path, relative_to_short, crytic_compile, working_dir=solc_working_dir
                     )
                 crytic_compile.filenames.add(path)
+                compilation_unit.filenames.add(path)
                 compilation_unit.asts[path.absolute] = info["ast"]
 
     def _guessed_tests(self) -> List[str]:

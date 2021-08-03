@@ -130,6 +130,43 @@ class Standard(AbstractPlatform):
         return self._underlying_platform.TYPE
 
 
+def _convert_filename_to_dict(filename: Filename) -> Dict:
+    """
+    Convert the filename to a dict containing the four filename fields
+
+    :param filename:
+    :return:
+    """
+    return {
+        "absolute": filename.absolute,
+        "used": filename.used,
+        "short": filename.short,
+        "relative": filename.relative,
+    }
+
+
+def _convert_dict_to_filename(filename: Dict) -> Filename:
+    """
+    Convert a dict to a Filename
+    This function should be called only on well formed json
+
+    :param filename:
+    :return:
+    """
+
+    assert "absolute" in filename
+    assert "used" in filename
+    assert "short" in filename
+    assert "relative" in filename
+
+    return Filename(
+        absolute=filename["absolute"],
+        relative=filename["relative"],
+        short=filename["short"],
+        used=filename["used"],
+    )
+
+
 def generate_standard_export(crytic_compile: "CryticCompile") -> Dict:
     """
     Export the standard crytic compile export
@@ -149,12 +186,7 @@ def generate_standard_export(crytic_compile: "CryticCompile") -> Dict:
                 "bin-runtime": compilation_unit.bytecode_runtime(contract_name),
                 "srcmap": ";".join(compilation_unit.srcmap_init(contract_name)),
                 "srcmap-runtime": ";".join(compilation_unit.srcmap_runtime(contract_name)),
-                "filenames": {
-                    "absolute": filename.absolute,
-                    "used": filename.used,
-                    "short": filename.short,
-                    "relative": filename.relative,
-                },
+                "filenames": _convert_filename_to_dict(filename),
                 "libraries": dict(libraries) if libraries else dict(),
                 "is_dependency": crytic_compile.is_dependency(filename.absolute),
                 "userdoc": compilation_unit.natspec[contract_name].userdoc.export(),
@@ -175,6 +207,9 @@ def generate_standard_export(crytic_compile: "CryticCompile") -> Dict:
             "compiler": compiler,
             "asts": compilation_unit.asts,
             "contracts": contracts,
+            "filenames": [
+                _convert_filename_to_dict(filename) for filename in compilation_unit.filenames
+            ],
         }
 
     output = {
@@ -195,14 +230,13 @@ def _load_from_compile_legacy(crytic_compile: "CryticCompile", loaded_json: Dict
         version=loaded_json["compiler"]["version"],
         optimized=loaded_json["compiler"]["optimized"],
     )
+    if "filenames" in loaded_json:
+        compilation_unit.filenames = {
+            _convert_dict_to_filename(filename) for filename in loaded_json["filenames"]
+        }
     for contract_name, contract in loaded_json["contracts"].items():
         compilation_unit.contracts_names.add(contract_name)
-        filename = Filename(
-            absolute=contract["filenames"]["absolute"],
-            relative=contract["filenames"]["relative"],
-            short=contract["filenames"]["short"],
-            used=contract["filenames"]["used"],
-        )
+        filename = _convert_dict_to_filename(contract["filenames"])
         compilation_unit.contracts_filenames[contract_name] = filename
 
         compilation_unit.abis[contract_name] = contract["abi"]

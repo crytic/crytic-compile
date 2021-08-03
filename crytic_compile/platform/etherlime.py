@@ -9,7 +9,7 @@ import os
 import re
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, List, Optional, Any
 
 from crytic_compile.compilation_unit import CompilationUnit
 from crytic_compile.compiler.compiler import CompilerVersion
@@ -27,6 +27,42 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger("CryticCompile")
 
 
+def _run_etherlime(target: str, npx_disable: bool, compile_arguments: Optional[str]) -> None:
+    """
+    Run etherlime
+
+    :param target:
+    :param npx_disable:
+    :param compile_arguments:
+    :return:
+    """
+    cmd = ["etherlime", "compile", target, "deleteCompiledFiles=true"]
+
+    if not npx_disable:
+        cmd = ["npx"] + cmd
+
+    if compile_arguments:
+        cmd += compile_arguments.split(" ")
+
+    try:
+        with subprocess.Popen(
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=target
+        ) as process:
+            stdout_bytes, stderr_bytes = process.communicate()
+            stdout, stderr = (
+                stdout_bytes.decode(),
+                stderr_bytes.decode(),
+            )  # convert bytestrings to unicode strings
+
+            LOGGER.info(stdout)
+
+            if stderr:
+                LOGGER.error(stderr)
+    except OSError as error:
+        # pylint: disable=raise-missing-from
+        raise InvalidCompilation(error)
+
+
 class Etherlime(AbstractPlatform):
     """
     Etherlime platform
@@ -37,7 +73,7 @@ class Etherlime(AbstractPlatform):
     TYPE = Type.ETHERLIME
 
     # pylint: disable=too-many-locals
-    def compile(self, crytic_compile: "CryticCompile", **kwargs: str) -> None:
+    def compile(self, crytic_compile: "CryticCompile", **kwargs: Any) -> None:
         """
         Compile the target
 
@@ -52,35 +88,11 @@ class Etherlime(AbstractPlatform):
         )
 
         build_directory = "build"
-
-        compile_arguments = kwargs.get("etherlime_compile_arguments", None)
+        compile_arguments: Optional[str] = kwargs.get("etherlime_compile_arguments", None)
+        npx_disable: bool = kwargs.get("npx_disable", False)
 
         if not etherlime_ignore_compile:
-            cmd = ["etherlime", "compile", self._target, "deleteCompiledFiles=true"]
-
-            if not kwargs.get("npx_disable", False):
-                cmd = ["npx"] + cmd
-
-            if compile_arguments:
-                cmd += compile_arguments.split(" ")
-
-            try:
-                with subprocess.Popen(
-                    cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self._target
-                ) as process:
-                    stdout_bytes, stderr_bytes = process.communicate()
-                    stdout, stderr = (
-                        stdout_bytes.decode(),
-                        stderr_bytes.decode(),
-                    )  # convert bytestrings to unicode strings
-
-                    LOGGER.info(stdout)
-
-                    if stderr:
-                        LOGGER.error(stderr)
-            except OSError as error:
-                # pylint: disable=raise-missing-from
-                raise InvalidCompilation(error)
+            _run_etherlime(self._target, npx_disable, compile_arguments)
 
         # similar to truffle
         if not os.path.isdir(os.path.join(self._target, build_directory)):
@@ -105,12 +117,13 @@ class Etherlime(AbstractPlatform):
                                 r"\d+\.\d+\.\d+", target_loaded["compiler"]["version"]
                             )[0]
 
-                if not "ast" in target_loaded:
+                if "ast" not in target_loaded:
                     continue
 
                 filename_txt = target_loaded["ast"]["absolutePath"]
                 filename = convert_filename(filename_txt, _relative_to_short, crytic_compile)
                 compilation_unit.asts[filename.absolute] = target_loaded["ast"]
+                compilation_unit.filenames.add(filename)
                 crytic_compile.filenames.add(filename)
                 contract_name = target_loaded["contractName"]
                 compilation_unit.contracts_filenames[contract_name] = filename
