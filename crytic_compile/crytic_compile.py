@@ -464,7 +464,7 @@ class CryticCompile:
     ###################################################################################
 
     def export(self, **kwargs: str) -> List[str]:
-        """Export to json. 
+        """Export to json.
         The json format can be crytic-compile, solc or truffle.
         The type must be specified in the kwargs with "export_format"
 
@@ -496,7 +496,7 @@ class CryticCompile:
             target (str): path to the target
 
         Returns:
-            AbstractPlatform: Underlying platform 
+            AbstractPlatform: Underlying platform
         """
         platforms = get_platforms()
         platform = None
@@ -517,8 +517,7 @@ class CryticCompile:
         return platform
 
     def _compile(self, **kwargs: str) -> None:
-        """Compile the project
-        """
+        """Compile the project"""
         custom_build: Union[None, str] = kwargs.get("compile_custom_build", None)
         if custom_build:
             self._run_custom_build(custom_build)

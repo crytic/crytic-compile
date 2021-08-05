@@ -187,8 +187,7 @@ def _print_filenames(compilation: "CryticCompile") -> None:
 
 
 def main() -> None:
-    """Main function run from the cli
-    """
+    """Main function run from the cli"""
     args = parse_args()
     try:
         # Compile all specified (possibly glob patterned) targets.
@@ -217,6 +216,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    """run main
-    """
+    """run main"""
     main()
