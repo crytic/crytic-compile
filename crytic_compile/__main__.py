@@ -25,10 +25,10 @@ LOGGER.setLevel(logging.INFO)
 
 
 def parse_args() -> argparse.Namespace:
-    """
-    Parse the arguments
+    """Create a argparse object and parse the arguments
 
-    :return:
+    Returns:
+        argparse.Namespace: parsed arguments
     """
     # Create our argument parser
     parser = argparse.ArgumentParser(
@@ -151,12 +151,25 @@ class ShowPlatforms(argparse.Action):  # pylint: disable=too-few-public-methods
         values: Any,
         option_string: Optional[str] = None,
     ) -> None:
+        """Action performed
+
+        Args:
+            parser (argparse.ArgumentParser): argument parser
+            args (Any):  not used
+            values (Any): not used
+            option_string (Optional[str], optional): not used. Defaults to None.
+        """
         platforms = get_platforms()
         LOGGER.info("\n" + "\n".join([f"- {x.NAME}: {x.PROJECT_URL}" for x in platforms]))
         parser.exit()
 
 
 def _print_filenames(compilation: "CryticCompile") -> None:
+    """Print the filenames
+
+    Args:
+        compilation (CryticCompile): CryticCompile project
+    """
     printed_filenames = set()
     for compilation_id, compilation_unit in compilation.compilation_units.items():
         print(
@@ -174,10 +187,7 @@ def _print_filenames(compilation: "CryticCompile") -> None:
 
 
 def main() -> None:
-    """
-    Main function run from the cli
-
-    :return:
+    """Main function run from the cli
     """
     args = parse_args()
     try:
@@ -207,4 +217,6 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    """run main
+    """
     main()

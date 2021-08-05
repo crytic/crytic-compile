@@ -28,13 +28,15 @@ LOGGER = logging.getLogger("CryticCompile")
 
 
 def _run_etherlime(target: str, npx_disable: bool, compile_arguments: Optional[str]) -> None:
-    """
-    Run etherlime
+    """Run etherlime
 
-    :param target:
-    :param npx_disable:
-    :param compile_arguments:
-    :return:
+    Args:
+        target (str): path to the target
+        npx_disable (bool): true if npx should not be used
+        compile_arguments (Optional[str]): additional arguments
+
+    Raises:
+        InvalidCompilation: if etherlime fails
     """
     cmd = ["etherlime", "compile", target, "deleteCompiledFiles=true"]
 
@@ -74,13 +76,13 @@ class Etherlime(AbstractPlatform):
 
     # pylint: disable=too-many-locals
     def compile(self, crytic_compile: "CryticCompile", **kwargs: Any) -> None:
-        """
-        Compile the target
+        """Run the compilation
 
-        :param crytic_compile:
-        :param target:
-        :param kwargs:
-        :return:
+        Args:
+            crytic_compile (CryticCompile): Associated CryticCompile object
+
+        Raises:
+            InvalidCompilation: if etherlime failed to run
         """
 
         etherlime_ignore_compile = kwargs.get("etherlime_ignore_compile", False) or kwargs.get(
@@ -151,11 +153,13 @@ class Etherlime(AbstractPlatform):
 
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:
-        """
-        Check if the target is an etherlime project
+        """Check if the target is an etherlime project
 
-        :param target:
-        :return:
+        Args:
+            target (str): path to the target
+
+        Returns:
+            bool: True if the target is a etherlime project
         """
         etherlime_ignore = kwargs.get("etherlime_ignore", False)
         if etherlime_ignore:
@@ -176,11 +180,13 @@ class Etherlime(AbstractPlatform):
         return False
 
     def is_dependency(self, path: str) -> bool:
-        """
-        Check if the path is a dependency
+        """Check if the path is a dependency
 
-        :param path:
-        :return:
+        Args:
+            _path (str): path to the target
+
+        Returns:
+            bool: True if the target is a dependency
         """
         if path in self._cached_dependencies:
             return self._cached_dependencies[path]
@@ -189,20 +195,22 @@ class Etherlime(AbstractPlatform):
         return ret
 
     def _guessed_tests(self) -> List[str]:
-        """
-        Guess the potential unit tests commands
+        """Guess the potential unit tests commands
 
-        :return:
+        Returns:
+            List[str]: The guessed unit tests commands
         """
         return ["etherlime test"]
 
 
 def _is_optimized(compile_arguments: Optional[str]) -> bool:
-    """
-    Check if the optimization is enabled
+    """Check if the optimization is enabled
 
-    :param compile_arguments:
-    :return:
+    Args:
+        compile_arguments (Optional[str]): list of compilation arguments
+
+    Returns:
+        bool: True if the optimizations are enabled
     """
     if compile_arguments:
         return "--run" in compile_arguments
@@ -210,11 +218,13 @@ def _is_optimized(compile_arguments: Optional[str]) -> bool:
 
 
 def _relative_to_short(relative: Path) -> Path:
-    """
-    Translate relative to short
+    """Translate relative path to short
 
-    :param relative:
-    :return:
+    Args:
+        relative (Path): path to the target
+
+    Returns:
+        Path: Translated path
     """
     short = relative
     try:

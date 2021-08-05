@@ -20,12 +20,13 @@ if TYPE_CHECKING:
 
 
 def export_to_archive(crytic_compile: "CryticCompile", **kwargs: Any) -> List[str]:
-    """
-    Export the archive
+    """Export the archive
 
-    :param crytic_compile:
-    :param kwargs:
-    :return:
+    Args:
+        crytic_compile (CryticCompile): CryticCompile containing the compilation units to export
+
+    Returns:
+        List[str]: List of the generated archive files
     """
     # Obtain objects to represent each contract
 
@@ -55,22 +56,20 @@ class Archive(AbstractPlatform):
     HIDE = True
 
     def __init__(self, target: str, **kwargs: str):
-        """
-        Initializes an object which represents solc standard json
+        """Initializes an object which represents solc standard json
 
-        :param target: A string path to a standard json
+        Args:
+            target (str): The path to the standard json
         """
         super().__init__(target, **kwargs)
         self._underlying_platform: Type[AbstractPlatform] = Archive
         self._unit_tests: List[str] = []
 
     def compile(self, crytic_compile: "CryticCompile", **_kwargs: str) -> None:
-        """
-        Compile
+        """Run the compilation
 
-        :param crytic_compile:
-        :param _kwargs:
-        :return:
+        Args:
+            crytic_compile (CryticCompile):
         """
         # pylint: disable=import-outside-toplevel
         from crytic_compile.crytic_compile import get_platforms
@@ -92,11 +91,13 @@ class Archive(AbstractPlatform):
 
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:
-        """
-        Check if the target is an archive
+        """Check if the target is an archive
 
-        :param target:
-        :return:
+        Args:
+            target (str): path to the target
+
+        Returns:
+            bool: True if the target is an archive
         """
         archive_ignore = kwargs.get("standard_ignore", False)
         if archive_ignore:
@@ -106,25 +107,34 @@ class Archive(AbstractPlatform):
         return Path(target).parts[-1].endswith("_export_archive.json")
 
     def is_dependency(self, _path: str) -> bool:
-        """
-        Check if the _path is a dependency. Always false
+        """Check if the _path is a dependency. Always false
 
-        :param _path:
-        :return:
+        Args:
+            _path (str): path to the target
+
+        Returns:
+            bool: Always false - the archive checks are handled by crytic_compile_dependencies
         """
         # TODO: check if its correctly handled by crytic_compile_dependencies
         return False
 
     def _guessed_tests(self) -> List[str]:
+        """Return the list of guessed unit tests commands
+
+        Returns:
+            List[str]: Guessed unit tests commands
+        """
         return self._unit_tests
 
 
 def generate_archive_export(crytic_compile: "CryticCompile") -> Tuple[Dict, str]:
-    """
-    Generate the archive export
+    """Generate the archive export
 
-    :param crytic_compile:
-    :return:
+    Args:
+        crytic_compile (CryticCompile):
+
+    Returns:
+        Tuple[Dict, str]: The dict is the exported archive, and the str the filename
     """
     output = standard.generate_standard_export(crytic_compile)
     output["source_content"] = crytic_compile.src_content
@@ -134,13 +144,3 @@ def generate_archive_export(crytic_compile: "CryticCompile") -> Tuple[Dict, str]
     target = f"{target}_export_archive.json"
 
     return output, target
-
-
-def _relative_to_short(relative: Path) -> Path:
-    """
-    Translate relative path to short. Return the same
-
-    :param relative:
-    :return:
-    """
-    return relative

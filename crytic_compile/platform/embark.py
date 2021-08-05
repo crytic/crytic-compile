@@ -36,13 +36,13 @@ class Embark(AbstractPlatform):
 
     # pylint:disable=too-many-branches,too-many-statements,too-many-locals
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str) -> None:
-        """
-        Compile the target
+        """Run the compilation
 
-        :param crytic_compile:
-        :param target:
-        :param kwargs:
-        :return:
+        Args:
+            crytic_compile (CryticCompile): Associated CryticCompile object
+
+        Raises:
+            InvalidCompilation: if embark failed to run
         """
         embark_ignore_compile = kwargs.get("embark_ignore_compile", False) or kwargs.get(
             "ignore_compile", False
@@ -162,11 +162,13 @@ class Embark(AbstractPlatform):
 
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:
-        """
-        Check if the target is an embark project
+        """Check if the target is an embark project
 
-        :param target:
-        :return:
+        Args:
+            target (str): path to the target
+
+        Returns:
+            bool: True if the target is an embark project
         """
         embark_ignore = kwargs.get("embark_ignore", False)
         if embark_ignore:
@@ -174,11 +176,13 @@ class Embark(AbstractPlatform):
         return os.path.isfile(os.path.join(target, "embark.json"))
 
     def is_dependency(self, path: str) -> bool:
-        """
-        Check if the path is a dependency
+        """Check if the path is a dependency
 
-        :param path:
-        :return:
+        Args:
+            _path (str): path to the target
+
+        Returns:
+            bool: True if the target is a dependency
         """
         if path in self._cached_dependencies:
             return self._cached_dependencies[path]
@@ -187,20 +191,22 @@ class Embark(AbstractPlatform):
         return ret
 
     def _guessed_tests(self) -> List[str]:
-        """
-        Guess the potential unit tests commands
+        """Guess the potential unit tests commands
 
-        :return:
+        Returns:
+            List[str]: The guessed unit tests commands
         """
         return ["embark test"]
 
 
 def _get_version(target: str) -> CompilerVersion:
-    """
-    Get the compiler version
+    """Get the compiler information
 
-    :param target:
-    :return:
+    Args:
+        target (str): path to the target
+
+    Returns:
+        CompilerVersion: Compiler information
     """
     with open(os.path.join(target, "embark.json"), encoding="utf8") as file_desc:
         config = json.load(file_desc)
@@ -218,11 +224,13 @@ def _get_version(target: str) -> CompilerVersion:
 
 
 def _relative_to_short(relative: Path) -> Path:
-    """
-    Convert relative to short
+    """Translate relative path to short
 
-    :param relative:
-    :return:
+    Args:
+        relative (Path): path to the target
+
+    Returns:
+        Path: Translated path
     """
     short = relative
     try:

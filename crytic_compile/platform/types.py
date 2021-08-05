@@ -28,6 +28,14 @@ class Type(IntEnum):
     ARCHIVE = 101
 
     def __str__(self) -> str:  # pylint: disable=too-many-branches
+        """Return a string representation
+
+        Raises:
+            ValueError: If the type is missing in __str__ (it should not happen)
+
+        Returns:
+            str: string representation
+        """
         if self == Type.SOLC:
             return "solc"
         if self == Type.SOLC_STANDARD_JSON:

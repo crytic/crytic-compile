@@ -4,6 +4,14 @@ crytic\_compile.utils package
 Submodules
 ----------
 
+crytic\_compile.utils.name\_collision module
+--------------------------------------------
+
+.. automodule:: crytic_compile.utils.name_collision
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 crytic\_compile.utils.naming module
 -----------------------------------
 
@@ -43,7 +51,6 @@ crytic\_compile.utils.zip module
    :members:
    :undoc-members:
    :show-inheritance:
-
 
 Module contents
 ---------------

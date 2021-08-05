@@ -48,6 +48,14 @@ SUPPORTED_NETWORK = {
 
 
 def _handle_bytecode(crytic_compile: "CryticCompile", target: str, result_b: bytes) -> None:
+    """Parse the bytecode and populate CryticCompile info
+
+    Args:
+        crytic_compile (CryticCompile): Associate CryticCompile object
+        target (str): path to the target
+        result_b (bytes): text containing the bytecode
+    """
+
     # There is no direct API to get the bytecode from etherscan
     # The page changes from time to time, we use for now a simple parsing, it will not be robust
     begin = """Search Algorithm">\nSimilar Contracts</button>\n"""
@@ -84,6 +92,18 @@ def _handle_bytecode(crytic_compile: "CryticCompile", target: str, result_b: byt
 def _handle_single_file(
     source_code: str, addr: str, prefix: Optional[str], contract_name: str, export_dir: str
 ) -> str:
+    """Handle a result with a single file
+
+    Args:
+        source_code (str): source code
+        addr (str): contract address
+        prefix (Optional[str]): used to separate different chains
+        contract_name (str): contract name
+        export_dir (str): directory where the code will be saved
+
+    Returns:
+        str: filename containing the source code
+    """
     if prefix:
         filename = os.path.join(export_dir, f"{addr}{prefix}-{contract_name}.sol")
     else:
@@ -98,6 +118,21 @@ def _handle_single_file(
 def _handle_multiple_files(
     dict_source_code: Dict, addr: str, prefix: Optional[str], contract_name: str, export_dir: str
 ) -> Tuple[str, str]:
+    """Handle a result with a multiple files. Generate multiple Solidity files
+
+    Args:
+        dict_source_code (Dict): dict result from etherscan
+        addr (str): contract address
+        prefix (Optional[str]): used to separate different chains
+        contract_name (str): contract name
+        export_dir (str): directory where the code will be saved
+
+    Raises:
+        InvalidCompilation: can be raised if there are multiple contracts with the same name
+
+    Returns:
+        Tuple[str, str]: target_filename, directory, where target_filename is the main file
+    """
     if prefix:
         directory = os.path.join(export_dir, f"{addr}{prefix}-{contract_name}")
     else:
@@ -152,13 +187,13 @@ class Etherscan(AbstractPlatform):
 
     # pylint: disable=too-many-locals,too-many-branches,too-many-statements
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str) -> None:
-        """
+        """Run the compilation
 
-        Compile the tharget
-        :param crytic_compile:
-        :param target:
-        :param kwargs:
-        :return:
+        Args:
+            crytic_compile (CryticCompile): Associated CryticCompile object
+
+        Raises:
+            InvalidCompilation: if etherscan returned an error, or its results were not correctly parsed
         """
 
         target = self._target
@@ -247,9 +282,9 @@ class Etherscan(AbstractPlatform):
         # Assert to help mypy
         assert isinstance(result["CompilerVersion"], str)
 
-        compiler_version = re.findall(r"\d+\.\d+\.\d+", convert_version(result["CompilerVersion"]))[
-            0
-        ]
+        compiler_version = re.findall(
+            r"\d+\.\d+\.\d+", _convert_version(result["CompilerVersion"])
+        )[0]
 
         optimization_used: bool = result["OptimizationUsed"] == "1"
 
@@ -303,11 +338,13 @@ class Etherscan(AbstractPlatform):
 
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:
-        """
-        Check if the target is an etherscan address
+        """Check if the target is a etherscan project
 
-        :param target:
-        :return:
+        Args:
+            target (str): path to the target
+
+        Returns:
+            bool: True if the target is a etherscan project
         """
         etherscan_ignore = kwargs.get("etherscan_ignore", False)
         if etherscan_ignore:
@@ -317,31 +354,44 @@ class Etherscan(AbstractPlatform):
         return bool(re.match(r"^\s*0x[a-zA-Z0-9]{40}\s*$", target))
 
     def is_dependency(self, _path: str) -> bool:
-        """
-        Always return false
+        """Check if the path is a dependency
 
-        :param _path:
-        :return:
+        Args:
+            _path (str): path to the target
+
+        Returns:
+            bool: True if the target is a dependency
         """
         return False
 
     def _guessed_tests(self) -> List[str]:
-        """
-        Guess the potential unit tests commands
+        """Guess the potential unit tests commands
 
-        :return:
+        Returns:
+            List[str]: The guessed unit tests commands
         """
         return []
 
 
-def convert_version(version: str) -> str:
-    """
-    Convert the compiler version
-    :param version:
-    :return:
+def _convert_version(version: str) -> str:
+    """Convert the compiler version
+
+    Args:
+        version (str): original version
+
+    Returns:
+        str: converted version
     """
     return version[1 : version.find("+")]
 
 
 def _relative_to_short(relative: Path) -> Path:
+    """Translate relative path to short (do nothing for etherscan)
+
+    Args:
+        relative (Path): path to the target
+
+    Returns:
+        Path: Translated path
+    """
     return relative

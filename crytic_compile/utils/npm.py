@@ -11,11 +11,13 @@ if TYPE_CHECKING:
 
 
 def get_package_name(target_txt: Union[str, "SolcStandardJson"]) -> Optional[str]:
-    """
-    Return the package's name
+    """Return the npm package's name
 
-    :param target_txt:
-    :return: str or None
+    Args:
+        target_txt (Union[str,SolcStandardJson): path to the target
+
+    Returns:
+        Optional[str]: npm package name
     """
 
     # Verify the target path is a string (exported zip archives are lists)

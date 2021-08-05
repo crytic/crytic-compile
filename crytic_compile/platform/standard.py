@@ -20,11 +20,13 @@ if TYPE_CHECKING:
 
 
 def export_to_standard(crytic_compile: "CryticCompile", **kwargs: str) -> List[str]:
-    """
-    Export the project to the standard crytic compile format
-    :param crytic_compile:
-    :param kwargs:
-    :return:
+    """Export the project to the standard crytic compile format
+
+    Args:
+        crytic_compile (CryticCompile): CryticCompile object to export
+
+    Returns:
+        List[str]: List of files generated
     """
     # Obtain objects to represent each contract
 
@@ -59,23 +61,20 @@ class Standard(AbstractPlatform):
     HIDE = True
 
     def __init__(self, target: str, **kwargs: str):
-        """
-        Initializes an object which represents solc standard json
+        """Init the Standard platform
 
-        :param target: A string path to a standard json
+        Args:
+            target (str): path to the target
         """
         super().__init__(str(target), **kwargs)
         self._underlying_platform: Type[AbstractPlatform] = Standard
         self._unit_tests: List[str] = []
 
     def compile(self, crytic_compile: "CryticCompile", **_kwargs: str) -> None:
-        """
-        Compile the target (load file)
+        """Compile the file (load the file for the Standard platform) and populates the CryticCompile object
 
-        :param crytic_compile:
-        :param target:
-        :param kwargs:
-        :return:
+        Args:
+            crytic_compile (CryticCompile): Associated CryticCompile
         """
         # pylint: disable=import-outside-toplevel
         from crytic_compile.crytic_compile import get_platforms
@@ -91,11 +90,13 @@ class Standard(AbstractPlatform):
 
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:
-        """
-        Check if the target is the standard crytic compile export
+        """Check if the target has the standard crytic-compile format
 
-        :param target:
-        :return:
+        Args:
+            target (str): path to the target
+
+        Returns:
+            bool: True if the target is a crytic-compile generated project
         """
         standard_ignore = kwargs.get("standard_ignore", False)
         if standard_ignore:
@@ -105,37 +106,62 @@ class Standard(AbstractPlatform):
         return Path(target).parts[-1].endswith("_export.json")
 
     def is_dependency(self, path: str) -> bool:
-        """
-        Always return False
+        """Check if the target is a dependency
+        This function always return false, the deps are handled by crytic_compile_dependencies
 
-        :param path:
-        :return:
+        Args:
+            path (str): path to the target
+
+        Returns:
+            bool: Always False
         """
         # handled by crytic_compile_dependencies
         return False
 
     def _guessed_tests(self) -> List[str]:
+        """Guess the potential unit tests commands
+
+        Returns:
+            List[str]: list of potential unit tests commands
+        """
         return self._unit_tests
 
     @property
     def platform_name_used(self) -> str:
+        """Return the name of the underlying platform used
+
+        Returns:
+            str: The name of the underlying platform used
+        """
         return self._underlying_platform.NAME
 
     @property
     def platform_project_url_used(self) -> str:
+        """Return the underlying platform project 's url
+
+        Returns:
+            str: Underlying platform project 's url
+        """
         return self._underlying_platform.PROJECT_URL
 
     @property
     def platform_type_used(self) -> PlatformType:
+        """Return the type of the underlying platform used
+
+        Returns:
+            Type: [description]
+        """
         return self._underlying_platform.TYPE
 
 
 def _convert_filename_to_dict(filename: Filename) -> Dict:
-    """
-    Convert the filename to a dict containing the four filename fields
+    """Convert the filename to a dict containing the four filename fields
 
-    :param filename:
-    :return:
+    Args:
+        filename (Filename): Filename to convert
+
+    Returns:
+        Dict: Dict with the four filenames fields
     """
     return {
         "absolute": filename.absolute,
@@ -146,12 +172,14 @@ def _convert_filename_to_dict(filename: Filename) -> Dict:
 
 
 def _convert_dict_to_filename(filename: Dict) -> Filename:
-    """
-    Convert a dict to a Filename
+    """Convert a dict to a Filename
     This function should be called only on well formed json
 
-    :param filename:
-    :return:
+    Args:
+        filename (Dict): Json to convert
+
+    Returns:
+        Filename: Filename converted
     """
 
     assert "absolute" in filename
@@ -168,12 +196,15 @@ def _convert_dict_to_filename(filename: Dict) -> Filename:
 
 
 def generate_standard_export(crytic_compile: "CryticCompile") -> Dict:
-    """
-    Export the standard crytic compile export
+    """Convert the CryticCompile object to a json
 
-    :param crytic_compile:
-    :return:
+    Args:
+        crytic_compile (CryticCompile): CryticCompile object to export
+
+    Returns:
+        Dict: CryticCompile converted to a json
     """
+
     compilation_units = {}
     for key, compilation_unit in crytic_compile.compilation_units.items():
         contracts = dict()
@@ -223,6 +254,12 @@ def generate_standard_export(crytic_compile: "CryticCompile") -> Dict:
 
 
 def _load_from_compile_legacy(crytic_compile: "CryticCompile", loaded_json: Dict) -> None:
+    """Load from old export
+
+    Args:
+        crytic_compile (CryticCompile): CryticCompile object to populate
+        loaded_json (Dict): Json representation of the CryticCompile object
+    """
     compilation_unit = CompilationUnit(crytic_compile, "legacy")
     compilation_unit.asts = loaded_json["asts"]
     compilation_unit.compiler_version = CompilerVersion(
@@ -265,12 +302,15 @@ def _load_from_compile_legacy(crytic_compile: "CryticCompile", loaded_json: Dict
 
 
 def load_from_compile(crytic_compile: "CryticCompile", loaded_json: Dict) -> Tuple[int, List[str]]:
-    """
-    Load from json
+    """Load from a standard crytic compile json
+    This function must be called on well-formed json
 
-    :param crytic_compile:
-    :param loaded_json:
-    :return:
+    Args:
+        crytic_compile (CryticCompile): CryticCompile object to populate
+        loaded_json (Dict): Json to load
+
+    Returns:
+        Tuple[int, List[str]]: (underlying platform types, guessed unit tests)
     """
     crytic_compile.package_name = loaded_json.get("package", None)
 
@@ -322,12 +362,3 @@ def load_from_compile(crytic_compile: "CryticCompile", loaded_json: Dict) -> Tup
     crytic_compile.working_dir = loaded_json["working_dir"]
 
     return loaded_json["type"], loaded_json.get("unit_tests", [])
-
-
-def _relative_to_short(relative: Path) -> Path:
-    """
-
-    :param relative:
-    :return:
-    """
-    return relative
