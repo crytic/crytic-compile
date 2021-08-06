@@ -177,7 +177,7 @@ class Truffle(AbstractPlatform):
         if not os.path.isdir(os.path.join(self._target, build_directory)):
             if not os.path.isdir(os.path.join(self._target, "node_modules")):
                 raise InvalidCompilation(
-                    f"External dependencies not found, please install them. (npm install)"
+                    "External dependencies not found, please install them. (npm install)"
                 )
             raise InvalidCompilation(f"`truffle compile` failed. Output:\n{stdout}")
         filenames = glob.glob(os.path.join(self._target, build_directory, "*.json"))
