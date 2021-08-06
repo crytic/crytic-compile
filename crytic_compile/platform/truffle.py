@@ -188,7 +188,7 @@ class Truffle(AbstractPlatform):
                 raise InvalidCompilation(
                     "External dependencies not found, please install them. (npm install)"
                 )
-            raise InvalidCompilation(f"`truffle compile` failed. Output:\n{stdout}")
+            raise InvalidCompilation(f"`truffle compile` failed. Can you run It? Output:\n{stdout}")
         filenames = glob.glob(os.path.join(self._target, build_directory, "*.json"))
 
         optimized = None
