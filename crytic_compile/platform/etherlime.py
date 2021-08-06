@@ -9,7 +9,7 @@ import os
 import re
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, List, Optional, Any
 
 from crytic_compile.compilation_unit import CompilationUnit
 from crytic_compile.compiler.compiler import CompilerVersion
@@ -27,6 +27,44 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger("CryticCompile")
 
 
+def _run_etherlime(target: str, npx_disable: bool, compile_arguments: Optional[str]) -> None:
+    """Run etherlime
+
+    Args:
+        target (str): path to the target
+        npx_disable (bool): true if npx should not be used
+        compile_arguments (Optional[str]): additional arguments
+
+    Raises:
+        InvalidCompilation: if etherlime fails
+    """
+    cmd = ["etherlime", "compile", target, "deleteCompiledFiles=true"]
+
+    if not npx_disable:
+        cmd = ["npx"] + cmd
+
+    if compile_arguments:
+        cmd += compile_arguments.split(" ")
+
+    try:
+        with subprocess.Popen(
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=target
+        ) as process:
+            stdout_bytes, stderr_bytes = process.communicate()
+            stdout, stderr = (
+                stdout_bytes.decode(),
+                stderr_bytes.decode(),
+            )  # convert bytestrings to unicode strings
+
+            LOGGER.info(stdout)
+
+            if stderr:
+                LOGGER.error(stderr)
+    except OSError as error:
+        # pylint: disable=raise-missing-from
+        raise InvalidCompilation(error)
+
+
 class Etherlime(AbstractPlatform):
     """
     Etherlime platform
@@ -37,14 +75,15 @@ class Etherlime(AbstractPlatform):
     TYPE = Type.ETHERLIME
 
     # pylint: disable=too-many-locals
-    def compile(self, crytic_compile: "CryticCompile", **kwargs: str) -> None:
-        """
-        Compile the target
+    def compile(self, crytic_compile: "CryticCompile", **kwargs: Any) -> None:
+        """Run the compilation
 
-        :param crytic_compile:
-        :param target:
-        :param kwargs:
-        :return:
+        Args:
+            crytic_compile (CryticCompile): Associated CryticCompile object
+            **kwargs: optional arguments. Used "etherlime_ignore_compile", "ignore_compile"
+
+        Raises:
+            InvalidCompilation: if etherlime failed to run
         """
 
         etherlime_ignore_compile = kwargs.get("etherlime_ignore_compile", False) or kwargs.get(
@@ -52,35 +91,11 @@ class Etherlime(AbstractPlatform):
         )
 
         build_directory = "build"
-
-        compile_arguments = kwargs.get("etherlime_compile_arguments", None)
+        compile_arguments: Optional[str] = kwargs.get("etherlime_compile_arguments", None)
+        npx_disable: bool = kwargs.get("npx_disable", False)
 
         if not etherlime_ignore_compile:
-            cmd = ["etherlime", "compile", self._target, "deleteCompiledFiles=true"]
-
-            if not kwargs.get("npx_disable", False):
-                cmd = ["npx"] + cmd
-
-            if compile_arguments:
-                cmd += compile_arguments.split(" ")
-
-            try:
-                with subprocess.Popen(
-                    cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self._target
-                ) as process:
-                    stdout_bytes, stderr_bytes = process.communicate()
-                    stdout, stderr = (
-                        stdout_bytes.decode(),
-                        stderr_bytes.decode(),
-                    )  # convert bytestrings to unicode strings
-
-                    LOGGER.info(stdout)
-
-                    if stderr:
-                        LOGGER.error(stderr)
-            except OSError as error:
-                # pylint: disable=raise-missing-from
-                raise InvalidCompilation(error)
+            _run_etherlime(self._target, npx_disable, compile_arguments)
 
         # similar to truffle
         if not os.path.isdir(os.path.join(self._target, build_directory)):
@@ -105,12 +120,13 @@ class Etherlime(AbstractPlatform):
                                 r"\d+\.\d+\.\d+", target_loaded["compiler"]["version"]
                             )[0]
 
-                if not "ast" in target_loaded:
+                if "ast" not in target_loaded:
                     continue
 
                 filename_txt = target_loaded["ast"]["absolutePath"]
                 filename = convert_filename(filename_txt, _relative_to_short, crytic_compile)
                 compilation_unit.asts[filename.absolute] = target_loaded["ast"]
+                compilation_unit.filenames.add(filename)
                 crytic_compile.filenames.add(filename)
                 contract_name = target_loaded["contractName"]
                 compilation_unit.contracts_filenames[contract_name] = filename
@@ -138,11 +154,14 @@ class Etherlime(AbstractPlatform):
 
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:
-        """
-        Check if the target is an etherlime project
+        """Check if the target is an etherlime project
 
-        :param target:
-        :return:
+        Args:
+            target (str): path to the target
+            **kwargs: optional arguments. Used "etherlime_ignore"
+
+        Returns:
+            bool: True if the target is a etherlime project
         """
         etherlime_ignore = kwargs.get("etherlime_ignore", False)
         if etherlime_ignore:
@@ -163,11 +182,13 @@ class Etherlime(AbstractPlatform):
         return False
 
     def is_dependency(self, path: str) -> bool:
-        """
-        Check if the path is a dependency
+        """Check if the path is a dependency
 
-        :param path:
-        :return:
+        Args:
+            path (str): path to the target
+
+        Returns:
+            bool: True if the target is a dependency
         """
         if path in self._cached_dependencies:
             return self._cached_dependencies[path]
@@ -176,20 +197,22 @@ class Etherlime(AbstractPlatform):
         return ret
 
     def _guessed_tests(self) -> List[str]:
-        """
-        Guess the potential unit tests commands
+        """Guess the potential unit tests commands
 
-        :return:
+        Returns:
+            List[str]: The guessed unit tests commands
         """
         return ["etherlime test"]
 
 
 def _is_optimized(compile_arguments: Optional[str]) -> bool:
-    """
-    Check if the optimization is enabled
+    """Check if the optimization is enabled
 
-    :param compile_arguments:
-    :return:
+    Args:
+        compile_arguments (Optional[str]): list of compilation arguments
+
+    Returns:
+        bool: True if the optimizations are enabled
     """
     if compile_arguments:
         return "--run" in compile_arguments
@@ -197,11 +220,13 @@ def _is_optimized(compile_arguments: Optional[str]) -> bool:
 
 
 def _relative_to_short(relative: Path) -> Path:
-    """
-    Translate relative to short
+    """Translate relative path to short
 
-    :param relative:
-    :return:
+    Args:
+        relative (Path): path to the target
+
+    Returns:
+        Path: Translated path
     """
     short = relative
     try:

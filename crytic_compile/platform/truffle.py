@@ -30,12 +30,17 @@ LOGGER = logging.getLogger("CryticCompile")
 
 
 def export_to_truffle(crytic_compile: "CryticCompile", **kwargs: str) -> List[str]:
-    """
-    Export to the truffle format
+    """Export to the truffle format
 
-    :param crytic_compile:
-    :param kwargs:
-    :return:
+    Args:
+        crytic_compile (CryticCompile): CryticCompile object to export
+        **kwargs: optional arguments. Used: "export_dir"
+
+    Raises:
+        InvalidCompilation: If there are more than 1 compilation unit
+
+    Returns:
+        List[str]: Singleton with the generated directory
     """
     # Get our export directory, if it's set, we create the path.
     export_dir = kwargs.get("export_dir", "crytic-export")
@@ -83,11 +88,15 @@ class Truffle(AbstractPlatform):
 
     # pylint: disable=too-many-locals,too-many-statements,too-many-branches
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str) -> None:
-        """
-        Compile the target
+        """Compile
 
-        :param kwargs:
-        :return:
+        Args:
+            crytic_compile (CryticCompile): CryticCompile object to populate
+            **kwargs: optional arguments. Used "truffle_build_directory", "truffle_ignore_compile", "ignore_compile",
+                "truffle_version", "npx_disable"
+
+        Raises:
+            InvalidCompilation: If truffle failed to run
         """
 
         build_directory = kwargs.get("truffle_build_directory", os.path.join("build", "contracts"))
@@ -212,6 +221,12 @@ class Truffle(AbstractPlatform):
                     continue
 
                 filename = target_loaded["ast"]["absolutePath"]
+
+                # Since truffle 5.3.14, the filenames start with "project:"
+                # See https://github.com/crytic/crytic-compile/issues/199
+                if filename.startswith("project:"):
+                    filename = "." + filename[len("project:") :]
+
                 try:
                     filename = convert_filename(
                         filename, _relative_to_short, crytic_compile, working_dir=self._target
@@ -224,6 +239,7 @@ class Truffle(AbstractPlatform):
 
                 compilation_unit.asts[filename.absolute] = target_loaded["ast"]
                 crytic_compile.filenames.add(filename)
+                compilation_unit.filenames.add(filename)
                 contract_name = target_loaded["contractName"]
                 compilation_unit.natspec[contract_name] = natspec
                 compilation_unit.contracts_filenames[contract_name] = filename
@@ -260,11 +276,14 @@ class Truffle(AbstractPlatform):
 
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:
-        """
-        Check if the target is a truffle project
+        """Check if the target is a truffle project
 
-        :param target:
-        :return:
+        Args:
+            target (str): path to the target
+            **kwargs: optional arguments. Used: "truffle_ignore"
+
+        Returns:
+            bool: True if the target is a truffle project
         """
         truffle_ignore = kwargs.get("truffle_ignore", False)
         if truffle_ignore:
@@ -282,11 +301,13 @@ class Truffle(AbstractPlatform):
 
     # pylint: disable=no-self-use
     def is_dependency(self, path: str) -> bool:
-        """
-        Check if the target is a dependency
+        """Check if the path is a dependency
 
-        :param path:
-        :return:
+        Args:
+            path (str): path to the target
+
+        Returns:
+            bool: True if the target is a dependency
         """
         if path in self._cached_dependencies:
             return self._cached_dependencies[path]
@@ -296,20 +317,22 @@ class Truffle(AbstractPlatform):
 
     # pylint: disable=no-self-use
     def _guessed_tests(self) -> List[str]:
-        """
-        Guess the potential unit tests commands
+        """Guess the potential unit tests commands
 
-        :return:
+        Returns:
+            List[str]: The guessed unit tests commands
         """
         return ["truffle test"]
 
 
 def _get_version_from_config(target: str) -> Optional[Tuple[str, str]]:
-    """
-    Naive check on the truffleconfig file to get the version
+    """Naive check on the truffleconfig file to get the version
 
-    :param target:
-    :return: (version, compiler) | None
+    Args:
+        target (str): path to the project directory
+
+    Returns:
+        Optional[Tuple[str, str]]: (compiler version, compiler name)
     """
     config = Path(target, "truffle-config.js")
     if not config.exists():
@@ -330,6 +353,18 @@ def _get_version_from_config(target: str) -> Optional[Tuple[str, str]]:
 
 
 def _get_version(truffle_call: List[str], cwd: str) -> Tuple[str, str]:
+    """Get the compiler version
+
+    Args:
+        truffle_call (List[str]): Command to run truffle
+        cwd (str): Working directory to run truffle
+
+    Raises:
+        InvalidCompilation: If truffle failed, or the solidity version was not found
+
+    Returns:
+        Tuple[str, str]: (compiler version, compiler name)
+    """
     cmd = truffle_call + ["version"]
     try:
         with subprocess.Popen(
@@ -356,13 +391,13 @@ def _get_version(truffle_call: List[str], cwd: str) -> Tuple[str, str]:
 
 
 def _save_config(cwd: Path) -> Tuple[Optional[Path], Optional[Path]]:
-    """
-    Save truffle-config.js / truffle.js to a temporary file.
-    Return (original_config_name, temporary_file)
-    Return None, None if there was no configuration file
+    """Save truffle-config.js / truffle.js to a temporary file.
 
-    :param cwd:
-    :return:
+    Args:
+        cwd (Path): Working directory
+
+    Returns:
+        Tuple[Optional[Path], Optional[Path]]: (original_config_name, temporary_file). None if there was no config file
     """
     unique_filename = str(uuid.uuid4())
     while Path(cwd, unique_filename).exists():
@@ -379,13 +414,12 @@ def _save_config(cwd: Path) -> Tuple[Optional[Path], Optional[Path]]:
 
 
 def _reload_config(cwd: Path, original_config: Optional[Path], tmp_config: Path) -> None:
-    """
-    Restore the original config
+    """Restore the original config
 
-    :param cwd:
-    :param original_config:
-    :param tmp_config:
-    :return:
+    Args:
+        cwd (Path): Working directory
+        original_config (Optional[Path]): Original config saved
+        tmp_config (Path): Temporary config
     """
     os.remove(Path(cwd, tmp_config))
     if original_config is not None:
@@ -393,13 +427,12 @@ def _reload_config(cwd: Path, original_config: Optional[Path], tmp_config: Path)
 
 
 def _write_config(cwd: Path, original_config: Path, version: Optional[str]) -> None:
-    """
-    Write the config file
+    """Write the config file
 
-    :param cwd:
-    :param original_config:
-    :param version:
-    :return:
+    Args:
+        cwd (Path): Working directory
+        original_config (Path): Original config saved
+        version (Optional[str]): Solc version
     """
     txt = ""
     if version:
@@ -417,6 +450,14 @@ def _write_config(cwd: Path, original_config: Path, version: Optional[str]) -> N
 
 
 def _relative_to_short(relative: Path) -> Path:
+    """Convert the relative path to its short version
+
+    Args:
+        relative (Path): Path to convert
+
+    Returns:
+        Path: Converted path
+    """
     short = relative
     try:
         short = short.relative_to(Path("contracts"))

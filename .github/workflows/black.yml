@@ -1,5 +1,5 @@
 ---
-name: Lint Code Base
+name: Black
 
 defaults:
   run:
@@ -12,7 +12,7 @@ on:
 
 jobs:
   build:
-    name: Lint Code Base
+    name: Black
     runs-on: ubuntu-latest
 
     steps:

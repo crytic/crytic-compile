@@ -34,13 +34,14 @@ class Brownie(AbstractPlatform):
     TYPE = Type.BROWNIE
 
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str) -> None:
-        """
-        Compile the target
+        """Run the compilation
 
-        :param crytic_compile:
-        :param target:
-        :param kwargs:
-        :return:
+        Args:
+            crytic_compile (CryticCompile): Associated CryticCompile object
+            **kwargs: optional arguments. Used "brownie_ignore_compile", "ignore_compile"
+
+        Raises:
+            InvalidCompilation: If brownie failed to run
         """
         build_directory = Path("build", "contracts")
         brownie_ignore_compile = kwargs.get("brownie_ignore_compile", False) or kwargs.get(
@@ -78,11 +79,14 @@ class Brownie(AbstractPlatform):
 
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:
-        """
-        Check if the target is a brownie env
+        """Check if the target is a brownie project
 
-        :param target:
-        :return:
+        Args:
+            target (str): path to the target
+            **kwargs: optional arguments. Used "brownie_ignore"
+
+        Returns:
+            bool: True if the target is a brownie project
         """
         brownie_ignore = kwargs.get("brownie_ignore", False)
         if brownie_ignore:
@@ -94,19 +98,21 @@ class Brownie(AbstractPlatform):
         )
 
     def is_dependency(self, _path: str) -> bool:
-        """
-        Check if the path is a dependency
+        """Check if the path is a dependency (not supported for brownie)
 
-        :param _path:
-        :return:
+        Args:
+            _path (str): path to the target
+
+        Returns:
+            bool: True if the target is a dependency
         """
         return False
 
     def _guessed_tests(self) -> List[str]:
-        """
-        Guess the potential unit tests commands
+        """Guess the potential unit tests commands
 
-        :return:
+        Returns:
+            List[str]: The guessed unit tests commands
         """
         return ["brownie test"]
 
@@ -115,13 +121,12 @@ class Brownie(AbstractPlatform):
 def _iterate_over_files(
     crytic_compile: "CryticCompile", target: Path, filenames: List[Path]
 ) -> None:
-    """
-    Iterate over the files
+    """Iterates over the files and populates the information into the CryticCompile object
 
-    :param crytic_compile:
-    :param target:
-    :param filenames:
-    :return:
+    Args:
+        crytic_compile (CryticCompile): associated cryticCompile object
+        target (Path): path to the target
+        filenames (List[Path]): List of files to iterate over
     """
     optimized = None
     compiler = "solc"
@@ -157,6 +162,7 @@ def _iterate_over_files(
             )
 
             compilation_unit.asts[filename.absolute] = target_loaded["ast"]
+            compilation_unit.filenames.add(filename)
             crytic_compile.filenames.add(filename)
             contract_name = target_loaded["contractName"]
             compilation_unit.contracts_filenames[contract_name] = filename
@@ -184,11 +190,13 @@ def _iterate_over_files(
 
 
 def _get_version(compiler: Dict) -> str:
-    """
-    Parse the compiler version
+    """Parse the compiler version
 
-    :param compiler:
-    :return:
+    Args:
+        compiler (Dict): dictionary from the json
+
+    Returns:
+        str: Compiler version
     """
     version = compiler.get("version", "")
     version = version[len("Version: ") :]
@@ -197,10 +205,12 @@ def _get_version(compiler: Dict) -> str:
 
 
 def _relative_to_short(relative: Path) -> Path:
-    """
-    Translate relative path to short (do nothing)
+    """Translate relative path to short (do nothing for brownie)
 
-    :param relative:
-    :return:
+    Args:
+        relative (Path): path to the target
+
+    Returns:
+        Path: Translated path
     """
     return relative

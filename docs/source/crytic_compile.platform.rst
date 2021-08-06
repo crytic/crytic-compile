@@ -44,6 +44,14 @@ crytic\_compile.platform.brownie module
    :undoc-members:
    :show-inheritance:
 
+crytic\_compile.platform.buidler module
+---------------------------------------
+
+.. automodule:: crytic_compile.platform.buidler
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 crytic\_compile.platform.dapp module
 ------------------------------------
 
@@ -80,6 +88,14 @@ crytic\_compile.platform.exceptions module
 ------------------------------------------
 
 .. automodule:: crytic_compile.platform.exceptions
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+crytic\_compile.platform.hardhat module
+---------------------------------------
+
+.. automodule:: crytic_compile.platform.hardhat
    :members:
    :undoc-members:
    :show-inheritance:
@@ -139,7 +155,6 @@ crytic\_compile.platform.waffle module
    :members:
    :undoc-members:
    :show-inheritance:
-
 
 Module contents
 ---------------

@@ -39,13 +39,11 @@ class Dapp(AbstractPlatform):
 
     # pylint: disable=too-many-locals
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str) -> None:
-        """
-        Compile the target
+        """Run the compilation
 
-        :param crytic_compile:
-        :param target:
-        :param kwargs:
-        :return:
+        Args:
+            crytic_compile (CryticCompile): Associated CryticCompile object
+            **kwargs: optional arguments. Used: "dapp_ignore_compile", "ignore_compile"
         """
 
         dapp_ignore_compile = kwargs.get("dapp_ignore_compile", False) or kwargs.get(
@@ -109,6 +107,7 @@ class Dapp(AbstractPlatform):
                 path = convert_filename(
                     path, _relative_to_short, crytic_compile, working_dir=self._target
                 )
+                compilation_unit.filenames.add(path)
                 crytic_compile.filenames.add(path)
                 compilation_unit.asts[path.absolute] = info["ast"]
 
@@ -118,11 +117,14 @@ class Dapp(AbstractPlatform):
 
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:
-        """
-        Heuristic used: check if "dapp build" is present in Makefile
+        """Check if the target is a dapp project
 
-        :param target:
-        :return:
+        Args:
+            target (str): path to the target
+            **kwargs: optional arguments. Used: "dapp_ignore"
+
+        Returns:
+            bool: True if the target is a dapp project
         """
         dapp_ignore = kwargs.get("dapp_ignore", False)
         if dapp_ignore:
@@ -135,11 +137,13 @@ class Dapp(AbstractPlatform):
         return False
 
     def is_dependency(self, path: str) -> bool:
-        """
-        Check if the path is a dependency
+        """Check if the path is a dependency (not supported for brownie)
 
-        :param path:
-        :return:
+        Args:
+            path (str): path to the target
+
+        Returns:
+            bool: True if the target is a dependency
         """
         if path in self._cached_dependencies:
             return self._cached_dependencies[path]
@@ -148,20 +152,22 @@ class Dapp(AbstractPlatform):
         return "lib" in Path(path).parts
 
     def _guessed_tests(self) -> List[str]:
-        """
-        Guess the potential unit tests commands
+        """Guess the potential unit tests commands
 
-        :return:
+        Returns:
+            List[str]: The guessed unit tests commands
         """
         return ["dapp test"]
 
 
 def _run_dapp(target: str) -> None:
-    """
-    Run Dapp
+    """Run the dapp compilation
 
-    :param target:
-    :return:
+    Args:
+        target (str): path to the target
+
+    Raises:
+        InvalidCompilation: If dapp failed to run
     """
     # pylint: disable=import-outside-toplevel
     from crytic_compile import InvalidCompilation
@@ -179,11 +185,13 @@ def _run_dapp(target: str) -> None:
 
 
 def _get_version(target: str) -> CompilerVersion:
-    """
-    Get the compiler version used
+    """Get the compiler version
 
-    :param target:
-    :return:
+    Args:
+        target (str): path to the target
+
+    Returns:
+        CompilerVersion: compiler information
     """
     files = glob.glob(target + "/**/*meta.json", recursive=True)
     version = None
@@ -206,11 +214,13 @@ def _get_version(target: str) -> CompilerVersion:
 
 
 def _relative_to_short(relative: Path) -> Path:
-    """
-    Translate relative path to short
+    """Translate relative path to short (do nothing for brownie)
 
-    :param relative:
-    :return:
+    Args:
+        relative (Path): path to the target
+
+    Returns:
+        Path: Translated path
     """
     short = relative
     try:

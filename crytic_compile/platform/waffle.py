@@ -38,13 +38,15 @@ class Waffle(AbstractPlatform):
 
     # pylint: disable=too-many-locals,too-many-branches,too-many-statements
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str) -> None:
-        """
-        Compile the target
+        """Compile the project and populate the CryticCompile object
 
-        :param crytic_compile:
-        :param target:
-        :param kwargs:
-        :return:
+        Args:
+            crytic_compile (CryticCompile): Associated CryticCompile
+            **kwargs: optional arguments. Used "waffle_ignore_compile", "ignore_compile", "npx_disable",
+                "waffle_config_file"
+
+        Raises:
+            InvalidCompilation: If the waffle failed to run
         """
 
         waffle_ignore_compile = kwargs.get("waffle_ignore_compile", False) or kwargs.get(
@@ -185,6 +187,7 @@ class Waffle(AbstractPlatform):
 
             compilation_unit.asts[filename.absolute] = target_all["sources"][contract[0]]["AST"]
             crytic_compile.filenames.add(filename)
+            compilation_unit.filenames.add(filename)
             compilation_unit.contracts_filenames[contract_name] = filename
             compilation_unit.contracts_names.add(contract_name)
             compilation_unit.abis[contract_name] = target_loaded["abi"]
@@ -213,11 +216,14 @@ class Waffle(AbstractPlatform):
 
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:
-        """
-        Check if the target is a waffle project
+        """Check if the target is a waffle project
 
-        :param target:
-        :return:
+        Args:
+            target (str): path to the target
+            **kwargs: optional arguments. Used "waffle_ignore"
+
+        Returns:
+            bool: True if the target is a waffle project
         """
         waffle_ignore = kwargs.get("waffle_ignore", False)
         if waffle_ignore:
@@ -245,11 +251,13 @@ class Waffle(AbstractPlatform):
         return False
 
     def is_dependency(self, path: str) -> bool:
-        """
-        Check if the path is a dependency
+        """Check if the path is a dependency
 
-        :param path:
-        :return:
+        Args:
+            path (str): path to the target
+
+        Returns:
+            bool: True if the target is a dependency
         """
         if path in self._cached_dependencies:
             return self._cached_dependencies[path]
@@ -258,30 +266,48 @@ class Waffle(AbstractPlatform):
         return ret
 
     def _guessed_tests(self) -> List[str]:
-        """
-        Guess the potential unit tests commands
+        """Guess the potential unit tests commands
 
-        :return:
+        Returns:
+            List[str]: The guessed unit tests commands
         """
         return ["npx mocha"]
 
 
 def _load_config(config_file: str) -> Dict:
-    """
-    Load the config file
+    """Load the config file
 
-    :param config_file:
-    :return:
+    Args:
+        config_file (str): config file to load
+
+    Raises:
+        InvalidCompilation: If the config file lacks "module.export"
+
+    Returns:
+        Dict: [description]
     """
     with open(config_file, "r") as file_desc:
         content = file_desc.read()
 
     if "module.exports" in content:
-        raise InvalidCompilation("module.export to supported for waffle")
+        raise InvalidCompilation("module.export is required for waffle")
     return json.loads(content)
 
 
 def _get_version(compiler: str, cwd: str, config: Optional[Dict] = None) -> str:
+    """Return the solidity verison used
+
+    Args:
+        compiler (str): compiler used
+        cwd (str): Working directory
+        config (Optional[Dict], optional): Config as a json. Defaults to None.
+
+    Raises:
+        InvalidCompilation: If the solidity version was not found
+
+    Returns:
+        str: Solidity version used
+    """
     version = ""
     if config is not None and "solcVersion" in config:
         version = re.findall(r"\d+\.\d+\.\d+", config["solcVersion"])[0]
@@ -325,6 +351,14 @@ def _get_version(compiler: str, cwd: str, config: Optional[Dict] = None) -> str:
 
 
 def _relative_to_short(relative: Path) -> Path:
+    """Translate relative path to short
+
+    Args:
+        relative (Path): path to the target
+
+    Returns:
+        Path: Translated path
+    """
     short = relative
     try:
         short = short.relative_to(Path("contracts"))

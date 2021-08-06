@@ -1,5 +1,7 @@
 """
 Abstract Platform
+
+This gives the skeleton for any platform supported by crytic-compile
 """
 import abc
 from typing import TYPE_CHECKING, List, Dict
@@ -32,6 +34,15 @@ class AbstractPlatform(metaclass=abc.ABCMeta):
     HIDE = False  # True if the class is not meant for direct user manipulation
 
     def __init__(self, target: str, **_kwargs: str):
+        """Init the object
+
+        Args:
+            target (str): path to the target
+            **_kwargs: optional arguments.
+
+        Raises:
+            IncorrectPlatformInitialization: If the Platform was not correctly designed
+        """
         if not self.NAME:
             raise IncorrectPlatformInitialization(
                 "NAME is not initialized {}".format(self.__class__.__name__)
@@ -57,37 +68,37 @@ class AbstractPlatform(metaclass=abc.ABCMeta):
     # For example the archive will return the underlying platform values
     @property
     def target(self) -> str:
-        """
-        Return the target name
+        """Return the target name
 
-        :return:
+        Returns:
+            str: The target name
         """
         return self._target
 
     @property
     def platform_name_used(self) -> str:
-        """
-        Return the underlying platform used
+        """Return the name of the underlying platform used
 
-        :return:
+        Returns:
+            str: The name of the underlying platform used
         """
         return self.NAME
 
     @property
     def platform_project_url_used(self) -> str:
-        """
-        Return the underlying platform url used
+        """Return the underlying platform project 's url
 
-        :return:
+        Returns:
+            str: Underlying platform project 's url
         """
         return self.PROJECT_URL
 
     @property
     def platform_type_used(self) -> Type:
-        """
-        Return the underlying platform url used
+        """Return the type of the underlying platform used
 
-        :return:
+        Returns:
+            Type: [description]
         """
         return self.TYPE
 
@@ -100,33 +111,37 @@ class AbstractPlatform(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str) -> None:
-        """
-        Run the compilation
+        """Run the compilation
 
-        :param crytic_compile:
-        :param kwargs:
-        :return:
+        Args:
+            crytic_compile (CryticCompile): CryticCompile object associated with the platform
+            **kwargs: optional arguments.
         """
         return
 
     @staticmethod
     @abc.abstractmethod
     def is_supported(target: str, **kwargs: str) -> bool:
-        """
-        Check if the target is a project supported by this platform
+        """Check if the target is a project supported by this platform
 
-        :param target:
-        :return:
+        Args:
+            target (str): path to the target
+            **kwargs: optional arguments. Used: "dapp_ignore"
+
+        Returns:
+            bool: True if the target is supported
         """
         return False
 
     @abc.abstractmethod
     def is_dependency(self, path: str) -> bool:
-        """
-        Check if the target is a dependency
+        """Check if the target is a dependency
 
-        :param path:
-        :return:
+        Args:
+            path (str): path to the target
+
+        Returns:
+            bool: True if the target is a dependency
         """
         return False
 
@@ -135,18 +150,18 @@ class AbstractPlatform(metaclass=abc.ABCMeta):
     # platforms-dependent tests
     @abc.abstractmethod
     def _guessed_tests(self) -> List[str]:
-        """
-        Guess the potential unit tests commands
+        """Guess the potential unit tests commands
 
-        :return:
+        Returns:
+            List[str]: list of potential unit tests commands
         """
         return []
 
     def guessed_tests(self) -> List[str]:
-        """
-        Guess the potential unit tests commands
+        """Guess the potential unit tests commands
 
-        :return: list of unit tests command guessed
+        Returns:
+            List[str]: list of potential unit tests commands
         """
         return guess_tests(self._target) + self._guessed_tests()
 

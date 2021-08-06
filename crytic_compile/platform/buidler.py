@@ -36,11 +36,15 @@ class Buidler(AbstractPlatform):
 
     # pylint: disable=too-many-locals,too-many-statements,too-many-branches
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str) -> None:
-        """
-        Compile the target
+        """Run the compilation
 
-        :param kwargs:
-        :return:
+        Args:
+            crytic_compile (CryticCompile): Associated CryticCompile objects
+            **kwargs: optional arguments. Used: "buidler_cache_directory", "buidler_ignore_compile", "ignore_compile",
+                "buidler_working_dir", "buidler_skip_directory_name_fix", "npx_disable"
+
+        Raises:
+            InvalidCompilation: If buidler failed to run
         """
 
         cache_directory = kwargs.get("buidler_cache_directory", "")
@@ -158,16 +162,20 @@ class Buidler(AbstractPlatform):
                         path = convert_filename(
                             path, relative_to_short, crytic_compile, working_dir=buidler_working_dir
                         )
+                    compilation_unit.filenames.add(path)
                     crytic_compile.filenames.add(path)
                     compilation_unit.asts[path.absolute] = info["ast"]
 
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:
-        """
-        Check if the target is a buidler project
+        """Check if the target is a buidler project
 
-        :param target:
-        :return:
+        Args:
+            target (str): path to the target
+            **kwargs: optional arguments. Used: "buidler_ignore"
+
+        Returns:
+            bool: True if the target is a buidler project
         """
         buidler_ignore = kwargs.get("buidler_ignore", False)
         if buidler_ignore:
@@ -177,11 +185,13 @@ class Buidler(AbstractPlatform):
         return is_javascript or is_typescript
 
     def is_dependency(self, path: str) -> bool:
-        """
-        Check if the target is a dependency
+        """Check if the path is a dependency
 
-        :param path:
-        :return:
+        Args:
+            path (str): path to the target
+
+        Returns:
+            bool: True if the target is a dependency
         """
         if path in self._cached_dependencies:
             return self._cached_dependencies[path]
@@ -190,18 +200,29 @@ class Buidler(AbstractPlatform):
         return ret
 
     def _guessed_tests(self) -> List[str]:
-        """
-        Guess the potential unit tests commands
+        """Guess the potential unit tests commands
 
-        :return:
+        Returns:
+            List[str]: The guessed unit tests commands
         """
         return ["buidler test"]
 
 
 def _get_version_from_config(builder_directory: Path) -> Tuple[str, str, bool]:
+    """Parse the compiler version
+
+    Args:
+        builder_directory (Path): path to the project's directory
+
+    Raises:
+        InvalidCompilation: If the configuration file was not found
+
+    Returns:
+        Tuple[str, str, bool]: (compiler_name,compiler_version,is_optimized)
     """
-    :return: (version, optimized)
-    """
+
+    #    :return: (version, optimized)
+
     path_config = Path(builder_directory, "last-solc-config.json")
     if not path_config.exists():
         path_config = Path(builder_directory, "last-vyper-config.json")

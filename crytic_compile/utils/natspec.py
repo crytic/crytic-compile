@@ -10,6 +10,11 @@ class UserMethod:
     """
 
     def __init__(self, method: Union[Dict, str]) -> None:
+        """Init the object
+
+        Args:
+            method (Union[Dict, str]): Method info (notice)
+        """
         # Constructors dont have "notice: '..'"
         if isinstance(method, str):
             self._notice: Optional[str] = method
@@ -18,18 +23,18 @@ class UserMethod:
 
     @property
     def notice(self) -> Optional[str]:
-        """
-        Return the method notice
+        """Return the method notice
 
-        :return: Optional[str]
+        Returns:
+            Optional[str]: method notice
         """
         return self._notice
 
     def export(self) -> Dict:
-        """
-        Export to a python dict
+        """Export to a python dict
 
-        :return: Dict
+        Returns:
+            Dict: Exported user method
         """
         return {"notice": self.notice}
 
@@ -40,6 +45,11 @@ class DevMethod:
     """
 
     def __init__(self, method: Dict) -> None:
+        """Init the object
+
+        Args:
+            method (Dict): Method infos (author, details, params, return)
+        """
         self._author: Optional[str] = method.get("author", None)
         self._details: Optional[str] = method.get("details", None)
         self._params: Dict[str, str] = method.get("params", {})
@@ -47,45 +57,45 @@ class DevMethod:
 
     @property
     def author(self) -> Optional[str]:
-        """
-        Return the method author
+        """Return the method author
 
-        :return: Optional[str]
+        Returns:
+            Optional[str]: method author
         """
         return self._author
 
     @property
     def details(self) -> Optional[str]:
-        """
-        Return the method details
+        """Return the method details
 
-        :return: Optional[str]
+        Returns:
+            Optional[str]: method details
         """
         return self._details
 
     @property
     def method_return(self) -> Optional[str]:
-        """
-        Return the method return
+        """Return the method return
 
-        :return: Optional[str]
+        Returns:
+            Optional[str]: method return
         """
         return self._return
 
     @property
     def params(self) -> Dict[str, str]:
-        """
-        Return the method params
+        """Return the method params
 
-        :return: Dict[str, str]
+        Returns:
+            Dict[str, str]: method_name => params
         """
         return self._params
 
     def export(self) -> Dict:
-        """
-        Export to a python dict
+        """Export to a python dict
 
-        :return: Dict
+        Returns:
+            Dict: Exported dev method
         """
         return {
             "author": self.author,
@@ -101,6 +111,11 @@ class UserDoc:
     """
 
     def __init__(self, userdoc: dict):
+        """Init the object
+
+        Args:
+            userdoc (dict): User doc (notice, methods)
+        """
         self._notice: Optional[str] = userdoc.get("notice", None)
         self._methods: Dict[str, UserMethod] = {
             k: UserMethod(item) for k, item in userdoc.get("methods", {}).items()
@@ -108,27 +123,27 @@ class UserDoc:
 
     @property
     def notice(self) -> Optional[str]:
-        """
-        Return the user notice
+        """Return the user notice
 
-        :return: Optional[str]
+        Returns:
+            Optional[str]: user notice
         """
         return self._notice
 
     @property
     def methods(self) -> Dict[str, UserMethod]:
-        """
-        Return the user methods
+        """Return the user methods
 
-        :return: Dict[str, UserMethod]
+        Returns:
+            Optional[str]: method_name => UserMethod
         """
         return self._methods
 
     def export(self) -> Dict:
-        """
-        Export to a python dict
+        """Export to a python dict
 
-        :return: Dict
+        Returns:
+            Dict: Exported user doc
         """
         return {
             "methods": {k: items.export() for k, items in self.methods.items()},
@@ -142,6 +157,11 @@ class DevDoc:
     """
 
     def __init__(self, devdoc: Dict):
+        """Init the object
+
+        Args:
+            devdoc (Dict): dev doc (author, details, methods, title)
+        """
         self._author: Optional[str] = devdoc.get("author", None)
         self._details: Optional[str] = devdoc.get("details", None)
         self._methods: Dict[str, DevMethod] = {
@@ -151,45 +171,45 @@ class DevDoc:
 
     @property
     def author(self) -> Optional[str]:
-        """
-        Return the dev author
+        """Return the dev author
 
-        :return: Optional[str]
+        Returns:
+            Optional[str]: dev author
         """
         return self._author
 
     @property
     def details(self) -> Optional[str]:
-        """
-        Return the dev details
+        """Return the dev details
 
-        :return: Optional[str]
+        Returns:
+            Optional[str]: dev details
         """
         return self._details
 
     @property
     def methods(self) -> Dict[str, DevMethod]:
-        """
-        Return the dev methods
+        """Return the dev methods
 
-        :return: Dict[str, DevMethod]
+        Returns:
+            Dict[str, DevMethod]: method_name => DevMethod
         """
         return self._methods
 
     @property
     def title(self) -> Optional[str]:
-        """
-        Return the dev title
+        """Return the dev title
 
-        :return: Optional[str]
+        Returns:
+            Optional[str]: dev title
         """
         return self._title
 
     def export(self) -> Dict:
-        """
-        Export to a python dict
+        """Export to a python dict
 
-        :return: Dict
+        Returns:
+            Dict: Exported dev doc
         """
         return {
             "methods": {k: items.export() for k, items in self.methods.items()},
@@ -205,23 +225,29 @@ class Natspec:
     """
 
     def __init__(self, userdoc: Dict, devdoc: Dict):
+        """Init the object
+
+        Args:
+            userdoc (Dict): user doc
+            devdoc (Dict): dev doc
+        """
         self._userdoc: UserDoc = UserDoc(userdoc)
         self._devdoc: DevDoc = DevDoc(devdoc)
 
     @property
     def userdoc(self) -> UserDoc:
-        """
-        Return the userdoc
+        """Return the userdoc
 
-        :return: UserDoc
+        Returns:
+            UserDoc: user documentation
         """
         return self._userdoc
 
     @property
     def devdoc(self) -> DevDoc:
-        """
-        Return the devdoc
+        """Return the devdoc
 
-        :return: DevDoc
+        Returns:
+            DevDoc: dev documentation
         """
         return self._devdoc

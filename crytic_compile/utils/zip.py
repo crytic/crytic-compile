@@ -15,17 +15,27 @@ if TYPE_CHECKING:
 
 
 def _to_str(txt: Union[bytes, str]) -> str:
+    """Convert bytes to an utf8 str. Do nothing if its already a str
+
+    Args:
+        txt (Union[bytes, str]): target name
+
+    Returns:
+        str: str
+    """
     if isinstance(txt, bytes):
         return txt.decode("utf8")
     return txt
 
 
 def load_from_zip(target: str) -> List["CryticCompile"]:
-    """
-    Load a file from a zip
+    """Load a file from a zip
 
-    :param target:
-    :return:
+    Args:
+        target (str): path to the
+
+    Returns:
+        List[CryticCompile]: List of loaded projects
     """
     # pylint: disable=import-outside-toplevel
     from crytic_compile.crytic_compile import CryticCompile
@@ -52,13 +62,12 @@ ZIP_TYPES_ACCEPTED = {
 def save_to_zip(
     crytic_compiles: List["CryticCompile"], zip_filename: str, zip_type: str = "lzma"
 ) -> None:
-    """
-    Save projects to a zip
+    """Save projects to a zip
 
-    :param zip_type:
-    :param crytic_compiles:
-    :param zip_filename:
-    :return:
+    Args:
+        crytic_compiles (List[CryticCompile]): List of project to save
+        zip_filename (str): zip filename
+        zip_type (str): Zip types. Supported lzma, stored, deflated, bzip2. Defaults to "lzma".
     """
     with ZipFile(
         zip_filename, "w", compression=ZIP_TYPES_ACCEPTED.get(zip_type, zipfile.ZIP_LZMA)

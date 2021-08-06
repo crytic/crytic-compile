@@ -31,15 +31,14 @@ class Vyper(AbstractPlatform):
     TYPE = Type.VYPER
 
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str) -> None:
-        """
-        Compile the target
+        """Compile the target
 
-        :param crytic_compile:
-        :param target:
-        :param kwargs:
-        :return:
-        """
+        Args:
+            crytic_compile (CryticCompile): CryticCompile object to populate
+            **kwargs: optional arguments. Used "vyper"
 
+
+        """
         target = self._target
 
         vyper = kwargs.get("vyper", "vyper")
@@ -79,6 +78,7 @@ class Vyper(AbstractPlatform):
         ]
 
         crytic_compile.filenames.add(contract_filename)
+        compilation_unit.filenames.add(contract_filename)
 
         # Natspec not yet handled for vyper
         compilation_unit.natspec[contract_name] = Natspec({}, {})
@@ -87,21 +87,26 @@ class Vyper(AbstractPlatform):
         compilation_unit.asts[contract_filename.absolute] = ast
 
     def is_dependency(self, _path: str) -> bool:
-        """
-        Always return false
+        """Check if the path is a dependency (not supported for vyper)
 
-        :param _path:
-        :return:
+        Args:
+            _path (str): path to the target
+
+        Returns:
+            bool: True if the target is a dependency
         """
         return False
 
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:
-        """
-        Check if the target is a vyper project
+        """Check if the target is a vyper project
 
-        :param target:
-        :return:
+        Args:
+            target (str): path to the target
+            **kwargs: optional arguments. Used "vyper_ignore"
+
+        Returns:
+            bool: True if the target is a vyper project
         """
         vyper_ignore = kwargs.get("vyper_ignore", False)
         if vyper_ignore:
@@ -109,15 +114,31 @@ class Vyper(AbstractPlatform):
         return os.path.isfile(target) and target.endswith(".vy")
 
     def _guessed_tests(self) -> List[str]:
-        """
-        Guess the potential unit tests commands
+        """Guess the potential unit tests commands
 
-        :return:
+        Returns:
+            List[str]: The guessed unit tests commands
         """
         return []
 
 
-def _run_vyper(filename: str, vyper: str, env: Dict = None, working_dir: str = None) -> Dict:
+def _run_vyper(
+    filename: str, vyper: str, env: Optional[Dict] = None, working_dir: Optional[str] = None
+) -> Dict:
+    """Run vyper
+
+    Args:
+        filename (str): vyper file
+        vyper (str): vyper binary
+        env (Optional[Dict], optional): Environment variables. Defaults to None.
+        working_dir (Optional[str], optional): Working directory. Defaults to None.
+
+    Raises:
+        InvalidCompilation: If vyper failed to run
+
+    Returns:
+        Dict: Vyper json compilation artifact
+    """
     if not os.path.isfile(filename):
         raise InvalidCompilation(
             "{} does not exist (are you in the correct directory?)".format(filename)
@@ -145,6 +166,20 @@ def _run_vyper(filename: str, vyper: str, env: Dict = None, working_dir: str = N
 def _get_vyper_ast(
     filename: str, vyper: str, env: Optional[Dict] = None, working_dir: Optional[str] = None
 ) -> Dict:
+    """Get ast from vyper
+
+    Args:
+        filename (str): vyper file
+        vyper (str): vyper binary
+        env (Dict, optional): Environment variables. Defaults to None.
+        working_dir (str, optional): Working directory. Defaults to None.
+
+    Raises:
+        InvalidCompilation: If vyper failed to run
+
+    Returns:
+        Dict: [description]
+    """
     if not os.path.isfile(filename):
         raise InvalidCompilation(
             "{} does not exist (are you in the correct directory?)".format(filename)
@@ -170,4 +205,12 @@ def _get_vyper_ast(
 
 
 def _relative_to_short(relative: Path) -> Path:
+    """Translate relative path to short (do nothing for vyper)
+
+    Args:
+        relative (Path): path to the target
+
+    Returns:
+        Path: Translated path
+    """
     return relative

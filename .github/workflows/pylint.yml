@@ -1,5 +1,5 @@
 ---
-name: Lint Code Base
+name: Pylint
 
 defaults:
   run:
@@ -12,7 +12,7 @@ on:
 
 jobs:
   build:
-    name: Lint Code Base
+    name: Pylint
     runs-on: ubuntu-latest
 
     steps:

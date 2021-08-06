@@ -21,15 +21,25 @@ Filename = namedtuple("Filename", ["absolute", "used", "relative", "short"])
 
 
 def extract_name(name: str) -> str:
-    """
-    Convert '/path:Contract' to Contract
+    """Convert '/path:Contract' to Contract
+
+    Args:
+        name (str): name to convert
+
+    Returns:
+        str: extracted contract name
     """
     return name[name.rfind(":") + 1 :]
 
 
 def extract_filename(name: str) -> str:
-    """
-    Convert '/path:Contract' to /path
+    """Convert '/path:Contract' to /path
+
+    Args:
+        name (str): name to convert
+
+    Returns:
+        str: extracted filename
     """
     if not ":" in name:
         return name
@@ -37,12 +47,14 @@ def extract_filename(name: str) -> str:
 
 
 def combine_filename_name(filename: str, name: str) -> str:
-    """
-    Combine the filename with the contract name
+    """Combine the filename with the contract name
 
-    :param filename:
-    :param name:
-    :return:
+    Args:
+        filename (str): filename
+        name (str): contract name
+
+    Returns:
+        str: Combined names
     """
     return filename + ":" + name
 
@@ -54,17 +66,20 @@ def convert_filename(
     crytic_compile: "CryticCompile",
     working_dir: Optional[Union[str, Path]] = None,
 ) -> Filename:
-    """
-    Convert filename.
+    """Convert a filename to CryticCompile Filename object.
     The used_filename can be absolute, relative, or missing node_modules/contracts directory
-    convert_filename return a tuple(absolute,used),
-    where absolute points to the absolute path, and used the original
 
-    :param used_filename:
-    :param relative_to_short: lambda function
-    :param crytic_compile:
-    :param working_dir:
-    :return: Filename (namedtuple)
+    Args:
+        used_filename (Union[str, Path]): Used filename
+        relative_to_short (Callable[[Path], Path]): Callback to translate the relative to short
+        crytic_compile (CryticCompile): Associated CryticCompile object
+        working_dir (Optional[Union[str, Path]], optional): Working directory. Defaults to None.
+
+    Raises:
+        InvalidCompilation: [description]
+
+    Returns:
+        Filename: Filename converted
     """
     filename_txt = used_filename
     if platform.system() == "Windows":
