@@ -38,6 +38,7 @@ class SolcStandardJson(Solc):
 
         Args:
             target (Union[str, dict], optional): A string path to a standard json, or a standard json. Defaults to None.
+            **kwargs: optional arguments.
 
         Raises:
             ValueError: If invalid json
@@ -116,6 +117,8 @@ class SolcStandardJson(Solc):
 
         Args:
             crytic_compile (CryticCompile): Associated CryticCompile object
+            **kwargs: optional arguments. Used: "solc", "solc_disable_warnings", "solc_args", "solc_working_dir",
+                "solc_remaps"
         """
 
         solc: str = kwargs.get("solc", "solc")
@@ -228,7 +231,7 @@ def _run_solc_standard_json(
     Args:
         solc_input (Dict): standard json object
         solc (str): path to the solc binary
-        solc_disable_warnings (bool, optional): True to not print the solc warnings. Defaults to False.
+        solc_disable_warnings (bool): True to not print the solc warnings. Defaults to False.
         working_dir (Optional[Dict], optional): Working directory to run solc. Defaults to None.
 
     Raises:

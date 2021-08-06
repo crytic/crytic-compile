@@ -191,6 +191,8 @@ class Etherscan(AbstractPlatform):
 
         Args:
             crytic_compile (CryticCompile): Associated CryticCompile object
+            **kwargs: optional arguments. Used "solc", "etherscan_only_source_code", "etherscan_only_bytecode",
+                "etherscan_api_key", "export_dir"
 
         Raises:
             InvalidCompilation: if etherscan returned an error, or its results were not correctly parsed
@@ -342,6 +344,7 @@ class Etherscan(AbstractPlatform):
 
         Args:
             target (str): path to the target
+            **kwargs: optional arguments. Used "etherscan_ignore"
 
         Returns:
             bool: True if the target is a etherscan project

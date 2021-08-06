@@ -71,6 +71,7 @@ class CryticCompile:
 
         Args:
             target (Union[str, AbstractPlatform]): Target
+            **kwargs: additional arguments
         """
 
         # dependencies is needed for platform conversion
@@ -438,6 +439,9 @@ class CryticCompile:
         """Import from an archive. compiled_archive is either a json file or the loaded dictionary
         The dictionary myst contain the "compilations" keyword
 
+        Args:
+            compiled_archive: Union[str, Dict]: list of archive to import
+
         Raises:
             ValueError: The import did not worked
 
@@ -468,6 +472,9 @@ class CryticCompile:
         The json format can be crytic-compile, solc or truffle.
         The type must be specified in the kwargs with "export_format"
 
+        Args:
+            **kwargs: optional arguments. Used: "export_format"
+
         Raises:
             ValueError: Incorrect type
 
@@ -494,6 +501,8 @@ class CryticCompile:
 
         Args:
             target (str): path to the target
+            **kwargs: optional arguments. Used: "compile_force_framework", "compile_custom_build", "compile_remove_metadata"
+
 
         Returns:
             AbstractPlatform: Underlying platform
@@ -517,7 +526,11 @@ class CryticCompile:
         return platform
 
     def _compile(self, **kwargs: str) -> None:
-        """Compile the project"""
+        """Compile the project
+
+        Args:
+            **kwargs: optional arguments. Used: "compile_custom_build", "compile_remove_metadata"
+        """
         custom_build: Union[None, str] = kwargs.get("compile_custom_build", None)
         if custom_build:
             self._run_custom_build(custom_build)
@@ -586,7 +599,8 @@ def compile_all(target: str, **kwargs: str) -> List[CryticCompile]:
     all the relevant instances of CryticCompile.
 
     Args:
-        target (str): A string representing a file/directory path or glob pattern denoting where compilation shouldoccur.
+        target (str): A string representing a file/directory path or glob pattern denoting where compilation should occur.
+        **kwargs: optional arguments. Used: "solc_standard_json"
 
     Raises:
         ValueError: If the target could not be compiled

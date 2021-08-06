@@ -40,6 +40,8 @@ class Buidler(AbstractPlatform):
 
         Args:
             crytic_compile (CryticCompile): Associated CryticCompile objects
+            **kwargs: optional arguments. Used: "buidler_cache_directory", "buidler_ignore_compile", "ignore_compile",
+                "buidler_working_dir", "buidler_skip_directory_name_fix", "npx_disable"
 
         Raises:
             InvalidCompilation: If buidler failed to run
@@ -170,6 +172,7 @@ class Buidler(AbstractPlatform):
 
         Args:
             target (str): path to the target
+            **kwargs: optional arguments. Used: "buidler_ignore"
 
         Returns:
             bool: True if the target is a buidler project

@@ -43,6 +43,7 @@ class Dapp(AbstractPlatform):
 
         Args:
             crytic_compile (CryticCompile): Associated CryticCompile object
+            **kwargs: optional arguments. Used: "dapp_ignore_compile", "ignore_compile"
         """
 
         dapp_ignore_compile = kwargs.get("dapp_ignore_compile", False) or kwargs.get(
@@ -120,6 +121,7 @@ class Dapp(AbstractPlatform):
 
         Args:
             target (str): path to the target
+            **kwargs: optional arguments. Used: "dapp_ignore"
 
         Returns:
             bool: True if the target is a dapp project
@@ -138,7 +140,7 @@ class Dapp(AbstractPlatform):
         """Check if the path is a dependency (not supported for brownie)
 
         Args:
-            _path (str): path to the target
+            path (str): path to the target
 
         Returns:
             bool: True if the target is a dependency

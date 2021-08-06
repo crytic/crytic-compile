@@ -35,6 +35,9 @@ class Vyper(AbstractPlatform):
 
         Args:
             crytic_compile (CryticCompile): CryticCompile object to populate
+            **kwargs: optional arguments. Used "vyper"
+
+
         """
         target = self._target
 
@@ -100,6 +103,7 @@ class Vyper(AbstractPlatform):
 
         Args:
             target (str): path to the target
+            **kwargs: optional arguments. Used "vyper_ignore"
 
         Returns:
             bool: True if the target is a vyper project
@@ -118,14 +122,16 @@ class Vyper(AbstractPlatform):
         return []
 
 
-def _run_vyper(filename: str, vyper: str, env: Dict = None, working_dir: str = None) -> Dict:
+def _run_vyper(
+    filename: str, vyper: str, env: Optional[Dict] = None, working_dir: Optional[str] = None
+) -> Dict:
     """Run vyper
 
     Args:
         filename (str): vyper file
         vyper (str): vyper binary
-        env (Dict, optional): Environment variables. Defaults to None.
-        working_dir (str, optional): Working directory. Defaults to None.
+        env (Optional[Dict], optional): Environment variables. Defaults to None.
+        working_dir (Optional[str], optional): Working directory. Defaults to None.
 
     Raises:
         InvalidCompilation: If vyper failed to run

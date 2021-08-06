@@ -41,12 +41,12 @@ class Waffle(AbstractPlatform):
         """Compile the project and populate the CryticCompile object
 
         Args:
-            crytic_compile (CryticCompile): [description]
+            crytic_compile (CryticCompile): Associated CryticCompile
+            **kwargs: optional arguments. Used "waffle_ignore_compile", "ignore_compile", "npx_disable",
+                "waffle_config_file"
 
         Raises:
-            InvalidCompilation: [description]
-            InvalidCompilation: [description]
-            InvalidCompilation: [description]
+            InvalidCompilation: If the waffle failed to run
         """
 
         waffle_ignore_compile = kwargs.get("waffle_ignore_compile", False) or kwargs.get(
@@ -220,6 +220,7 @@ class Waffle(AbstractPlatform):
 
         Args:
             target (str): path to the target
+            **kwargs: optional arguments. Used "waffle_ignore"
 
         Returns:
             bool: True if the target is a waffle project

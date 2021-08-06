@@ -42,7 +42,7 @@ def export_to_solc_from_compilation_unit(
         export_dir (str): Export directory
 
     Returns:
-        Optional[str]: [description]
+        Optional[str]: path to the file generated
     """
     contracts = dict()
 
@@ -98,7 +98,8 @@ def export_to_solc(crytic_compile: "CryticCompile", **kwargs: str) -> List[str]:
     - $key.json, where $key is the compilation unit identifiant
 
     Args:
-        crytic_compile (CryticCompile):
+        crytic_compile (CryticCompile): CryticCompile object to export
+        **kwargs: optional arguments. Used: "export_dir"
 
     Returns:
         List[str]: List of filenames generated
@@ -135,6 +136,7 @@ class Solc(AbstractPlatform):
 
         Args:
             crytic_compile (CryticCompile): Associated CryticCompile object
+            **kwargs: optional arguments. Used: "solc_working_dir", "solc_force_legacy_json"
 
         Raises:
             InvalidCompilation: If solc failed to run
@@ -181,6 +183,7 @@ class Solc(AbstractPlatform):
 
         Args:
             target (str): path to the target
+            **kwargs: optional arguments. Not used
 
         Returns:
             bool: True if the target is a Solidity file
@@ -213,6 +216,8 @@ def _get_targets_json(compilation_unit: "CompilationUnit", target: str, **kwargs
     Args:
         compilation_unit (CompilationUnit): Compilation unit
         target (str): path to the solidity file
+        **kwargs: optional arguments. Used: "solc", "solc_disable_warnings", "solc_args", "solc_remaps",
+            "solc_solcs_bin", "solc_solcs_select", "solc_working_dir", "solc_force_legacy_json"
 
     Returns:
         Dict: Json of the compilation artifacts
@@ -406,9 +411,9 @@ def _run_solc(
         solc_disable_warnings (bool): If True, disable solc warnings
         solc_arguments (Optional[str]): Additional solc cli arguments
         solc_remaps (Optional[Union[str, List[str]]], optional): Solc remaps. Can be a string where remap are separated with space, or list of str, or a list of. Defaults to None.
-        env (Optional[Dict], optional): Environement variable when solc is run. Defaults to None.
-        working_dir (Optional[Union[Path, str]], optional): Working directory when solc is run. Defaults to None.
-        force_legacy_json (bool, optional): Force to use the legacy json format. Defaults to False.
+        env (Optional[Dict]): Environement variable when solc is run. Defaults to None.
+        working_dir (Optional[Union[Path, str]]): Working directory when solc is run. Defaults to None.
+        force_legacy_json (bool): Force to use the legacy json format. Defaults to False.
 
     Raises:
         InvalidCompilation: If solc faile to run
@@ -508,7 +513,7 @@ def _run_solcs_path(
     solc_disable_warnings: bool,
     solc_arguments: str,
     solc_remaps: Optional[Union[str, List[str]]] = None,
-    env: Dict = None,
+    env: Optional[Dict] = None,
     working_dir: Optional[str] = None,
     force_legacy_json: bool = False,
 ) -> Dict:
@@ -519,11 +524,11 @@ def _run_solcs_path(
         filename (str): Solidity file to compile
         solcs_path (Optional[Union[Dict, List[str]]]): List of solc binaries to try. If its a dict, in the form "version:path".
         solc_disable_warnings (bool): If True, disable solc warnings
-        solc_arguments (Optional[str]): Additional solc cli arguments
+        solc_arguments (str): Additional solc cli arguments
         solc_remaps (Optional[Union[str, List[str]]], optional): Solc remaps. Can be a string where remap are separated with space, or list of str, or a list of. Defaults to None.
-        env (Optional[Dict], optional): Environement variable when solc is run. Defaults to None.
+        env (Optional[Dict]): Environement variable when solc is run. Defaults to None.
         working_dir (Optional[Union[Path, str]], optional): Working directory when solc is run. Defaults to None.
-        force_legacy_json (bool, optional): Force to use the legacy json format. Defaults to False.
+        force_legacy_json (bool): Force to use the legacy json format. Defaults to False.
 
     Raises:
         InvalidCompilation: [description]
@@ -606,12 +611,12 @@ def _run_solcs_env(
         filename (str): Solidity file to compile
         solc (str): Solc binary
         solc_disable_warnings (bool): If True, disable solc warnings
-        solc_arguments (Optional[str]): Additional solc cli arguments
+        solc_arguments (str): Additional solc cli arguments
         solc_remaps (Optional[Union[str, List[str]]], optional): Solc remaps. Can be a string where remap are separated with space, or list of str, or a list of. Defaults to None.
         env (Optional[Dict], optional): Environement variable when solc is run. Defaults to None.
         working_dir (Optional[Union[Path, str]], optional): Working directory when solc is run. Defaults to None.
-        solcs_env (Optional[List[str]], optional): List of solc env variable to try. Defaults to None.
-        force_legacy_json (bool, optional): Force to use the legacy json format. Defaults to False.
+        solcs_env (Optional[List[str]]): List of solc env variable to try. Defaults to None.
+        force_legacy_json (bool): Force to use the legacy json format. Defaults to False.
 
     Raises:
         InvalidCompilation: If solc failed

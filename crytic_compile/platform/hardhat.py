@@ -40,6 +40,8 @@ class Hardhat(AbstractPlatform):
 
         Args:
             crytic_compile (CryticCompile): Associated CryticCompile object
+            **kwargs: optional arguments. Used: "hardhat_ignore", "hardhat_ignore_compile", "ignore_compile",
+                "hardhat_artifacts_directory","hardhat_working_dir","npx_disable"
 
         Raises:
             InvalidCompilation: If hardhat failed to run
@@ -171,6 +173,7 @@ class Hardhat(AbstractPlatform):
 
         Args:
             target (str): path to the target
+            **kwargs: optional arguments. Used: "hardhat_ignore"
 
         Returns:
             bool: True if the target is an hardhat project

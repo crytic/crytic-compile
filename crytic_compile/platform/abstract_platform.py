@@ -38,6 +38,7 @@ class AbstractPlatform(metaclass=abc.ABCMeta):
 
         Args:
             target (str): path to the target
+            **_kwargs: optional arguments.
 
         Raises:
             IncorrectPlatformInitialization: If the Platform was not correctly designed
@@ -114,6 +115,7 @@ class AbstractPlatform(metaclass=abc.ABCMeta):
 
         Args:
             crytic_compile (CryticCompile): CryticCompile object associated with the platform
+            **kwargs: optional arguments.
         """
         return
 
@@ -124,6 +126,7 @@ class AbstractPlatform(metaclass=abc.ABCMeta):
 
         Args:
             target (str): path to the target
+            **kwargs: optional arguments. Used: "dapp_ignore"
 
         Returns:
             bool: True if the target is supported

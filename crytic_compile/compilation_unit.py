@@ -163,7 +163,7 @@ class CompilationUnit:
             name (str): Contract name
 
         Returns:
-            Filename: Absolute filename associated with the contract
+            str: Absolute filename associated with the contract
         """
         return self._contracts_filenames[name].absolute
 
@@ -174,7 +174,7 @@ class CompilationUnit:
             name (str): Contract name
 
         Returns:
-            Filename: Used filename associated with the contract
+            str: Used filename associated with the contract
         """
         return self._contracts_filenames[name].used
 

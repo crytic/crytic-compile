@@ -24,6 +24,7 @@ def export_to_archive(crytic_compile: "CryticCompile", **kwargs: Any) -> List[st
 
     Args:
         crytic_compile (CryticCompile): CryticCompile containing the compilation units to export
+        **kwargs: optional arguments. Used: "export_dir"
 
     Returns:
         List[str]: List of the generated archive files
@@ -60,6 +61,7 @@ class Archive(AbstractPlatform):
 
         Args:
             target (str): The path to the standard json
+            **kwargs: optional arguments.
         """
         super().__init__(target, **kwargs)
         self._underlying_platform: Type[AbstractPlatform] = Archive
@@ -69,7 +71,8 @@ class Archive(AbstractPlatform):
         """Run the compilation
 
         Args:
-            crytic_compile (CryticCompile):
+            crytic_compile (CryticCompile): asscoiated CryticCompile object
+            **_kwargs: unused
         """
         # pylint: disable=import-outside-toplevel
         from crytic_compile.crytic_compile import get_platforms
@@ -95,6 +98,7 @@ class Archive(AbstractPlatform):
 
         Args:
             target (str): path to the target
+            **kwargs: optional arguments. Used: "standard_ignore"
 
         Returns:
             bool: True if the target is an archive
@@ -131,7 +135,7 @@ def generate_archive_export(crytic_compile: "CryticCompile") -> Tuple[Dict, str]
     """Generate the archive export
 
     Args:
-        crytic_compile (CryticCompile):
+        crytic_compile (CryticCompile): CryticCompile object to export
 
     Returns:
         Tuple[Dict, str]: The dict is the exported archive, and the str the filename

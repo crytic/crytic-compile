@@ -32,9 +32,10 @@ To run them locally:
 - `pylint crytic_compile --rcfile pyproject.toml`
 - `black crytic_compile --config pyproject.toml`
 - `mypy crytic_compile --config mypy.ini`
+- `dargling crytic_compile`
 
 
-We use pylint `2.8.2`, black `20.8b1` and mypy `0.812`.
+We use pylint `2.8.2`, black `20.8b1`, mypy `0.812` and dargling `1.8.0`.
 
 ## Development Environment
 Instructions for installing a development version of crytic-compile can be found in our [wiki](https://github.com/crytic/crytic-compile/wiki/Developer-installation).

@@ -40,6 +40,7 @@ class Embark(AbstractPlatform):
 
         Args:
             crytic_compile (CryticCompile): Associated CryticCompile object
+            **kwargs: optional arguments. Used: "embark_ignore_compile", "ignore_compile", "embark_overwrite_config"
 
         Raises:
             InvalidCompilation: if embark failed to run
@@ -166,6 +167,7 @@ class Embark(AbstractPlatform):
 
         Args:
             target (str): path to the target
+            **kwargs: optional arguments. Used: "embark_ignore"
 
         Returns:
             bool: True if the target is an embark project
@@ -179,7 +181,7 @@ class Embark(AbstractPlatform):
         """Check if the path is a dependency
 
         Args:
-            _path (str): path to the target
+            path (str): path to the target
 
         Returns:
             bool: True if the target is a dependency

@@ -31,6 +31,9 @@ def _to_str(txt: Union[bytes, str]) -> str:
 def load_from_zip(target: str) -> List["CryticCompile"]:
     """Load a file from a zip
 
+    Args:
+        target (str): path to the
+
     Returns:
         List[CryticCompile]: List of loaded projects
     """
@@ -64,7 +67,7 @@ def save_to_zip(
     Args:
         crytic_compiles (List[CryticCompile]): List of project to save
         zip_filename (str): zip filename
-        zip_type (str, optional): Zip types. Supported lzma, stored, deflated, bzip2. Defaults to "lzma".
+        zip_type (str): Zip types. Supported lzma, stored, deflated, bzip2. Defaults to "lzma".
     """
     with ZipFile(
         zip_filename, "w", compression=ZIP_TYPES_ACCEPTED.get(zip_type, zipfile.ZIP_LZMA)

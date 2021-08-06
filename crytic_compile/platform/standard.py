@@ -24,6 +24,7 @@ def export_to_standard(crytic_compile: "CryticCompile", **kwargs: str) -> List[s
 
     Args:
         crytic_compile (CryticCompile): CryticCompile object to export
+        **kwargs: optional arguments. Used: "export_dir"
 
     Returns:
         List[str]: List of files generated
@@ -65,6 +66,8 @@ class Standard(AbstractPlatform):
 
         Args:
             target (str): path to the target
+            **kwargs: optional arguments. Not used
+
         """
         super().__init__(str(target), **kwargs)
         self._underlying_platform: Type[AbstractPlatform] = Standard
@@ -75,6 +78,8 @@ class Standard(AbstractPlatform):
 
         Args:
             crytic_compile (CryticCompile): Associated CryticCompile
+            **_kwargs: optional arguments. Not used
+
         """
         # pylint: disable=import-outside-toplevel
         from crytic_compile.crytic_compile import get_platforms
@@ -94,6 +99,7 @@ class Standard(AbstractPlatform):
 
         Args:
             target (str): path to the target
+            **kwargs: optional arguments. Used: "standard_ignore"
 
         Returns:
             bool: True if the target is a crytic-compile generated project
@@ -149,7 +155,7 @@ class Standard(AbstractPlatform):
         """Return the type of the underlying platform used
 
         Returns:
-            Type: [description]
+            PlatformType: Type of the underlying platform
         """
         return self._underlying_platform.TYPE
 

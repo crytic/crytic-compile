@@ -34,6 +34,7 @@ def export_to_truffle(crytic_compile: "CryticCompile", **kwargs: str) -> List[st
 
     Args:
         crytic_compile (CryticCompile): CryticCompile object to export
+        **kwargs: optional arguments. Used: "export_dir"
 
     Raises:
         InvalidCompilation: If there are more than 1 compilation unit
@@ -91,6 +92,8 @@ class Truffle(AbstractPlatform):
 
         Args:
             crytic_compile (CryticCompile): CryticCompile object to populate
+            **kwargs: optional arguments. Used "truffle_build_directory", "truffle_ignore_compile", "ignore_compile",
+                "truffle_version", "npx_disable"
 
         Raises:
             InvalidCompilation: If truffle failed to run
@@ -277,6 +280,7 @@ class Truffle(AbstractPlatform):
 
         Args:
             target (str): path to the target
+            **kwargs: optional arguments. Used: "truffle_ignore"
 
         Returns:
             bool: True if the target is a truffle project
@@ -300,7 +304,7 @@ class Truffle(AbstractPlatform):
         """Check if the path is a dependency
 
         Args:
-            _path (str): path to the target
+            path (str): path to the target
 
         Returns:
             bool: True if the target is a dependency
@@ -427,7 +431,7 @@ def _write_config(cwd: Path, original_config: Path, version: Optional[str]) -> N
 
     Args:
         cwd (Path): Working directory
-        original_config (Optional[Path]): Original config saved
+        original_config (Path): Original config saved
         version (Optional[str]): Solc version
     """
     txt = ""

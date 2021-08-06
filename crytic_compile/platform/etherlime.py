@@ -80,6 +80,7 @@ class Etherlime(AbstractPlatform):
 
         Args:
             crytic_compile (CryticCompile): Associated CryticCompile object
+            **kwargs: optional arguments. Used "etherlime_ignore_compile", "ignore_compile"
 
         Raises:
             InvalidCompilation: if etherlime failed to run
@@ -157,6 +158,7 @@ class Etherlime(AbstractPlatform):
 
         Args:
             target (str): path to the target
+            **kwargs: optional arguments. Used "etherlime_ignore"
 
         Returns:
             bool: True if the target is a etherlime project
@@ -183,7 +185,7 @@ class Etherlime(AbstractPlatform):
         """Check if the path is a dependency
 
         Args:
-            _path (str): path to the target
+            path (str): path to the target
 
         Returns:
             bool: True if the target is a dependency

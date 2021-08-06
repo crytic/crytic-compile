@@ -38,6 +38,7 @@ class Brownie(AbstractPlatform):
 
         Args:
             crytic_compile (CryticCompile): Associated CryticCompile object
+            **kwargs: optional arguments. Used "brownie_ignore_compile", "ignore_compile"
 
         Raises:
             InvalidCompilation: If brownie failed to run
@@ -82,6 +83,7 @@ class Brownie(AbstractPlatform):
 
         Args:
             target (str): path to the target
+            **kwargs: optional arguments. Used "brownie_ignore"
 
         Returns:
             bool: True if the target is a brownie project
