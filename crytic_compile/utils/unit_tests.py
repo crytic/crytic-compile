@@ -7,11 +7,13 @@ from typing import List
 
 
 def guess_tests(target: str) -> List[str]:
-    """
-    Try to guess the unit tests
+    """Try to guess the unit tests commands
 
-    :param target:
-    :return:
+    Args:
+        target (str): path to the target
+
+    Returns:
+        List[str]: List of guessed unit tests commands
     """
     targets: List[str] = []
 

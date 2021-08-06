@@ -12,7 +12,6 @@ crytic\_compile.compiler.compiler module
    :undoc-members:
    :show-inheritance:
 
-
 Module contents
 ---------------
 

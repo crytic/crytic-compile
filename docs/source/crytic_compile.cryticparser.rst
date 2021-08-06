@@ -20,7 +20,6 @@ crytic\_compile.cryticparser.defaults module
    :undoc-members:
    :show-inheritance:
 
-
 Module contents
 ---------------
 

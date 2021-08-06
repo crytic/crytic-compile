@@ -35,10 +35,10 @@ logging.basicConfig()
 
 
 def get_platforms() -> List[Type[AbstractPlatform]]:
-    """
-    Return the available platforms classes
+    """Return the available platforms classes
 
-    :return:
+    Returns:
+        List[Type[AbstractPlatform]]: Available platforms
     """
     platforms = [getattr(all_platforms, name) for name in dir(all_platforms)]
     platforms = [d for d in platforms if inspect.isclass(d) and issubclass(d, AbstractPlatform)]
@@ -46,11 +46,13 @@ def get_platforms() -> List[Type[AbstractPlatform]]:
 
 
 def is_supported(target: str) -> bool:
-    """
-    Check if the target is supported
+    """Check if the target is supporte. Iterate over all known platforms
 
-    :param target:
-    :return:
+    Args:
+        target (str): path to the target
+
+    Returns:
+        bool: True if the target is supported
     """
     platforms = get_platforms()
     return any(platform.is_supported(target) for platform in platforms) or target.endswith(".zip")
@@ -63,11 +65,13 @@ class CryticCompile:
     """
 
     def __init__(self, target: Union[str, AbstractPlatform], **kwargs: str):
-        """
+        """See https://github.com/crytic/crytic-compile/wiki/Configuration
+        Target is usually a file or a project directory. It can be an AbstractPlatform
+        for custom setup
+
         Args:
-            target (str|SolcStandardJson)
-        Keyword Args:
-            See https://github.com/crytic/crytic-compile/wiki/Configuration
+            target (Union[str, AbstractPlatform]): Target
+            **kwargs: additional arguments
         """
 
         # dependencies is needed for platform conversion
@@ -113,25 +117,30 @@ class CryticCompile:
 
     @property
     def target(self) -> str:
-        """
-        Return the target (project)
+        """Return the project's target
 
-        :return:
+        Returns:
+            str: target
         """
         return self._platform.target
 
     @property
     def compilation_units(self) -> Dict[str, CompilationUnit]:
-        """
-        Return the dict id -> compilation unit
+        """Return the compilation units
 
+        Returns:
+            Dict[str, CompilationUnit]: compilation id => CompilationUnit
         """
         return self._compilation_units
 
     def is_in_multiple_compilation_unit(self, contract: str) -> bool:
-        """
-        Check if the contract is share by multiple compilation unit
+        """Check if the contract is shared by multiple compilation unit
 
+        Args:
+            contract (str): contract name
+
+        Returns:
+            bool: True if the contract is in multiple compilation units
         """
         count = 0
         for compilation_unit in self._compilation_units.values():
@@ -147,21 +156,33 @@ class CryticCompile:
 
     @property
     def filenames(self) -> Set[Filename]:
-        """
-        :return: set(naming.Filename)
+        """All the project filenames
+
+        Returns:
+            Set[Filename]: Project's filenames
         """
         return self._filenames
 
     @filenames.setter
     def filenames(self, all_filenames: Set[Filename]) -> None:
+        """Set the filenames
+
+        Args:
+            all_filenames (Set[Filename]): New filenames
+        """
         self._filenames = all_filenames
 
     def filename_lookup(self, filename: str) -> Filename:
-        """
-        Return a crytic_compile.naming.Filename from a any filename form (used/absolute/relative)
+        """Return a crytic_compile.naming.Filename from a any filename
 
-        :param filename: str
-        :return: crytic_compile.naming.Filename
+        Args:
+            filename (str): filename (used/absolute/relative)
+
+        Raises:
+            ValueError: If the filename is not in the project
+
+        Returns:
+            Filename: Associated Filename object
         """
         if self._filenames_lookup is None:
             self._filenames_lookup = {}
@@ -175,45 +196,57 @@ class CryticCompile:
 
     @property
     def dependencies(self) -> Set[str]:
-        """
-        Return the dependencies files
+        """Return the dependencies files
 
-        :return:
+        Returns:
+            Set[str]: Dependencies files
         """
         return self._dependencies
 
     def is_dependency(self, filename: str) -> bool:
-        """
-        Check if the filename is a dependency
+        """Check if the filename is a dependency
 
-        :param filename:
-        :return:
+        Args:
+            filename (str): filename
+
+        Returns:
+            bool: True if the filename is a dependency
         """
         return filename in self._dependencies or self.platform.is_dependency(filename)
 
     @property
     def package(self) -> Optional[str]:
-        """
-        Return the package name
+        """Return the package name
 
-        :return:
+        Returns:
+            Optional[str]: package name
         """
         return self._package
 
     @property
     def working_dir(self) -> Path:
-        """
-        Return the working dir
+        """Return the working directory
 
-        :return:
+        Returns:
+            Path: Working directory
         """
         return self._working_dir
 
     @working_dir.setter
     def working_dir(self, path: Path) -> None:
+        """Set the working directory
+
+        Args:
+            path (Path): new working directory
+        """
         self._working_dir = path
 
     def _get_cached_offset_to_line(self, file: Filename) -> None:
+        """Compute the cached offsets to lines
+
+        Args:
+            file (Filename): filename
+        """
         if file not in self._cached_line_to_code:
             self._get_cached_line_to_code(file)
 
@@ -231,6 +264,15 @@ class CryticCompile:
         self._cached_offset_to_line[file] = lines_delimiters
 
     def get_line_from_offset(self, filename: Union[Filename, str], offset: int) -> Tuple[int, int]:
+        """Return the line from a given offset
+
+        Args:
+            filename (Union[Filename, str]): filename
+            offset (int): global offset
+
+        Returns:
+            Tuple[int, int]: (line, line offset)
+        """
         if isinstance(filename, str):
             file = self.filename_lookup(filename)
         else:
@@ -242,6 +284,15 @@ class CryticCompile:
         return lines_delimiters[offset]
 
     def get_global_offset_from_line(self, filename: Union[Filename, str], line: int) -> int:
+        """Return the global offset from a given line
+
+        Args:
+            filename (Union[Filename, str]): filename
+            line (int): line
+
+        Returns:
+            int: global offset
+        """
         if isinstance(filename, str):
             file = self.filename_lookup(filename)
         else:
@@ -252,16 +303,26 @@ class CryticCompile:
         return self._cached_line_to_offset[file][line]
 
     def _get_cached_line_to_code(self, file: Filename) -> None:
+        """Compute the cached lines
+
+        Args:
+            file (Filename): filename
+        """
         source_code = self.src_content[file.absolute]
         source_code_encoded = source_code.encode("utf-8")
         source_code_list = source_code_encoded.splitlines(True)
         self._cached_line_to_code[file] = source_code_list
 
     def get_code_from_line(self, filename: Union[Filename, str], line: int) -> Optional[bytes]:
-        """
-        Return the line from the file. Start at line = 1.
+        """Return the code from the line. Start at line = 1.
         Return None if the line is not in the file
 
+        Args:
+            filename (Union[Filename, str]): filename
+            line (int): line
+
+        Returns:
+            Optional[bytes]: line of code
         """
         if isinstance(filename, str):
             file = self.filename_lookup(filename)
@@ -277,10 +338,10 @@ class CryticCompile:
 
     @property
     def src_content(self) -> Dict[str, str]:
-        """
-        Return the source content, filename -> source_code
+        """Return the source content
 
-        :return:
+        Returns:
+            Dict[str, str]: filename -> source_code
         """
         # If we have no source code loaded yet, load it for every contract.
         if not self._src_content:
@@ -292,20 +353,21 @@ class CryticCompile:
 
     @src_content.setter
     def src_content(self, src: Dict) -> None:
-        """
-        Set the src_content
+        """Set the source content
 
-        :param src:
-        :return:
+        Args:
+            src (Dict): New source content
         """
         self._src_content = src
 
-    def src_content_for_file(self, filename_absolute: str) -> Union[str, None]:
-        """
-        Get the source code of the file
+    def src_content_for_file(self, filename_absolute: str) -> Optional[str]:
+        """Get the source code of the file
 
-        :param filename_absolute:
-        :return:
+        Args:
+            filename_absolute (str): absolute filename
+
+        Returns:
+            Optional[str]: source code
         """
         return self.src_content.get(filename_absolute, None)
 
@@ -318,10 +380,10 @@ class CryticCompile:
 
     @property
     def type(self) -> int:
-        """
-        Return the type of the platform used
+        """Return the type of the platform used
 
-        :return:
+        Returns:
+            int: Platform type (see AbstractPatform.TYPE)
         """
         # Type should have been set by now
         assert self._platform.TYPE
@@ -329,10 +391,10 @@ class CryticCompile:
 
     @property
     def platform(self) -> AbstractPlatform:
-        """
-        Return the platform module
+        """Return the underlying platform
 
-        :return:
+        Returns:
+            AbstractPlatform: Underlying platform
         """
         assert self._platform
         return self._platform
@@ -346,15 +408,21 @@ class CryticCompile:
 
     @property
     def bytecode_only(self) -> bool:
-        """
-        Return true if only the bytecode was retrieved
+        """Return true if only the bytecode was retrieved.
+        This can only happen for the etherscan platform
 
-        :return:
+        Returns:
+            bool: True if the project is bytecode only
         """
         return self._bytecode_only
 
     @bytecode_only.setter
     def bytecode_only(self, bytecode: bool) -> None:
+        """Set the bytecode_only info (only for etherscan)
+
+        Args:
+            bytecode (bool): new bytecode_only status
+        """
         self._bytecode_only = bytecode
 
     # endregion
@@ -364,14 +432,21 @@ class CryticCompile:
     ###################################################################################
     ###################################################################################
 
+    # TODO: refactor import_archive_compilations to rely on one CryticCompile object
+    # But multiple compilation units
     @staticmethod
     def import_archive_compilations(compiled_archive: Union[str, Dict]) -> List["CryticCompile"]:
-        """
-        Import from an archive. compiled_archive is either a json file or the loaded dictionary
+        """Import from an archive. compiled_archive is either a json file or the loaded dictionary
         The dictionary myst contain the "compilations" keyword
 
-        :param compiled_archive:
-        :return:
+        Args:
+            compiled_archive: Union[str, Dict]: list of archive to import
+
+        Raises:
+            ValueError: The import did not worked
+
+        Returns:
+            [CryticCompile]: List of crytic compile object
         """
         # If the argument is a string, it is likely a filepath, load the archive.
         if isinstance(compiled_archive, str):
@@ -393,14 +468,24 @@ class CryticCompile:
     ###################################################################################
 
     def export(self, **kwargs: str) -> List[str]:
-        """
-        Export to json. The json format can be crytic-compile, solc or truffle.
+        """Export to json.
+        The json format can be crytic-compile, solc or truffle.
+        The type must be specified in the kwargs with "export_format"
+
+        Args:
+            **kwargs: optional arguments. Used: "export_format"
+
+        Raises:
+            ValueError: Incorrect type
+
+        Returns:
+            List[str]: List of the filenames generated
         """
         export_format = kwargs.get("export_format", None)
         if export_format is None:
             return export_to_standard(self, **kwargs)
         if export_format not in PLATFORMS_EXPORT:
-            raise Exception("Export format unknown")
+            raise ValueError("Export format unknown")
         return PLATFORMS_EXPORT[export_format](self, **kwargs)
 
     # endregion
@@ -412,6 +497,16 @@ class CryticCompile:
 
     # pylint: disable=no-self-use
     def _init_platform(self, target: str, **kwargs: str) -> AbstractPlatform:
+        """Init the platform
+
+        Args:
+            target (str): path to the target
+            **kwargs: optional arguments. Used: "compile_force_framework", "compile_custom_build", "compile_remove_metadata"
+
+
+        Returns:
+            AbstractPlatform: Underlying platform
+        """
         platforms = get_platforms()
         platform = None
 
@@ -431,6 +526,11 @@ class CryticCompile:
         return platform
 
     def _compile(self, **kwargs: str) -> None:
+        """Compile the project
+
+        Args:
+            **kwargs: optional arguments. Used: "compile_custom_build", "compile_remove_metadata"
+        """
         custom_build: Union[None, str] = kwargs.get("compile_custom_build", None)
         if custom_build:
             self._run_custom_build(custom_build)
@@ -445,6 +545,11 @@ class CryticCompile:
 
     @staticmethod
     def _run_custom_build(custom_build: str) -> None:
+        """Run a custom build
+
+        Args:
+            custom_build (str): Command to run
+        """
         cmd = custom_build.split(" ")
 
         with subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
@@ -467,13 +572,20 @@ class CryticCompile:
 
     @property
     def package_name(self) -> Optional[str]:
-        """
-        :return: str or None
+        """Return the npm package name
+
+        Returns:
+            Optional[str]: Package name
         """
         return self._package
 
     @package_name.setter
     def package_name(self, name: Optional[str]) -> None:
+        """Set the package name
+
+        Args:
+            name (Optional[str]): New package name
+        """
         self._package = name
 
 
@@ -481,15 +593,20 @@ class CryticCompile:
 ###################################################################################
 ###################################################################################
 
-
+# TODO: refactor me to be integarted within CryticCompile.__init__
 def compile_all(target: str, **kwargs: str) -> List[CryticCompile]:
-    """
-    Given a direct or glob pattern target, compiles all underlying sources and returns
+    """Given a direct or glob pattern target, compiles all underlying sources and returns
     all the relevant instances of CryticCompile.
 
-    :param target: A string representing a file/directory path or glob pattern denoting where compilation shouldoccur.
-    :param kwargs: The remainder of the arguments passed through to all compilation steps.
-    :return: Returns a list of CryticCompile instances for all compilations which occurred.
+    Args:
+        target (str): A string representing a file/directory path or glob pattern denoting where compilation should occur.
+        **kwargs: optional arguments. Used: "solc_standard_json"
+
+    Raises:
+        ValueError: If the target could not be compiled
+
+    Returns:
+        List[CryticCompile]: Returns a list of CryticCompile instances for all compilations which occurred.
     """
     use_solc_standard_json = kwargs.get("solc_standard_json", False)
 

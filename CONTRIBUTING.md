@@ -19,6 +19,9 @@ Some pull request guidelines:
 - When possible, large changes should be split up into smaller focused pull requests.
 - Fill out the pull request description with a summary of what your patch does, key changes that have been made, and any further points of discussion, if applicable.
 - Title your pull request with a brief description of what it's changing. "Fixes #123" is a good comment to add to the description, but makes for an unclear title on its own.
+- We use the [Google style guide](https://github.com/google/styleguide/blob/gh-pages/pyguide.md#38-comments-and-docstrings) for documentation.
+- If there are specific operations whose purpose would not be clear to a naive user, documentation should alleviate that.
+- Add type hints to function parameters, return variables, class variables, lists and sets. If possible add type hints to dictionaries.
 
 ## Linters
 
@@ -29,9 +32,10 @@ To run them locally:
 - `pylint crytic_compile --rcfile pyproject.toml`
 - `black crytic_compile --config pyproject.toml`
 - `mypy crytic_compile --config mypy.ini`
+- `dargling crytic_compile`
 
 
-We use pylint `2.8.2`, black `20.8b1` and mypy `0.812`.
+We use pylint `2.8.2`, black `20.8b1`, mypy `0.812` and dargling `1.8.0`.
 
 ## Development Environment
 Instructions for installing a development version of crytic-compile can be found in our [wiki](https://github.com/crytic/crytic-compile/wiki/Developer-installation).

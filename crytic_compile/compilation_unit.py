@@ -1,3 +1,6 @@
+"""
+Module handling the compilation unit
+"""
 import re
 import uuid
 from typing import TYPE_CHECKING, Dict, List, Optional, Set, Tuple, Union
@@ -14,7 +17,15 @@ if TYPE_CHECKING:
 
 # pylint: disable=too-many-instance-attributes,too-many-public-methods
 class CompilationUnit:
+    """CompilationUnit class"""
+
     def __init__(self, crytic_compile: "CryticCompile", unique_id: str):
+        """Init the object
+
+        Args:
+            crytic_compile (CryticCompile): Associated CryticCompile object
+            unique_id (str): Unique ID used to identify the compilation unit
+        """
         # ASTS are indexed by absolute path
         self._asts: Dict = {}
 
@@ -61,10 +72,20 @@ class CompilationUnit:
 
     @property
     def unique_id(self) -> str:
+        """Return the compilation unit ID
+
+        Returns:
+            str: Compilation unit unique ID
+        """
         return self._unique_id
 
     @property
     def crytic_compile(self) -> "CryticCompile":
+        """Return the CryticCompile object
+
+        Returns:
+            CryticCompile: Associated CryticCompile object
+        """
         return self._crytic_compile
 
     ###################################################################################
@@ -75,10 +96,10 @@ class CompilationUnit:
 
     @property
     def natspec(self) -> Dict[str, Natspec]:
-        """
-        Return the natspec of the contractse
+        """Return the natspec of the contracts
 
-        :return: Dict[str, Natspec]
+        Returns:
+            Dict[str, Natspec]: Contract name -> Natspec
         """
         return self._natspec
 
@@ -90,57 +111,84 @@ class CompilationUnit:
 
     @property
     def filenames(self) -> Set[Filename]:
-        """
-        :return: set(naming.Filename)
+        """Return the filenames used by the compilation units
+
+        Returns:
+            Set[Filename]: Filenames used by the compilation units
         """
         return self._filenames
 
     @filenames.setter
     def filenames(self, all_filenames: Set[Filename]) -> None:
+        """Set the filenames
+
+        Args:
+            all_filenames (Set[Filename]): new filenames
+        """
         self._filenames = all_filenames
 
     @property
     def contracts_filenames(self) -> Dict[str, Filename]:
-        """
-        Return a dict contract_name -> Filename namedtuple (absolute, used)
+        """Return a dict mapping the contract name to their Filename
 
-        :return: dict(name -> utils.namings.Filename)
+        Returns:
+            Dict[str, Filename]: contract_name -> Filename
         """
         return self._contracts_filenames
 
     @property
     def contracts_absolute_filenames(self) -> Dict[str, str]:
-        """
-        Return a dict (contract_name -> absolute filename)
+        """Return a dict mapping the contract name to their absolute filename
 
-        :return:
+        Returns:
+            Dict[str, Filename]: contract_name -> absolute filename
         """
         return {k: f.absolute for (k, f) in self._contracts_filenames.items()}
 
     def filename_of_contract(self, name: str) -> Filename:
-        """
-        :return: utils.namings.Filename
+        """Return the Filename of a given contract
+
+        Args:
+            name (str): Contract name
+
+        Returns:
+            Filename: Filename associated with the contract
         """
         return self._contracts_filenames[name]
 
     def absolute_filename_of_contract(self, name: str) -> str:
-        """
-        :return: Absolute filename
+        """Return the absolute filename of a given contract
+
+        Args:
+            name (str): Contract name
+
+        Returns:
+            str: Absolute filename associated with the contract
         """
         return self._contracts_filenames[name].absolute
 
     def used_filename_of_contract(self, name: str) -> str:
-        """
-        :return: Used filename
+        """Return the used filename of a given contract
+
+        Args:
+            name (str): Contract name
+
+        Returns:
+            str: Used filename associated with the contract
         """
         return self._contracts_filenames[name].used
 
     def find_absolute_filename_from_used_filename(self, used_filename: str) -> str:
-        """
-        Return the absolute filename based on the used one
+        """Return the absolute filename based on the used one
 
-        :param used_filename:
-        :return: absolute filename
+        Args:
+            used_filename (str): Used filename
+
+        Raises:
+            ValueError: If the filename is not found
+
+        Returns:
+            str: Absolute filename
         """
         # Note: we could memoize this function if the third party end up using it heavily
         # If used_filename is already an absolute pathn no need to lookup
@@ -152,11 +200,16 @@ class CompilationUnit:
         return d_file[used_filename]
 
     def relative_filename_from_absolute_filename(self, absolute_filename: str) -> str:
-        """
-        Return the relative file based on the absolute name
+        """Return the relative file based on the absolute name
 
-        :param absolute_filename:
-        :return:
+        Args:
+            absolute_filename (str): Absolute filename
+
+        Raises:
+            ValueError: If the filename is not found
+
+        Returns:
+            str: Absolute filename
         """
         d_file = {f.absolute: f.relative for _, f in self._contracts_filenames.items()}
         if absolute_filename not in d_file:
@@ -172,28 +225,28 @@ class CompilationUnit:
 
     @property
     def contracts_names(self) -> Set[str]:
-        """
-        Return the contracts names
+        """Return the contracts names
 
-        :return:
+        Returns:
+            Set[str]: List of the contracts names
         """
         return self._contracts_name
 
     @contracts_names.setter
     def contracts_names(self, names: Set[str]) -> None:
-        """
-        Return the contracts names
+        """Set the contract names
 
-        :return:
+        Args:
+            names (Set[str]): New contracts names
         """
         self._contracts_name = names
 
     @property
     def contracts_names_without_libraries(self) -> Set[str]:
-        """
-        Return the contracts names (without the librairies)
+        """Return the contracts names without the librairies
 
-        :return:
+        Returns:
+            Set[str]: List of contracts
         """
         if self._contracts_name_without_libraries is None:
             libraries: List[str] = []
@@ -213,19 +266,21 @@ class CompilationUnit:
 
     @property
     def abis(self) -> Dict:
-        """
-        Return the ABIs
+        """Return the ABIs
 
-        :return:
+        Returns:
+            Dict: ABIs (solc/vyper format) (contract name -> ABI)
         """
         return self._abis
 
     def abi(self, name: str) -> Dict:
-        """
-        Get the ABI from a contract
+        """Get the ABI from a contract
 
-        :param name:
-        :return:
+        Args:
+            name (str): Contract name
+
+        Returns:
+            Dict: ABI (solc/vyper format)
         """
         return self._abis.get(name, None)
 
@@ -238,23 +293,30 @@ class CompilationUnit:
 
     @property
     def asts(self) -> Dict:
-        """
-        Return the ASTs
+        """Return the ASTs
 
-        :return: dict (absolute filename -> AST)
+        Returns:
+            Dict: contract name -> AST (solc/vyper format)
         """
         return self._asts
 
     @asts.setter
     def asts(self, value: Dict) -> None:
+        """Set the ASTs
+
+        Args:
+            value (Dict): New ASTs
+        """
         self._asts = value
 
     def ast(self, path: str) -> Union[Dict, None]:
-        """
-        Return of the file
+        """Return the ast of the file
 
-        :param path:
-        :return:
+        Args:
+            path (str): path to the file
+
+        Returns:
+            Union[Dict, None]: Ast (solc/vyper format)
         """
         if path not in self._asts:
             try:
@@ -272,58 +334,64 @@ class CompilationUnit:
 
     @property
     def bytecodes_runtime(self) -> Dict[str, str]:
-        """
-        Return the runtime bytecodes
+        """Return the runtime bytecodes
 
-        :return:
+        Returns:
+            Dict[str, str]: contract => runtime bytecode
         """
         return self._runtime_bytecodes
 
     @bytecodes_runtime.setter
     def bytecodes_runtime(self, bytecodes: Dict[str, str]) -> None:
-        """
-        Return the init bytecodes
+        """Set the bytecodes runtime
 
-        :return:
+        Args:
+            bytecodes (Dict[str, str]): New bytecodes runtime
         """
         self._runtime_bytecodes = bytecodes
 
     @property
     def bytecodes_init(self) -> Dict[str, str]:
-        """
-        Return the init bytecodes
+        """Return the init bytecodes
 
-        :return:
+        Returns:
+            Dict[str, str]: contract => init bytecode
         """
         return self._init_bytecodes
 
     @bytecodes_init.setter
     def bytecodes_init(self, bytecodes: Dict[str, str]) -> None:
-        """
-        Return the init bytecodes
+        """Set the bytecodes init
 
-        :return:
+        Args:
+            bytecodes (Dict[str, str]): New bytecodes init
         """
         self._init_bytecodes = bytecodes
 
-    def bytecode_runtime(self, name: str, libraries: Union[None, Dict[str, str]] = None) -> str:
-        """
-        Return the runtime bytecode of the contract. If library is provided, patch the bytecode
+    def bytecode_runtime(self, name: str, libraries: Optional[Dict[str, str]] = None) -> str:
+        """Return the runtime bytecode of the contract.
+        If library is provided, patch the bytecode
 
-        :param name:
-        :param libraries:
-        :return:
+        Args:
+            name (str): contract name
+            libraries (Optional[Dict[str, str]], optional): lib_name => address. Defaults to None.
+
+        Returns:
+            str: runtime bytecode
         """
         runtime = self._runtime_bytecodes.get(name, None)
         return self._update_bytecode_with_libraries(runtime, libraries)
 
-    def bytecode_init(self, name: str, libraries: Union[None, Dict[str, str]] = None) -> str:
-        """
-        Return the init bytecode of the contract. If library is provided, patch the bytecode
+    def bytecode_init(self, name: str, libraries: Optional[Dict[str, str]] = None) -> str:
+        """Return the init bytecode of the contract.
+        If library is provided, patch the bytecode
 
-        :param name:
-        :param libraries:
-        :return:
+        Args:
+            name (str): contract name
+            libraries (Optional[Dict[str, str]], optional): lib_name => address. Defaults to None.
+
+        Returns:
+            str: init bytecode
         """
         init = self._init_bytecodes.get(name, None)
         return self._update_bytecode_with_libraries(init, libraries)
@@ -337,37 +405,41 @@ class CompilationUnit:
 
     @property
     def srcmaps_init(self) -> Dict[str, List[str]]:
-        """
-        Return the init srcmap
+        """Return the srcmaps init
 
-        :return:
+        Returns:
+            Dict[str, List[str]]: Srcmaps init (solc/vyper format)
         """
         return self._srcmaps
 
     @property
     def srcmaps_runtime(self) -> Dict[str, List[str]]:
-        """
-        Return the runtime srcmap
+        """Return the srcmaps runtime
 
-        :return:
+        Returns:
+            Dict[str, List[str]]: Srcmaps runtime (solc/vyper format)
         """
         return self._srcmaps_runtime
 
     def srcmap_init(self, name: str) -> List[str]:
-        """
-        Return the init srcmap
+        """Return the srcmap init of a contract
 
-        :param name:
-        :return:
+        Args:
+            name (str): name of the contract
+
+        Returns:
+            List[str]: Srcmap init (solc/vyper format)
         """
         return self._srcmaps.get(name, [])
 
     def srcmap_runtime(self, name: str) -> List[str]:
-        """
-        Return the runtime srcmap
+        """Return the srcmap runtime of a contract
 
-        :param name:
-        :return:
+        Args:
+            name (str): name of the contract
+
+        Returns:
+            List[str]: Srcmap runtime (solc/vyper format)
         """
         return self._srcmaps_runtime.get(name, [])
 
@@ -380,17 +452,23 @@ class CompilationUnit:
 
     @property
     def libraries(self) -> Dict[str, List[Tuple[str, str]]]:
-        """
-        Return the libraries used (contract_name -> [(library, pattern))])
+        """Return the libraries used
 
-        :return:
+        Returns:
+            Dict[str, List[Tuple[str, str]]]:  (contract_name -> [(library, pattern))])
         """
         return self._libraries
 
     def _convert_libraries_names(self, libraries: Dict[str, str]) -> Dict[str, str]:
-        """
-        :param libraries: list(name, addr). Name can be the library name, or filename:library_name
-        :return:
+        """Convert the libraries names
+        The name in the argument can be the library name, or filename:library_name
+        The returned dict contains all the names possible with the different solc versions
+
+        Args:
+            libraries (Dict[str, str]): lib_name => address
+
+        Returns:
+            Dict[str, str]: lib_name => address
         """
         new_names = {}
         for (lib, addr) in libraries.items():
@@ -440,15 +518,18 @@ class CompilationUnit:
     def _library_name_lookup(
         self, lib_name: str, original_contract: str
     ) -> Optional[Tuple[str, str]]:
-        """
-        Convert a library name to the contract
+        """Do a lookup on a library name to its name used in contracts
         The library can be:
         - the original contract name
         - __X__ following Solidity 0.4 format
         - __$..$__ following Solidity 0.5 format
 
-        :param lib_name:
-        :return: (contract name, pattern) (None if not found)
+        Args:
+            lib_name (str): library name
+            original_contract (str): original contract name
+
+        Returns:
+            Optional[Tuple[str, str]]: contract_name, library_name
         """
 
         for name in self.contracts_names:
@@ -521,11 +602,13 @@ class CompilationUnit:
         return None
 
     def libraries_names(self, name: str) -> List[str]:
-        """
-        Return the name of the libraries used by the contract
+        """Return the names of the libraries used by the contract
 
-        :param name: contract
-        :return: list of libraries name
+        Args:
+            name (str): contract name
+
+        Returns:
+            List[str]: libraries used
         """
 
         if name not in self._libraries:
@@ -533,14 +616,16 @@ class CompilationUnit:
             runtime = re.findall(r"__.{36}__", self.bytecode_runtime(name))
             libraires = [self._library_name_lookup(x, name) for x in set(init + runtime)]
             self._libraries[name] = [lib for lib in libraires if lib]
-        return [name for (name, pattern) in self._libraries[name]]
+        return [name for (name, _) in self._libraries[name]]
 
     def libraries_names_and_patterns(self, name: str) -> List[Tuple[str, str]]:
-        """
-        Return the name of the libraries used by the contract
+        """Return the names and the patterns of the libraries used by the contract
 
-        :param name: contract
-        :return: list of (libraries name, pattern)
+        Args:
+            name (str): contract name
+
+        Returns:
+            List[Tuple[str, str]]: (lib_name, pattern)
         """
 
         if name not in self._libraries:
@@ -553,12 +638,14 @@ class CompilationUnit:
     def _update_bytecode_with_libraries(
         self, bytecode: str, libraries: Union[None, Dict[str, str]]
     ) -> str:
-        """
-        Patch the bytecode
+        """Update the bytecode with the libraries address
 
-        :param bytecode:
-        :param libraries:
-        :return:
+        Args:
+            bytecode (str): bytecode to patch
+            libraries (Union[None, Dict[str, str]]): pattern => address
+
+        Returns:
+            str: Patched bytecode
         """
         if libraries:
             libraries = self._convert_libraries_names(libraries)
@@ -579,17 +666,24 @@ class CompilationUnit:
     ###################################################################################
 
     def hashes(self, name: str) -> Dict[str, int]:
-        """
-        Return the hashes of the functions
+        """Return the hashes of the functions
 
-        :param name:
-        :return:
+        Args:
+            name (str): contract name
+
+        Returns:
+            Dict[str, int]: (function name => signature)
         """
         if not name in self._hashes:
             self._compute_hashes(name)
         return self._hashes[name]
 
     def _compute_hashes(self, name: str) -> None:
+        """Compute the function hashes
+
+        Args:
+            name (str): contract name
+        """
         self._hashes[name] = {}
         for sig in self.abi(name):
             if "type" in sig:
@@ -609,16 +703,24 @@ class CompilationUnit:
     ###################################################################################
 
     def events_topics(self, name: str) -> Dict[str, Tuple[int, List[bool]]]:
-        """
-        Return the topics of the contract'sevents
-        :param name: contract
-        :return: A dictionary {event signature -> topic hash, [is_indexed for each parameter]}
+        """Return the topics of the contract's events
+
+        Args:
+            name (str): contract name
+
+        Returns:
+            Dict[str, Tuple[int, List[bool]]]: event signature => topic hash, [is_indexed for each parameter]
         """
         if not name in self._events:
             self._compute_topics_events(name)
         return self._events[name]
 
     def _compute_topics_events(self, name: str) -> None:
+        """Compute the topics of the contract's events
+
+        Args:
+            name (str): contract name
+        """
         self._events[name] = {}
         for sig in self.abi(name):
             if "type" in sig:
@@ -640,10 +742,11 @@ class CompilationUnit:
     ###################################################################################
 
     def remove_metadata(self) -> None:
-        """
-        Init bytecode contains metadata that needs to be removed
-        see
+        """Remove init bytecode
+        See
         http://solidity.readthedocs.io/en/v0.4.24/metadata.html#encoding-of-the-metadata-hash-in-the-bytecode
+
+        Note we dont support recent Solidity version, see https://github.com/crytic/crytic-compile/issues/59
         """
         self._init_bytecodes = {
             key: re.sub(r"a165627a7a72305820.{64}0029", r"", bytecode)
@@ -664,13 +767,18 @@ class CompilationUnit:
 
     @property
     def compiler_version(self) -> "CompilerVersion":
-        """
-        Return the compiler used as a namedtuple(compiler, version)
+        """Return the compiler info
 
-        :return:
+        Returns:
+            CompilerVersion: compiler info
         """
         return self._compiler_version
 
     @compiler_version.setter
     def compiler_version(self, compiler: CompilerVersion) -> None:
+        """Set the compiler version
+
+        Args:
+            compiler (CompilerVersion): New compiler version
+        """
         self._compiler_version = compiler

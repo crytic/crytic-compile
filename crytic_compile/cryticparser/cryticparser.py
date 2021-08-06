@@ -1,5 +1,7 @@
 """
 Module handling the cli arguments
+
+Call cryticparser.init(parser: ArgumentParser) to setup all the crytic-compile arguments in the argument parser
 """
 from argparse import ArgumentParser
 
@@ -8,11 +10,10 @@ from crytic_compile.cryticparser import DEFAULTS_FLAG_IN_CONFIG
 
 
 def init(parser: ArgumentParser) -> None:
-    """
-    Add crytic-compile arguments to the parser
+    """Add crytic-compile arguments to the parser
 
-    :param parser:
-    :return:
+    Args:
+        parser (ArgumentParser): argparser where the cli flags are added
     """
 
     group_solc = parser.add_argument_group("Compile options")
@@ -62,6 +63,12 @@ def init(parser: ArgumentParser) -> None:
 
 
 def _init_solc(parser: ArgumentParser) -> None:
+    """Init solc arguments
+
+    Args:
+        parser (ArgumentParser): argparser where the cli flags are added
+    """
+
     group_solc = parser.add_argument_group("Solc options")
     group_solc.add_argument(
         "--solc", help="solc path", action="store", default=DEFAULTS_FLAG_IN_CONFIG["solc"]
@@ -127,6 +134,11 @@ def _init_solc(parser: ArgumentParser) -> None:
 
 
 def _init_waffle(parser: ArgumentParser) -> None:
+    """Init waffle arguments
+
+    Args:
+        parser (ArgumentParser): argparser where the cli flags are added
+    """
     group_waffle = parser.add_argument_group("Waffle options")
     group_waffle.add_argument(
         "--waffle-ignore-compile",
@@ -145,6 +157,11 @@ def _init_waffle(parser: ArgumentParser) -> None:
 
 
 def _init_truffle(parser: ArgumentParser) -> None:
+    """Init truffle arguments
+
+    Args:
+        parser (ArgumentParser): argparser where the cli flags are added
+    """
     group_truffle = parser.add_argument_group("Truffle options")
     group_truffle.add_argument(
         "--truffle-ignore-compile",
@@ -185,6 +202,11 @@ def _init_truffle(parser: ArgumentParser) -> None:
 
 
 def _init_embark(parser: ArgumentParser) -> None:
+    """Init embark arguments
+
+    Args:
+        parser (ArgumentParser): argparser where the cli flags are added
+    """
     group_embark = parser.add_argument_group("Embark options")
     group_embark.add_argument(
         "--embark-ignore-compile",
@@ -203,6 +225,11 @@ def _init_embark(parser: ArgumentParser) -> None:
 
 
 def _init_brownie(parser: ArgumentParser) -> None:
+    """Init brownie arguments
+
+    Args:
+        parser (ArgumentParser): argparser where the cli flags are added
+    """
     group_embark = parser.add_argument_group("Brownie options")
     group_embark.add_argument(
         "--brownie-ignore-compile",
@@ -214,6 +241,11 @@ def _init_brownie(parser: ArgumentParser) -> None:
 
 
 def _init_dapp(parser: ArgumentParser) -> None:
+    """Init dapp arguments
+
+    Args:
+        parser (ArgumentParser): argparser where the cli flags are added
+    """
     group_dapp = parser.add_argument_group("Dapp options")
     group_dapp.add_argument(
         "--dapp-ignore-compile",
@@ -225,6 +257,11 @@ def _init_dapp(parser: ArgumentParser) -> None:
 
 
 def _init_etherlime(parser: ArgumentParser) -> None:
+    """Init etherlime arguments
+
+    Args:
+        parser (ArgumentParser): argparser where the cli flags are added
+    """
     group_etherlime = parser.add_argument_group("Etherlime options")
     group_etherlime.add_argument(
         "--etherlime-ignore-compile",
@@ -245,6 +282,11 @@ def _init_etherlime(parser: ArgumentParser) -> None:
 
 
 def _init_etherscan(parser: ArgumentParser) -> None:
+    """Init etherscan arguments
+
+    Args:
+        parser (ArgumentParser): argparser where the cli flags are added
+    """
     group_etherscan = parser.add_argument_group("Etherscan options")
     group_etherscan.add_argument(
         "--etherscan-only-source-code",
@@ -280,6 +322,11 @@ def _init_etherscan(parser: ArgumentParser) -> None:
 
 
 def _init_npx(parser: ArgumentParser) -> None:
+    """Init npx arguments
+
+    Args:
+        parser (ArgumentParser): argparser where the cli flags are added
+    """
     group_npx = parser.add_argument_group("NPX options")
     group_npx.add_argument(
         "--npx-disable",
@@ -291,6 +338,11 @@ def _init_npx(parser: ArgumentParser) -> None:
 
 
 def _init_buidler(parser: ArgumentParser) -> None:
+    """Init buidler arguments
+
+    Args:
+        parser (ArgumentParser): argparser where the cli flags are added
+    """
     group_buidler = parser.add_argument_group("Buidler options")
     group_buidler.add_argument(
         "--buidler-ignore-compile",
@@ -318,6 +370,11 @@ def _init_buidler(parser: ArgumentParser) -> None:
 
 
 def _init_hardhat(parser: ArgumentParser) -> None:
+    """Init hardhat arguments
+
+    Args:
+        parser (ArgumentParser): argparser where the cli flags are added
+    """
     group_hardhat = parser.add_argument_group("hardhat options")
     group_hardhat.add_argument(
         "--hardhat-ignore-compile",

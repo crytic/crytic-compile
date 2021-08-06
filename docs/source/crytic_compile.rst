@@ -5,6 +5,7 @@ Subpackages
 -----------
 
 .. toctree::
+   :maxdepth: 4
 
    crytic_compile.compiler
    crytic_compile.cryticparser
@@ -14,6 +15,14 @@ Subpackages
 Submodules
 ----------
 
+crytic\_compile.compilation\_unit module
+----------------------------------------
+
+.. automodule:: crytic_compile.compilation_unit
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 crytic\_compile.crytic\_compile module
 --------------------------------------
 
@@ -21,7 +30,6 @@ crytic\_compile.crytic\_compile module
    :members:
    :undoc-members:
    :show-inheritance:
-
 
 Module contents
 ---------------

@@ -6,7 +6,7 @@ import logging
 import os
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, Tuple, List
+from typing import TYPE_CHECKING, List
 
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform.exceptions import InvalidCompilation
@@ -27,7 +27,7 @@ LOGGER = logging.getLogger("CryticCompile")
 
 class Hardhat(AbstractPlatform):
     """
-    Builder platform
+    Hardhat platform
     """
 
     NAME = "Hardhat"
@@ -36,11 +36,15 @@ class Hardhat(AbstractPlatform):
 
     # pylint: disable=too-many-locals,too-many-statements
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str) -> None:
-        """
-        Compile the target
+        """Run the compilation
 
-        :param kwargs:
-        :return:
+        Args:
+            crytic_compile (CryticCompile): Associated CryticCompile object
+            **kwargs: optional arguments. Used: "hardhat_ignore", "hardhat_ignore_compile", "ignore_compile",
+                "hardhat_artifacts_directory","hardhat_working_dir","npx_disable"
+
+        Raises:
+            InvalidCompilation: If hardhat failed to run
         """
 
         hardhat_ignore_compile = kwargs.get("hardhat_ignore_compile", False) or kwargs.get(
@@ -165,11 +169,14 @@ class Hardhat(AbstractPlatform):
 
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:
-        """
-        Check if the target is a hardhat project
+        """Check if the target is an hardhat project
 
-        :param target:
-        :return:
+        Args:
+            target (str): path to the target
+            **kwargs: optional arguments. Used: "hardhat_ignore"
+
+        Returns:
+            bool: True if the target is an hardhat project
         """
         hardhat_ignore = kwargs.get("hardhat_ignore", False)
         if hardhat_ignore:
@@ -179,11 +186,13 @@ class Hardhat(AbstractPlatform):
         )
 
     def is_dependency(self, path: str) -> bool:
-        """
-        Check if the target is a dependency
+        """Check if the path is a dependency
 
-        :param path:
-        :return:
+        Args:
+            path (str): path to the target
+
+        Returns:
+            bool: True if the target is a dependency
         """
         if path in self._cached_dependencies:
             return self._cached_dependencies[path]
@@ -192,25 +201,9 @@ class Hardhat(AbstractPlatform):
         return ret
 
     def _guessed_tests(self) -> List[str]:
-        """
-        Guess the potential unit tests commands
+        """Guess the potential unit tests commands
 
-        :return:
+        Returns:
+            List[str]: The guessed unit tests commands
         """
         return ["hardhat test"]
-
-
-def _get_version_from_config(path_config: Path) -> Optional[Tuple[str, str, bool]]:
-    """
-    :return: (version, optimized)
-    """
-    if not path_config.exists():
-        raise InvalidCompilation(f"{path_config} not found")
-    with open(path_config) as config_f:
-        config = json.load(config_f)
-
-    # hardhat supports multiple config file, we dont at the moment
-    version = list(config["files"].values())[0]["solcConfig"]["version"]
-
-    optimized = list(config["files"].values())[0]["solcConfig"]["settings"]["optimizer"]["enabled"]
-    return "solc", version, optimized

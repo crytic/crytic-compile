@@ -33,6 +33,17 @@ LOGGER = logging.getLogger("CryticCompile")
 def export_to_solc_from_compilation_unit(
     compilation_unit: "CompilationUnit", key: str, export_dir: str
 ) -> Optional[str]:
+    """Export the compilation unit to the standard solc output format.
+    The exported file will be $key.json
+
+    Args:
+        compilation_unit (CompilationUnit): Compilation unit to export
+        key (str): Filename Id
+        export_dir (str): Export directory
+
+    Returns:
+        Optional[str]: path to the file generated
+    """
     contracts = dict()
 
     for contract_name in compilation_unit.contracts_names:
@@ -81,12 +92,17 @@ def export_to_solc_from_compilation_unit(
 
 
 def export_to_solc(crytic_compile: "CryticCompile", **kwargs: str) -> List[str]:
-    """
-    Export the project to the solc format
+    """Export all the compilation units to the standard solc output format.
+    The files generated will be either
+    - combined_solc.json, if there is one compilation unit (echidna legacy)
+    - $key.json, where $key is the compilation unit identifiant
 
-    :param crytic_compile:
-    :param kwargs:
-    :return:
+    Args:
+        crytic_compile (CryticCompile): CryticCompile object to export
+        **kwargs: optional arguments. Used: "export_dir"
+
+    Returns:
+        List[str]: List of filenames generated
     """
     # Obtain objects to represent each contract
     export_dir = kwargs.get("export_dir", "crytic-export")
@@ -116,12 +132,14 @@ class Solc(AbstractPlatform):
     TYPE = Type.SOLC
 
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str) -> None:
-        """
-        Compile the target
+        """Run the compilation
 
-        :param crytic_compile:
-        :param kwargs:
-        :return:
+        Args:
+            crytic_compile (CryticCompile): Associated CryticCompile object
+            **kwargs: optional arguments. Used: "solc_working_dir", "solc_force_legacy_json"
+
+        Raises:
+            InvalidCompilation: If solc failed to run
         """
 
         solc_working_dir = kwargs.get("solc_working_dir", None)
@@ -161,33 +179,49 @@ class Solc(AbstractPlatform):
 
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:
-        """
-        Check if the target is a solc project
+        """Check if the target is a Solidity file
 
-        :param target:
-        :return:
+        Args:
+            target (str): path to the target
+            **kwargs: optional arguments. Not used
+
+        Returns:
+            bool: True if the target is a Solidity file
         """
         return os.path.isfile(target) and target.endswith(".sol")
 
     def is_dependency(self, _path: str) -> bool:
-        """
-        Always return false
+        """Check if the path is a dependency (always false for direct solc)
 
-        :param _path:
-        :return:
+        Args:
+            _path (str): path to the target
+
+        Returns:
+            bool: True if the target is a dependency
         """
         return False
 
     def _guessed_tests(self) -> List[str]:
-        """
-        Guess the potential unit tests commands
+        """Guess the potential unit tests commands (always empty for direct solc)
 
-        :return:
+        Returns:
+            List[str]: The guessed unit tests commands
         """
         return []
 
 
 def _get_targets_json(compilation_unit: "CompilationUnit", target: str, **kwargs: Any) -> Dict:
+    """Run the compilation, population the compilation info, and returns the json compilation artifacts
+
+    Args:
+        compilation_unit (CompilationUnit): Compilation unit
+        target (str): path to the solidity file
+        **kwargs: optional arguments. Used: "solc", "solc_disable_warnings", "solc_args", "solc_remaps",
+            "solc_solcs_bin", "solc_solcs_select", "solc_working_dir", "solc_force_legacy_json"
+
+    Returns:
+        Dict: Json of the compilation artifacts
+    """
     solc: str = kwargs.get("solc", "solc")
     solc_disable_warnings: bool = kwargs.get("solc_disable_warnings", False)
     solc_arguments: str = kwargs.get("solc_args", "")
@@ -253,6 +287,15 @@ def solc_handle_contracts(
     target: str,
     solc_working_dir: Optional[str],
 ) -> None:
+    """Populate the compilation unit from the compilation json artifacts
+
+    Args:
+        targets_json (Dict): Compilation artifacts
+        skip_filename (bool): If true, skip the filename (for solc <0.4.10)
+        compilation_unit (CompilationUnit): Associated compilation unit
+        target (str): Path to the target
+        solc_working_dir (Optional[str]): Working directory for running solc
+    """
     is_above_0_8 = _is_at_or_above_minor_version(compilation_unit, 8)
 
     if "contracts" in targets_json:
@@ -290,25 +333,32 @@ def solc_handle_contracts(
 
 
 def _is_at_or_above_minor_version(compilation_unit: "CompilationUnit", version: int) -> bool:
-    """
-    Checks if the solc version is at or above(=newer) a given minor (0.x.0) version
+    """Checks if the solc version is at or above(=newer) a given minor (0.x.0) version
 
-    :param crytic_compile:
-    :param version:
-    :return:
+    Args:
+        compilation_unit (CompilationUnit): Associated compilation unit
+        version (int): version to check
 
+    Returns:
+        bool: True if the compilation unit version is above or equal to the provided version
     """
     return int(compilation_unit.compiler_version.version.split(".")[1]) >= version
 
 
 def get_version(solc: str, env: Optional[Dict[str, str]]) -> str:
-    """
-    Obtains the version of the solc executable specified.
+    """Obtains the version of the solc executable specified.
 
-    :param solc: The solc executable name to invoke.
-    :param env: An optional environment key-value store which can be used when invoking the solc executable.
-    :return: Returns the version of the provided solc executable.
+    Args:
+        solc (str): The solc executable name to invoke.
+        env (Optional[Dict[str, str]]): An optional environment key-value store which can be used when invoking the solc executable.
+
+    Raises:
+        InvalidCompilation: If solc failed to run
+
+    Returns:
+        str: Returns the version of the provided solc executable.
     """
+
     cmd = [solc, "--version"]
     try:
         with subprocess.Popen(
@@ -326,11 +376,13 @@ def get_version(solc: str, env: Optional[Dict[str, str]]) -> str:
 
 
 def is_optimized(solc_arguments: Optional[str]) -> bool:
-    """
-    Check if optimization are used
+    """Check if optimization are used
 
-    :param solc_arguments:
-    :return:
+    Args:
+        solc_arguments (Optional[str]): Solc arguments to check
+
+    Returns:
+        bool: True if the optimization are enabled
     """
     if solc_arguments:
         return "--optimize" in solc_arguments
@@ -349,18 +401,25 @@ def _run_solc(
     working_dir: Optional[Union[Path, str]] = None,
     force_legacy_json: bool = False,
 ) -> Dict:
-    """
-    Note: Ensure that crytic_compile.compiler_version is set prior calling _run_solc
+    """Run solc.
+    Ensure that crytic_compile.compiler_version is set prior calling _run_solc
 
-    :param crytic_compile:
-    :param filename:
-    :param solc:
-    :param solc_disable_warnings:
-    :param solc_arguments:
-    :param solc_remaps:
-    :param env:
-    :param working_dir:
-    :return:
+    Args:
+        compilation_unit (CompilationUnit): Associated compilation unit
+        filename (str): Solidity file to compile
+        solc (str): Solc binary
+        solc_disable_warnings (bool): If True, disable solc warnings
+        solc_arguments (Optional[str]): Additional solc cli arguments
+        solc_remaps (Optional[Union[str, List[str]]], optional): Solc remaps. Can be a string where remap are separated with space, or list of str, or a list of. Defaults to None.
+        env (Optional[Dict]): Environement variable when solc is run. Defaults to None.
+        working_dir (Optional[Union[Path, str]]): Working directory when solc is run. Defaults to None.
+        force_legacy_json (bool): Force to use the legacy json format. Defaults to False.
+
+    Raises:
+        InvalidCompilation: If solc faile to run
+
+    Returns:
+        Dict: Json compilation artifacts
     """
     if not os.path.isfile(filename) and (
         not working_dir or not os.path.isfile(os.path.join(str(working_dir), filename))
@@ -454,10 +513,29 @@ def _run_solcs_path(
     solc_disable_warnings: bool,
     solc_arguments: str,
     solc_remaps: Optional[Union[str, List[str]]] = None,
-    env: Dict = None,
+    env: Optional[Dict] = None,
     working_dir: Optional[str] = None,
     force_legacy_json: bool = False,
 ) -> Dict:
+    """[summary]
+
+    Args:
+        compilation_unit (CompilationUnit): Associated compilation unit
+        filename (str): Solidity file to compile
+        solcs_path (Optional[Union[Dict, List[str]]]): List of solc binaries to try. If its a dict, in the form "version:path".
+        solc_disable_warnings (bool): If True, disable solc warnings
+        solc_arguments (str): Additional solc cli arguments
+        solc_remaps (Optional[Union[str, List[str]]], optional): Solc remaps. Can be a string where remap are separated with space, or list of str, or a list of. Defaults to None.
+        env (Optional[Dict]): Environement variable when solc is run. Defaults to None.
+        working_dir (Optional[Union[Path, str]], optional): Working directory when solc is run. Defaults to None.
+        force_legacy_json (bool): Force to use the legacy json format. Defaults to False.
+
+    Raises:
+        InvalidCompilation: [description]
+
+    Returns:
+        Dict: Json compilation artifacts
+    """
     targets_json = None
     if isinstance(solcs_path, dict):
         guessed_solcs = _guess_solc(filename, working_dir)
@@ -476,6 +554,7 @@ def _run_solcs_path(
                     working_dir=working_dir,
                     force_legacy_json=force_legacy_json,
                 )
+                break
             except InvalidCompilation:
                 pass
 
@@ -524,6 +603,27 @@ def _run_solcs_env(
     solcs_env: Optional[List[str]] = None,
     force_legacy_json: bool = False,
 ) -> Dict:
+    """Run different solc based on environment variable
+    This is mostly a legacy function for old solc-select usages
+
+    Args:
+        compilation_unit (CompilationUnit): Associated compilation unit
+        filename (str): Solidity file to compile
+        solc (str): Solc binary
+        solc_disable_warnings (bool): If True, disable solc warnings
+        solc_arguments (str): Additional solc cli arguments
+        solc_remaps (Optional[Union[str, List[str]]], optional): Solc remaps. Can be a string where remap are separated with space, or list of str, or a list of. Defaults to None.
+        env (Optional[Dict], optional): Environement variable when solc is run. Defaults to None.
+        working_dir (Optional[Union[Path, str]], optional): Working directory when solc is run. Defaults to None.
+        solcs_env (Optional[List[str]]): List of solc env variable to try. Defaults to None.
+        force_legacy_json (bool): Force to use the legacy json format. Defaults to False.
+
+    Raises:
+        InvalidCompilation: If solc failed
+
+    Returns:
+        Dict: Json compilation artifacts
+    """
     env = dict(os.environ) if env is None else env
     targets_json = None
     guessed_solcs = _guess_solc(filename, working_dir)
@@ -578,6 +678,15 @@ PATTERN = re.compile(r"pragma solidity\s*(?:\^|>=|<=)?\s*(\d+\.\d+\.\d+)")
 
 
 def _guess_solc(target: str, solc_working_dir: Optional[str]) -> List[str]:
+    """Guess the Solidity version (look for "pragma solidity")
+
+    Args:
+        target (str): Solidity filename
+        solc_working_dir (Optional[str]): Working directory
+
+    Returns:
+        List[str]: List of potential solidity version
+    """
     if solc_working_dir:
         target = os.path.join(solc_working_dir, target)
     with open(target, encoding="utf8") as file_desc:
@@ -586,10 +695,12 @@ def _guess_solc(target: str, solc_working_dir: Optional[str]) -> List[str]:
 
 
 def relative_to_short(relative: Path) -> Path:
-    """
-    Convert relative to short
+    """Convert relative to short (does nothing for direct solc)
 
-    :param relative:
-    :return:
+    Args:
+        relative (Path): target
+
+    Returns:
+        Path: Converted path
     """
     return relative

@@ -34,11 +34,16 @@ class SolcStandardJson(Solc):
     TYPE = Type.SOLC_STANDARD_JSON
 
     def __init__(self, target: Union[str, dict] = None, **kwargs: str):
-        """
-        Initializes an object which represents solc standard json
+        """Initializes an object which represents solc standard json
 
-        :param target: A string path to a standard json
+        Args:
+            target (Union[str, dict], optional): A string path to a standard json, or a standard json. Defaults to None.
+            **kwargs: optional arguments.
+
+        Raises:
+            ValueError: If invalid json
         """
+
         super().__init__(str(target), **kwargs)
 
         if target is None:
@@ -52,8 +57,6 @@ class SolcStandardJson(Solc):
 
         elif isinstance(target, dict):
             self._json = target
-        #        elif isinstance(target, SolcStandardJson):
-        #            self._json = target._json
         else:
             raise ValueError("Invalid target for solc standard json input.")
 
@@ -85,40 +88,37 @@ class SolcStandardJson(Solc):
             }
 
     def add_source_file(self, file_path: str) -> None:
-        """
-        Append file
+        """Append file
 
-        :param file_path:
-        :return:
+        Args:
+            file_path (str): file to append
         """
         self._json["sources"][file_path] = {"urls": [file_path]}
 
     def add_remapping(self, remapping: str) -> None:
-        """
-        Append our remappings
+        """Append our remappings
 
-        :param remapping:
-        :return:
+        Args:
+            remapping (str): remapping to add
         """
         self._json["settings"]["remappings"].append(remapping)
 
     def to_dict(self) -> Dict:
-        """
-        Patch in our desired output types
+        """Patch in our desired output types
 
-        :return:
+        Returns:
+            Dict:
         """
         return self._json
 
     # pylint: disable=too-many-locals
     def compile(self, crytic_compile: "CryticCompile", **kwargs: Any) -> None:
-        """
-        Compile the target
+        """[summary]
 
-        :param crytic_compile:
-        :param target:
-        :param kwargs:
-        :return:
+        Args:
+            crytic_compile (CryticCompile): Associated CryticCompile object
+            **kwargs: optional arguments. Used: "solc", "solc_disable_warnings", "solc_args", "solc_working_dir",
+                "solc_remaps"
         """
 
         solc: str = kwargs.get("solc", "solc")
@@ -210,10 +210,10 @@ class SolcStandardJson(Solc):
                 compilation_unit.asts[path.absolute] = info["ast"]
 
     def _guessed_tests(self) -> List[str]:
-        """
-        Guess the potential unit tests commands
+        """Guess the potential unit tests commands
 
-        :return:
+        Returns:
+            List[str]: The guessed unit tests commands
         """
         return []
 
@@ -225,14 +225,20 @@ def _run_solc_standard_json(
     solc_disable_warnings: bool = False,
     working_dir: Optional[Dict] = None,
 ) -> Dict:
-    """
-    Note: Ensure that crytic_compile.compiler_version is set prior calling _run_solc
+    """Run the solc standard json compilation.
+    Ensure that crytic_compile.compiler_version is set prior calling _run_solc
 
-    :param solc_input:
-    :param solc:
-    :param solc_disable_warnings:
-    :param working_dir:
-    :return:
+    Args:
+        solc_input (Dict): standard json object
+        solc (str): path to the solc binary
+        solc_disable_warnings (bool): True to not print the solc warnings. Defaults to False.
+        working_dir (Optional[Dict], optional): Working directory to run solc. Defaults to None.
+
+    Raises:
+        InvalidCompilation: If the compilation failed
+
+    Returns:
+        Dict: Solc json output
     """
     cmd = [solc, "--standard-json", "--allow-paths", "."]
     additional_kwargs: Dict = {"cwd": working_dir} if working_dir else {}

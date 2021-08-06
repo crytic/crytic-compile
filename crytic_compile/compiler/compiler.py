@@ -1,5 +1,4 @@
-"""
-Handle the compiler version
+"""Handle the compiler version
 """
 
 from collections import namedtuple
