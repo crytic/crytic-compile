@@ -360,10 +360,14 @@ def load_from_compile(crytic_compile: "CryticCompile", loaded_json: Dict) -> Tup
                     crytic_compile.dependencies.add(filename.short)
                     crytic_compile.dependencies.add(filename.used)
             compilation_unit.asts = compilation_unit_json["asts"]
+            compilation_unit.filenames = {
+                _convert_dict_to_filename(filename)
+                for filename in compilation_unit_json["filenames"]
+            }
 
     # Set our filenames
     for compilation_unit in crytic_compile.compilation_units.values():
-        crytic_compile.filenames |= set(compilation_unit.contracts_filenames.values())
+        crytic_compile.filenames |= set(compilation_unit.filenames)
 
     crytic_compile.working_dir = loaded_json["working_dir"]
 
