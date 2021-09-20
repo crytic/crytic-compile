@@ -170,20 +170,18 @@ def _print_filenames(compilation: "CryticCompile") -> None:
     Args:
         compilation (CryticCompile): CryticCompile project
     """
-    printed_filenames = set()
     for compilation_id, compilation_unit in compilation.compilation_units.items():
         print(
             f"Compilation unit: {compilation_id} ({len(compilation_unit.contracts_names)} files, solc {compilation_unit.compiler_version.version})"
         )
         for contract in compilation_unit.contracts_names:
             filename = compilation_unit.filename_of_contract(contract)
-            unique_id = f"{contract} - {filename} - {compilation_id}"
-            if unique_id not in printed_filenames:
-                print(f"\t{contract} -> \n\tAbsolute: {filename.absolute}")
-                print(f"\t\tRelative: {filename.relative}")
-                print(f"\t\tShort: {filename.short}")
-                print(f"\t\tUsed: {filename.used}")
-                printed_filenames.add(unique_id)
+            print(f"\t{contract} -> \n\tAbsolute: {filename.absolute}")
+        for filename in compilation_unit.filenames:
+            print(f"\t{filename.absolute}")
+            print(f"\t\tRelative: {filename.relative}")
+            print(f"\t\tShort: {filename.short}")
+            print(f"\t\tUsed: {filename.used}")
 
 
 def main() -> None:
