@@ -44,6 +44,7 @@ SUPPORTED_NETWORK = {
     "tobalaba:": ("-tobalaba.etherscan.io", "tobalaba.etherscan.io"),
     "bsc:": (".bscscan.com", "bscscan.com"),
     "testnet.bsc:": ("-testnet.bscscan.com", "testnet.bscscan.com"),
+    "arbitrum:": (".arbiscan.io", "arbiscan.io"),
 }
 
 
