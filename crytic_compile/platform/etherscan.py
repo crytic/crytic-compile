@@ -45,6 +45,7 @@ SUPPORTED_NETWORK = {
     "bsc:": (".bscscan.com", "bscscan.com"),
     "testnet.bsc:": ("-testnet.bscscan.com", "testnet.bscscan.com"),
     "arbitrum:": (".arbiscan.io", "arbiscan.io"),
+    "avalanche:": (".snowtrace.io", "snowtrace.io")
 }
 
 
