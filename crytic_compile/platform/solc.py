@@ -389,6 +389,36 @@ def is_optimized(solc_arguments: Optional[str]) -> bool:
     return False
 
 
+def _build_options(compiler_version: CompilerVersion, force_legacy_json: bool) -> str:
+    """
+    Build the solc command line options
+
+    Args:
+        compiler_version (CompilerVersion): compiler version
+        force_legacy_json (bool): true if the legacy json must be used
+
+    Returns:
+        str: options to be passed to the CI
+    """
+    old_04_versions = [f"0.4.{x}" for x in range(0, 12)]
+    # compact-format was removed from solc 0.8.10
+    explicit_compact_format = (
+        [f"0.4.{x}" for x in range(13, 27)]
+        + [f"0.5.{x}" for x in range(0, 18)]
+        + [f"0.6.{x}" for x in range(0, 13)]
+        + [f"0.7.{x}" for x in range(0, 7)]
+        + [f"0.8.{x}" for x in range(0, 10)]
+    )
+    if compiler_version.version in old_04_versions or compiler_version.version.startswith("0.3"):
+        return "abi,ast,bin,bin-runtime,srcmap,srcmap-runtime,userdoc,devdoc"
+    if force_legacy_json:
+        return "abi,ast,bin,bin-runtime,srcmap,srcmap-runtime,userdoc,devdoc,hashes"
+    if compiler_version.version in explicit_compact_format:
+        return "abi,ast,bin,bin-runtime,srcmap,srcmap-runtime,userdoc,devdoc,hashes,compact-format"
+
+    return "abi,ast,bin,bin-runtime,srcmap,srcmap-runtime,userdoc,devdoc,hashes"
+
+
 # pylint: disable=too-many-arguments,too-many-locals,too-many-branches
 def _run_solc(
     compilation_unit: "CompilationUnit",
@@ -437,15 +467,7 @@ def _run_solc(
 
     compiler_version = compilation_unit.compiler_version
     assert compiler_version
-    old_04_versions = [f"0.4.{x}" for x in range(0, 12)]
-    if compiler_version.version in old_04_versions or compiler_version.version.startswith("0.3"):
-        options = "abi,ast,bin,bin-runtime,srcmap,srcmap-runtime,userdoc,devdoc"
-    elif force_legacy_json:
-        options = "abi,ast,bin,bin-runtime,srcmap,srcmap-runtime,userdoc,devdoc,hashes"
-    else:
-        options = (
-            "abi,ast,bin,bin-runtime,srcmap,srcmap-runtime,userdoc,devdoc,hashes,compact-format"
-        )
+    options = _build_options(compiler_version, force_legacy_json)
 
     cmd = [solc]
     if solc_remaps:
