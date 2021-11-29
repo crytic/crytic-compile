@@ -313,6 +313,47 @@ def _init_etherscan(parser: ArgumentParser) -> None:
     )
 
     group_etherscan.add_argument(
+        "--arbiscan-apikey",
+        help="Etherscan API key.",
+        action="store",
+        dest="arbiscan_api_key",
+        default=DEFAULTS_FLAG_IN_CONFIG["etherscan_api_key"],
+    )
+
+    group_etherscan.add_argument(
+        "--polygonscan-apikey",
+        help="Etherscan API key.",
+        action="store",
+        dest="polygonscan_api_key",
+        default=DEFAULTS_FLAG_IN_CONFIG["etherscan_api_key"],
+    )
+
+
+    group_etherscan.add_argument(
+        "--avax-apikey",
+        help="Etherscan API key.",
+        action="store",
+        dest="avax_api_key",
+        default=DEFAULTS_FLAG_IN_CONFIG["etherscan_api_key"],
+    )
+
+    group_etherscan.add_argument(
+        "--ftmscan-apikey",
+        help="Etherscan API key.",
+        action="store",
+        dest="ftmscan_api_key",
+        default=DEFAULTS_FLAG_IN_CONFIG["etherscan_api_key"],
+    )
+
+    group_etherscan.add_argument(
+        "--bscan-apikey",
+        help="Etherscan API key.",
+        action="store",
+        dest="bscan_api_key",
+        default=DEFAULTS_FLAG_IN_CONFIG["etherscan_api_key"],
+    )
+
+    group_etherscan.add_argument(
         "--etherscan-export-directory",
         help="Directory in which to save the analyzed contracts.",
         action="store",
