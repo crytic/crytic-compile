@@ -328,7 +328,6 @@ def _init_etherscan(parser: ArgumentParser) -> None:
         default=DEFAULTS_FLAG_IN_CONFIG["etherscan_api_key"],
     )
 
-
     group_etherscan.add_argument(
         "--avax-apikey",
         help="Etherscan API key.",

@@ -231,7 +231,6 @@ class Etherscan(AbstractPlatform):
         ftmscan_api_key = kwargs.get("ftmscan_api_key", None)
         bscan_api_key = kwargs.get("bscan_api_key", None)
 
-
         export_dir = kwargs.get("export_dir", "crytic-export")
         export_dir = os.path.join(
             export_dir, kwargs.get("etherscan_export_dir", "etherscan-contracts")
