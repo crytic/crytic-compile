@@ -394,8 +394,8 @@ def _build_options(compiler_version: CompilerVersion, force_legacy_json: bool) -
     Build the solc command line options
 
     Args:
-        compiler_version (CompilerVersion):
-        force_legacy_json (bool):
+        compiler_version (CompilerVersion): compiler version
+        force_legacy_json (bool): true if the legacy json must be used
 
     Returns:
         str: options to be passed to the CI
