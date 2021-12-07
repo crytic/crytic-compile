@@ -171,7 +171,7 @@ class SolcStandardJson(Solc):
                             working_dir=solc_working_dir,
                         )
                     compilation_unit.contracts_names.add(contract_name)
-                    compilation_unit.contracts_filenames[contract_name] = contract_filename
+                    compilation_unit.filename_to_contracts[contract_filename].add(contract_name)
                     compilation_unit.abis[contract_name] = info["abi"]
 
                     userdoc = info.get("userdoc", {})

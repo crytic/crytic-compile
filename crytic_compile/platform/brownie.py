@@ -165,7 +165,7 @@ def _iterate_over_files(
             compilation_unit.filenames.add(filename)
             crytic_compile.filenames.add(filename)
             contract_name = target_loaded["contractName"]
-            compilation_unit.contracts_filenames[contract_name] = filename
+            compilation_unit.filename_to_contracts[filename].add(contract_name)
             compilation_unit.contracts_names.add(contract_name)
             compilation_unit.abis[contract_name] = target_loaded["abi"]
             compilation_unit.bytecodes_init[contract_name] = target_loaded["bytecode"].replace(

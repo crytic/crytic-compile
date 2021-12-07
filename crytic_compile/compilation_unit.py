@@ -3,6 +3,7 @@ Module handling the compilation unit
 """
 import re
 import uuid
+from collections import defaultdict
 from typing import TYPE_CHECKING, Dict, List, Optional, Set, Tuple, Union
 
 import sha3
@@ -14,6 +15,7 @@ from crytic_compile.compiler.compiler import CompilerVersion
 # Cycle dependency
 if TYPE_CHECKING:
     from crytic_compile import CryticCompile
+
 
 # pylint: disable=too-many-instance-attributes,too-many-public-methods
 class CompilationUnit:
@@ -43,8 +45,8 @@ class CompilationUnit:
         # set containing all the contract name without the libraries
         self._contracts_name_without_libraries: Optional[Set[str]] = None
 
-        # mapping from contract name to filename (naming.Filename)
-        self._contracts_filenames: Dict[str, Filename] = {}
+        # mapping from filename to contract name
+        self._filename_to_contracts: Dict[Filename, Set[str]] = defaultdict(set)
 
         # Libraries used by the contract
         # contract_name -> (library, pattern)
@@ -128,55 +130,13 @@ class CompilationUnit:
         self._filenames = all_filenames
 
     @property
-    def contracts_filenames(self) -> Dict[str, Filename]:
-        """Return a dict mapping the contract name to their Filename
+    def filename_to_contracts(self) -> Dict[Filename, Set[str]]:
+        """Return a dict mapping the filename to a list of contract declared
 
         Returns:
-            Dict[str, Filename]: contract_name -> Filename
+            Dict[Filename, List[str]]: Filename -> List[contract_name]
         """
-        return self._contracts_filenames
-
-    @property
-    def contracts_absolute_filenames(self) -> Dict[str, str]:
-        """Return a dict mapping the contract name to their absolute filename
-
-        Returns:
-            Dict[str, Filename]: contract_name -> absolute filename
-        """
-        return {k: f.absolute for (k, f) in self._contracts_filenames.items()}
-
-    def filename_of_contract(self, name: str) -> Filename:
-        """Return the Filename of a given contract
-
-        Args:
-            name (str): Contract name
-
-        Returns:
-            Filename: Filename associated with the contract
-        """
-        return self._contracts_filenames[name]
-
-    def absolute_filename_of_contract(self, name: str) -> str:
-        """Return the absolute filename of a given contract
-
-        Args:
-            name (str): Contract name
-
-        Returns:
-            str: Absolute filename associated with the contract
-        """
-        return self._contracts_filenames[name].absolute
-
-    def used_filename_of_contract(self, name: str) -> str:
-        """Return the used filename of a given contract
-
-        Args:
-            name (str): Contract name
-
-        Returns:
-            str: Used filename associated with the contract
-        """
-        return self._contracts_filenames[name].used
+        return self._filename_to_contracts
 
     def find_absolute_filename_from_used_filename(self, used_filename: str) -> str:
         """Return the absolute filename based on the used one
@@ -194,7 +154,7 @@ class CompilationUnit:
         # If used_filename is already an absolute pathn no need to lookup
         if used_filename in self._crytic_compile.filenames:
             return used_filename
-        d_file = {f.used: f.absolute for _, f in self._contracts_filenames.items()}
+        d_file = {f.used: f.absolute for f in self._filenames}
         if used_filename not in d_file:
             raise ValueError("f{filename} does not exist in {d}")
         return d_file[used_filename]
@@ -211,7 +171,7 @@ class CompilationUnit:
         Returns:
             str: Absolute filename
         """
-        d_file = {f.absolute: f.relative for _, f in self._contracts_filenames.items()}
+        d_file = {f.absolute: f.relative for f in self._filenames}
         if absolute_filename not in d_file:
             raise ValueError("f{absolute_filename} does not exist in {d}")
         return d_file[absolute_filename]
@@ -488,30 +448,32 @@ class CompilationUnit:
             new_names[lib_4] = addr
             new_names[lib_5] = addr
 
-            if lib in self.contracts_names:
-                lib_filename = self.contracts_filenames[lib]
+            for lib_filename, contract_names in self._filename_to_contracts.items():
+                for contract_name in contract_names:
+                    if contract_name != lib:
+                        continue
 
-                lib_with_abs_filename = lib_filename.absolute + ":" + lib
-                lib_with_abs_filename = lib_with_abs_filename[0:36]
+                    lib_with_abs_filename = lib_filename.absolute + ":" + lib
+                    lib_with_abs_filename = lib_with_abs_filename[0:36]
 
-                lib_4 = "__" + lib_with_abs_filename + "_" * (38 - len(lib_with_abs_filename))
-                new_names[lib_4] = addr
+                    lib_4 = "__" + lib_with_abs_filename + "_" * (38 - len(lib_with_abs_filename))
+                    new_names[lib_4] = addr
 
-                lib_with_used_filename = lib_filename.used + ":" + lib
-                lib_with_used_filename = lib_with_used_filename[0:36]
+                    lib_with_used_filename = lib_filename.used + ":" + lib
+                    lib_with_used_filename = lib_with_used_filename[0:36]
 
-                lib_4 = "__" + lib_with_used_filename + "_" * (38 - len(lib_with_used_filename))
-                new_names[lib_4] = addr
+                    lib_4 = "__" + lib_with_used_filename + "_" * (38 - len(lib_with_used_filename))
+                    new_names[lib_4] = addr
 
-                sha3_result = sha3.keccak_256()
-                sha3_result.update(lib_with_abs_filename.encode("utf-8"))
-                lib_5 = "__$" + sha3_result.hexdigest()[:34] + "$__"
-                new_names[lib_5] = addr
+                    sha3_result = sha3.keccak_256()
+                    sha3_result.update(lib_with_abs_filename.encode("utf-8"))
+                    lib_5 = "__$" + sha3_result.hexdigest()[:34] + "$__"
+                    new_names[lib_5] = addr
 
-                sha3_result = sha3.keccak_256()
-                sha3_result.update(lib_with_used_filename.encode("utf-8"))
-                lib_5 = "__$" + sha3_result.hexdigest()[:34] + "$__"
-                new_names[lib_5] = addr
+                    sha3_result = sha3.keccak_256()
+                    sha3_result.update(lib_with_used_filename.encode("utf-8"))
+                    lib_5 = "__$" + sha3_result.hexdigest()[:34] + "$__"
+                    new_names[lib_5] = addr
 
         return new_names
 
@@ -532,59 +494,62 @@ class CompilationUnit:
             Optional[Tuple[str, str]]: contract_name, library_name
         """
 
-        for name in self.contracts_names:
-            if name == lib_name:
-                return name, name
+        for filename, contract_names in self._filename_to_contracts.items():
+            for name in contract_names:
+                if name == lib_name:
+                    return name, name
 
-            # Some platform use only the contract name
-            # Some use fimename:contract_name
-            name_with_absolute_filename = self.contracts_filenames[name].absolute + ":" + name
-            name_with_absolute_filename = name_with_absolute_filename[0:36]
+                # Some platform use only the contract name
+                # Some use fimename:contract_name
+                name_with_absolute_filename = filename.absolute + ":" + name
+                name_with_absolute_filename = name_with_absolute_filename[0:36]
 
-            name_with_used_filename = self.contracts_filenames[name].used + ":" + name
-            name_with_used_filename = name_with_used_filename[0:36]
+                name_with_used_filename = filename.used + ":" + name
+                name_with_used_filename = name_with_used_filename[0:36]
 
-            # Solidity 0.4
-            solidity_0_4 = "__" + name + "_" * (38 - len(name))
-            if solidity_0_4 == lib_name:
-                return name, solidity_0_4
+                # Solidity 0.4
+                solidity_0_4 = "__" + name + "_" * (38 - len(name))
+                if solidity_0_4 == lib_name:
+                    return name, solidity_0_4
 
-            # Solidity 0.4 with filename
-            solidity_0_4_filename = (
-                "__" + name_with_absolute_filename + "_" * (38 - len(name_with_absolute_filename))
-            )
-            if solidity_0_4_filename == lib_name:
-                return name, solidity_0_4_filename
+                # Solidity 0.4 with filename
+                solidity_0_4_filename = (
+                    "__"
+                    + name_with_absolute_filename
+                    + "_" * (38 - len(name_with_absolute_filename))
+                )
+                if solidity_0_4_filename == lib_name:
+                    return name, solidity_0_4_filename
 
-            # Solidity 0.4 with filename
-            solidity_0_4_filename = (
-                "__" + name_with_used_filename + "_" * (38 - len(name_with_used_filename))
-            )
-            if solidity_0_4_filename == lib_name:
-                return name, solidity_0_4_filename
+                # Solidity 0.4 with filename
+                solidity_0_4_filename = (
+                    "__" + name_with_used_filename + "_" * (38 - len(name_with_used_filename))
+                )
+                if solidity_0_4_filename == lib_name:
+                    return name, solidity_0_4_filename
 
-            # Solidity 0.5
-            sha3_result = sha3.keccak_256()
-            sha3_result.update(name.encode("utf-8"))
-            v5_name = "__$" + sha3_result.hexdigest()[:34] + "$__"
+                # Solidity 0.5
+                sha3_result = sha3.keccak_256()
+                sha3_result.update(name.encode("utf-8"))
+                v5_name = "__$" + sha3_result.hexdigest()[:34] + "$__"
 
-            if v5_name == lib_name:
-                return name, v5_name
+                if v5_name == lib_name:
+                    return name, v5_name
 
-            # Solidity 0.5 with filename
-            sha3_result = sha3.keccak_256()
-            sha3_result.update(name_with_absolute_filename.encode("utf-8"))
-            v5_name = "__$" + sha3_result.hexdigest()[:34] + "$__"
+                # Solidity 0.5 with filename
+                sha3_result = sha3.keccak_256()
+                sha3_result.update(name_with_absolute_filename.encode("utf-8"))
+                v5_name = "__$" + sha3_result.hexdigest()[:34] + "$__"
 
-            if v5_name == lib_name:
-                return name, v5_name
+                if v5_name == lib_name:
+                    return name, v5_name
 
-            sha3_result = sha3.keccak_256()
-            sha3_result.update(name_with_used_filename.encode("utf-8"))
-            v5_name = "__$" + sha3_result.hexdigest()[:34] + "$__"
+                sha3_result = sha3.keccak_256()
+                sha3_result.update(name_with_used_filename.encode("utf-8"))
+                v5_name = "__$" + sha3_result.hexdigest()[:34] + "$__"
 
-            if v5_name == lib_name:
-                return name, v5_name
+                if v5_name == lib_name:
+                    return name, v5_name
 
         # handle specific case of collision for Solidity <0.4
         # We can only detect that the second contract is meant to be the library

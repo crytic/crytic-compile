@@ -125,7 +125,7 @@ class Buidler(AbstractPlatform):
                         )
 
                         compilation_unit.contracts_names.add(contract_name)
-                        compilation_unit.contracts_filenames[contract_name] = contract_filename
+                        compilation_unit.filename_to_contracts[contract_filename].add(contract_name)
 
                         compilation_unit.abis[contract_name] = info["abi"]
                         compilation_unit.bytecodes_init[contract_name] = info["evm"]["bytecode"][
