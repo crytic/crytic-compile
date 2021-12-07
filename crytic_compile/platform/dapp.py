@@ -79,7 +79,7 @@ class Dapp(AbstractPlatform):
                             optimized |= metadata["settings"]["optimizer"]["enabled"]
                     contract_name = extract_name(original_contract_name)
                     compilation_unit.contracts_names.add(contract_name)
-                    compilation_unit.contracts_filenames[contract_name] = original_filename
+                    compilation_unit.filename_to_contracts[original_filename].add(contract_name)
 
                     compilation_unit.abis[contract_name] = info["abi"]
                     compilation_unit.bytecodes_init[contract_name] = info["evm"]["bytecode"][

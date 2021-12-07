@@ -30,6 +30,29 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger("CryticCompile")
 
 
+def _build_contract_data(compilation_unit: "CompilationUnit") -> Dict:
+    contracts = dict()
+
+    for filename, contract_names in compilation_unit.filename_to_contracts.items():
+        for contract_name in contract_names:
+            abi = str(compilation_unit.abi(contract_name))
+            abi = abi.replace("'", '"')
+            abi = abi.replace("True", "true")
+            abi = abi.replace("False", "false")
+            abi = abi.replace(" ", "")
+            exported_name = combine_filename_name(filename.absolute, contract_name)
+            contracts[exported_name] = {
+                "srcmap": ";".join(compilation_unit.srcmap_init(contract_name)),
+                "srcmap-runtime": ";".join(compilation_unit.srcmap_runtime(contract_name)),
+                "abi": abi,
+                "bin": compilation_unit.bytecode_init(contract_name),
+                "bin-runtime": compilation_unit.bytecode_runtime(contract_name),
+                "userdoc": compilation_unit.natspec[contract_name].userdoc.export(),
+                "devdoc": compilation_unit.natspec[contract_name].devdoc.export(),
+            }
+    return contracts
+
+
 def export_to_solc_from_compilation_unit(
     compilation_unit: "CompilationUnit", key: str, export_dir: str
 ) -> Optional[str]:
@@ -44,26 +67,7 @@ def export_to_solc_from_compilation_unit(
     Returns:
         Optional[str]: path to the file generated
     """
-    contracts = dict()
-
-    for contract_name in compilation_unit.contracts_names:
-        abi = str(compilation_unit.abi(contract_name))
-        abi = abi.replace("'", '"')
-        abi = abi.replace("True", "true")
-        abi = abi.replace("False", "false")
-        abi = abi.replace(" ", "")
-        exported_name = combine_filename_name(
-            compilation_unit.contracts_filenames[contract_name].absolute, contract_name
-        )
-        contracts[exported_name] = {
-            "srcmap": ";".join(compilation_unit.srcmap_init(contract_name)),
-            "srcmap-runtime": ";".join(compilation_unit.srcmap_runtime(contract_name)),
-            "abi": abi,
-            "bin": compilation_unit.bytecode_init(contract_name),
-            "bin-runtime": compilation_unit.bytecode_runtime(contract_name),
-            "userdoc": compilation_unit.natspec[contract_name].userdoc.export(),
-            "devdoc": compilation_unit.natspec[contract_name].devdoc.export(),
-        }
+    contracts = _build_contract_data(compilation_unit)
 
     # Create additional informational objects.
     sources = {filename: {"AST": ast} for (filename, ast) in compilation_unit.asts.items()}
@@ -318,7 +322,7 @@ def solc_handle_contracts(
                     working_dir=solc_working_dir,
                 )
             compilation_unit.contracts_names.add(contract_name)
-            compilation_unit.contracts_filenames[contract_name] = contract_filename
+            compilation_unit.filename_to_contracts[contract_filename].add(contract_name)
             compilation_unit.abis[contract_name] = (
                 json.loads(info["abi"]) if not is_above_0_8 else info["abi"]
             )

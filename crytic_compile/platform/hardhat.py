@@ -51,9 +51,11 @@ class Hardhat(AbstractPlatform):
             "ignore_compile", False
         )
 
-        build_directory = Path(kwargs.get("hardhat_artifacts_directory", "artifacts"), "build-info")
+        build_directory = Path(
+            self._target, kwargs.get("hardhat_artifacts_directory", "artifacts"), "build-info"
+        )
 
-        hardhat_working_dir = kwargs.get("hardhat_working_dir", None)
+        hardhat_working_dir = kwargs.get("hardhat_working_dir", self._target)
 
         base_cmd = ["hardhat"]
         if not kwargs.get("npx_disable", False):
@@ -127,7 +129,9 @@ class Hardhat(AbstractPlatform):
                             )
 
                             compilation_unit.contracts_names.add(contract_name)
-                            compilation_unit.contracts_filenames[contract_name] = contract_filename
+                            compilation_unit.filename_to_contracts[contract_filename].add(
+                                contract_name
+                            )
 
                             compilation_unit.abis[contract_name] = info["abi"]
                             compilation_unit.bytecodes_init[contract_name] = info["evm"][

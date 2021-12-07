@@ -32,7 +32,7 @@ To run them locally:
 - `pylint crytic_compile --rcfile pyproject.toml`
 - `black crytic_compile --config pyproject.toml`
 - `mypy crytic_compile --config mypy.ini`
-- `dargling crytic_compile`
+- `darglint crytic_compile`
 
 
 We use pylint `2.8.2`, black `20.8b1`, mypy `0.812` and dargling `1.8.0`.

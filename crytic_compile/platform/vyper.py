@@ -60,7 +60,7 @@ class Vyper(AbstractPlatform):
         contract_name = Path(target).parts[-1]
 
         compilation_unit.contracts_names.add(contract_name)
-        compilation_unit.contracts_filenames[contract_name] = contract_filename
+        compilation_unit.filename_to_contracts[contract_filename].add(contract_name)
         compilation_unit.abis[contract_name] = info["abi"]
         compilation_unit.bytecodes_init[contract_name] = info["bytecode"].replace("0x", "")
         compilation_unit.bytecodes_runtime[contract_name] = info["bytecode_runtime"].replace(

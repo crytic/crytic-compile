@@ -174,9 +174,9 @@ def _print_filenames(compilation: "CryticCompile") -> None:
         print(
             f"Compilation unit: {compilation_id} ({len(compilation_unit.contracts_names)} files, solc {compilation_unit.compiler_version.version})"
         )
-        for contract in compilation_unit.contracts_names:
-            filename = compilation_unit.filename_of_contract(contract)
-            print(f"\t{contract} -> \n\tAbsolute: {filename.absolute}")
+        for filename, contracts in compilation_unit.filename_to_contracts.items():
+            for contract in contracts:
+                print(f"\t{contract} -> \n\tAbsolute: {filename.absolute}")
         for filename in compilation_unit.filenames:
             print(f"\t{filename.absolute}")
             print(f"\t\tRelative: {filename.relative}")

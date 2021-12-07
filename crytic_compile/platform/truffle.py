@@ -54,25 +54,25 @@ def export_to_truffle(crytic_compile: "CryticCompile", **kwargs: str) -> List[st
 
     # Loop for each contract filename.
     results: List[Dict] = []
-    for contract_name in compilation_unit.contracts_names:
-        # Create the informational object to output for this contract
-        filename = compilation_unit.contracts_filenames[contract_name]
-        output = {
-            "contractName": contract_name,
-            "abi": compilation_unit.abi(contract_name),
-            "bytecode": "0x" + compilation_unit.bytecode_init(contract_name),
-            "deployedBytecode": "0x" + compilation_unit.bytecode_runtime(contract_name),
-            "ast": compilation_unit.ast(filename.absolute),
-            "userdoc": compilation_unit.natspec[contract_name].userdoc.export(),
-            "devdoc": compilation_unit.natspec[contract_name].devdoc.export(),
-        }
-        results.append(output)
+    for filename, contract_names in compilation_unit.filename_to_contracts.items():
+        for contract_name in contract_names:
+            # Create the informational object to output for this contract
+            output = {
+                "contractName": contract_name,
+                "abi": compilation_unit.abi(contract_name),
+                "bytecode": "0x" + compilation_unit.bytecode_init(contract_name),
+                "deployedBytecode": "0x" + compilation_unit.bytecode_runtime(contract_name),
+                "ast": compilation_unit.ast(filename.absolute),
+                "userdoc": compilation_unit.natspec[contract_name].userdoc.export(),
+                "devdoc": compilation_unit.natspec[contract_name].devdoc.export(),
+            }
+            results.append(output)
 
-        # If we have an export directory, export it.
+            # If we have an export directory, export it.
 
-        path = os.path.join(export_dir, contract_name + ".json")
-        with open(path, "w", encoding="utf8") as file_desc:
-            json.dump(output, file_desc)
+            path = os.path.join(export_dir, contract_name + ".json")
+            with open(path, "w", encoding="utf8") as file_desc:
+                json.dump(output, file_desc)
 
     return [export_dir]
 
@@ -242,7 +242,7 @@ class Truffle(AbstractPlatform):
                 compilation_unit.filenames.add(filename)
                 contract_name = target_loaded["contractName"]
                 compilation_unit.natspec[contract_name] = natspec
-                compilation_unit.contracts_filenames[contract_name] = filename
+                compilation_unit.filename_to_contracts[filename].add(contract_name)
                 compilation_unit.contracts_names.add(contract_name)
                 compilation_unit.abis[contract_name] = target_loaded["abi"]
                 compilation_unit.bytecodes_init[contract_name] = target_loaded["bytecode"].replace(
