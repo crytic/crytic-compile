@@ -19,6 +19,7 @@ from crytic_compile.platform.abstract_platform import AbstractPlatform
 from crytic_compile.platform.all_export import PLATFORMS_EXPORT
 from crytic_compile.platform.solc import Solc
 from crytic_compile.platform.standard import export_to_standard
+from crytic_compile.platform.truffle import Truffle
 from crytic_compile.utils.naming import Filename
 from crytic_compile.utils.npm import get_package_name
 from crytic_compile.utils.zip import load_from_zip
@@ -184,6 +185,10 @@ class CryticCompile:
         Returns:
             Filename: Associated Filename object
         """
+
+        if isinstance(self.platform, Truffle) and filename.startswith("project:/"):
+            filename = filename[len("project:/") :]
+
         if self._filenames_lookup is None:
             self._filenames_lookup = {}
             for file in self._filenames:
