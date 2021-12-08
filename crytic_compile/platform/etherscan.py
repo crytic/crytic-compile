@@ -122,7 +122,12 @@ def _handle_single_file(
 
 
 def _handle_multiple_files(
-    dict_source_code: Dict, addr: str, prefix: Optional[str], contract_name: str, export_dir: str
+    dict_source_code: Dict,
+    addr: str,
+    prefix: Optional[str],
+    contract_name: str,
+    export_dir: str,
+    default_contract_name: bool,
 ) -> Tuple[str, str]:
     """Handle a result with a multiple files. Generate multiple Solidity files
 
@@ -132,7 +137,7 @@ def _handle_multiple_files(
         prefix (Optional[str]): used to separate different chains
         contract_name (str): contract name
         export_dir (str): directory where the code will be saved
-
+        default_contract_name (bool) : whether to use default etherscan target or override
     Raises:
         InvalidCompilation: can be raised if there are multiple contracts with the same name
 
@@ -162,7 +167,7 @@ def _handle_multiple_files(
         if returned_filename is None:
             returned_filename = path_filename
         # but if later on a file exists whose name matches the contract name reported by Etherscan, use that
-        elif path_filename.name == f"{contract_name}.sol":
+        elif path_filename.name == f"{contract_name}.sol" and default_contract_name:
             if returned_filename.name == path_filename.name:
                 # if there are multiple contracts with the same name as the targeted file, we cannot know which one to pick
                 LOGGER.error(
@@ -170,9 +175,10 @@ def _handle_multiple_files(
                 )
                 raise InvalidCompilation("Duplicate contract name in etherscan results of " + addr)
             returned_filename = path_filename
+        else:
+            returned_filename = Path(contract_name)
 
         path_filename = Path(directory, path_filename)
-
         if not os.path.exists(path_filename.parent):
             os.makedirs(path_filename.parent)
         with open(path_filename, "w", encoding="utf8") as file_desc:
@@ -198,7 +204,7 @@ class Etherscan(AbstractPlatform):
         Args:
             crytic_compile (CryticCompile): Associated CryticCompile object
             **kwargs: optional arguments. Used "solc", "etherscan_only_source_code", "etherscan_only_bytecode",
-                "etherscan_api_key", "export_dir"
+                "etherscan_api_key", "export_dir", "contract_name"
 
         Raises:
             InvalidCompilation: if etherscan returned an error, or its results were not correctly parsed
@@ -286,7 +292,11 @@ class Etherscan(AbstractPlatform):
             assert isinstance(result["SourceCode"], str)
             assert isinstance(result["ContractName"], str)
             source_code = result["SourceCode"]
-            contract_name = result["ContractName"]
+            contract_name = kwargs.get("contract_name", result["ContractName"])
+
+            default_contract_name = False
+            if kwargs["contract_name"]:  # override and target specific contract
+                default_contract_name = True
 
         if source_code == "" and not only_source:
             LOGGER.info("Source code not available, try to fetch the bytecode only")
@@ -326,14 +336,14 @@ class Etherscan(AbstractPlatform):
             # etherscan might return an object with two curly braces, {{ content }}
             dict_source_code = json.loads(source_code[1:-1])
             filename, working_dir = _handle_multiple_files(
-                dict_source_code, addr, prefix, contract_name, export_dir
+                dict_source_code, addr, prefix, contract_name, export_dir, default_contract_name
             )
         except JSONDecodeError:
             try:
                 # or etherscan might return an object with single curly braces, { content }
                 dict_source_code = json.loads(source_code)
                 filename, working_dir = _handle_multiple_files(
-                    dict_source_code, addr, prefix, contract_name, export_dir
+                    dict_source_code, addr, prefix, contract_name, export_dir, default_contract_name
                 )
             except JSONDecodeError:
                 filename = _handle_single_file(source_code, addr, prefix, contract_name, export_dir)

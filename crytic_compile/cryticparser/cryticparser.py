@@ -305,6 +305,13 @@ def _init_etherscan(parser: ArgumentParser) -> None:
     )
 
     group_etherscan.add_argument(
+        "--contract",
+        help="Name of target contract on Etherscan",
+        action="store",
+        dest="contract_name",
+    )
+
+    group_etherscan.add_argument(
         "--etherscan-apikey",
         help="Etherscan API key.",
         action="store",
