@@ -13,14 +13,11 @@ from typing import TYPE_CHECKING, Dict, List, Union, Tuple, Optional
 
 from crytic_compile.compilation_unit import CompilationUnit
 from crytic_compile.compiler.compiler import CompilerVersion
+from crytic_compile.platform import solc_standard_json
 from crytic_compile.platform.abstract_platform import AbstractPlatform
 from crytic_compile.platform.exceptions import InvalidCompilation
-from crytic_compile.platform.solc import (
-    _run_solc,
-    solc_handle_contracts,
-)
 from crytic_compile.platform.types import Type
-from crytic_compile.utils.naming import Filename, convert_filename
+from crytic_compile.utils.naming import Filename
 
 # Cycle dependency
 
@@ -86,7 +83,7 @@ def _handle_bytecode(crytic_compile: "CryticCompile", target: str, result_b: byt
     compilation_unit.srcmaps_runtime[contract_name] = []
 
     compilation_unit.compiler_version = CompilerVersion(
-        compiler="unknown", version="", optimized=None
+        compiler="unknown", version="", optimized=False
     )
 
     crytic_compile.bytecode_only = True
@@ -123,7 +120,7 @@ def _handle_single_file(
 
 def _handle_multiple_files(
     dict_source_code: Dict, addr: str, prefix: Optional[str], contract_name: str, export_dir: str
-) -> Tuple[str, str]:
+) -> Tuple[List[str], str]:
     """Handle a result with a multiple files. Generate multiple Solidity files
 
     Args:
@@ -133,11 +130,8 @@ def _handle_multiple_files(
         contract_name (str): contract name
         export_dir (str): directory where the code will be saved
 
-    Raises:
-        InvalidCompilation: can be raised if there are multiple contracts with the same name
-
     Returns:
-        Tuple[str, str]: target_filename, directory, where target_filename is the main file
+        Tuple[List[str], str]: filesnames, directory, where target_filename is the main file
     """
     if prefix:
         directory = os.path.join(export_dir, f"{addr}{prefix}-{contract_name}")
@@ -151,25 +145,10 @@ def _handle_multiple_files(
         # or etherscan might return an object with contract names as keys
         source_codes = dict_source_code
 
-    returned_filename: Optional[Path] = None
-
     for filename, source_code in source_codes.items():
         path_filename = Path(filename)
         if "contracts" in path_filename.parts and not filename.startswith("@"):
             path_filename = Path(*path_filename.parts[path_filename.parts.index("contracts") :])
-
-        # start by assuming that the targeted file is the first one returned
-        if returned_filename is None:
-            returned_filename = path_filename
-        # but if later on a file exists whose name matches the contract name reported by Etherscan, use that
-        elif path_filename.name == f"{contract_name}.sol":
-            if returned_filename.name == path_filename.name:
-                # if there are multiple contracts with the same name as the targeted file, we cannot know which one to pick
-                LOGGER.error(
-                    "Duplicate contract name in etherscan results, couldn't decide on contract to use"
-                )
-                raise InvalidCompilation("Duplicate contract name in etherscan results of " + addr)
-            returned_filename = path_filename
 
         path_filename = Path(directory, path_filename)
 
@@ -178,8 +157,7 @@ def _handle_multiple_files(
         with open(path_filename, "w", encoding="utf8") as file_desc:
             file_desc.write(source_code["content"])
 
-    assert returned_filename is not None
-    return str(returned_filename), directory
+    return list(source_codes.keys()), directory
 
 
 class Etherscan(AbstractPlatform):
@@ -205,8 +183,6 @@ class Etherscan(AbstractPlatform):
         """
 
         target = self._target
-
-        solc = kwargs.get("solc", "solc")
 
         if target.startswith(tuple(SUPPORTED_NETWORK)):
             prefix: Union[None, str] = SUPPORTED_NETWORK[target[: target.find(":") + 1]][0]
@@ -316,53 +292,41 @@ class Etherscan(AbstractPlatform):
 
         optimization_used: bool = result["OptimizationUsed"] == "1"
 
-        solc_arguments = None
+        optimize_runs = None
         if optimization_used:
-            optimized_run = int(result["Runs"])
-            solc_arguments = f"--optimize --optimize-runs {optimized_run}"
+            optimize_runs = int(result["Runs"])
 
-        working_dir = None
+        working_dir: Optional[str] = None
+
         try:
             # etherscan might return an object with two curly braces, {{ content }}
             dict_source_code = json.loads(source_code[1:-1])
-            filename, working_dir = _handle_multiple_files(
+            filenames, working_dir = _handle_multiple_files(
                 dict_source_code, addr, prefix, contract_name, export_dir
             )
         except JSONDecodeError:
             try:
                 # or etherscan might return an object with single curly braces, { content }
                 dict_source_code = json.loads(source_code)
-                filename, working_dir = _handle_multiple_files(
+                filenames, working_dir = _handle_multiple_files(
                     dict_source_code, addr, prefix, contract_name, export_dir
                 )
             except JSONDecodeError:
-                filename = _handle_single_file(source_code, addr, prefix, contract_name, export_dir)
+                filenames = [
+                    _handle_single_file(source_code, addr, prefix, contract_name, export_dir)
+                ]
 
-        compilation_unit = CompilationUnit(crytic_compile, str(filename))
-
-        targets_json = _run_solc(
-            compilation_unit,
-            filename,
-            solc=solc,
-            solc_disable_warnings=False,
-            solc_arguments=solc_arguments,
-            env=dict(os.environ, SOLC_VERSION=compiler_version),
-            working_dir=working_dir,
-        )
+        compilation_unit = CompilationUnit(crytic_compile, contract_name)
 
         compilation_unit.compiler_version = CompilerVersion(
-            compiler="solc", version=compiler_version, optimized=optimization_used
+            compiler=kwargs.get("solc", "solc"),
+            version=compiler_version,
+            optimized=optimization_used,
+            optimize_runs=optimize_runs,
         )
+        compilation_unit.compiler_version.look_for_installed_version()
 
-        solc_handle_contracts(targets_json, False, compilation_unit, "", working_dir)
-
-        for path, info in targets_json["sources"].items():
-            path = convert_filename(
-                path, _relative_to_short, crytic_compile, working_dir=working_dir
-            )
-            crytic_compile.filenames.add(path)
-            compilation_unit.filenames.add(path)
-            compilation_unit.asts[path.absolute] = info["AST"]
+        solc_standard_json.standalone_compile(filenames, compilation_unit, working_dir=working_dir)
 
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:
