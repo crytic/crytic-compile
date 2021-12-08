@@ -346,6 +346,7 @@ def _is_at_or_above_minor_version(compilation_unit: "CompilationUnit", version: 
     Returns:
         bool: True if the compilation unit version is above or equal to the provided version
     """
+    assert compilation_unit.compiler_version.version
     return int(compilation_unit.compiler_version.version.split(".")[1]) >= version
 
 
@@ -413,6 +414,7 @@ def _build_options(compiler_version: CompilerVersion, force_legacy_json: bool) -
         + [f"0.7.{x}" for x in range(0, 7)]
         + [f"0.8.{x}" for x in range(0, 10)]
     )
+    assert compiler_version.version
     if compiler_version.version in old_04_versions or compiler_version.version.startswith("0.3"):
         return "abi,ast,bin,bin-runtime,srcmap,srcmap-runtime,userdoc,devdoc"
     if force_legacy_json:

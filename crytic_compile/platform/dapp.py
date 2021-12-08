@@ -11,7 +11,7 @@ import subprocess
 from pathlib import Path
 
 # Cycle dependency
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, Optional
 
 from crytic_compile.compilation_unit import CompilationUnit
 from crytic_compile.compiler.compiler import CompilerVersion
@@ -63,7 +63,7 @@ class Dapp(AbstractPlatform):
         with open(os.path.join(directory, "dapp.sol.json")) as file_desc:
             targets_json = json.load(file_desc)
 
-            version = None
+            version: Optional[str] = None
             if "version" in targets_json:
                 version = re.findall(r"\d+\.\d+\.\d+", targets_json["version"])[0]
 
@@ -194,7 +194,7 @@ def _get_version(target: str) -> CompilerVersion:
         CompilerVersion: compiler information
     """
     files = glob.glob(target + "/**/*meta.json", recursive=True)
-    version = None
+    version: Optional[str] = None
     optimized = None
     compiler = "solc"
     for file in files:
@@ -203,8 +203,9 @@ def _get_version(target: str) -> CompilerVersion:
                 config = json.load(file_desc)
             if "compiler" in config:
                 if "version" in config["compiler"]:
-                    version = re.findall(r"\d+\.\d+\.\d+", config["compiler"]["version"])
-                    assert version
+                    versions = re.findall(r"\d+\.\d+\.\d+", config["compiler"]["version"])
+                    if versions:
+                        version = versions[0]
             if "settings" in config:
                 if "optimizer" in config["settings"]:
                     if "enabled" in config["settings"]["optimizer"]:
