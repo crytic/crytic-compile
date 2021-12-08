@@ -354,7 +354,9 @@ class CryticCompile:
         if not self._src_content:
             for filename in self.filenames:
                 if filename.absolute not in self._src_content and os.path.isfile(filename.absolute):
-                    with open(filename.absolute, encoding="utf8", newline="") as source_file:
+                    with open(
+                        filename.absolute, encoding="utf8", newline="", errors="replace"
+                    ) as source_file:
                         self._src_content[filename.absolute] = source_file.read()
         return self._src_content
 
