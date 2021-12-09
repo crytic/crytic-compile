@@ -354,7 +354,8 @@ def _load_from_compile_legacy2(crytic_compile: "CryticCompile", loaded_json: Dic
 
         if "filenames" in compilation_unit_json:
             compilation_unit.filenames = {
-                _convert_dict_to_filename(filename) for filename in compilation_unit_json["filenames"]
+                _convert_dict_to_filename(filename)
+                for filename in compilation_unit_json["filenames"]
             }
         else:
             # For legay code, we recover the filenames from the contracts list
