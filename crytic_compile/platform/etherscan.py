@@ -145,11 +145,13 @@ def _handle_multiple_files(
         # or etherscan might return an object with contract names as keys
         source_codes = dict_source_code
 
+    filtered_paths: List[str] = []
     for filename, source_code in source_codes.items():
         path_filename = Path(filename)
         if "contracts" in path_filename.parts and not filename.startswith("@"):
             path_filename = Path(*path_filename.parts[path_filename.parts.index("contracts") :])
 
+        filtered_paths.append(str(path_filename))
         path_filename = Path(directory, path_filename)
 
         if not os.path.exists(path_filename.parent):
@@ -157,7 +159,7 @@ def _handle_multiple_files(
         with open(path_filename, "w", encoding="utf8") as file_desc:
             file_desc.write(source_code["content"])
 
-    return list(source_codes.keys()), directory
+    return list(filtered_paths), directory
 
 
 class Etherscan(AbstractPlatform):
