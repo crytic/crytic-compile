@@ -351,9 +351,17 @@ def _load_from_compile_legacy2(crytic_compile: "CryticCompile", loaded_json: Dic
                 crytic_compile.dependencies.add(filename.short)
                 crytic_compile.dependencies.add(filename.used)
         compilation_unit.asts = compilation_unit_json["asts"]
-        compilation_unit.filenames = {
-            _convert_dict_to_filename(filename) for filename in compilation_unit_json["filenames"]
-        }
+
+        if "filenames" in compilation_unit_json:
+            compilation_unit.filenames = {
+                _convert_dict_to_filename(filename) for filename in compilation_unit_json["filenames"]
+            }
+        else:
+            # For legay code, we recover the filenames from the contracts list
+            # This is not perfect, as a filename might not be associated to any contract
+            for contract_name, contract in compilation_unit_json["contracts"].items():
+                filename = _convert_dict_to_filename(contract["filenames"])
+                compilation_unit.filenames.add(filename)
 
 
 def _load_from_compile_current(crytic_compile: "CryticCompile", loaded_json: Dict) -> None:
