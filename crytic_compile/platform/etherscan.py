@@ -33,7 +33,7 @@ ETHERSCAN_BASE_BYTECODE = "https://%s/address/%s#code"
 
 SUPPORTED_NETWORK = {
     # Key, (prefix_base, perfix_bytecode)
-    "mainet:": (".etherscan.io", "etherscan.io"),
+    "mainnet:": (".etherscan.io", "etherscan.io"),
     "ropsten:": ("-ropsten.etherscan.io", "ropsten.etherscan.io"),
     "kovan:": ("-kovan.etherscan.io", "kovan.etherscan.io"),
     "rinkeby:": ("-rinkeby.etherscan.io", "rinkeby.etherscan.io"),
@@ -390,3 +390,107 @@ def _relative_to_short(relative: Path) -> Path:
         Path: Translated path
     """
     return relative
+
+
+class Ropsten(Etherscan):
+    """Ropsten Etherscan"""
+
+    NAME = "Ropsten"
+    PROJECT_URL = "https://ropsten.etherscan.io"
+    TYPE = Type.ETHERSCAN
+
+
+class Kovan(Etherscan):
+    """Kovan Etherscan"""
+
+    NAME = "Kovan"
+    PROJECT_URL = "https://kovan.etherscan.io"
+    TYPE = Type.ETHERSCAN
+
+
+class Rinkeby(Etherscan):
+    """Rinkeby Etherscan"""
+
+    NAME = "Rinkeby"
+    PROJECT_URL = "https://rinkeby.etherscan.io"
+    TYPE = Type.ETHERSCAN
+
+
+class Goerli(Etherscan):
+    """Goerli Etherscan"""
+
+    NAME = "Goerli"
+    PROJECT_URL = "https://goerli.etherscan.io"
+    TYPE = Type.ETHERSCAN
+
+
+class Tobalaba(Etherscan):
+    """Tobalaba Etherscan"""
+
+    NAME = "Tobalaba"
+    PROJECT_URL = "https://tobalaba.etherscan.io"
+    TYPE = Type.ETHERSCAN
+
+
+class Binance(Etherscan):
+    """Binance Etherscan"""
+
+    NAME = "Binance Smart Chain"
+    PROJECT_URL = "https://bscscan.com"
+    TYPE = Type.ETHERSCAN
+
+
+class BinanceTestnet(Etherscan):
+    """Binance Testnet Etherscan"""
+
+    NAME = "Binance Smart Chain Testnet"
+    PROJECT_URL = "https://testnet.bscscan.com"
+    TYPE = Type.ETHERSCAN
+
+
+class Arbitrum(Etherscan):
+    """Artbitrum Etherscan"""
+
+    NAME = "Arbitrum"
+    PROJECT_URL = "https://arbiscan.io"
+    TYPE = Type.ETHERSCAN
+
+
+class ArbitrumTestnet(Etherscan):
+    """Artbitrum Testnet Etherscan"""
+
+    NAME = "Arbitrum Testnet"
+    PROJECT_URL = "https://testnet.arbiscan.io"
+    TYPE = Type.ETHERSCAN
+
+
+class Polygon(Etherscan):
+    """Polygon Etherscan"""
+
+    NAME = "Polygon"
+    PROJECT_URL = "https://polygonscan.com"
+    TYPE = Type.ETHERSCAN
+
+
+class Avalanche(Etherscan):
+    """Avalanche Etherscan"""
+
+    NAME = "Avalanche"
+    PROJECT_URL = "https://snowtrace.io"
+    TYPE = Type.ETHERSCAN
+
+
+class AvalancheTestnet(Etherscan):
+    """Avalanche Testnet Etherscan"""
+
+    NAME = "Avalanche Testnet"
+    PROJECT_URL = "https://testnet.snowtrace.io"
+    TYPE = Type.ETHERSCAN
+
+
+class Fantom(Etherscan):
+    """Fantom Etherscan"""
+
+    NAME = "Fantom"
+    PROJECT_URL = "https://ftmscan.com"
+    TYPE = Type.ETHERSCAN
