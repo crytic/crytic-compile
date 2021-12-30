@@ -5,6 +5,11 @@ from typing import Optional
 
 LOGGER = logging.getLogger("CryticCompile")
 
+
+class UnsupportedSolcVersion(Exception):
+    """The requested solc version cannot be installed by solc-select."""
+
+
 # pylint: disable=too-few-public-methods
 class CompilerVersion:
     """
@@ -37,16 +42,21 @@ class CompilerVersion:
         This function queries solc-select to see if the current compiler version is installed
         And if its not it will install it
 
-        Returns:
-
+        Raises:
+            UnsupportedSolcVersion: If the version requested cannot be automatically installed by solc-select.
         """
 
         # pylint: disable=import-outside-toplevel
         try:
             from solc_select import solc_select
 
-            if self.version not in solc_select.installed_versions():
+            if (
+                self.version not in solc_select.installed_versions()
+                and self.version in solc_select.get_available_versions()
+            ):
                 solc_select.install_artifacts([self.version])
+            else:
+                raise UnsupportedSolcVersion(f"{self.version} is not supported by solc-select")
 
         except ImportError:
             LOGGER.info(
