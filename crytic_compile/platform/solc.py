@@ -520,7 +520,10 @@ def _run_solc(
         # pylint: disable=raise-missing-from
         raise InvalidCompilation(error)
     stdout_, stderr_ = process.communicate()
-    stdout, stderr = (stdout_.decode(), stderr_.decode())  # convert bytestrings to unicode strings
+    stdout, stderr = (
+        stdout_.decode(encoding="utf-8", errors="ignore"),
+        stderr_.decode(encoding="utf-8", errors="ignore"),
+    )  # convert bytestrings to unicode strings
 
     if stderr and (not solc_disable_warnings):
         LOGGER.info("Compilation warnings/errors on %s:\n%s", filename, stderr)
