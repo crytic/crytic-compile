@@ -45,21 +45,21 @@ class AbstractPlatform(metaclass=abc.ABCMeta):
         """
         if not self.NAME:
             raise IncorrectPlatformInitialization(
-                "NAME is not initialized {}".format(self.__class__.__name__)
+                f"NAME is not initialized {self.__class__.__name__}"
             )
 
         if not self.PROJECT_URL:
             raise IncorrectPlatformInitialization(
-                "PROJECT_URL is not initialized {}".format(self.__class__.__name__)
+                f"PROJECT_URL is not initialized {self.__class__.__name__}"
             )
 
         if self.TYPE == Type.NOT_IMPLEMENTED:
             raise IncorrectPlatformInitialization(
-                "TYPE is not initialized {}".format(self.__class__.__name__)
+                f"TYPE is not initialized {self.__class__.__name__}"
             )
 
         self._target: str = target
-        self._cached_dependencies: Dict[str, bool] = dict()
+        self._cached_dependencies: Dict[str, bool] = {}
 
     # region Properties.
     ###################################################################################

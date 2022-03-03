@@ -60,7 +60,7 @@ class Dapp(AbstractPlatform):
 
         optimized = False
 
-        with open(os.path.join(directory, "dapp.sol.json")) as file_desc:
+        with open(os.path.join(directory, "dapp.sol.json"), "r", encoding="utf8") as file_desc:
             targets_json = json.load(file_desc)
 
             version: Optional[str] = None

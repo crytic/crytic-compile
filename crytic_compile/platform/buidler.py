@@ -228,10 +228,10 @@ def _get_version_from_config(builder_directory: Path) -> Tuple[str, str, bool]:
         path_config = Path(builder_directory, "last-vyper-config.json")
         if not path_config.exists():
             raise InvalidCompilation(f"{path_config} not found")
-        with open(path_config) as config_f:
+        with open(path_config, "r", encoding="utf8") as config_f:
             version = config_f.read()
             return "vyper", version, False
-    with open(path_config) as config_f:
+    with open(path_config, "r", encoding="utf8") as config_f:
         config = json.load(config_f)
 
     version = config["solc"]["version"]

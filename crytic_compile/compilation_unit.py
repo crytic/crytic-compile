@@ -618,7 +618,7 @@ class CompilationUnit:
                 if library_found in libraries:
                     bytecode = re.sub(
                         re.escape(library_found),
-                        "{:040x}".format(int(libraries[library_found])),
+                        f"{libraries[library_found]:0>40x}",
                         bytecode,
                     )
         return bytecode

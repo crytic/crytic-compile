@@ -234,7 +234,7 @@ class Etherscan(AbstractPlatform):
             etherscan_bytecode_url += f"&apikey={bscan_api_key}"
 
         source_code: str = ""
-        result: Dict[str, Union[bool, str, int]] = dict()
+        result: Dict[str, Union[bool, str, int]] = {}
         contract_name: str = ""
 
         if not only_bytecode:

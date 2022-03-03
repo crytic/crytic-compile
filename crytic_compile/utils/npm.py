@@ -30,7 +30,7 @@ def get_package_name(target_txt: Union[str, "SolcStandardJson"]) -> Optional[str
         if target.is_dir():
             package = Path(target, "package.json")
             if package.exists():
-                with open(package) as file_desc:
+                with open(package, "r", encoding="utf8") as file_desc:
                     try:
                         package_dict: Dict[str, str] = json.load(file_desc)
                         return package_dict.get("name", None)

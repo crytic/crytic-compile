@@ -91,13 +91,13 @@ class CryticCompile:
         # This is not memory optimized, but allow an offset lookup in O(1)
         # Because we frequently do this lookup in Slither during the AST parsing
         # We decided to favor the running time versus memory
-        self._cached_offset_to_line: Dict[Filename, Dict[int, Tuple[int, int]]] = dict()
+        self._cached_offset_to_line: Dict[Filename, Dict[int, Tuple[int, int]]] = {}
         # Lines are indexed from 1
         self._cached_line_to_offset: Dict[Filename, Dict[int, int]] = defaultdict(dict)
 
         # Return the line from the line number
         # Note: line 1 is at index 0
-        self._cached_line_to_code: Dict[Filename, List[bytes]] = dict()
+        self._cached_line_to_code: Dict[Filename, List[bytes]] = {}
 
         self._working_dir = Path.cwd()
 
@@ -259,7 +259,7 @@ class CryticCompile:
 
         source_code = self._cached_line_to_code[file]
         acc = 0
-        lines_delimiters: Dict[int, Tuple[int, int]] = dict()
+        lines_delimiters: Dict[int, Tuple[int, int]] = {}
         for line_number, x in enumerate(source_code):
             self._cached_line_to_offset[file][line_number + 1] = acc
 
@@ -630,7 +630,7 @@ def compile_all(target: str, **kwargs: str) -> List[CryticCompile]:
             compilations = load_from_zip(target)
         elif target.endswith(".zip.base64"):
             with tempfile.NamedTemporaryFile() as tmp:
-                with open(target) as target_file:
+                with open(target, encoding="base64") as target_file:
                     tmp.write(base64.b64decode(target_file.read()))
                     compilations = load_from_zip(tmp.name)
         else:
