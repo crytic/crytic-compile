@@ -169,8 +169,8 @@ class Waffle(AbstractPlatform):
         if not os.path.exists(combined_path):
             raise InvalidCompilation("`Combined-Json.json` not found")
 
-        with open(combined_path, "r", encoding="utf8") as file_desc:
-            target_all = json.load(file_desc)
+        with open(combined_path, encoding="utf8") as f:
+            target_all = json.load(f)
 
         optimized = None
 
