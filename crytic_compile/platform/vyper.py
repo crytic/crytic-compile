@@ -140,9 +140,7 @@ def _run_vyper(
         Dict: Vyper json compilation artifact
     """
     if not os.path.isfile(filename):
-        raise InvalidCompilation(
-            "{} does not exist (are you in the correct directory?)".format(filename)
-        )
+        raise InvalidCompilation(f"{filename} does not exist (are you in the correct directory?)")
 
     cmd = [vyper, filename, "-f", "combined_json"]
 
@@ -181,9 +179,7 @@ def _get_vyper_ast(
         Dict: [description]
     """
     if not os.path.isfile(filename):
-        raise InvalidCompilation(
-            "{} does not exist (are you in the correct directory?)".format(filename)
-        )
+        raise InvalidCompilation(f"{filename} does not exist (are you in the correct directory?)")
 
     cmd = [vyper, filename, "-f", "ast"]
 

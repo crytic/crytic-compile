@@ -31,7 +31,7 @@ LOGGER = logging.getLogger("CryticCompile")
 
 
 def _build_contract_data(compilation_unit: "CompilationUnit") -> Dict:
-    contracts = dict()
+    contracts = {}
 
     for filename, contract_names in compilation_unit.filename_to_contracts.items():
         for contract_name in contract_names:
@@ -376,6 +376,7 @@ def get_version(solc: str, env: Optional[Dict[str, str]]) -> str:
                 raise InvalidCompilation(f"Solidity version not found: {stdout}")
             return version[0]
     except OSError as error:
+        print("get versions")
         # pylint: disable=raise-missing-from
         raise InvalidCompilation(error)
 
@@ -460,9 +461,7 @@ def _run_solc(
     if not os.path.isfile(filename) and (
         not working_dir or not os.path.isfile(os.path.join(str(working_dir), filename))
     ):
-        raise InvalidCompilation(
-            "{} does not exist (are you in the correct directory?)".format(filename)
-        )
+        raise InvalidCompilation(f"{filename} does not exist (are you in the correct directory?)")
 
     if not filename.endswith(".sol"):
         raise InvalidCompilation("Incorrect file format")
@@ -516,6 +515,7 @@ def _run_solc(
             process = subprocess.Popen(
                 cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **additional_kwargs
             )
+        print(cmd)
     except OSError as error:
         # pylint: disable=raise-missing-from
         raise InvalidCompilation(error)

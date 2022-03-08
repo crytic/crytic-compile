@@ -61,7 +61,7 @@ class Waffle(AbstractPlatform):
         # Default behaviour (without any config_file)
         build_directory = os.path.join("build")
         compiler = "native"
-        config: Dict = dict()
+        config: Dict = {}
 
         config_file = kwargs.get("waffle_config_file", "waffle.json")
 
@@ -169,8 +169,8 @@ class Waffle(AbstractPlatform):
         if not os.path.exists(combined_path):
             raise InvalidCompilation("`Combined-Json.json` not found")
 
-        with open(combined_path, "r") as file_desc:
-            target_all = json.load(file_desc)
+        with open(combined_path, encoding="utf8") as f:
+            target_all = json.load(f)
 
         optimized = None
 
@@ -286,7 +286,11 @@ def _load_config(config_file: str) -> Dict:
     Returns:
         Dict: [description]
     """
-    with open(config_file, "r") as file_desc:
+    with open(
+        config_file,
+        "r",
+        encoding="utf8",
+    ) as file_desc:
         content = file_desc.read()
 
     if "module.exports" in content:
