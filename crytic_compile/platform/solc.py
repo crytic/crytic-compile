@@ -489,7 +489,7 @@ def _run_solc(
         # split() removes the delimiter, so we add it again
         solc_args_ = [("--" + x).split(" ", 1) for x in solc_args if x]
         # Flat the list of list
-        solc_args = [item for sublist in solc_args_ for item in sublist if item]
+        solc_args = [item.strip() for sublist in solc_args_ for item in sublist if item]
         cmd += solc_args
 
     additional_kwargs: Dict = {"cwd": working_dir} if working_dir else {}
