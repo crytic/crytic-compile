@@ -7,6 +7,8 @@ import logging
 import os
 import re
 import urllib.request
+import glob
+import shutil
 from json.decoder import JSONDecodeError
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, List, Union, Tuple, Optional
@@ -330,6 +332,8 @@ class Etherscan(AbstractPlatform):
 
         solc_standard_json.standalone_compile(filenames, compilation_unit, working_dir=working_dir)
 
+        _remove_unused_contracts(compilation_unit, export_dir)
+
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:
         """Check if the target is a etherscan project
@@ -390,3 +394,91 @@ def _relative_to_short(relative: Path) -> Path:
         Path: Translated path
     """
     return relative
+
+
+def _remove_unused_contracts(compilation_unit: CompilationUnit, export_dir: str) -> None:
+    """
+    Removes unused contracts from the compilation unit and file system
+
+    Args:
+        compilation_unit (CompilationUnit): compilation unit to populate
+        export_dir (str): export dir
+
+    Returns:
+
+    """
+    if len(list(compilation_unit.asts.keys())) == 1:
+        # there is only 1 file
+        return
+
+    # for etherscan this will be the value the etherscan api returns in 'ContractName'
+    root_contract_name = compilation_unit.unique_id
+
+    # find the root file path by it's name
+    # and also get the base path used by all paths (the keys under 'asts')
+    root_file_path = None
+    base_path = None
+    for file_path, file_ast in compilation_unit.asts.items():
+        if root_file_path is not None: # already found target contract
+            break
+        for node in file_ast['nodes']:
+            if node['nodeType'] == 'ContractDefinition' and node['name'] == root_contract_name:
+                root_file_path = file_path
+                base_path = file_path.replace(file_ast['absolutePath'], '')
+                break
+
+    if root_file_path is None:
+        # we could not find a contract with that name in any of the files
+        return
+
+    # Starting with the root contract, fetch all dependencies (and their dependencies, etc.)
+    files_to_include = []
+    files_to_check = [root_file_path]
+    while any(files_to_check):
+        target_file_path = files_to_check.pop()
+        for node in compilation_unit.asts[target_file_path]['nodes']:
+            if node['nodeType'] == 'ImportDirective':
+                import_path = os.path.join(base_path, node['absolutePath'])
+                if import_path not in files_to_check and import_path not in files_to_include:
+                    files_to_check.append(import_path)
+        files_to_include.append(target_file_path)
+
+    if len(list(compilation_unit.asts.keys())) == len(files_to_include):
+        # all of the files need to be included
+        return
+
+    # Remove all of the unused files from the compilation unit
+    included_contractnames = set()
+    for target_file_path in files_to_include:
+        for node in compilation_unit.asts[target_file_path]['nodes']:
+            if node['nodeType'] == 'ContractDefinition':
+                included_contractnames.add(node['name'])
+
+    for contractname in list(compilation_unit.contracts_names):
+        if contractname not in included_contractnames:
+            compilation_unit.contracts_names.remove(contractname)
+            del compilation_unit.abis[contractname]
+            del compilation_unit.natspec[contractname]
+            del compilation_unit.bytecodes_init[contractname]
+            del compilation_unit.bytecodes_runtime[contractname]
+            del compilation_unit.srcmaps_init[contractname]
+            del compilation_unit.srcmaps_runtime[contractname]
+
+    for contract_filename in list(compilation_unit.filename_to_contracts.keys()):
+        if contract_filename.absolute not in files_to_include:
+            del compilation_unit.filename_to_contracts[contract_filename]
+
+    for fileobj in list(compilation_unit.crytic_compile.filenames):
+        if fileobj.absolute not in files_to_include:
+            compilation_unit.crytic_compile.filenames.remove(fileobj)
+            compilation_unit.filenames.remove(fileobj)
+            del compilation_unit.asts[fileobj.absolute]
+
+    # remove all unused files
+    for filename in glob.iglob(os.path.join(export_dir, '**/**'), recursive=True):
+        if os.path.isfile(filename) and filename not in files_to_include:
+            os.remove(filename)
+    # remove all folders which are now empty
+    for filename in glob.iglob(os.path.join(export_dir, '**/**'), recursive=True):
+        if os.path.isdir(filename) and len(os.listdir(filename)) == 0:
+            shutil.rmtree(filename)
