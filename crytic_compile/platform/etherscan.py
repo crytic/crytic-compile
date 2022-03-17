@@ -415,7 +415,7 @@ def _remove_unused_contracts(compilation_unit: CompilationUnit, export_dir: str)
     # for etherscan this will be the value the etherscan api returns in 'ContractName'
     root_contract_name = compilation_unit.unique_id
 
-    # find the root file path by it's name
+    # find the root file path according to a contract with the correct name being defined in it
     # and also get the base path used by all paths (the keys under 'asts')
     root_file_path = None
     base_path = ""
