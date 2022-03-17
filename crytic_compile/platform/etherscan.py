@@ -396,6 +396,7 @@ def _relative_to_short(relative: Path) -> Path:
     return relative
 
 
+# pylint: disable=too-many-locals,too-many-branches
 def _remove_unused_contracts(compilation_unit: CompilationUnit, export_dir: str) -> None:
     """
     Removes unused contracts from the compilation unit and file system
@@ -417,14 +418,14 @@ def _remove_unused_contracts(compilation_unit: CompilationUnit, export_dir: str)
     # find the root file path by it's name
     # and also get the base path used by all paths (the keys under 'asts')
     root_file_path = None
-    base_path = None
+    base_path = ""
     for file_path, file_ast in compilation_unit.asts.items():
-        if root_file_path is not None: # already found target contract
+        if root_file_path is not None:  # already found target contract
             break
-        for node in file_ast['nodes']:
-            if node['nodeType'] == 'ContractDefinition' and node['name'] == root_contract_name:
+        for node in file_ast["nodes"]:
+            if node["nodeType"] == "ContractDefinition" and node["name"] == root_contract_name:
                 root_file_path = file_path
-                base_path = file_path.replace(file_ast['absolutePath'], '')
+                base_path = file_path.replace(file_ast["absolutePath"], "")
                 break
 
     if root_file_path is None:
@@ -436,9 +437,9 @@ def _remove_unused_contracts(compilation_unit: CompilationUnit, export_dir: str)
     files_to_check = [root_file_path]
     while any(files_to_check):
         target_file_path = files_to_check.pop()
-        for node in compilation_unit.asts[target_file_path]['nodes']:
-            if node['nodeType'] == 'ImportDirective':
-                import_path = os.path.join(base_path, node['absolutePath'])
+        for node in compilation_unit.asts[target_file_path]["nodes"]:
+            if node["nodeType"] == "ImportDirective":
+                import_path = os.path.join(base_path, node["absolutePath"])
                 if import_path not in files_to_check and import_path not in files_to_include:
                     files_to_check.append(import_path)
         files_to_include.append(target_file_path)
@@ -450,9 +451,9 @@ def _remove_unused_contracts(compilation_unit: CompilationUnit, export_dir: str)
     # Remove all of the unused files from the compilation unit
     included_contractnames = set()
     for target_file_path in files_to_include:
-        for node in compilation_unit.asts[target_file_path]['nodes']:
-            if node['nodeType'] == 'ContractDefinition':
-                included_contractnames.add(node['name'])
+        for node in compilation_unit.asts[target_file_path]["nodes"]:
+            if node["nodeType"] == "ContractDefinition":
+                included_contractnames.add(node["name"])
 
     for contractname in list(compilation_unit.contracts_names):
         if contractname not in included_contractnames:
@@ -475,10 +476,10 @@ def _remove_unused_contracts(compilation_unit: CompilationUnit, export_dir: str)
             del compilation_unit.asts[fileobj.absolute]
 
     # remove all unused files
-    for filename in glob.iglob(os.path.join(export_dir, '**/**'), recursive=True):
+    for filename in glob.iglob(os.path.join(export_dir, "**/**"), recursive=True):
         if os.path.isfile(filename) and filename not in files_to_include:
             os.remove(filename)
     # remove all folders which are now empty
-    for filename in glob.iglob(os.path.join(export_dir, '**/**'), recursive=True):
+    for filename in glob.iglob(os.path.join(export_dir, "**/**"), recursive=True):
         if os.path.isdir(filename) and len(os.listdir(filename)) == 0:
             shutil.rmtree(filename)
