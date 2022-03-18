@@ -305,6 +305,14 @@ def _init_etherscan(parser: ArgumentParser) -> None:
     )
 
     group_etherscan.add_argument(
+        "--etherscan-target-only",
+        help="Etherscan only include target contract.",
+        action="store_true",
+        dest="etherscan_target_only",
+        default=DEFAULTS_FLAG_IN_CONFIG["etherscan_target_only"],
+    )
+
+    group_etherscan.add_argument(
         "--etherscan-apikey",
         help="Etherscan API key.",
         action="store",

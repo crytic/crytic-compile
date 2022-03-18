@@ -7,8 +7,6 @@ import logging
 import os
 import re
 import urllib.request
-import glob
-import shutil
 from json.decoder import JSONDecodeError
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, List, Union, Tuple, Optional
@@ -204,6 +202,8 @@ class Etherscan(AbstractPlatform):
         only_source = kwargs.get("etherscan_only_source_code", False)
         only_bytecode = kwargs.get("etherscan_only_bytecode", False)
 
+        target_only = kwargs.get("etherscan_target_only", False)
+
         etherscan_api_key = kwargs.get("etherscan_api_key", None)
         arbiscan_api_key = kwargs.get("arbiscan_api_key", None)
         polygonscan_api_key = kwargs.get("polygonscan_api_key", None)
@@ -332,7 +332,8 @@ class Etherscan(AbstractPlatform):
 
         solc_standard_json.standalone_compile(filenames, compilation_unit, working_dir=working_dir)
 
-        _remove_unused_contracts(compilation_unit, export_dir)
+        if target_only:
+            _remove_unused_contracts(compilation_unit)
 
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:
@@ -397,13 +398,12 @@ def _relative_to_short(relative: Path) -> Path:
 
 
 # pylint: disable=too-many-locals,too-many-branches
-def _remove_unused_contracts(compilation_unit: CompilationUnit, export_dir: str) -> None:
+def _remove_unused_contracts(compilation_unit: CompilationUnit) -> None:
     """
-    Removes unused contracts from the compilation unit and file system
+    Removes unused contracts from the compilation unit
 
     Args:
         compilation_unit (CompilationUnit): compilation unit to populate
-        export_dir (str): export dir
 
     Returns:
 
@@ -474,12 +474,3 @@ def _remove_unused_contracts(compilation_unit: CompilationUnit, export_dir: str)
             compilation_unit.crytic_compile.filenames.remove(fileobj)
             compilation_unit.filenames.remove(fileobj)
             del compilation_unit.asts[fileobj.absolute]
-
-    # remove all unused files
-    for filename in glob.iglob(os.path.join(export_dir, "**/**"), recursive=True):
-        if os.path.isfile(filename) and filename not in files_to_include:
-            os.remove(filename)
-    # remove all folders which are now empty
-    for filename in glob.iglob(os.path.join(export_dir, "**/**"), recursive=True):
-        if os.path.isdir(filename) and len(os.listdir(filename)) == 0:
-            shutil.rmtree(filename)

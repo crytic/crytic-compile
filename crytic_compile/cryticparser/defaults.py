@@ -30,6 +30,7 @@ DEFAULTS_FLAG_IN_CONFIG = {
     "etherlime_compile_arguments": None,
     "etherscan_only_source_code": False,
     "etherscan_only_bytecode": False,
+    "etherscan_target_only": False,
     "etherscan_api_key": None,
     "etherscan_export_directory": "etherscan-contracts",
     "waffle_ignore_compile": False,
