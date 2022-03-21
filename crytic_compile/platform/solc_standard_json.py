@@ -4,6 +4,7 @@ Handle compilation through the standard solc json format
 import json
 import logging
 import os
+import shutil
 import subprocess
 from typing import TYPE_CHECKING, Dict, List, Optional, Union, Any
 
@@ -146,6 +147,7 @@ def run_solc_standard_json(
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             env=env,
+            executable=shutil.which(cmd[0]),
             **additional_kwargs,
         ) as process:
 

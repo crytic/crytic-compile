@@ -7,6 +7,7 @@ import json
 import logging
 import os
 import re
+import shutil
 import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional, Any
@@ -48,7 +49,11 @@ def _run_etherlime(target: str, npx_disable: bool, compile_arguments: Optional[s
 
     try:
         with subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=target
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=target,
+            executable=shutil.which(cmd[0]),
         ) as process:
             stdout_bytes, stderr_bytes = process.communicate()
             stdout, stderr = (

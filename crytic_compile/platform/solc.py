@@ -5,6 +5,7 @@ import json
 import logging
 import os
 import re
+import shutil
 import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, List, Optional, Union, Any
@@ -367,7 +368,11 @@ def get_version(solc: str, env: Optional[Dict[str, str]]) -> str:
     cmd = [solc, "--version"]
     try:
         with subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=env,
+            executable=shutil.which(cmd[0]),
         ) as process:
             stdout_bytes, _ = process.communicate()
             stdout = stdout_bytes.decode()  # convert bytestrings to unicode strings
@@ -509,11 +514,20 @@ def _run_solc(
         # pylint: disable=consider-using-with
         if env:
             process = subprocess.Popen(
-                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env, **additional_kwargs
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                executable=shutil.which(cmd[0]),
+                env=env,
+                **additional_kwargs,
             )
         else:
             process = subprocess.Popen(
-                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **additional_kwargs
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                executable=shutil.which(cmd[0]),
+                **additional_kwargs,
             )
         print(cmd)
     except OSError as error:
