@@ -381,7 +381,6 @@ def get_version(solc: str, env: Optional[Dict[str, str]]) -> str:
                 raise InvalidCompilation(f"Solidity version not found: {stdout}")
             return version[0]
     except OSError as error:
-        print("get versions")
         # pylint: disable=raise-missing-from
         raise InvalidCompilation(error)
 
@@ -529,7 +528,6 @@ def _run_solc(
                 executable=shutil.which(cmd[0]),
                 **additional_kwargs,
             )
-        print(cmd)
     except OSError as error:
         # pylint: disable=raise-missing-from
         raise InvalidCompilation(error)
