@@ -38,6 +38,6 @@ def get_package_name(target_txt: Union[str, "SolcStandardJson"]) -> Optional[str
                         return None
         return None
 
-    except OSError:
+    except (OSError, ValueError):
         # Can happen if the target is a very large string, is_dir will throw an exception
         return None
