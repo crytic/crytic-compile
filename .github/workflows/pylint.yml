@@ -44,4 +44,3 @@ jobs:
           VALIDATE_PYTHON: true
           VALIDATE_PYTHON_PYLINT: true
           PYTHON_PYLINT_CONFIG_FILE: pyproject.toml
-

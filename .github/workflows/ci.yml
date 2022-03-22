@@ -1,3 +1,4 @@
+---
 name: CI
 
 on:
@@ -8,7 +9,7 @@ on:
   pull_request:
   schedule:
     # run CI every day even if no PRs/merges occur
-    - cron:  '0 12 * * *'
+    - cron: '0 12 * * *'
 
 jobs:
   tests:
@@ -34,7 +35,7 @@ jobs:
       id: node
       shell: bash
       run: |
-        if [ ${{ matrix.type }} = "etherlime" ]; then
+        if [ ${{ matrix.type }} = etherlime ]; then
           echo '::set-output name=version::10.17.0'
         else
           echo '::set-output name=version::lts/*'
