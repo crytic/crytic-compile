@@ -2,12 +2,17 @@
 
 ### Test dapp integration
 
+DIR=$(mktemp -d)
+cd "$DIR" || exit 255
+
 # The dapp init process makes a temporary local git repo and needs certain values to be set
 git config --global user.email "ci@trailofbits.com"
 git config --global user.name "CI User"
 
-curl -L https://nixos.org/nix/install | sh
-curl https://dapp.tools/install | sh
+which nix-env || exit 255
+
+git clone --recursive https://github.com/dapphub/dapptools "$HOME/.dapp/dapptools"
+nix-env -f "$HOME/.dapp/dapptools" -iA dapp seth solc hevm ethsign
 
 dapp init
 
