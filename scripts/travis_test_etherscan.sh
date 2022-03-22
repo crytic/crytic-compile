@@ -2,8 +2,8 @@
 
 ### Test etherscan integration
 
-mkdir /tmp/etherscan
-cd /tmp/etherscan  || exit 255
+DIR=$(mktemp -d)
+cd "$DIR" || exit 255
 
 solc-select use 0.4.25 --always-install
 
