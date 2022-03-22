@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-### Test dapp integration
+### Test hardhat integration
 
 cd tests/hardhat || exit 255
 

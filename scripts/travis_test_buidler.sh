@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-### Test dapp integration
+### Test buidler integration
 
 cd tests/buidler || exit 255
 

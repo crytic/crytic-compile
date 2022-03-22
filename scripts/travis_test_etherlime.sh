@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-### Test truffle integration
+### Test etherlime integration
 
 mkdir /tmp/etherlime
 cd /tmp/etherlime || exit 255
