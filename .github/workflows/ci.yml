@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        type: ["solc", "truffle", "embark", "etherlime", "brownie", "waffle", "buidler", "hardhat"]
+        type: ["solc", "truffle", "embark", "etherlime", "brownie", "waffle", "buidler", "hardhat", "foundry"]
     steps:
     - uses: actions/checkout@v1
     - name: Set up Python 3.6
@@ -32,4 +32,4 @@ jobs:
         TEST_TYPE: ${{ matrix.type }}
         GITHUB_ETHERSCAN: ${{ secrets.GITHUB_ETHERSCAN }}
       run: |
-        bash "scripts/travis_test_${TEST_TYPE}.sh"
+        bash "scripts/ci_test_${TEST_TYPE}.sh"

@@ -439,3 +439,27 @@ def _init_hardhat(parser: ArgumentParser) -> None:
         dest="hardhat_artifacts_directory",
         default=DEFAULTS_FLAG_IN_CONFIG["hardhat_artifacts_directory"],
     )
+
+
+def _init_foundry(parser: ArgumentParser) -> None:
+    """Init foundry arguments
+
+    Args:
+        parser (ArgumentParser): argparser where the cli flags are added
+    """
+    group_hardhat = parser.add_argument_group("foundry options")
+    group_hardhat.add_argument(
+        "--foundry-ignore-compile",
+        help="Do not run foundry compile",
+        action="store_true",
+        dest="foundry_ignore_compile",
+        default=DEFAULTS_FLAG_IN_CONFIG["foundry_ignore_compile"],
+    )
+
+    group_hardhat.add_argument(
+        "--foundry-out-directory",
+        help="Use an alternative out directory (default: out)",
+        action="store",
+        dest="foundry_out_directory",
+        default=DEFAULTS_FLAG_IN_CONFIG["foundry_out_directory"],
+    )
