@@ -167,7 +167,11 @@ class Truffle(AbstractPlatform):
                 _write_config(Path(self._target), config_used, overwritten_version)
 
             with subprocess.Popen(
-                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self._target
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                cwd=self._target,
+                executable=shutil.which(cmd[0]),
             ) as process:
 
                 stdout_bytes, stderr_bytes = process.communicate()
@@ -368,7 +372,11 @@ def _get_version(truffle_call: List[str], cwd: str) -> Tuple[str, str]:
     cmd = truffle_call + ["version"]
     try:
         with subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=cwd,
+            executable=shutil.which(cmd[0]),
         ) as process:
             sstdout, _ = process.communicate()
             ssstdout = sstdout.decode()  # convert bytestrings to unicode strings

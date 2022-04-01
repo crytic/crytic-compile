@@ -3,6 +3,7 @@ Vyper platform
 """
 import json
 import os
+import shutil
 import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, List, Optional
@@ -147,7 +148,12 @@ def _run_vyper(
     additional_kwargs: Dict = {"cwd": working_dir} if working_dir else {}
     try:
         with subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env, **additional_kwargs
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=env,
+            executable=shutil.which(cmd[0]),
+            **additional_kwargs,
         ) as process:
             stdout, stderr = process.communicate()
             res = stdout.split(b"\n")
@@ -186,7 +192,12 @@ def _get_vyper_ast(
     additional_kwargs: Dict = {"cwd": working_dir} if working_dir else {}
     try:
         with subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env, **additional_kwargs
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=env,
+            executable=shutil.which(cmd[0]),
+            **additional_kwargs,
         ) as process:
             stdout, stderr = process.communicate()
             res = stdout.split(b"\n")

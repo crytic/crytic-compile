@@ -5,6 +5,7 @@ Embark platform. https://github.com/embark-framework/embark
 import json
 import logging
 import os
+import shutil
 import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING, List
@@ -64,7 +65,9 @@ class Embark(AbstractPlatform):
             if write_embark_json:
                 try:
                     with subprocess.Popen(
-                        ["npm", "install", plugin_name], cwd=self._target
+                        ["npm", "install", plugin_name],
+                        cwd=self._target,
+                        executable=shutil.which("npm"),
                     ) as process:
                         _, stderr = process.communicate()
                         with open(
@@ -91,7 +94,11 @@ class Embark(AbstractPlatform):
                     cmd = ["npx"] + cmd
                 # pylint: disable=consider-using-with
                 process = subprocess.Popen(
-                    cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self._target
+                    cmd,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    cwd=self._target,
+                    executable=shutil.which(cmd[0]),
                 )
             except OSError as error:
                 # pylint: disable=raise-missing-from
