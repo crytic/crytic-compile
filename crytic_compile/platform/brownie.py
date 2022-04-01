@@ -4,6 +4,7 @@ Brownie platform. https://github.com/iamdefinitelyahuman/brownie
 import json
 import logging
 import os
+import shutil
 import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, List
@@ -54,7 +55,11 @@ class Brownie(AbstractPlatform):
             cmd = base_cmd + ["compile"]
             try:
                 with subprocess.Popen(
-                    cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self._target
+                    cmd,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    cwd=self._target,
+                    executable=shutil.which(cmd[0]),
                 ) as process:
                     stdout_bytes, stderr_bytes = process.communicate()
                     stdout, stderr = (
