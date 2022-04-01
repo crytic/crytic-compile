@@ -6,7 +6,7 @@
 cd /tmp || exit 255
 
 curl -L https://foundry.paradigm.xyz | bash
-source /home/runner/.bashrc
+export PATH=$PATH:/home/runner/.foundry/bin
 foundryup
 
 forge init
