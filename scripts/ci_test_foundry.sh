@@ -9,6 +9,8 @@ curl -L https://foundry.paradigm.xyz | bash
 export PATH=$PATH:/home/runner/.foundry/bin
 foundryup
 
+mkdir forge_test
+cd forge_test || exit 255
 forge init
 
 crytic-compile .
