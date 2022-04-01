@@ -77,11 +77,16 @@ class Archive(AbstractPlatform):
         # pylint: disable=import-outside-toplevel
         from crytic_compile.crytic_compile import get_platforms
 
-        if isinstance(self._target, str) and os.path.isfile(self._target):
-            with open(self._target, encoding="utf8") as f_target:
-                loaded_json = json.load(f_target)
-        else:
+        try:
+            if isinstance(self._target, str) and os.path.isfile(self._target):
+                with open(self._target, encoding="utf8") as f_target:
+                    loaded_json = json.load(f_target)
+            else:
+                loaded_json = json.loads(self._target)
+        except (OSError, ValueError):
+            # Can happen if the target is a very large string, isfile will throw an exception
             loaded_json = json.loads(self._target)
+
         (underlying_type, unit_tests) = standard.load_from_compile(crytic_compile, loaded_json)
         underlying_type = TypePlatform(underlying_type)
         platforms: List[Type[AbstractPlatform]] = get_platforms()

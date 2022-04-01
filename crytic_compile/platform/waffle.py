@@ -6,6 +6,7 @@ import json
 import logging
 import os
 import re
+import shutil
 import subprocess
 import tempfile
 from pathlib import Path
@@ -151,7 +152,11 @@ class Waffle(AbstractPlatform):
 
                 try:
                     with subprocess.Popen(
-                        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=target
+                        cmd,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        cwd=target,
+                        executable=shutil.which(cmd[0]),
                     ) as process:
                         stdout, stderr = process.communicate()
                         if stdout:
@@ -323,7 +328,11 @@ def _get_version(compiler: str, cwd: str, config: Optional[Dict] = None) -> str:
         cmd = ["solc", "--version"]
         try:
             with subprocess.Popen(
-                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                cwd=cwd,
+                executable=shutil.which(cmd[0]),
             ) as process:
                 stdout_bytes, _ = process.communicate()
                 stdout_txt = stdout_bytes.decode()  # convert bytestrings to unicode strings
@@ -339,7 +348,11 @@ def _get_version(compiler: str, cwd: str, config: Optional[Dict] = None) -> str:
         cmd = ["solcjs", "--version"]
         try:
             with subprocess.Popen(
-                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                cwd=cwd,
+                executable=shutil.which(cmd[0]),
             ) as process:
                 stdout_bytes, _ = process.communicate()
                 stdout_txt = stdout_bytes.decode()  # convert bytestrings to unicode strings
