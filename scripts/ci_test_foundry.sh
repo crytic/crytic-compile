@@ -6,7 +6,7 @@
 cd /tmp || exit 255
 
 curl -L https://foundry.paradigm.xyz | bash
-source ~/.bash_profile
+source /home/runner/.bashrc
 foundryup
 
 forge init
@@ -14,6 +14,6 @@ forge init
 crytic-compile .
 if [ $? -ne 0 ]
 then
-    echo "hardhat test failed"
+    echo "foundry test failed"
     exit 255
 fi
