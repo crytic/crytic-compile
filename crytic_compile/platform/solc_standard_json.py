@@ -139,6 +139,7 @@ def run_solc_standard_json(
     if compiler_version.version:
         env["SOLC_VERSION"] = compiler_version.version
 
+    stderr = ""
     try:
 
         with subprocess.Popen(
