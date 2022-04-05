@@ -132,14 +132,14 @@ class Truffle(AbstractPlatform):
                             version = package["devDependencies"]["truffle"]
                             if version.startswith("^"):
                                 version = version[1:]
-                            truffle_version = "truffle@{}".format(version)
+                            truffle_version = f"truffle@{version}"
                             base_cmd = ["npx", truffle_version]
                     if "dependencies" in package:
                         if "truffle" in package["dependencies"]:
                             version = package["dependencies"]["truffle"]
                             if version.startswith("^"):
                                 version = version[1:]
-                            truffle_version = "truffle@{}".format(version)
+                            truffle_version = f"truffle@{version}"
                             base_cmd = ["npx", truffle_version]
 
         if not truffle_ignore_compile:
@@ -167,7 +167,11 @@ class Truffle(AbstractPlatform):
                 _write_config(Path(self._target), config_used, overwritten_version)
 
             with subprocess.Popen(
-                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self._target
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                cwd=self._target,
+                executable=shutil.which(cmd[0]),
             ) as process:
 
                 stdout_bytes, stderr_bytes = process.communicate()
@@ -339,7 +343,7 @@ def _get_version_from_config(target: str) -> Optional[Tuple[str, str]]:
         config = Path(target, "truffle.js")
         if not config.exists():
             return None
-    with open(config) as config_f:
+    with open(config, "r", encoding="utf8") as config_f:
         config_buffer = config_f.read()
 
     # The config is a javascript file
@@ -368,7 +372,11 @@ def _get_version(truffle_call: List[str], cwd: str) -> Tuple[str, str]:
     cmd = truffle_call + ["version"]
     try:
         with subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=cwd,
+            executable=shutil.which(cmd[0]),
         ) as process:
             sstdout, _ = process.communicate()
             ssstdout = sstdout.decode()  # convert bytestrings to unicode strings
@@ -378,7 +386,7 @@ def _get_version(truffle_call: List[str], cwd: str) -> Tuple[str, str]:
             for line in stdout:
                 if "Solidity" in line:
                     if "native" in line:
-                        return solc.get_version("solc", dict()), "solc-native"
+                        return solc.get_version("solc", {}), "solc-native"
                     version = re.findall(r"\d+\.\d+\.\d+", line)[0]
                     compiler = re.findall(r"(solc[a-z\-]*)", line)
                     if len(compiler) > 0:
@@ -445,7 +453,7 @@ def _write_config(cwd: Path, original_config: Path, version: Optional[str]) -> N
       }}
     }}
     """
-    with open(Path(cwd, original_config), "w") as f:
+    with open(Path(cwd, original_config), "w", encoding="utf8") as f:
         f.write(txt)
 
 

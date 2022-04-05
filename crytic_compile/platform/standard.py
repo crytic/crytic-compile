@@ -213,9 +213,9 @@ def generate_standard_export(crytic_compile: "CryticCompile") -> Dict:
 
     compilation_units = {}
     for key, compilation_unit in crytic_compile.compilation_units.items():
-        contracts: Dict[str, Dict[str, Any]] = dict()
+        contracts: Dict[str, Dict[str, Any]] = {}
         for filename, contract_names in compilation_unit.filename_to_contracts.items():
-            contracts[filename.relative] = dict()
+            contracts[filename.relative] = {}
             for contract_name in contract_names:
                 libraries = compilation_unit.libraries_names_and_patterns(contract_name)
                 contracts[filename.relative][contract_name] = {
@@ -225,7 +225,7 @@ def generate_standard_export(crytic_compile: "CryticCompile") -> Dict:
                     "srcmap": ";".join(compilation_unit.srcmap_init(contract_name)),
                     "srcmap-runtime": ";".join(compilation_unit.srcmap_runtime(contract_name)),
                     "filenames": _convert_filename_to_dict(filename),
-                    "libraries": dict(libraries) if libraries else dict(),
+                    "libraries": dict(libraries) if libraries else {},
                     "is_dependency": crytic_compile.is_dependency(filename.absolute),
                     "userdoc": compilation_unit.natspec[contract_name].userdoc.export(),
                     "devdoc": compilation_unit.natspec[contract_name].devdoc.export(),
@@ -233,7 +233,7 @@ def generate_standard_export(crytic_compile: "CryticCompile") -> Dict:
 
         # Create our root object to contain the contracts and other information.
 
-        compiler: Dict = dict()
+        compiler: Dict = {}
         if compilation_unit.compiler_version:
             compiler = {
                 "compiler": compilation_unit.compiler_version.compiler,

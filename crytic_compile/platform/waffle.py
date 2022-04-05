@@ -6,6 +6,7 @@ import json
 import logging
 import os
 import re
+import shutil
 import subprocess
 import tempfile
 from pathlib import Path
@@ -61,7 +62,7 @@ class Waffle(AbstractPlatform):
         # Default behaviour (without any config_file)
         build_directory = os.path.join("build")
         compiler = "native"
-        config: Dict = dict()
+        config: Dict = {}
 
         config_file = kwargs.get("waffle_config_file", "waffle.json")
 
@@ -151,7 +152,11 @@ class Waffle(AbstractPlatform):
 
                 try:
                     with subprocess.Popen(
-                        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=target
+                        cmd,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        cwd=target,
+                        executable=shutil.which(cmd[0]),
                     ) as process:
                         stdout, stderr = process.communicate()
                         if stdout:
@@ -169,8 +174,8 @@ class Waffle(AbstractPlatform):
         if not os.path.exists(combined_path):
             raise InvalidCompilation("`Combined-Json.json` not found")
 
-        with open(combined_path, "r") as file_desc:
-            target_all = json.load(file_desc)
+        with open(combined_path, encoding="utf8") as f:
+            target_all = json.load(f)
 
         optimized = None
 
@@ -286,7 +291,11 @@ def _load_config(config_file: str) -> Dict:
     Returns:
         Dict: [description]
     """
-    with open(config_file, "r") as file_desc:
+    with open(
+        config_file,
+        "r",
+        encoding="utf8",
+    ) as file_desc:
         content = file_desc.read()
 
     if "module.exports" in content:
@@ -319,7 +328,11 @@ def _get_version(compiler: str, cwd: str, config: Optional[Dict] = None) -> str:
         cmd = ["solc", "--version"]
         try:
             with subprocess.Popen(
-                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                cwd=cwd,
+                executable=shutil.which(cmd[0]),
             ) as process:
                 stdout_bytes, _ = process.communicate()
                 stdout_txt = stdout_bytes.decode()  # convert bytestrings to unicode strings
@@ -335,7 +348,11 @@ def _get_version(compiler: str, cwd: str, config: Optional[Dict] = None) -> str:
         cmd = ["solcjs", "--version"]
         try:
             with subprocess.Popen(
-                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                cwd=cwd,
+                executable=shutil.which(cmd[0]),
             ) as process:
                 stdout_bytes, _ = process.communicate()
                 stdout_txt = stdout_bytes.decode()  # convert bytestrings to unicode strings

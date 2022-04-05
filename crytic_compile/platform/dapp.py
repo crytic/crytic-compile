@@ -7,6 +7,7 @@ import json
 import logging
 import os
 import re
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -60,7 +61,7 @@ class Dapp(AbstractPlatform):
 
         optimized = False
 
-        with open(os.path.join(directory, "dapp.sol.json")) as file_desc:
+        with open(os.path.join(directory, "dapp.sol.json"), "r", encoding="utf8") as file_desc:
             targets_json = json.load(file_desc)
 
             version: Optional[str] = None
@@ -176,7 +177,11 @@ def _run_dapp(target: str) -> None:
 
     try:
         with subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=target
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=target,
+            executable=shutil.which(cmd[0]),
         ) as process:
             _, _ = process.communicate()
     except OSError as error:

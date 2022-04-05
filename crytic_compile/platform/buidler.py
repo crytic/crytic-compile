@@ -4,6 +4,7 @@ Builder platform
 import json
 import logging
 import os
+import shutil
 import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Tuple
@@ -70,7 +71,11 @@ class Buidler(AbstractPlatform):
             )
 
             with subprocess.Popen(
-                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self._target
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                cwd=self._target,
+                executable=shutil.which(cmd[0]),
             ) as process:
 
                 stdout_bytes, stderr_bytes = process.communicate()
@@ -228,10 +233,10 @@ def _get_version_from_config(builder_directory: Path) -> Tuple[str, str, bool]:
         path_config = Path(builder_directory, "last-vyper-config.json")
         if not path_config.exists():
             raise InvalidCompilation(f"{path_config} not found")
-        with open(path_config) as config_f:
+        with open(path_config, "r", encoding="utf8") as config_f:
             version = config_f.read()
             return "vyper", version, False
-    with open(path_config) as config_f:
+    with open(path_config, "r", encoding="utf8") as config_f:
         config = json.load(config_f)
 
     version = config["solc"]["version"]

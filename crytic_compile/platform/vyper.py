@@ -3,6 +3,7 @@ Vyper platform
 """
 import json
 import os
+import shutil
 import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, List, Optional
@@ -140,16 +141,20 @@ def _run_vyper(
         Dict: Vyper json compilation artifact
     """
     if not os.path.isfile(filename):
-        raise InvalidCompilation(
-            "{} does not exist (are you in the correct directory?)".format(filename)
-        )
+        raise InvalidCompilation(f"{filename} does not exist (are you in the correct directory?)")
 
     cmd = [vyper, filename, "-f", "combined_json"]
 
     additional_kwargs: Dict = {"cwd": working_dir} if working_dir else {}
+    stderr = ""
     try:
         with subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env, **additional_kwargs
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=env,
+            executable=shutil.which(cmd[0]),
+            **additional_kwargs,
         ) as process:
             stdout, stderr = process.communicate()
             res = stdout.split(b"\n")
@@ -181,16 +186,20 @@ def _get_vyper_ast(
         Dict: [description]
     """
     if not os.path.isfile(filename):
-        raise InvalidCompilation(
-            "{} does not exist (are you in the correct directory?)".format(filename)
-        )
+        raise InvalidCompilation(f"{filename} does not exist (are you in the correct directory?)")
 
     cmd = [vyper, filename, "-f", "ast"]
 
     additional_kwargs: Dict = {"cwd": working_dir} if working_dir else {}
+    stderr = ""
     try:
         with subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env, **additional_kwargs
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=env,
+            executable=shutil.which(cmd[0]),
+            **additional_kwargs,
         ) as process:
             stdout, stderr = process.communicate()
             res = stdout.split(b"\n")

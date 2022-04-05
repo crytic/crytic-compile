@@ -135,5 +135,8 @@ def convert_filename(
     short = relative_to_short(short)
 
     return Filename(
-        absolute=str(absolute), relative=str(relative), short=str(short), used=used_filename
+        absolute=str(absolute),
+        relative=relative.as_posix(),
+        short=short.as_posix(),
+        used=used_filename,
     )

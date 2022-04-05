@@ -5,6 +5,7 @@ import json
 import logging
 import os
 import re
+import shutil
 import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, List, Optional, Union, Any
@@ -31,7 +32,7 @@ LOGGER = logging.getLogger("CryticCompile")
 
 
 def _build_contract_data(compilation_unit: "CompilationUnit") -> Dict:
-    contracts = dict()
+    contracts = {}
 
     for filename, contract_names in compilation_unit.filename_to_contracts.items():
         for contract_name in contract_names:
@@ -367,7 +368,11 @@ def get_version(solc: str, env: Optional[Dict[str, str]]) -> str:
     cmd = [solc, "--version"]
     try:
         with subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=env,
+            executable=shutil.which(cmd[0]),
         ) as process:
             stdout_bytes, _ = process.communicate()
             stdout = stdout_bytes.decode()  # convert bytestrings to unicode strings
@@ -460,9 +465,7 @@ def _run_solc(
     if not os.path.isfile(filename) and (
         not working_dir or not os.path.isfile(os.path.join(str(working_dir), filename))
     ):
-        raise InvalidCompilation(
-            "{} does not exist (are you in the correct directory?)".format(filename)
-        )
+        raise InvalidCompilation(f"{filename} does not exist (are you in the correct directory?)")
 
     if not filename.endswith(".sol"):
         raise InvalidCompilation("Incorrect file format")
@@ -490,7 +493,7 @@ def _run_solc(
         # split() removes the delimiter, so we add it again
         solc_args_ = [("--" + x).split(" ", 1) for x in solc_args if x]
         # Flat the list of list
-        solc_args = [item for sublist in solc_args_ for item in sublist if item]
+        solc_args = [item.strip() for sublist in solc_args_ for item in sublist if item]
         cmd += solc_args
 
     additional_kwargs: Dict = {"cwd": working_dir} if working_dir else {}
@@ -510,17 +513,29 @@ def _run_solc(
         # pylint: disable=consider-using-with
         if env:
             process = subprocess.Popen(
-                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env, **additional_kwargs
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                executable=shutil.which(cmd[0]),
+                env=env,
+                **additional_kwargs,
             )
         else:
             process = subprocess.Popen(
-                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **additional_kwargs
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                executable=shutil.which(cmd[0]),
+                **additional_kwargs,
             )
     except OSError as error:
         # pylint: disable=raise-missing-from
         raise InvalidCompilation(error)
     stdout_, stderr_ = process.communicate()
-    stdout, stderr = (stdout_.decode(), stderr_.decode())  # convert bytestrings to unicode strings
+    stdout, stderr = (
+        stdout_.decode(encoding="utf-8", errors="ignore"),
+        stderr_.decode(encoding="utf-8", errors="ignore"),
+    )  # convert bytestrings to unicode strings
 
     if stderr and (not solc_disable_warnings):
         LOGGER.info("Compilation warnings/errors on %s:\n%s", filename, stderr)

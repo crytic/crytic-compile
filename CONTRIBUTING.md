@@ -14,7 +14,7 @@ crytic-compile uses the pull request contribution model. Please make an account 
 
 Some pull request guidelines:
 
-- Work from the [`dev`](https://github.com/crytic/crytic-compile/tree/dev) branch. We performed extensive tests prior to merging anything to `master`, working from `dev` will allow us to merge your work faster.
+- Work from the [`dev`](https://github.com/crytic/crytic-compile/tree/dev) branch. We perform extensive tests prior to merging anything to `master`, working from `dev` will allow us to merge your work faster.
 - Minimize irrelevant changes (formatting, whitespace, etc) to code that would otherwise not be touched by this patch. Save formatting or style corrections for a separate pull request that does not make any semantic changes.
 - When possible, large changes should be split up into smaller focused pull requests.
 - Fill out the pull request description with a summary of what your patch does, key changes that have been made, and any further points of discussion, if applicable.
@@ -35,7 +35,7 @@ To run them locally:
 - `darglint crytic_compile`
 
 
-We use pylint `2.8.2`, black `20.8b1`, mypy `0.812` and dargling `1.8.0`.
+We use pylint `2.13.4`, black `22.3.0`, mypy `0.942` and darglint `1.8.0`.
 
 ## Development Environment
 Instructions for installing a development version of crytic-compile can be found in our [wiki](https://github.com/crytic/crytic-compile/wiki/Developer-installation).

@@ -4,6 +4,7 @@ Handle compilation through the standard solc json format
 import json
 import logging
 import os
+import shutil
 import subprocess
 from typing import TYPE_CHECKING, Dict, List, Optional, Union, Any
 
@@ -49,7 +50,7 @@ def standalone_compile(
         LOGGER.error("The compiler version of the compilation unit must be set")
         return
 
-    standard_json_dict: Dict = dict()
+    standard_json_dict: Dict = {}
     build_standard_json_default(standard_json_dict)
 
     for filename in filenames:
@@ -138,6 +139,7 @@ def run_solc_standard_json(
     if compiler_version.version:
         env["SOLC_VERSION"] = compiler_version.version
 
+    stderr = ""
     try:
 
         with subprocess.Popen(
@@ -146,6 +148,7 @@ def run_solc_standard_json(
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             env=env,
+            executable=shutil.which(cmd[0]),
             **additional_kwargs,
         ) as process:
 
@@ -340,7 +343,7 @@ class SolcStandardJson(Solc):
         super().__init__(str(target), **kwargs)
 
         if target is None:
-            self._json: Dict = dict()
+            self._json: Dict = {}
         elif isinstance(target, str):
             if os.path.isfile(target):
                 with open(target, mode="r", encoding="utf-8") as target_file:
