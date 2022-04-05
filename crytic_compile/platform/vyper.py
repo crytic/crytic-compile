@@ -146,6 +146,7 @@ def _run_vyper(
     cmd = [vyper, filename, "-f", "combined_json"]
 
     additional_kwargs: Dict = {"cwd": working_dir} if working_dir else {}
+    stderr = ""
     try:
         with subprocess.Popen(
             cmd,
@@ -190,6 +191,7 @@ def _get_vyper_ast(
     cmd = [vyper, filename, "-f", "ast"]
 
     additional_kwargs: Dict = {"cwd": working_dir} if working_dir else {}
+    stderr = ""
     try:
         with subprocess.Popen(
             cmd,
