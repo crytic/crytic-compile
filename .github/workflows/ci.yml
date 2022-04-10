@@ -24,6 +24,9 @@ jobs:
           # Requires nix
           - os: windows-2022
             type: dapp
+          # Explore foundry support in windows
+          - os: windows-2022
+            type: foundry
     steps:
     - uses: actions/checkout@v3
     - name: Set up shell
