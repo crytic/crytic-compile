@@ -35,7 +35,7 @@ To run them locally:
 - `darglint crytic_compile`
 
 
-We use pylint `2.12.2`, black `21.10b0`, mypy `0.812` and darglint `1.8.0`.
+We use pylint `2.13.4`, black `22.3.0`, mypy `0.942` and darglint `1.8.0`.
 
 ## Development Environment
 Instructions for installing a development version of crytic-compile can be found in our [wiki](https://github.com/crytic/crytic-compile/wiki/Developer-installation).

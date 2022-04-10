@@ -2,13 +2,8 @@
 
 ### Test truffle integration
 
-mkdir /tmp/truffle
-cd /tmp/truffle || exit 255
-
-curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.34.0/install.sh | bash
-source ~/.nvm/nvm.sh
-nvm install --lts
-nvm use --lts
+DIR=$(mktemp -d)
+cd "$DIR" || exit 255
 
 npm install -g truffle
 truffle unbox metacoin
@@ -23,7 +18,7 @@ fi
 # The assigned id changes
 #cd -
 #
-#DIFF=$(diff /tmp/truffle/crytic-export/contracts.json tests/expected/truffle-metacoin.json)
+#DIFF=$(diff "$DIR/crytic-export/contracts.json" tests/expected/truffle-metacoin.json)
 #if [ "$DIFF" != "" ]
 #then  
 #    echo "Truffle test failed"
