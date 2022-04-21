@@ -17,13 +17,16 @@ jobs:
     strategy:
       matrix:
         os: ["ubuntu-latest", "windows-2022"]
-        type: ["brownie", "buidler", "dapp", "embark", "etherlime", "hardhat", "solc", "truffle", "waffle"]
+        type: ["brownie", "buidler", "dapp", "embark", "etherlime", "hardhat", "solc", "truffle", "waffle", "foundry"]
         exclude:
           # Currently broken, tries to pull git:// which is blocked by GH
           - type: embark
           # Requires nix
           - os: windows-2022
             type: dapp
+          # Explore foundry support in windows
+          - os: windows-2022
+            type: foundry
     steps:
     - uses: actions/checkout@v3
     - name: Set up shell
@@ -67,4 +70,4 @@ jobs:
         GITHUB_ETHERSCAN: ${{ secrets.GITHUB_ETHERSCAN }}
       shell: bash
       run: |
-        bash "scripts/travis_test_${TEST_TYPE}.sh"
+        bash "scripts/ci_test_${TEST_TYPE}.sh"
