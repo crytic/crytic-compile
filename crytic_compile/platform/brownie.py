@@ -98,9 +98,11 @@ class Brownie(AbstractPlatform):
             return False
         # < 1.1.0: brownie-config.json
         # >= 1.1.0: brownie-config.yaml
-        return os.path.isfile(os.path.join(target, "brownie-config.json")) or os.path.isfile(
-            os.path.join(target, "brownie-config.yaml")
-        ) or os.path.isfile(os.path.join(target, "brownie-config.yml"))
+        return (
+            os.path.isfile(os.path.join(target, "brownie-config.json"))
+            or os.path.isfile(os.path.join(target, "brownie-config.yaml"))
+            or os.path.isfile(os.path.join(target, "brownie-config.yml"))
+        )
 
     def is_dependency(self, _path: str) -> bool:
         """Check if the path is a dependency (not supported for brownie)
