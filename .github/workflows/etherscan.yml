@@ -6,6 +6,8 @@ on:
     branches:
       - master
       - dev
+  pull_request:
+    branches: [ master, dev ]
   schedule:
     # run CI every day even if no PRs/merges occur
     - cron: '0 12 * * *'
@@ -39,4 +41,4 @@ jobs:
         GITHUB_ETHERSCAN: ${{ secrets.GITHUB_ETHERSCAN }}
       shell: bash
       run: |
-        bash "scripts/travis_test_${TEST_TYPE}.sh"
+        bash "scripts/ci_test_${TEST_TYPE}.sh"
