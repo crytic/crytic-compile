@@ -23,3 +23,11 @@ then
     exit 255
 fi
 
+# From crytic/slither#1154
+crytic-compile 0xcfc1E0968CA08aEe88CbF664D4A1f8B881d90f37 --compile-remove-metadata --etherscan-apikey "$GITHUB_ETHERSCAN"
+
+if [ $? -ne 0 ]
+then
+    echo "Etherscan test failed"
+    exit 255
+fi
