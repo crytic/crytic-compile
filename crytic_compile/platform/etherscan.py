@@ -8,7 +8,7 @@ import os
 import re
 import urllib.request
 from json.decoder import JSONDecodeError
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import TYPE_CHECKING, Dict, List, Union, Tuple, Optional
 
 from crytic_compile.compilation_unit import CompilationUnit
@@ -147,23 +147,25 @@ def _handle_multiple_files(
 
     filtered_paths: List[str] = []
     for filename, source_code in source_codes.items():
-        path_filename = Path(filename)
+        path_filename = PurePosixPath(filename)
         if "contracts" in path_filename.parts and not filename.startswith("@"):
-            path_filename = Path(*path_filename.parts[path_filename.parts.index("contracts") :])
+            path_filename = PurePosixPath(
+                *path_filename.parts[path_filename.parts.index("contracts") :]
+            )
 
         # Convert "absolute" paths such as "/interfaces/IFoo.sol" into relative ones.
         # This is needed due to the following behavior from pathlib.Path:
         # > When several absolute paths are given, the last is taken as an anchor
         # We need to make sure this is relative, so that Path(directory, ...) remains anchored to directory
         if path_filename.is_absolute():
-            path_filename = Path(*path_filename.parts[1:])
+            path_filename = PurePosixPath(*path_filename.parts[1:])
 
-        filtered_paths.append(str(path_filename))
-        path_filename = Path(directory, path_filename)
+        filtered_paths.append(path_filename.as_posix())
+        path_filename_disk = Path(directory, path_filename)
 
-        if not os.path.exists(path_filename.parent):
-            os.makedirs(path_filename.parent)
-        with open(path_filename, "w", encoding="utf8") as file_desc:
+        if not os.path.exists(path_filename_disk.parent):
+            os.makedirs(path_filename_disk.parent)
+        with open(path_filename_disk, "w", encoding="utf8") as file_desc:
             file_desc.write(source_code["content"])
 
     return list(filtered_paths), directory
