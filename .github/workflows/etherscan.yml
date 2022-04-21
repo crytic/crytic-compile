@@ -41,4 +41,4 @@ jobs:
         GITHUB_ETHERSCAN: ${{ secrets.GITHUB_ETHERSCAN }}
       shell: bash
       run: |
-        bash "scripts/travis_ci_${TEST_TYPE}.sh"
+        bash "scripts/ci_test_${TEST_TYPE}.sh"
