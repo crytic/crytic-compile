@@ -151,6 +151,13 @@ def _handle_multiple_files(
         if "contracts" in path_filename.parts and not filename.startswith("@"):
             path_filename = Path(*path_filename.parts[path_filename.parts.index("contracts") :])
 
+        # Convert "absolute" paths such as "/interfaces/IFoo.sol" into relative ones.
+        # This is needed due to the following behavior from pathlib.Path:
+        # > When several absolute paths are given, the last is taken as an anchor
+        # We need to make sure this is relative, so that Path(directory, ...) remains anchored to directory
+        if path_filename.is_absolute():
+            path_filename = Path(*path_filename.parts[1:])
+
         filtered_paths.append(str(path_filename))
         path_filename = Path(directory, path_filename)
 
