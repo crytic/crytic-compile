@@ -148,7 +148,9 @@ def _handle_multiple_files(
     filtered_paths: List[str] = []
     for filename, source_code in source_codes.items():
         path_filename = Path(filename)
-        if "contracts" in path_filename.parts and not filename.startswith("@"):
+        # https://etherscan.io/address/0x19bb64b80cbf61e61965b0e5c2560cc7364c6546#code has an import of erc721a/contracts/ERC721A.sol
+        # if the full path is lost then won't compile 
+        if "contracts" == path_filename.parts[0] and not filename.startswith("@"):
             path_filename = Path(*path_filename.parts[path_filename.parts.index("contracts") :])
 
         filtered_paths.append(str(path_filename))
