@@ -63,4 +63,6 @@ class Type(IntEnum):
             return "Builder"
         if self == Type.BROWNIE:
             return "Browner"
+        if self == Type.FOUNDRY:
+            return "Foundry"
         raise ValueError
