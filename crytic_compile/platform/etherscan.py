@@ -209,6 +209,7 @@ class Etherscan(AbstractPlatform):
         avax_api_key = kwargs.get("avax_api_key", None)
         ftmscan_api_key = kwargs.get("ftmscan_api_key", None)
         bscan_api_key = kwargs.get("bscan_api_key", None)
+        optim_api_key = kwargs.get("optim_api_key", None)
 
         export_dir = kwargs.get("export_dir", "crytic-export")
         export_dir = os.path.join(
@@ -233,6 +234,9 @@ class Etherscan(AbstractPlatform):
         if bscan_api_key and "bscscan" in etherscan_url:
             etherscan_url += f"&apikey={bscan_api_key}"
             etherscan_bytecode_url += f"&apikey={bscan_api_key}"
+        if optim_api_key and "optim" in etherscan_url:
+            etherscan_url += f"&apikey={optim_api_key}"
+            etherscan_bytecode_url += f"&apikey={optim_api_key}"
 
         source_code: str = ""
         result: Dict[str, Union[bool, str, int]] = {}
