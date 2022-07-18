@@ -29,6 +29,13 @@ def init(parser: ArgumentParser) -> None:
     )
 
     group_solc.add_argument(
+        "--compile-auto",
+        help="TBD",
+        action="store_true",
+        default=False,
+    )
+
+    group_solc.add_argument(
         "--compile-remove-metadata",
         help="Remove the metadata from the bytecodes",
         action="store_true",

@@ -18,6 +18,7 @@ from crytic_compile.platform import all_platforms, solc_standard_json
 from crytic_compile.platform.abstract_platform import AbstractPlatform
 from crytic_compile.platform.all_export import PLATFORMS_EXPORT
 from crytic_compile.platform.solc import Solc
+from crytic_compile.platform.solc_standard_json import SolcStandardJson
 from crytic_compile.platform.standard import export_to_standard
 from crytic_compile.platform.truffle import Truffle
 from crytic_compile.utils.naming import Filename
@@ -546,6 +547,34 @@ class CryticCompile:
 
         else:
             self._platform.compile(self, **kwargs)
+
+        if kwargs.get("compile_auto", False):
+            compilation_units = self._compilation_units.values()
+            self._compilation_units = {}
+            for compilation_unit in compilation_units:
+                solc_standard_json_platform = SolcStandardJson({}, **kwargs)
+                filenames = compilation_unit.filenames
+
+                for file in filenames:
+                    if self._platform.is_dependency(file.relative):
+                        remapping = file.used + "=" + file.relative
+                        solc_standard_json_platform.add_remapping(remapping)
+
+                    solc_standard_json_platform.add_source_file(file.absolute)
+
+                # todo make this an cli argument
+                remapping_file = Path(self._platform.target, "remappings.txt")
+                if remapping_file.exists():
+                    with open(remapping_file) as f:
+                        remappings = f.read().splitlines()
+                        for remapping in remappings:
+                            solc_standard_json_platform.add_remapping(remapping)
+
+
+
+                subprocess.run(["solc-select", "use", compilation_unit.compiler_version.version], stdout=subprocess.PIPE, check=True)
+
+                solc_standard_json_platform.compile(self, **kwargs)
 
         remove_metadata = kwargs.get("compile_remove_metadata", False)
         if remove_metadata:
