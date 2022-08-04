@@ -5,6 +5,9 @@
 
 cd /tmp || exit 255
 
+git config --global user.email "you@example.com"
+git config --global user.name "Your Name"
+
 curl -L https://foundry.paradigm.xyz | bash
 export PATH=$PATH:/home/runner/.foundry/bin
 foundryup
