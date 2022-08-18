@@ -32,7 +32,14 @@ def init(parser: ArgumentParser) -> None:
         "--compile-auto",
         help="TBD",
         action="store_true",
-        default=False,
+        default=DEFAULTS_FLAG_IN_CONFIG["compile_auto"],
+    )
+
+    group_solc.add_argument(
+        "--remappings",
+        help="File containing the remapping (only for --compile-auto)",
+        action="store",
+        default=DEFAULTS_FLAG_IN_CONFIG["remappings"],
     )
 
     group_solc.add_argument(

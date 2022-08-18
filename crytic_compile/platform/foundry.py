@@ -130,6 +130,7 @@ class Foundry(AbstractPlatform):
                 contract_name = filename_txt.parts[-1]
                 contract_name = contract_name[: -len(".json")]
 
+                print(filename)
                 compilation_unit.natspec[contract_name] = natspec
                 compilation_unit.filename_to_contracts[filename].add(contract_name)
                 compilation_unit.contracts_names.add(contract_name)
@@ -140,12 +141,10 @@ class Foundry(AbstractPlatform):
                 compilation_unit.bytecodes_runtime[contract_name] = target_loaded[
                     "deployedBytecode"
                 ]["object"].replace("0x", "")
-                compilation_unit.srcmaps_init[contract_name] = target_loaded["bytecode"][
-                    "sourceMap"
-                ].split(";")
-                compilation_unit.srcmaps_runtime[contract_name] = target_loaded["deployedBytecode"][
-                    "sourceMap"
-                ].split(";")
+                compilation_unit.srcmaps_init[contract_name] = target_loaded["bytecode"].get(
+                    "sourceMap", "").split(";")
+                compilation_unit.srcmaps_runtime[contract_name] = target_loaded["deployedBytecode"].get(
+                    "sourceMap", "").split(";")
 
         version, optimized, runs = _get_config_info(self._target)
 

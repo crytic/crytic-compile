@@ -188,7 +188,7 @@ class CryticCompile:
         """
 
         if isinstance(self.platform, Truffle) and filename.startswith("project:/"):
-            filename = filename[len("project:/") :]
+            filename = filename[len("project:/"):]
 
         if self._filenames_lookup is None:
             self._filenames_lookup = {}
@@ -356,7 +356,7 @@ class CryticCompile:
             for filename in self.filenames:
                 if filename.absolute not in self._src_content and os.path.isfile(filename.absolute):
                     with open(
-                        filename.absolute, encoding="utf8", newline="", errors="replace"
+                            filename.absolute, encoding="utf8", newline="", errors="replace"
                     ) as source_file:
                         self._src_content[filename.absolute] = source_file.read()
         return self._src_content
@@ -562,17 +562,16 @@ class CryticCompile:
 
                     solc_standard_json_platform.add_source_file(file.absolute)
 
-                # todo make this an cli argument
-                remapping_file = Path(self._platform.target, "remappings.txt")
+                remapping_filename = kwargs.get("remappings", "remappings.txt")
+                remapping_file = Path(self._platform.target, remapping_filename)
                 if remapping_file.exists():
                     with open(remapping_file) as f:
                         remappings = f.read().splitlines()
                         for remapping in remappings:
                             solc_standard_json_platform.add_remapping(remapping)
 
-
-
-                subprocess.run(["solc-select", "use", compilation_unit.compiler_version.version], stdout=subprocess.PIPE, check=True)
+                subprocess.run(["solc-select", "use", compilation_unit.compiler_version.version],
+                               stdout=subprocess.PIPE, check=True)
 
                 solc_standard_json_platform.compile(self, **kwargs)
 

@@ -45,4 +45,6 @@ DEFAULTS_FLAG_IN_CONFIG = {
     "foundry_ignore_compile": False,
     "foundry_out_directory": "out",
     "export_dir": "crytic-export",
+    "compile_auto": False,
+    "remappings": "remappings.txt",
 }
