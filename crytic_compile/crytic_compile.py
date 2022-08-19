@@ -630,7 +630,7 @@ def compile_all(target: str, **kwargs: str) -> List[CryticCompile]:
             compilations = load_from_zip(target)
         elif target.endswith(".zip.base64"):
             with tempfile.NamedTemporaryFile() as tmp:
-                with open(target, encoding="base64") as target_file:
+                with open(target, encoding="utf8") as target_file:
                     tmp.write(base64.b64decode(target_file.read()))
                     compilations = load_from_zip(tmp.name)
         else:
