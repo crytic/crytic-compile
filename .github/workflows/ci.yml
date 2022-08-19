@@ -15,6 +15,7 @@ jobs:
   tests:
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: ["ubuntu-latest", "windows-2022"]
         type: ["brownie", "buidler", "dapp", "embark", "etherlime", "hardhat", "solc", "truffle", "waffle", "foundry"]
