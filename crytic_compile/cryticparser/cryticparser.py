@@ -353,6 +353,14 @@ def _init_etherscan(parser: ArgumentParser) -> None:
     )
 
     group_etherscan.add_argument(
+        "--optim-apikey",
+        help="Optimistic API key.",
+        action="store",
+        dest="optim_api_key",
+        default=DEFAULTS_FLAG_IN_CONFIG["etherscan_api_key"],
+    )
+
+    group_etherscan.add_argument(
         "--etherscan-export-directory",
         help="Directory in which to save the analyzed contracts.",
         action="store",
