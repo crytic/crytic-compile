@@ -258,9 +258,13 @@ class Etherscan(AbstractPlatform):
 
         if not only_bytecode:
             if "polygon" in etherscan_url:
-                etherscan_url = urllib.request.Request(etherscan_url,headers={"User-Agent": "Mozilla/5.0"})
-            with urllib.request.urlopen(etherscan_url) as response:
-                html = response.read()
+                # build object with headers, then send request
+                new_etherscan_url = urllib.request.Request(etherscan_url,headers={"User-Agent": "Mozilla/5.0"})
+                with urllib.request.urlopen(new_etherscan_url) as response:
+                    html = response.read()
+            else:
+                with urllib.request.urlopen(etherscan_url) as response:
+                    html = response.read()
 
             info = json.loads(html)
 
