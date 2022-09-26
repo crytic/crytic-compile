@@ -216,6 +216,7 @@ class Etherscan(AbstractPlatform):
         etherscan_api_key = kwargs.get("etherscan_api_key", None)
         arbiscan_api_key = kwargs.get("arbiscan_api_key", None)
         polygonscan_api_key = kwargs.get("polygonscan_api_key", None)
+        test_polygonscan_api_key = kwargs.get("test_polygonscan_api_key", None)
         avax_api_key = kwargs.get("avax_api_key", None)
         ftmscan_api_key = kwargs.get("ftmscan_api_key", None)
         bscan_api_key = kwargs.get("bscan_api_key", None)
@@ -235,6 +236,9 @@ class Etherscan(AbstractPlatform):
         if polygonscan_api_key and "polygonscan" in etherscan_url:
             etherscan_url += f"&apikey={polygonscan_api_key}"
             etherscan_bytecode_url += f"&apikey={polygonscan_api_key}"
+        if test_polygonscan_api_key and "polygonscan" in etherscan_url:
+            etherscan_url += f"&apikey={test_polygonscan_api_key}"
+            etherscan_bytecode_url += f"&apikey={test_polygonscan_api_key}"
         if avax_api_key and "snowtrace" in etherscan_url:
             etherscan_url += f"&apikey={avax_api_key}"
             etherscan_bytecode_url += f"&apikey={avax_api_key}"
