@@ -45,7 +45,7 @@ SUPPORTED_NETWORK = {
     "arbi:": (".arbiscan.io", "arbiscan.io"),
     "testnet.arbi:": ("-testnet.arbiscan.io", "testnet.arbiscan.io"),
     "poly:": (".polygonscan.com", "polygonscan.com"),
-    "mumbai:": ("-mumbai.polygonscan.com", "mumbai.polygonscan.com"),
+    "mumbai:": ("-testnet.polygonscan.com", "testnet.polygonscan.com"),
     "avax:": (".snowtrace.io", "snowtrace.io"),
     "testnet.avax:": ("-testnet.snowtrace.io", "testnet.snowtrace.io"),
     "ftm:": (".ftmscan.com", "ftmscan.com"),
