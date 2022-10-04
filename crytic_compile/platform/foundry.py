@@ -140,12 +140,16 @@ class Foundry(AbstractPlatform):
                 compilation_unit.bytecodes_runtime[contract_name] = target_loaded[
                     "deployedBytecode"
                 ]["object"].replace("0x", "")
-                compilation_unit.srcmaps_init[contract_name] = target_loaded["bytecode"][
-                    "sourceMap"
-                ].split(";") if target_loaded["bytecode"].get("sourceMap") else []
-                compilation_unit.srcmaps_runtime[contract_name] = target_loaded["deployedBytecode"][
-                    "sourceMap"
-                ].split(";") if target_loaded["deployedBytecode"].get("sourceMap") else []
+                compilation_unit.srcmaps_init[contract_name] = (
+                    target_loaded["bytecode"]["sourceMap"].split(";")
+                    if target_loaded["bytecode"].get("sourceMap")
+                    else []
+                )
+                compilation_unit.srcmaps_runtime[contract_name] = (
+                    target_loaded["deployedBytecode"]["sourceMap"].split(";")
+                    if target_loaded["deployedBytecode"].get("sourceMap")
+                    else []
+                )
 
         version, optimized, runs = _get_config_info(self._target)
 

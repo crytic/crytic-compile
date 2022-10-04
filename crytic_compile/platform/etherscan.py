@@ -45,6 +45,7 @@ SUPPORTED_NETWORK = {
     "arbi:": (".arbiscan.io", "arbiscan.io"),
     "testnet.arbi:": ("-testnet.arbiscan.io", "testnet.arbiscan.io"),
     "poly:": (".polygonscan.com", "polygonscan.com"),
+    "mumbai:": ("-testnet.polygonscan.com", "testnet.polygonscan.com"),
     "avax:": (".snowtrace.io", "snowtrace.io"),
     "testnet.avax:": ("-testnet.snowtrace.io", "testnet.snowtrace.io"),
     "ftm:": (".ftmscan.com", "ftmscan.com"),
@@ -215,6 +216,7 @@ class Etherscan(AbstractPlatform):
         etherscan_api_key = kwargs.get("etherscan_api_key", None)
         arbiscan_api_key = kwargs.get("arbiscan_api_key", None)
         polygonscan_api_key = kwargs.get("polygonscan_api_key", None)
+        test_polygonscan_api_key = kwargs.get("test_polygonscan_api_key", None)
         avax_api_key = kwargs.get("avax_api_key", None)
         ftmscan_api_key = kwargs.get("ftmscan_api_key", None)
         bscan_api_key = kwargs.get("bscan_api_key", None)
@@ -234,6 +236,9 @@ class Etherscan(AbstractPlatform):
         if polygonscan_api_key and "polygonscan" in etherscan_url:
             etherscan_url += f"&apikey={polygonscan_api_key}"
             etherscan_bytecode_url += f"&apikey={polygonscan_api_key}"
+        if test_polygonscan_api_key and "polygonscan" in etherscan_url:
+            etherscan_url += f"&apikey={test_polygonscan_api_key}"
+            etherscan_bytecode_url += f"&apikey={test_polygonscan_api_key}"
         if avax_api_key and "snowtrace" in etherscan_url:
             etherscan_url += f"&apikey={avax_api_key}"
             etherscan_bytecode_url += f"&apikey={avax_api_key}"
@@ -252,8 +257,16 @@ class Etherscan(AbstractPlatform):
         contract_name: str = ""
 
         if not only_bytecode:
-            with urllib.request.urlopen(etherscan_url) as response:
-                html = response.read()
+            if "polygon" in etherscan_url:
+                # build object with headers, then send request
+                new_etherscan_url = urllib.request.Request(
+                    etherscan_url, headers={"User-Agent": "Mozilla/5.0"}
+                )
+                with urllib.request.urlopen(new_etherscan_url) as response:
+                    html = response.read()
+            else:
+                with urllib.request.urlopen(etherscan_url) as response:
+                    html = response.read()
 
             info = json.loads(html)
 
