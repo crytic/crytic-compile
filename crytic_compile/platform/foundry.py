@@ -94,13 +94,22 @@ class Foundry(AbstractPlatform):
                 if stderr:
                     LOGGER.error(stderr)
 
-        filenames = Path(self._target, out_directory).rglob("*.json")
+        filenames = list(Path(self._target, out_directory).rglob("*.json"))
 
         # foundry only support solc for now
         compiler = "solc"
         compilation_unit = CompilationUnit(crytic_compile, str(self._target))
 
         for filename_txt in filenames:
+            # guard against users having extra_output_files which generates e.g <file>.metadata.json artifacts
+            name_components = filename_txt.name.split(".")
+            main_name = filename_txt.with_name(".".join(name_components[:-2] + ["json"]))
+            if len(name_components) > 2 and main_name in filenames:
+                LOGGER.debug("Skipping %s as it is not the main artifact", filename_txt)
+                continue
+
+            LOGGER.debug("Processing artifact %s", filename_txt)
+
             with open(filename_txt, encoding="utf8") as file_desc:
                 target_loaded = json.load(file_desc)
 
