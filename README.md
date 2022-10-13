@@ -5,19 +5,20 @@
 
 Library to help smart contract compilation. It includes support for:
 - Direct solc compilation
-- [Truffle](https://truffleframework.com/)
-- [Embark](https://embark.status.im/)
-- [Dapp](https://dapp.tools/dapp/)
-- [Etherlime](https://github.com/LimeChain/etherlime)
-- [Etherscan](https://etherscan.io/)
 - [Brownie](https://github.com/iamdefinitelyahuman/brownie)
-- [Waffle](https://github.com/EthWorks/Waffle)
 - [Buidler](https://github.com/nomiclabs/buidler)
+- [Dapp](https://dapp.tools/dapp/)
+- [Embark](https://embark.status.im/)
+- [Etherlime](https://github.com/LimeChain/etherlime)
+- [Etherscan](https://etherscan.io/) (including several alt-chain explorers and testnets)
+- [Foundry](https://github.com/foundry-rs/foundry/)
 - [Hardhat](https://github.com/nomiclabs/hardhat)
+- [Truffle](https://truffleframework.com/)
+- [Waffle](https://github.com/EthWorks/Waffle)
 
 See the [Configuration](https://github.com/crytic/crytic-compile/wiki/Configuration) documentation for advanced usages.
 
-The plugin is used in Crytic tools, including:
+The plugin is used in Trail of Bits tools, including:
 - [Slither](https://github.com/crytic/slither)
 - [Echidna](https://github.com/crytic/echidna)
 - [Manticore](https://github.com/trailofbits/manticore/)
