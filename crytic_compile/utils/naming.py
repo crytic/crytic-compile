@@ -7,7 +7,7 @@ import os.path
 import platform
 from collections import namedtuple
 from pathlib import Path
-from typing import TYPE_CHECKING, Union, Callable, Optional
+from typing import TYPE_CHECKING, Tuple, Union, Callable, Optional
 
 from crytic_compile.platform.exceptions import InvalidCompilation
 
@@ -75,6 +75,8 @@ def convert_filename(
         relative_to_short (Callable[[Path], Path]): Callback to translate the relative to short
         crytic_compile (CryticCompile): Associated CryticCompile object
         working_dir (Optional[Union[str, Path]], optional): Working directory. Defaults to None.
+        node_modules_dir (Optional[Union[str, Path]], optional): node_modules directory.
+            Defaults to None.
 
     Raises:
         InvalidCompilation: [description]
@@ -92,20 +94,7 @@ def convert_filename(
     else:
         filename = Path(filename_txt)
 
-    if working_dir is None:
-        cwd = Path.cwd()
-        working_dir = cwd
-    else:
-        working_dir = Path(working_dir)
-        if working_dir.is_absolute():
-            cwd = working_dir
-        else:
-            cwd = Path.cwd().joinpath(Path(working_dir)).resolve()
-
-    if node_modules_dir is None:
-        node_modules_dir = cwd.joinpath(Path("node_modules"))
-    else:
-        node_modules_dir = Path(node_modules_dir)
+    working_dir, cwd, node_modules_dir = _get_working_directories(working_dir, node_modules_dir)
 
     if crytic_compile.package_name:
         try:
@@ -146,3 +135,34 @@ def convert_filename(
         short=short.as_posix(),
         used=used_filename,
     )
+
+def _get_working_directories(
+    working_dir: Optional[Union[str, Path]],
+    node_modules_dir: Optional[Union[str, Path]]
+) -> Tuple[Path, Path, Path]:
+    """Checks input directories and returns processed paths ready to use.
+
+    Args:
+        working_dir (Optional[Union[str, Path]], optional): Working directory.
+        node_modules_dir (Optional[Union[str, Path]], optional): node_modules directory..
+
+    Returns:
+        Tuple[Path, Path, Path]: Working directory, current working directory and node_modules
+            directory.
+    """
+    if working_dir is None:
+        cwd = Path.cwd()
+        working_dir = cwd
+    else:
+        working_dir = Path(working_dir)
+        if working_dir.is_absolute():
+            cwd = working_dir
+        else:
+            cwd = Path.cwd().joinpath(Path(working_dir)).resolve()
+
+    if node_modules_dir is None:
+        node_modules_dir = cwd.joinpath(Path("node_modules"))
+    else:
+        node_modules_dir = Path(node_modules_dir)
+
+    return working_dir, cwd, node_modules_dir
