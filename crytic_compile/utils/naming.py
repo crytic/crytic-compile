@@ -65,6 +65,7 @@ def convert_filename(
     relative_to_short: Callable[[Path], Path],
     crytic_compile: "CryticCompile",
     working_dir: Optional[Union[str, Path]] = None,
+    node_modules_dir: Optional[Union[str, Path]] = None
 ) -> Filename:
     """Convert a filename to CryticCompile Filename object.
     The used_filename can be absolute, relative, or missing node_modules/contracts directory
@@ -101,14 +102,19 @@ def convert_filename(
         else:
             cwd = Path.cwd().joinpath(Path(working_dir)).resolve()
 
+    if node_modules_dir is None:
+        node_modules_dir = cwd.joinpath(Path("node_modules"))
+    else:
+        node_modules_dir = Path(node_modules_dir)
+
     if crytic_compile.package_name:
         try:
             filename = filename.relative_to(Path(crytic_compile.package_name))
         except ValueError:
             pass
     if not filename.exists():
-        if cwd.joinpath(Path("node_modules"), filename).exists():
-            filename = cwd.joinpath("node_modules", filename)
+        if node_modules_dir.joinpath(filename).exists():
+            filename = node_modules_dir.joinpath(filename)
         elif cwd.joinpath(Path("contracts"), filename).exists():
             filename = cwd.joinpath("contracts", filename)
         elif working_dir.joinpath(filename).exists():

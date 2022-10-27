@@ -57,6 +57,7 @@ class Hardhat(AbstractPlatform):
         )
 
         hardhat_working_dir = kwargs.get("hardhat_working_dir", self._target)
+        node_modules_dir = kwargs.get("hardhat_node_modules_directory", None)
 
         base_cmd = ["hardhat"]
         if not kwargs.get("npx_disable", False):
@@ -131,6 +132,7 @@ class Hardhat(AbstractPlatform):
                                 relative_to_short,
                                 crytic_compile,
                                 working_dir=hardhat_working_dir,
+                                node_modules_dir=node_modules_dir
                             )
 
                             compilation_unit.contracts_names.add(contract_name)
@@ -164,6 +166,7 @@ class Hardhat(AbstractPlatform):
                                 relative_to_short,
                                 crytic_compile,
                                 working_dir=hardhat_working_dir,
+                                node_modules_dir=node_modules_dir
                             )
                         else:
                             path = convert_filename(
@@ -171,6 +174,7 @@ class Hardhat(AbstractPlatform):
                                 relative_to_short,
                                 crytic_compile,
                                 working_dir=hardhat_working_dir,
+                                node_modules_dir=node_modules_dir
                             )
                         crytic_compile.filenames.add(path)
                         compilation_unit.filenames.add(path)

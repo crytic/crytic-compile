@@ -456,6 +456,13 @@ def _init_hardhat(parser: ArgumentParser) -> None:
         default=DEFAULTS_FLAG_IN_CONFIG["hardhat_artifacts_directory"],
     )
 
+    group_hardhat.add_argument(
+        "--hardhat-node-modules-directory",
+        help="Use an alternative node_modules directory (default ./node_modules)",
+        action="store",
+        dest="hardhat_node_modules_directory",
+        default=DEFAULTS_FLAG_IN_CONFIG["hardhat_node_modules_directory"],
+    )
 
 def _init_foundry(parser: ArgumentParser) -> None:
     """Init foundry arguments
