@@ -723,9 +723,9 @@ class CompilationUnit:
         try:
             bytecode = self._runtime_bytecodes[name]
         except:
-            raise ValueError(
+            raise ValueError(  # pylint: disable=raise-missing-from
                 f"contract {name} does not exist"
-            )  # pylint: disable=raise-missing-from
+            )
 
         metadata_length = int(f"0x{bytecode[-4:]}", base=16)
         metadata = bytecode[-(metadata_length * 2 + 4) :]
