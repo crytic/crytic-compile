@@ -727,11 +727,11 @@ class CompilationUnit:
                 f"contract {name} does not exist"
             )
 
+        # the last two bytes contain the length of the preceding metadata.
         metadata_length = int(f"0x{bytecode[-4:]}", base=16)
+        # extract the metadata
         metadata = bytecode[-(metadata_length * 2 + 4) :]
         metadata_decoded = cbor2.loads(bytearray.fromhex(metadata))
-
-        # up to (inclusive) 0.4.24
 
         for k, v in metadata_decoded.items():
             if len(v) == 1:
