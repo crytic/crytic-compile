@@ -278,6 +278,14 @@ class Truffle(AbstractPlatform):
             compiler=compiler, version=version, optimized=optimized
         )
 
+    def clean(self, **_kwargs: str) -> None:
+        """Clean compilation artifacts
+
+        Args:
+            **kwargs: unused.
+        """
+        return
+
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:
         """Check if the target is a truffle project

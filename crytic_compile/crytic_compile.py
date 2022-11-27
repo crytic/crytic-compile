@@ -545,6 +545,8 @@ class CryticCompile:
             self._run_custom_build(custom_build)
 
         else:
+            if not kwargs.get("skip_clean", False) and not kwargs.get("ignore_compile", False):
+                self._platform.clean(**kwargs)
             self._platform.compile(self, **kwargs)
 
         remove_metadata = kwargs.get("compile_remove_metadata", False)

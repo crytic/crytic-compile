@@ -35,6 +35,17 @@ class Hardhat(AbstractPlatform):
     PROJECT_URL = "https://github.com/nomiclabs/hardhat"
     TYPE = Type.HARDHAT
 
+    def __init__(self, target: str, **kwargs: str):
+        super().__init__(target, **kwargs)
+
+        self._ignore_compile = kwargs.get("hardhat_ignore_compile", False) or kwargs.get(
+            "ignore_compile", False
+        )
+
+        self._base_cmd = ["hardhat"]
+        if not kwargs.get("npx_disable", False):
+            self._base_cmd = ["npx"] + self._base_cmd
+
     # pylint: disable=too-many-locals,too-many-statements
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str) -> None:
         """Run the compilation
@@ -48,15 +59,7 @@ class Hardhat(AbstractPlatform):
             InvalidCompilation: If hardhat failed to run
         """
 
-        hardhat_ignore_compile = kwargs.get("hardhat_ignore_compile", False) or kwargs.get(
-            "ignore_compile", False
-        )
-
-        base_cmd = ["hardhat"]
-        if not kwargs.get("npx_disable", False):
-            base_cmd = ["npx"] + base_cmd
-
-        detected_paths = self._get_hardhat_paths(base_cmd, kwargs)
+        detected_paths = self._get_hardhat_paths(kwargs)
 
         build_directory = Path(
             self._target,
@@ -66,8 +69,8 @@ class Hardhat(AbstractPlatform):
 
         hardhat_working_dir = Path(self._target, detected_paths["root"])
 
-        if not hardhat_ignore_compile:
-            cmd = base_cmd + ["compile", "--force"]
+        if not self._ignore_compile:
+            cmd = self._base_cmd + ["compile", "--force"]
 
             LOGGER.info(
                 "'%s' running",
@@ -180,6 +183,28 @@ class Hardhat(AbstractPlatform):
                         compilation_unit.filenames.add(path)
                         compilation_unit.asts[path.absolute] = info["ast"]
 
+    def clean(self, **kwargs: str) -> None:
+        """Clean compilation artifacts
+
+        Args:
+            **kwargs: optional arguments.
+        """
+
+        if self._ignore_compile:
+            return
+
+        for clean_cmd in [["clean"], ["clean", "--global"]]:
+            cmd = self._base_cmd + clean_cmd
+            LOGGER.info(
+                "'%s' running",
+                " ".join(cmd),
+            )
+            subprocess.run(
+                cmd,
+                cwd=self._target,
+                executable=shutil.which(cmd[0]),
+            )
+
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:
         """Check if the target is an hardhat project
@@ -221,14 +246,11 @@ class Hardhat(AbstractPlatform):
         """
         return ["hardhat test"]
 
-    def _get_hardhat_paths(
-        self, base_cmd: List[str], args: Dict[str, str]
-    ) -> Dict[str, Union[Path, str]]:
+    def _get_hardhat_paths(self, args: Dict[str, str]) -> Dict[str, Union[Path, str]]:
         """Obtain hardhat configuration paths, defaulting to the
         standard config if needed.
 
         Args:
-            base_cmd ([str]): hardhat command
             args (Dict[str, str]): crytic-compile options that may affect paths
 
         Returns:
@@ -255,7 +277,7 @@ class Hardhat(AbstractPlatform):
             override_paths["root"] = Path(target_path, args["hardhat_working_dir"])
 
         print_paths = "console.log(JSON.stringify(config.paths))"
-        config_str = self._run_hardhat_console(base_cmd, print_paths)
+        config_str = self._run_hardhat_console(print_paths)
 
         try:
             paths = json.loads(config_str or "{}")
@@ -264,23 +286,22 @@ class Hardhat(AbstractPlatform):
             LOGGER.info("Problem deserializing hardhat configuration: %s", e)
             return {**default_paths, **override_paths}
 
-    def _run_hardhat_console(self, base_cmd: List[str], command: str) -> Optional[str]:
+    def _run_hardhat_console(self, command: str) -> Optional[str]:
         """Run a JS command in the hardhat console
 
         Args:
-            base_cmd ([str]): hardhat command
             command (str): console command to run
 
         Returns:
             Optional[str]: command output if execution succeeds
         """
         with subprocess.Popen(
-            base_cmd + ["console", "--no-compile"],
+            self._base_cmd + ["console", "--no-compile"],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             cwd=self._target,
-            executable=shutil.which(base_cmd[0]),
+            executable=shutil.which(self._base_cmd[0]),
         ) as process:
             stdout_bytes, stderr_bytes = process.communicate(command.encode("utf-8"))
             stdout, stderr = (

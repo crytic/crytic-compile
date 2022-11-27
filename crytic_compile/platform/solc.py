@@ -182,6 +182,14 @@ class Solc(AbstractPlatform):
                 crytic_compile.filenames.add(path)
                 compilation_unit.asts[path.absolute] = info["AST"]
 
+    def clean(self, **_kwargs: str) -> None:
+        """Clean compilation artifacts
+
+        Args:
+            **kwargs: unused.
+        """
+        return
+
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:
         """Check if the target is a Solidity file

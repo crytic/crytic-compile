@@ -116,6 +116,30 @@ class Dapp(AbstractPlatform):
             compiler="solc", version=version, optimized=optimized
         )
 
+    def clean(self, **kwargs: str) -> None:
+        """Clean compilation artifacts
+
+        Args:
+            **kwargs: optional arguments.
+        """
+
+        dapp_ignore_compile = kwargs.get("dapp_ignore_compile", False) or kwargs.get(
+            "ignore_compile", False
+        )
+        if dapp_ignore_compile:
+            return
+
+        cmd = ["dapp", "clean"]
+        LOGGER.info(
+            "'%s' running",
+            " ".join(cmd),
+        )
+        subprocess.run(
+            cmd,
+            cwd=self._target,
+            executable=shutil.which(cmd[0]),
+        )
+
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:
         """Check if the target is a dapp project

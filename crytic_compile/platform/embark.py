@@ -168,6 +168,14 @@ class Embark(AbstractPlatform):
                 natspec = Natspec(userdoc, devdoc)
                 compilation_unit.natspec[contract_name] = natspec
 
+    def clean(self, **_kwargs: str) -> None:
+        """Clean compilation artifacts
+
+        Args:
+            **kwargs: unused.
+        """
+        return
+
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:
         """Check if the target is an embark project

@@ -157,6 +157,14 @@ class Foundry(AbstractPlatform):
             compiler=compiler, version=version, optimized=optimized, optimize_runs=runs
         )
 
+    def clean(self, **_kwargs: str) -> None:
+        """Clean compilation artifacts
+
+        Args:
+            **kwargs: unused.
+        """
+        return
+
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:
         """Check if the target is a foundry project
