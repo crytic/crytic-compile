@@ -56,36 +56,31 @@ class Vyper(AbstractPlatform):
         assert target in targets_json
 
         info = targets_json[target]
-        contract_filename = convert_filename(target, _relative_to_short, crytic_compile)
+        filename = convert_filename(target, _relative_to_short, crytic_compile)
 
         contract_name = Path(target).parts[-1]
 
-        compilation_unit.contracts_names.add(contract_name)
-        compilation_unit.filename_to_contracts[contract_filename].add(contract_name)
-        compilation_unit.abis[contract_name] = info["abi"]
-        compilation_unit.bytecodes_init[contract_name] = info["bytecode"].replace("0x", "")
-        compilation_unit.bytecodes_runtime[contract_name] = info["bytecode_runtime"].replace(
-            "0x", ""
-        )
+        source_unit = compilation_unit.create_source_units(filename)
+
+        source_unit.contracts_names.add(contract_name)
+        compilation_unit.filename_to_contracts[filename].add(contract_name)
+        source_unit.abis[contract_name] = info["abi"]
+        source_unit.bytecodes_init[contract_name] = info["bytecode"].replace("0x", "")
+        source_unit.bytecodes_runtime[contract_name] = info["bytecode_runtime"].replace("0x", "")
         # Vyper does not provide the source mapping for the init bytecode
-        compilation_unit.srcmaps_init[contract_name] = []
+        source_unit.srcmaps_init[contract_name] = []
         # info["source_map"]["pc_pos_map"] contains the source mapping in a simpler format
         # However pc_pos_map_compressed" seems to follow solc's format, so for convenience
         # We store the same
         # TODO: create SourceMapping class, so that srcmaps_runtime would store an class
         # That will give more flexebility to different compilers
-        compilation_unit.srcmaps_runtime[contract_name] = info["source_map"][
-            "pc_pos_map_compressed"
-        ]
-
-        crytic_compile.filenames.add(contract_filename)
-        compilation_unit.filenames.add(contract_filename)
+        source_unit.srcmaps_runtime[contract_name] = info["source_map"]["pc_pos_map_compressed"]
 
         # Natspec not yet handled for vyper
-        compilation_unit.natspec[contract_name] = Natspec({}, {})
+        source_unit.natspec[contract_name] = Natspec({}, {})
 
         ast = _get_vyper_ast(target, vyper)
-        compilation_unit.asts[contract_filename.absolute] = ast
+        source_unit.ast = ast
 
     def is_dependency(self, _path: str) -> bool:
         """Check if the path is a dependency (not supported for vyper)

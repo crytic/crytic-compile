@@ -54,17 +54,17 @@ def export_to_truffle(crytic_compile: "CryticCompile", **kwargs: str) -> List[st
 
     # Loop for each contract filename.
     results: List[Dict] = []
-    for filename, contract_names in compilation_unit.filename_to_contracts.items():
-        for contract_name in contract_names:
+    for source_unit in compilation_unit.source_units.values():
+        for contract_name in source_unit.contracts_names:
             # Create the informational object to output for this contract
             output = {
                 "contractName": contract_name,
-                "abi": compilation_unit.abi(contract_name),
-                "bytecode": "0x" + compilation_unit.bytecode_init(contract_name),
-                "deployedBytecode": "0x" + compilation_unit.bytecode_runtime(contract_name),
-                "ast": compilation_unit.ast(filename.absolute),
-                "userdoc": compilation_unit.natspec[contract_name].userdoc.export(),
-                "devdoc": compilation_unit.natspec[contract_name].devdoc.export(),
+                "abi": source_unit.abi(contract_name),
+                "bytecode": "0x" + source_unit.bytecode_init(contract_name),
+                "deployedBytecode": "0x" + source_unit.bytecode_runtime(contract_name),
+                "ast": source_unit.ast,
+                "userdoc": source_unit.natspec[contract_name].userdoc.export(),
+                "devdoc": source_unit.natspec[contract_name].devdoc.export(),
             }
             results.append(output)
 
@@ -241,22 +241,23 @@ class Truffle(AbstractPlatform):
                     # pylint: disable=raise-missing-from
                     raise InvalidCompilation(txt)
 
-                compilation_unit.asts[filename.absolute] = target_loaded["ast"]
-                crytic_compile.filenames.add(filename)
-                compilation_unit.filenames.add(filename)
+                source_unit = compilation_unit.create_source_units(filename)
+
+                source_unit.ast = target_loaded["ast"]
+
                 contract_name = target_loaded["contractName"]
-                compilation_unit.natspec[contract_name] = natspec
+                source_unit.natspec[contract_name] = natspec
                 compilation_unit.filename_to_contracts[filename].add(contract_name)
-                compilation_unit.contracts_names.add(contract_name)
-                compilation_unit.abis[contract_name] = target_loaded["abi"]
-                compilation_unit.bytecodes_init[contract_name] = target_loaded["bytecode"].replace(
+                source_unit.contracts_names.add(contract_name)
+                source_unit.abis[contract_name] = target_loaded["abi"]
+                source_unit.bytecodes_init[contract_name] = target_loaded["bytecode"].replace(
                     "0x", ""
                 )
-                compilation_unit.bytecodes_runtime[contract_name] = target_loaded[
+                source_unit.bytecodes_runtime[contract_name] = target_loaded[
                     "deployedBytecode"
                 ].replace("0x", "")
-                compilation_unit.srcmaps_init[contract_name] = target_loaded["sourceMap"].split(";")
-                compilation_unit.srcmaps_runtime[contract_name] = target_loaded[
+                source_unit.srcmaps_init[contract_name] = target_loaded["sourceMap"].split(";")
+                source_unit.srcmaps_runtime[contract_name] = target_loaded[
                     "deployedSourceMap"
                 ].split(";")
 

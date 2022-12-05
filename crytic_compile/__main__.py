@@ -172,7 +172,7 @@ def _print_filenames(compilation: "CryticCompile") -> None:
     """
     for compilation_id, compilation_unit in compilation.compilation_units.items():
         print(
-            f"Compilation unit: {compilation_id} ({len(compilation_unit.contracts_names)} files, solc {compilation_unit.compiler_version.version})"
+            f"Compilation unit: {compilation_id} solc {compilation_unit.compiler_version.version})"
         )
         for filename, contracts in compilation_unit.filename_to_contracts.items():
             for contract in contracts:
