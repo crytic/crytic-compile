@@ -65,7 +65,7 @@ class CryticCompile:
     Main class.
     """
 
-    def __init__(self, target: Union[str, AbstractPlatform], **kwargs: str):
+    def __init__(self, target: Union[str, AbstractPlatform], **kwargs: str) -> None:
         """See https://github.com/crytic/crytic-compile/wiki/Configuration
         Target is usually a file or a project directory. It can be an AbstractPlatform
         for custom setup

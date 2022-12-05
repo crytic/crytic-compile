@@ -70,6 +70,7 @@ class CompilationUnit:
     def source_units(self) -> Dict[Filename, SourceUnit]:
         """
         Return the dict of the source units
+
         Returns:
             Dict[Filename, SourceUnit]: the source units
         """
@@ -92,6 +93,7 @@ class CompilationUnit:
     def asts(self) -> Dict[str, Dict]:
         """
         Return all the asts from the compilation unit
+
         Returns:
             Dict[str, Dict]: absolute path -> ast
         """
@@ -107,7 +109,7 @@ class CompilationUnit:
         If the source unit already exist, return it
 
         Args:
-            filename Filename: filename of the source unit
+            filename (Filename): filename of the source unit
 
         Returns:
             SourceUnit: the source unit
