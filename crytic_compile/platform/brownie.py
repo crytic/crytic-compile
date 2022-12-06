@@ -208,7 +208,7 @@ def _get_version(compiler: Dict) -> str:
     version = compiler.get("version", "")
     if "Version:" in version:
         version = version.split("Version:")[1].strip()
-    version = version[0 : version.find("+")] #TODO handle not "+" not found
+    version = version[0 : version.find("+")]  # TODO handle not "+" not found
     return version
 
 
