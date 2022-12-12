@@ -71,6 +71,10 @@ class Foundry(AbstractPlatform):
                 "--force",
             ]
 
+            # disable extra_output_files via environment variable
+            # it takes precedence over config entries
+            env = dict(os.environ, FOUNDRY_EXTRA_OUTPUT_FILES="[]")
+
             LOGGER.info(
                 "'%s' running",
                 " ".join(cmd),
@@ -82,6 +86,7 @@ class Foundry(AbstractPlatform):
                 stderr=subprocess.PIPE,
                 cwd=self._target,
                 executable=shutil.which(cmd[0]),
+                env=env,
             ) as process:
 
                 stdout_bytes, stderr_bytes = process.communicate()
@@ -94,7 +99,7 @@ class Foundry(AbstractPlatform):
                 if stderr:
                     LOGGER.error(stderr)
 
-        filenames = list(Path(self._target, out_directory).rglob("*.json"))
+        filenames = set(Path(self._target, out_directory).rglob("*.json"))
 
         # foundry only support solc for now
         compiler = "solc"
