@@ -14,6 +14,7 @@ from crytic_compile.platform.exceptions import InvalidCompilation
 from crytic_compile.platform.types import Type
 from crytic_compile.utils.naming import convert_filename, extract_name
 from crytic_compile.utils.natspec import Natspec
+from crytic_compile.utils.subprocess import run
 from .abstract_platform import AbstractPlatform
 
 # Handle cycle
@@ -35,6 +36,17 @@ class Hardhat(AbstractPlatform):
     PROJECT_URL = "https://github.com/nomiclabs/hardhat"
     TYPE = Type.HARDHAT
 
+    def _settings(self, args):
+        hardhat_ignore_compile = args.get("hardhat_ignore_compile", False) or args.get(
+            "ignore_compile", False
+        )
+
+        base_cmd = ["hardhat"]
+        if not args.get("npx_disable", False):
+            base_cmd = ["npx"] + base_cmd
+
+        return hardhat_ignore_compile, base_cmd
+
     # pylint: disable=too-many-locals,too-many-statements
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str) -> None:
         """Run the compilation
@@ -48,13 +60,7 @@ class Hardhat(AbstractPlatform):
             InvalidCompilation: If hardhat failed to run
         """
 
-        hardhat_ignore_compile = kwargs.get("hardhat_ignore_compile", False) or kwargs.get(
-            "ignore_compile", False
-        )
-
-        base_cmd = ["hardhat"]
-        if not kwargs.get("npx_disable", False):
-            base_cmd = ["npx"] + base_cmd
+        hardhat_ignore_compile, base_cmd = self._settings(kwargs)
 
         detected_paths = self._get_hardhat_paths(base_cmd, kwargs)
 
@@ -187,20 +193,13 @@ class Hardhat(AbstractPlatform):
             **kwargs: optional arguments.
         """
 
-        if self._ignore_compile:
+        hardhat_ignore_compile, base_cmd = self._settings(kwargs)
+
+        if hardhat_ignore_compile:
             return
 
         for clean_cmd in [["clean"], ["clean", "--global"]]:
-            cmd = self._base_cmd + clean_cmd
-            LOGGER.info(
-                "'%s' running",
-                " ".join(cmd),
-            )
-            subprocess.run(
-                cmd,
-                cwd=self._target,
-                executable=shutil.which(cmd[0]),
-            )
+            run(base_cmd + clean_cmd, cwd=self._target)
 
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:

@@ -19,6 +19,7 @@ from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform.abstract_platform import AbstractPlatform
 from crytic_compile.platform.types import Type
 from crytic_compile.utils.naming import convert_filename, extract_name
+from crytic_compile.utils.subprocess import run
 
 # Handle cycle
 from crytic_compile.utils.natspec import Natspec
@@ -129,16 +130,7 @@ class Dapp(AbstractPlatform):
         if dapp_ignore_compile:
             return
 
-        cmd = ["dapp", "clean"]
-        LOGGER.info(
-            "'%s' running",
-            " ".join(cmd),
-        )
-        subprocess.run(
-            cmd,
-            cwd=self._target,
-            executable=shutil.which(cmd[0]),
-        )
+        run(["dapp", "clean"], cwd=self._target)
 
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:
