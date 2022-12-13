@@ -97,7 +97,7 @@ class Standard(AbstractPlatform):
         """Clean compilation artifacts
 
         Args:
-            **kwargs: unused.
+            **_kwargs: unused.
         """
         return
 

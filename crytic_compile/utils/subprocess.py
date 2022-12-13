@@ -3,17 +3,17 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
-from typing import Dict, List
+from typing import Any, Dict, List, Optional, Union
 
 LOGGER = logging.getLogger("CryticCompile")
 
 
 def run(
     cmd: List[str],
-    cwd: os.PathLike | None = None,
-    extra_env: Dict[str, str] | None = None,
-    **kwargs,
-) -> subprocess.CompletedProcess | None:
+    cwd: Optional[Union[str, os.PathLike]] = None,
+    extra_env: Optional[Dict[str, str]] = None,
+    **kwargs: Any,
+) -> Optional[subprocess.CompletedProcess]:
     """
     Execute a command in a cross-platform compatible way.
 
@@ -28,7 +28,7 @@ def run(
         None: if there was a problem executing
     """
     subprocess_cwd = Path(os.getcwd() if cwd is None else cwd).resolve()
-    subprocess_env = None if extra_env is None else dict(os.environ, extra_env)
+    subprocess_env = None if extra_env is None else dict(os.environ, **extra_env)
     subprocess_exe = shutil.which(cmd[0])
 
     if subprocess_exe is None:
@@ -43,11 +43,11 @@ def run(
 
     try:
         return subprocess.run(
-            cmd, cwd=subprocess_cwd, executable=subprocess_exe, env=subprocess_env, **kwargs
+            cmd, executable=subprocess_exe, cwd=subprocess_cwd, env=subprocess_env, **kwargs
         )
     except FileNotFoundError:
         LOGGER.error("Could not execute `%s`, is it installed and in PATH?", cmd[0])
     except OSError:
-        LOGGER.error("OS error executing:", exc_info=1)
+        LOGGER.error("OS error executing:", exc_info=True)
 
     return None

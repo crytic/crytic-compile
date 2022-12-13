@@ -7,7 +7,7 @@ import os
 import shutil
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform.exceptions import InvalidCompilation
@@ -35,17 +35,6 @@ class Hardhat(AbstractPlatform):
     NAME = "Hardhat"
     PROJECT_URL = "https://github.com/nomiclabs/hardhat"
     TYPE = Type.HARDHAT
-
-    def _settings(self, args):
-        hardhat_ignore_compile = args.get("hardhat_ignore_compile", False) or args.get(
-            "ignore_compile", False
-        )
-
-        base_cmd = ["hardhat"]
-        if not args.get("npx_disable", False):
-            base_cmd = ["npx"] + base_cmd
-
-        return hardhat_ignore_compile, base_cmd
 
     # pylint: disable=too-many-locals,too-many-statements
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str) -> None:
@@ -241,6 +230,18 @@ class Hardhat(AbstractPlatform):
             List[str]: The guessed unit tests commands
         """
         return ["hardhat test"]
+
+    @staticmethod
+    def _settings(args: Dict[str, Any]) -> Tuple[bool, List[str]]:
+        hardhat_ignore_compile = args.get("hardhat_ignore_compile", False) or args.get(
+            "ignore_compile", False
+        )
+
+        base_cmd = ["hardhat"]
+        if not args.get("npx_disable", False):
+            base_cmd = ["npx"] + base_cmd
+
+        return hardhat_ignore_compile, base_cmd
 
     def _get_hardhat_paths(
         self, base_cmd: List[str], args: Dict[str, str]
