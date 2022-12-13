@@ -4,6 +4,7 @@ Handle compilation through the standard solc json format
 import json
 import logging
 import os
+from pathlib import Path
 import shutil
 import subprocess
 from typing import TYPE_CHECKING, Dict, List, Optional, Union, Any
@@ -132,7 +133,8 @@ def run_solc_standard_json(
     Returns:
         Dict: Solc json output
     """
-    cmd = [compiler_version.compiler, "--standard-json", "--allow-paths", "."]
+    working_dir_resolved = Path(working_dir if working_dir else ".").resolve()
+    cmd = [compiler_version.compiler, "--standard-json", "--allow-paths", str(working_dir_resolved)]
     additional_kwargs: Dict = {"cwd": working_dir} if working_dir else {}
 
     env = dict(os.environ)
