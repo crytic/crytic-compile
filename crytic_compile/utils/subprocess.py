@@ -1,5 +1,5 @@
 """
-Utils for running executables across platforms
+Process execution helpers.
 """
 import logging
 import os
@@ -46,10 +46,23 @@ def run(
 
     try:
         return subprocess.run(
-            cmd, executable=subprocess_exe, cwd=subprocess_cwd, env=subprocess_env, check=True, **kwargs
+            cmd,
+            executable=subprocess_exe,
+            cwd=subprocess_cwd,
+            env=subprocess_env,
+            check=True,
+            capture_output=True,
+            **kwargs,
         )
     except FileNotFoundError:
         LOGGER.error("Could not execute `%s`, is it installed and in PATH?", cmd[0])
+    except subprocess.CalledProcessError as e:
+        LOGGER.error("'%s' returned non-zero exit code %d", cmd[0], e.returncode)
+        stdout, stderr = (e.stdout.decode().strip(), e.stderr.decode().strip())
+        if stdout:
+            LOGGER.error("\nstdout: ".join(stdout.split("\n")))
+        if stderr:
+            LOGGER.error("\nstderr: ".join(stderr.split("\n")))
     except OSError:
         LOGGER.error("OS error executing:", exc_info=True)
 
