@@ -6,9 +6,7 @@ cd tests/hardhat || exit 255
 
 npm install
 
-crytic-compile .
-if [ $? -ne 0 ]
-then
-    echo "hardhat test failed"
-    exit 255
+if ! crytic-compile .
+then echo "Hardhat test failed" && exit 255
+else echo "Hardhat test passed" && exit 0
 fi

@@ -1,0 +1,5 @@
+{
+  "devDependencies": {
+    "@nomiclabs/buidler": "^1.4.8"
+  }
+}
