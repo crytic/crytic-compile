@@ -109,10 +109,13 @@ def convert_filename(
     if not filename.exists():
         # how node.js loads dependencies from node_modules:
         # https://nodejs.org/api/modules.html#loading-from-node_modules-folders
-        for folder in cwd.parents:
-            if folder.joinpath(Path("node_modules"), filename).exists():
-                filename = folder.joinpath("node_modules", filename)
-                break
+        if cwd.joinpath(Path("node_modules"), filename).exists():
+            filename = cwd.joinpath("node_modules", filename)
+        else:
+            for folder in cwd.parents:
+                if folder.joinpath(Path("node_modules"), filename).exists():
+                    filename = folder.joinpath(Path("node_modules"), filename)
+                    break
     if not filename.exists():
         if cwd.joinpath(Path("contracts"), filename).exists():
             filename = cwd.joinpath("contracts", filename)
