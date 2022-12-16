@@ -433,7 +433,7 @@ def _init_hardhat(parser: ArgumentParser) -> None:
     Args:
         parser (ArgumentParser): argparser where the cli flags are added
     """
-    group_hardhat = parser.add_argument_group("hardhat options")
+    group_hardhat = parser.add_argument_group("Hardhat options")
     group_hardhat.add_argument(
         "--hardhat-ignore-compile",
         help="Do not run hardhat compile",
@@ -465,7 +465,7 @@ def _init_foundry(parser: ArgumentParser) -> None:
     Args:
         parser (ArgumentParser): argparser where the cli flags are added
     """
-    group_foundry = parser.add_argument_group("foundry options")
+    group_foundry = parser.add_argument_group("Foundry options")
     group_foundry.add_argument(
         "--foundry-ignore-compile",
         help="Do not run foundry compile",
