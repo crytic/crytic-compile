@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Test embark integration
+### Test embark integration
 
 cd /tmp || exit 255
 
@@ -13,8 +13,11 @@ npm install -g embark@4.2.0
 embark demo
 cd /tmp/embark_demo || exit 255
 npm install
+crytic-compile . --embark-overwrite-config --compile-remove-metadata
 
-if ! crytic-compile . --embark-overwrite-config --compile-remove-metadata
-then echo "Embark test failed" && exit 255
-else echo "Embark test passed" && exit 0
+if [ $? -ne 0 ]
+then
+    echo "Embark test failed"
+    exit 255
 fi
+

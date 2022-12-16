@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Test dapp integration
+### Test dapp integration
 
 DIR=$(mktemp -d)
 cd "$DIR" || exit 255
@@ -16,7 +16,10 @@ nix-env -f "$HOME/.dapp/dapptools" -iA dapp seth solc hevm ethsign
 
 dapp init
 
-if ! crytic-compile . --compile-remove-metadata
-then echo "dapp test failed" && exit 255
-else echo "dapp test passed" && exit 0
+crytic-compile . --compile-remove-metadata
+if [ $? -ne 0 ]
+then
+    echo "dapp test failed"
+    exit 255
 fi
+

@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 
-# Test buidler integration
+### Test buidler integration
 
 cd tests/buidler || exit 255
 
-npm install || exit 255
+npm install --save-dev @nomiclabs/buidler
 
-if ! crytic-compile .
-then echo "Buidler test failed" && exit 255
-else echo "Buidler test passed" && exit 0
+crytic-compile .
+if [ $? -ne 0 ]
+then
+    echo "buidler test failed"
+    exit 255
 fi

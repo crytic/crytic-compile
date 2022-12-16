@@ -1,24 +1,25 @@
 #!/usr/bin/env bash
 
-# Test waffle integration
+### Test waffle integration
 
 DIR=$(mktemp -d)
 cd "$DIR" || exit 255
 
-# Install waffle if it's not already present
-if [[ -z "$(command -v waffle)" ]]
-then npm install -g ethereum-waffle
-fi
-
+npm install -g ethereum-waffle
 npm install openzeppelin-solidity
-
 mkdir contracts
-
+cd contracts || exit 255
 echo 'contract Test {
   constructor() public {}
-}' > contracts/token.sol
+}' > token.sol
 
-if ! crytic-compile . --compile-remove-metadata --compile-force-framework Waffle
-then echo "Waffle test failed" && exit 255
-else echo "Waffle test passed" && exit 0
+cd ..
+
+crytic-compile . --compile-remove-metadata --compile-force-framework Waffle
+
+if [ $? -ne 0 ]
+then
+    echo "Waffle test failed"
+    exit 255
 fi
+
