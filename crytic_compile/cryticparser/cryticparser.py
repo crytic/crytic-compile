@@ -53,6 +53,7 @@ def init(parser: ArgumentParser) -> None:
     _init_solc(parser)
     _init_truffle(parser)
     _init_embark(parser)
+    _init_brownie(parser)
     _init_dapp(parser)
     _init_etherlime(parser)
     _init_etherscan(parser)
@@ -60,6 +61,7 @@ def init(parser: ArgumentParser) -> None:
     _init_npx(parser)
     _init_buidler(parser)
     _init_hardhat(parser)
+    _init_foundry(parser)
 
 
 def _init_solc(parser: ArgumentParser) -> None:
