@@ -13,7 +13,7 @@ setup(
     author="Trail of Bits",
     version="0.2.4",
     packages=find_packages(),
-    python_requires=">=3.6",
+    python_requires=">=3.8",
     install_requires=["pycryptodome>=3.4.6"],
     license="AGPL-3.0",
     long_description=long_description,
