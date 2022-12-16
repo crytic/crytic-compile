@@ -109,19 +109,17 @@ def convert_filename(
     if not filename.exists():
         # how node.js loads dependencies from node_modules:
         # https://nodejs.org/api/modules.html#loading-from-node_modules-folders
-        if cwd.joinpath(Path("node_modules"), filename).exists():
-            filename = cwd.joinpath("node_modules", filename)
-        elif cwd.joinpath(Path("../node_modules"), filename).exists():
-            filename = cwd.joinpath("contracts", filename)
-        elif cwd.joinpath(Path("../../node_modules"), filename).exists():
-            filename = cwd.joinpath("contracts", filename)
-        elif cwd.joinpath(Path("contracts"), filename).exists():
+        for folder in cwd.parents:
+            if folder.joinpath(Path("node_modules"), filename).exists():
+                filename = folder.joinpath("node_modules", filename)
+                break
+    if not filename.exists():
+        if cwd.joinpath(Path("contracts"), filename).exists():
             filename = cwd.joinpath("contracts", filename)
         elif working_dir.joinpath(filename).exists():
             filename = working_dir.joinpath(filename)
         else:
-            test = cwd.joinpath(Path("../node_modules"), filename);
-            raise InvalidCompilation(f"Unknown file: {filename} {test}")
+            raise InvalidCompilation(f"Unknown file: {filename}")
     elif not filename.is_absolute():
         filename = cwd.joinpath(filename)
 
