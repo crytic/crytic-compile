@@ -6,7 +6,7 @@ import uuid
 from collections import defaultdict
 from typing import TYPE_CHECKING, Dict, List, Optional, Set, Tuple, Union
 
-import sha3
+from Crypto.Hash import keccak
 
 from crytic_compile.utils.naming import Filename
 from crytic_compile.utils.natspec import Natspec
@@ -435,12 +435,12 @@ class CompilationUnit:
             # Prior solidity 0.5
             # libraries were on the format __filename:contract_name_____
             # From solidity 0.5,
-            # libraries are on the format __$kecckack(filename:contract_name)[34]$__
+            # libraries are on the format __$keccak(filename:contract_name)[34]$__
             # https://solidity.readthedocs.io/en/v0.5.7/050-breaking-changes.html#command-line-and-json-interfaces
 
             lib_4 = "__" + lib + "_" * (38 - len(lib))
 
-            sha3_result = sha3.keccak_256()
+            sha3_result = keccak.new(digest_bits=256)
             sha3_result.update(lib.encode("utf-8"))
             lib_5 = "__$" + sha3_result.hexdigest()[:34] + "$__"
 
@@ -465,12 +465,12 @@ class CompilationUnit:
                     lib_4 = "__" + lib_with_used_filename + "_" * (38 - len(lib_with_used_filename))
                     new_names[lib_4] = addr
 
-                    sha3_result = sha3.keccak_256()
+                    sha3_result = keccak.new(digest_bits=256)
                     sha3_result.update(lib_with_abs_filename.encode("utf-8"))
                     lib_5 = "__$" + sha3_result.hexdigest()[:34] + "$__"
                     new_names[lib_5] = addr
 
-                    sha3_result = sha3.keccak_256()
+                    sha3_result = keccak.new(digest_bits=256)
                     sha3_result.update(lib_with_used_filename.encode("utf-8"))
                     lib_5 = "__$" + sha3_result.hexdigest()[:34] + "$__"
                     new_names[lib_5] = addr
@@ -529,7 +529,7 @@ class CompilationUnit:
                     return name, solidity_0_4_filename
 
                 # Solidity 0.5
-                sha3_result = sha3.keccak_256()
+                sha3_result = keccak.new(digest_bits=256)
                 sha3_result.update(name.encode("utf-8"))
                 v5_name = "__$" + sha3_result.hexdigest()[:34] + "$__"
 
@@ -537,14 +537,14 @@ class CompilationUnit:
                     return name, v5_name
 
                 # Solidity 0.5 with filename
-                sha3_result = sha3.keccak_256()
+                sha3_result = keccak.new(digest_bits=256)
                 sha3_result.update(name_with_absolute_filename.encode("utf-8"))
                 v5_name = "__$" + sha3_result.hexdigest()[:34] + "$__"
 
                 if v5_name == lib_name:
                     return name, v5_name
 
-                sha3_result = sha3.keccak_256()
+                sha3_result = keccak.new(digest_bits=256)
                 sha3_result.update(name_with_used_filename.encode("utf-8"))
                 v5_name = "__$" + sha3_result.hexdigest()[:34] + "$__"
 
@@ -656,7 +656,7 @@ class CompilationUnit:
                     sig_name = sig["name"]
                     arguments = ",".join([x["type"] for x in sig["inputs"]])
                     sig = f"{sig_name}({arguments})"
-                    sha3_result = sha3.keccak_256()
+                    sha3_result = keccak.new(digest_bits=256)
                     sha3_result.update(sig.encode("utf-8"))
                     self._hashes[name][sig] = int("0x" + sha3_result.hexdigest()[:8], 16)
 
@@ -694,7 +694,7 @@ class CompilationUnit:
                     arguments = ",".join([x["type"] for x in sig["inputs"]])
                     indexes = [x.get("indexed", False) for x in sig["inputs"]]
                     sig = f"{sig_name}({arguments})"
-                    sha3_result = sha3.keccak_256()
+                    sha3_result = keccak.new(digest_bits=256)
                     sha3_result.update(sig.encode("utf-8"))
 
                     self._events[name][sig] = (int("0x" + sha3_result.hexdigest()[:8], 16), indexes)

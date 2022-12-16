@@ -409,6 +409,12 @@ class SolcStandardJson(Solc):
             optimized=is_optimized(solc_arguments),
         )
 
+        add_optimization(
+            self._json,
+            compilation_unit.compiler_version.optimized,
+            compilation_unit.compiler_version.optimize_runs,
+        )
+
         # Add all remappings
         if solc_remaps:
             if isinstance(solc_remaps, str):

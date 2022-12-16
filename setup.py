@@ -14,7 +14,7 @@ setup(
     version="0.2.4",
     packages=find_packages(),
     python_requires=">=3.8",
-    install_requires=["pysha3>=1.0.2"],
+    install_requires=["pycryptodome>=3.4.6"],
     license="AGPL-3.0",
     long_description=long_description,
     package_data={"crytic_compile": ["py.typed"]},
