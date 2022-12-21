@@ -12,6 +12,15 @@ solc-select use 0.5.12 --always-install
 python metadata_test.py $GITHUB_ETHERSCAN > metadata_test_output.json
 
 cd - || exit 255
+
+echo "actual"
+cat "$DIR/metadata_test_output.json"
+
+echo "expected"
+cat "tests/expected/metadata.json"
+
+
+
 DIFF=$(diff "$DIR/metadata_test_output.json" tests/expected/metadata.json)
 if [ "$?" != "0" ] || [ "$DIFF" != "" ]
 then  
