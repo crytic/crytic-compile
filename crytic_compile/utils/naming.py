@@ -124,7 +124,8 @@ def convert_filename(
 
     if not filename.exists():
         raise InvalidCompilation(f"Unknown file: {filename}")
-    elif not filename.is_absolute():
+
+    if not filename.is_absolute():
         filename = cwd.joinpath(filename)
 
     absolute = filename
