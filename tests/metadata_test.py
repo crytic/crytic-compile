@@ -1,4 +1,5 @@
 import sys
+import json
 from crytic_compile import CryticCompile
 
 crytic_compile_instance = CryticCompile(
@@ -9,4 +10,4 @@ crytic_compile_instance = CryticCompile(
 compilation_unit = list(crytic_compile_instance.compilation_units.values())[0]
 
 # print out the parsed metadata
-print(json.dumps(cu.metadata_of('Dai')))
+print(json.dumps(compilation_unit.metadata_of('Dai')))
