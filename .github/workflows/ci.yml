@@ -18,7 +18,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "windows-2022"]
-        type: ["brownie", "buidler", "dapp", "embark", "etherlime", "hardhat", "solc", "truffle", "waffle", "foundry", "monorepo"]
+        type: ["brownie", "buidler", "dapp", "embark", "etherlime", "hardhat", "solc", "truffle", "waffle", "foundry"]
         exclude:
           # Currently broken, tries to pull git:// which is blocked by GH
           - type: embark
@@ -49,7 +49,7 @@ jobs:
       with:
         node-version: ${{ steps.node.outputs.version }}
     - name: Set up Python 3.8
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v4
       with:
         python-version: 3.8
     - name: Install dependencies
@@ -59,10 +59,10 @@ jobs:
         pip install .
     - name: Set up nix
       if: matrix.type == 'dapp'
-      uses: cachix/install-nix-action@v16
+      uses: cachix/install-nix-action@v18
     - name: Set up cachix
       if: matrix.type == 'dapp'
-      uses: cachix/cachix-action@v10
+      uses: cachix/cachix-action@v12
       with:
         name: dapp
     - name: Run Tests
