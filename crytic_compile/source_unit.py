@@ -559,7 +559,7 @@ class SourceUnit:
         # the metadata is at the end of the runtime(!) bytecode
         try:
             bytecode = self._runtime_bytecodes[name]
-            print('runtime bytecode', bytecode)
+            print("runtime bytecode", bytecode)
         except:
             raise ValueError(  # pylint: disable=raise-missing-from
                 f"contract {name} does not exist"
