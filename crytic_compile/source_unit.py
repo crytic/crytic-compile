@@ -549,12 +549,15 @@ class SourceUnit:
 
     def metadata_of(self, name: str) -> Dict[str, Union[str, bool]]:
         """Return the parsed metadata of a contract by name
+
         Args:
             name (str): contract name
+
         Raises:
             ValueError: If no contract/library with that name exists
+
         Returns:
-            Dict[str, Union[str, bool]]: fieldname => value
+            Dict[str, Union[str, bool]]: fielname => value
         """
         # the metadata is at the end of the runtime(!) bytecode
         try:
