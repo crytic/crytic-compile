@@ -123,7 +123,7 @@ class Foundry(AbstractPlatform):
                     # pylint: disable=raise-missing-from
                     raise InvalidCompilation(txt)
 
-                source_unit = compilation_unit.create_source_units(filename)
+                source_unit = compilation_unit.create_source_unit(filename)
 
                 source_unit.ast = target_loaded["ast"]
 

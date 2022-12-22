@@ -72,7 +72,7 @@ class Dapp(AbstractPlatform):
 
                 filename = convert_filename(original_filename, lambda x: x, crytic_compile)
 
-                source_unit = compilation_unit.create_source_units(filename)
+                source_unit = compilation_unit.create_source_unit(filename)
 
                 for original_contract_name, info in contracts_info.items():
                     if "metadata" in info:
@@ -111,7 +111,7 @@ class Dapp(AbstractPlatform):
                 path = convert_filename(
                     path, _relative_to_short, crytic_compile, working_dir=self._target
                 )
-                source_unit = compilation_unit.create_source_units(path)
+                source_unit = compilation_unit.create_source_unit(path)
                 source_unit.ast = info["ast"]
 
         compilation_unit.compiler_version = CompilerVersion(

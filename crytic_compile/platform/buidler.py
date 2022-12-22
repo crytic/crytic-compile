@@ -119,7 +119,7 @@ class Buidler(AbstractPlatform):
                         crytic_compile,
                         working_dir=buidler_working_dir,
                     )
-                    source_unit = compilation_unit.create_source_units(filename)
+                    source_unit = compilation_unit.create_source_unit(filename)
 
                     for original_contract_name, info in contracts_info.items():
                         contract_name = extract_name(original_contract_name)
@@ -168,7 +168,7 @@ class Buidler(AbstractPlatform):
                         path = convert_filename(
                             path, relative_to_short, crytic_compile, working_dir=buidler_working_dir
                         )
-                    source_unit = compilation_unit.create_source_units(path)
+                    source_unit = compilation_unit.create_source_unit(path)
                     source_unit.ast = info["ast"]
 
     @staticmethod

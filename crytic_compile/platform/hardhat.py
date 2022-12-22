@@ -131,7 +131,7 @@ class Hardhat(AbstractPlatform):
                             working_dir=hardhat_working_dir,
                         )
 
-                        source_unit = compilation_unit.create_source_units(filename)
+                        source_unit = compilation_unit.create_source_unit(filename)
 
                         for original_contract_name, info in contracts_info.items():
                             contract_name = extract_name(original_contract_name)
@@ -174,7 +174,7 @@ class Hardhat(AbstractPlatform):
                                 working_dir=hardhat_working_dir,
                             )
 
-                        source_unit = compilation_unit.create_source_units(path)
+                        source_unit = compilation_unit.create_source_unit(path)
                         source_unit.ast = info["ast"]
 
     @staticmethod

@@ -5,6 +5,7 @@ import uuid
 from collections import defaultdict
 from typing import TYPE_CHECKING, Dict, Set
 
+
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.source_unit import SourceUnit
 from crytic_compile.utils.naming import Filename
@@ -102,7 +103,7 @@ class CompilationUnit:
             for source_unit in self.source_units.values()
         }
 
-    def create_source_units(self, filename: Filename) -> SourceUnit:
+    def create_source_unit(self, filename: Filename) -> SourceUnit:
         """
         Create the source unit associated with the filename
         Add the relevant info in the compilation unit/crytic compile

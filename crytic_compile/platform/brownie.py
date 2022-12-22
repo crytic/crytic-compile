@@ -168,7 +168,7 @@ def _iterate_over_files(
                 filename_txt, _relative_to_short, crytic_compile, working_dir=target
             )
 
-            source_unit = compilation_unit.create_source_units(filename)
+            source_unit = compilation_unit.create_source_unit(filename)
 
             source_unit.ast = target_loaded["ast"]
             contract_name = target_loaded["contractName"]

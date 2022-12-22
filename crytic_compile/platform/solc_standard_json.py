@@ -280,7 +280,7 @@ def parse_standard_json_output(
                         working_dir=solc_working_dir,
                     )
 
-                source_unit = compilation_unit.create_source_units(filename)
+                source_unit = compilation_unit.create_source_unit(filename)
 
                 source_unit.contracts_names.add(contract_name)
                 compilation_unit.filename_to_contracts[filename].add(contract_name)
@@ -318,7 +318,7 @@ def parse_standard_json_output(
                     compilation_unit.crytic_compile,
                     working_dir=solc_working_dir,
                 )
-            source_unit = compilation_unit.create_source_units(path)
+            source_unit = compilation_unit.create_source_unit(path)
 
             source_unit.ast = info.get("ast")
 
@@ -409,6 +409,12 @@ class SolcStandardJson(Solc):
             compiler="solc",
             version=get_version(solc, None),
             optimized=is_optimized(solc_arguments),
+        )
+
+        add_optimization(
+            self._json,
+            compilation_unit.compiler_version.optimized,
+            compilation_unit.compiler_version.optimize_runs,
         )
 
         # Add all remappings

@@ -60,7 +60,7 @@ class Vyper(AbstractPlatform):
 
         contract_name = Path(target).parts[-1]
 
-        source_unit = compilation_unit.create_source_units(filename)
+        source_unit = compilation_unit.create_source_unit(filename)
 
         source_unit.contracts_names.add(contract_name)
         compilation_unit.filename_to_contracts[filename].add(contract_name)

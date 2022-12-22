@@ -189,7 +189,7 @@ class Waffle(AbstractPlatform):
             )
 
             contract_name = contract[1]
-            source_unit = compilation_unit.create_source_units(filename)
+            source_unit = compilation_unit.create_source_unit(filename)
 
             source_unit.ast = target_all["sources"][contract[0]]["AST"]
             crytic_compile.filenames.add(filename)

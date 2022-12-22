@@ -124,7 +124,7 @@ class Embark(AbstractPlatform):
                 filename = convert_filename(
                     k, _relative_to_short, crytic_compile, working_dir=self._target
                 )
-                source_unit = compilation_unit.create_source_units(filename)
+                source_unit = compilation_unit.create_source_unit(filename)
                 source_unit.ast = ast
 
             if not "contracts" in targets_loaded:
@@ -144,7 +144,7 @@ class Embark(AbstractPlatform):
                     working_dir=self._target,
                 )
 
-                source_unit = compilation_unit.create_source_units(filename)
+                source_unit = compilation_unit.create_source_unit(filename)
 
                 compilation_unit.filename_to_contracts[filename].add(contract_name)
                 source_unit.contracts_names.add(contract_name)

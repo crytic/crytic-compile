@@ -178,7 +178,7 @@ class Solc(AbstractPlatform):
                     path = convert_filename(
                         path, relative_to_short, crytic_compile, working_dir=solc_working_dir
                     )
-                source_unit = compilation_unit.create_source_units(path)
+                source_unit = compilation_unit.create_source_unit(path)
                 source_unit.ast = info["AST"]
 
     @staticmethod
@@ -322,7 +322,7 @@ def solc_handle_contracts(
                     working_dir=solc_working_dir,
                 )
 
-            source_unit = compilation_unit.create_source_units(filename)
+            source_unit = compilation_unit.create_source_unit(filename)
 
             source_unit.contracts_names.add(contract_name)
             compilation_unit.filename_to_contracts[filename].add(contract_name)

@@ -278,7 +278,7 @@ def _load_from_compile_legacy1(crytic_compile: "CryticCompile", loaded_json: Dic
     for contract_name, contract in loaded_json["contracts"].items():
         filename = _convert_dict_to_filename(contract["filenames"])
         compilation_unit.filename_to_contracts[filename].add(contract_name)
-        source_unit = compilation_unit.create_source_units(filename)
+        source_unit = compilation_unit.create_source_unit(filename)
 
         source_unit.contracts_names.add(contract_name)
         source_unit.abis[contract_name] = contract["abi"]
@@ -312,7 +312,7 @@ def _load_from_compile_legacy1(crytic_compile: "CryticCompile", loaded_json: Dic
     for path, ast in loaded_json["asts"].items():
         # The following might create lookup issue?
         filename = crytic_compile.filename_lookup(path)
-        source_unit = compilation_unit.create_source_units(filename)
+        source_unit = compilation_unit.create_source_unit(filename)
         source_unit.ast = ast
 
 
@@ -341,7 +341,7 @@ def _load_from_compile_legacy2(crytic_compile: "CryticCompile", loaded_json: Dic
             )
             compilation_unit.filename_to_contracts[filename].add(contract_name)
 
-            source_unit = compilation_unit.create_source_units(filename)
+            source_unit = compilation_unit.create_source_unit(filename)
             source_unit.contracts_names.add(contract_name)
             source_unit.abis[contract_name] = contract["abi"]
             source_unit.bytecodes_init[contract_name] = contract["bin"]
@@ -375,7 +375,7 @@ def _load_from_compile_legacy2(crytic_compile: "CryticCompile", loaded_json: Dic
         for path, ast in loaded_json["asts"].items():
             # The following might create lookup issue?
             filename = crytic_compile.filename_lookup(path)
-            source_unit = compilation_unit.create_source_units(filename)
+            source_unit = compilation_unit.create_source_unit(filename)
             source_unit.ast = ast
 
 
@@ -397,7 +397,7 @@ def _load_from_compile_0_0_1(crytic_compile: "CryticCompile", loaded_json: Dict)
                     used=contract["filenames"]["used"],
                 )
                 compilation_unit.filename_to_contracts[filename].add(contract_name)
-                source_unit = compilation_unit.create_source_units(filename)
+                source_unit = compilation_unit.create_source_unit(filename)
                 source_unit.contracts_names.add(contract_name)
                 source_unit.abis[contract_name] = contract["abi"]
                 source_unit.bytecodes_init[contract_name] = contract["bin"]
@@ -424,7 +424,7 @@ def _load_from_compile_0_0_1(crytic_compile: "CryticCompile", loaded_json: Dict)
             for path, ast in compilation_unit_json["asts"].items():
                 # The following might create lookup issue?
                 filename = crytic_compile.filename_lookup(path)
-                source_unit = compilation_unit.create_source_units(filename)
+                source_unit = compilation_unit.create_source_unit(filename)
                 source_unit.ast = ast
 
 
@@ -447,7 +447,7 @@ def _load_from_compile_current(crytic_compile: "CryticCompile", loaded_json: Dic
                 )
                 compilation_unit.filename_to_contracts[filename].add(contract_name)
 
-                source_unit = compilation_unit.create_source_units(filename)
+                source_unit = compilation_unit.create_source_unit(filename)
                 source_unit.contracts_names.add(contract_name)
                 source_unit.abis[contract_name] = contract["abi"]
                 source_unit.bytecodes_init[contract_name] = contract["bin"]
@@ -469,7 +469,7 @@ def _load_from_compile_current(crytic_compile: "CryticCompile", loaded_json: Dic
             for path, ast in compilation_unit_json["asts"].items:
                 # The following might create lookup issue?
                 filename = convert_filename(path, lambda x: x, crytic_compile)
-                source_unit = compilation_unit.create_source_units(filename)
+                source_unit = compilation_unit.create_source_unit(filename)
                 source_unit.ast = ast
 
             compilation_unit.filenames = {
