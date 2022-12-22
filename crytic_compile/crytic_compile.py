@@ -65,7 +65,7 @@ class CryticCompile:
     Main class.
     """
 
-    def __init__(self, target: Union[str, AbstractPlatform], **kwargs: str):
+    def __init__(self, target: Union[str, AbstractPlatform], **kwargs: str) -> None:
         """See https://github.com/crytic/crytic-compile/wiki/Configuration
         Target is usually a file or a project directory. It can be an AbstractPlatform
         for custom setup
@@ -145,8 +145,9 @@ class CryticCompile:
         """
         count = 0
         for compilation_unit in self._compilation_units.values():
-            if contract in compilation_unit.contracts_names:
-                count += 1
+            for source_unit in compilation_unit.source_units.values():
+                if contract in source_unit.contracts_names:
+                    count += 1
         return count >= 2
 
     ###################################################################################
@@ -550,7 +551,8 @@ class CryticCompile:
         remove_metadata = kwargs.get("compile_remove_metadata", False)
         if remove_metadata:
             for compilation_unit in self._compilation_units.values():
-                compilation_unit.remove_metadata()
+                for source_unit in compilation_unit.source_units.values():
+                    source_unit.remove_metadata()
 
     @staticmethod
     def _run_custom_build(custom_build: str) -> None:

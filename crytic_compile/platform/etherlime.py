@@ -130,28 +130,30 @@ class Etherlime(AbstractPlatform):
 
                 filename_txt = target_loaded["ast"]["absolutePath"]
                 filename = convert_filename(filename_txt, _relative_to_short, crytic_compile)
-                compilation_unit.asts[filename.absolute] = target_loaded["ast"]
-                compilation_unit.filenames.add(filename)
-                crytic_compile.filenames.add(filename)
+
+                source_unit = compilation_unit.create_source_unit(filename)
+
+                source_unit.ast = target_loaded["ast"]
                 contract_name = target_loaded["contractName"]
+
                 compilation_unit.filename_to_contracts[filename].add(contract_name)
-                compilation_unit.contracts_names.add(contract_name)
-                compilation_unit.abis[contract_name] = target_loaded["abi"]
-                compilation_unit.bytecodes_init[contract_name] = target_loaded["bytecode"].replace(
+                source_unit.contracts_names.add(contract_name)
+                source_unit.abis[contract_name] = target_loaded["abi"]
+                source_unit.bytecodes_init[contract_name] = target_loaded["bytecode"].replace(
                     "0x", ""
                 )
-                compilation_unit.bytecodes_runtime[contract_name] = target_loaded[
+                source_unit.bytecodes_runtime[contract_name] = target_loaded[
                     "deployedBytecode"
                 ].replace("0x", "")
-                compilation_unit.srcmaps_init[contract_name] = target_loaded["sourceMap"].split(";")
-                compilation_unit.srcmaps_runtime[contract_name] = target_loaded[
+                source_unit.srcmaps_init[contract_name] = target_loaded["sourceMap"].split(";")
+                source_unit.srcmaps_runtime[contract_name] = target_loaded[
                     "deployedSourceMap"
                 ].split(";")
 
                 userdoc = target_loaded.get("userdoc", {})
                 devdoc = target_loaded.get("devdoc", {})
                 natspec = Natspec(userdoc, devdoc)
-                compilation_unit.natspec[contract_name] = natspec
+                source_unit.natspec[contract_name] = natspec
 
         compilation_unit.compiler_version = CompilerVersion(
             compiler=compiler, version=version, optimized=_is_optimized(compile_arguments)

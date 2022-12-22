@@ -266,36 +266,39 @@ def parse_standard_json_output(
             for contract_name, info in file_contracts.items():
                 # for solc < 0.4.10 we cant retrieve the filename from the ast
                 if skip_filename:
-                    contract_filename = convert_filename(
+                    filename = convert_filename(
                         file_path,
                         relative_to_short,
                         compilation_unit.crytic_compile,
                         working_dir=solc_working_dir,
                     )
                 else:
-                    contract_filename = convert_filename(
+                    filename = convert_filename(
                         file_path,
                         relative_to_short,
                         compilation_unit.crytic_compile,
                         working_dir=solc_working_dir,
                     )
-                compilation_unit.contracts_names.add(contract_name)
-                compilation_unit.filename_to_contracts[contract_filename].add(contract_name)
-                compilation_unit.abis[contract_name] = info["abi"]
+
+                source_unit = compilation_unit.create_source_unit(filename)
+
+                source_unit.contracts_names.add(contract_name)
+                compilation_unit.filename_to_contracts[filename].add(contract_name)
+                source_unit.abis[contract_name] = info["abi"]
 
                 userdoc = info.get("userdoc", {})
                 devdoc = info.get("devdoc", {})
                 natspec = Natspec(userdoc, devdoc)
-                compilation_unit.natspec[contract_name] = natspec
+                source_unit.natspec[contract_name] = natspec
 
-                compilation_unit.bytecodes_init[contract_name] = info["evm"]["bytecode"]["object"]
-                compilation_unit.bytecodes_runtime[contract_name] = info["evm"]["deployedBytecode"][
+                source_unit.bytecodes_init[contract_name] = info["evm"]["bytecode"]["object"]
+                source_unit.bytecodes_runtime[contract_name] = info["evm"]["deployedBytecode"][
                     "object"
                 ]
-                compilation_unit.srcmaps_init[contract_name] = info["evm"]["bytecode"][
+                source_unit.srcmaps_init[contract_name] = info["evm"]["bytecode"][
                     "sourceMap"
                 ].split(";")
-                compilation_unit.srcmaps_runtime[contract_name] = info["evm"]["deployedBytecode"][
+                source_unit.srcmaps_runtime[contract_name] = info["evm"]["deployedBytecode"][
                     "sourceMap"
                 ].split(";")
 
@@ -315,10 +318,9 @@ def parse_standard_json_output(
                     compilation_unit.crytic_compile,
                     working_dir=solc_working_dir,
                 )
-            compilation_unit.crytic_compile.filenames.add(path)
-            compilation_unit.filenames.add(path)
+            source_unit = compilation_unit.create_source_unit(path)
 
-            compilation_unit.asts[path.absolute] = info.get("ast")
+            source_unit.ast = info.get("ast")
 
 
 # Inherits is_dependency/is_supported from Solc
