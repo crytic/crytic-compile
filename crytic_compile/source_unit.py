@@ -3,6 +3,7 @@ Module handling the source unit
 """
 import re
 from typing import Dict, List, Optional, Union, Tuple, Set, TYPE_CHECKING
+import cbor2
 
 from Crypto.Hash import keccak
 
@@ -546,22 +547,64 @@ class SourceUnit:
     ###################################################################################
     ###################################################################################
 
+    def metadata_of(self, name: str) -> Dict[str, Union[str, bool]]:
+        """Return the parsed metadata of a contract by name
+
+        Args:
+            name (str): contract name
+
+        Raises:
+            ValueError: If no contract/library with that name exists
+
+        Returns:
+            Dict[str, Union[str, bool]]: fielname => value
+        """
+        # the metadata is at the end of the runtime(!) bytecode
+        try:
+            bytecode = self._runtime_bytecodes[name]
+            print("runtime bytecode", bytecode)
+        except:
+            raise ValueError(  # pylint: disable=raise-missing-from
+                f"contract {name} does not exist"
+            )
+
+        # the last two bytes contain the length of the preceding metadata.
+        metadata_length = int(f"0x{bytecode[-4:]}", base=16)
+        # extract the metadata
+        metadata = bytecode[-(metadata_length * 2 + 4) :]
+        metadata_decoded = cbor2.loads(bytearray.fromhex(metadata))
+
+        for k, v in metadata_decoded.items():
+            if len(v) == 1:
+                metadata_decoded[k] = bool(v)
+            elif k == "solc":
+                metadata_decoded[k] = ".".join([str(d) for d in v])
+            else:
+                # there might be nested items or other unforeseen errors
+                try:
+                    metadata_decoded[k] = v.hex()
+                except:  # pylint: disable=bare-except
+                    pass
+
+        return metadata_decoded
+
     def remove_metadata(self) -> None:
         """Remove init bytecode
         See
         http://solidity.readthedocs.io/en/v0.4.24/metadata.html#encoding-of-the-metadata-hash-in-the-bytecode
-
-        Note we dont support recent Solidity version, see https://github.com/crytic/crytic-compile/issues/59
         """
-        self._init_bytecodes = {
-            key: re.sub(r"a165627a7a72305820.{64}0029", r"", bytecode)
-            for (key, bytecode) in self._init_bytecodes.items()
-        }
-
-        self._runtime_bytecodes = {
-            key: re.sub(r"a165627a7a72305820.{64}0029", r"", bytecode)
-            for (key, bytecode) in self._runtime_bytecodes.items()
-        }
+        # the metadata is at the end of the runtime(!) bytecode of each contract
+        for (key, bytecode) in self._runtime_bytecodes.items():
+            if not bytecode or bytecode == "0x":
+                continue
+            # the last two bytes contain the length of the preceding metadata.
+            metadata_length = int(f"0x{bytecode[-4:]}", base=16)
+            # store the metadata here so we can remove it from the init bytecode later on
+            metadata = bytecode[-(metadata_length * 2 + 4) :]
+            # remove the metadata from the runtime bytecode, '+ 4' for the two length-indication bytes at the end
+            self._runtime_bytecodes[key] = bytecode[0 : -(metadata_length * 2 + 4)]
+            # remove the metadata from the init bytecode
+            self._init_bytecodes[key] = self._init_bytecodes[key].replace(metadata, "")
 
     # endregion
     ###################################################################################
