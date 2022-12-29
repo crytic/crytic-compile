@@ -150,10 +150,6 @@ def _handle_multiple_files(
     filtered_paths: List[str] = []
     for filename, source_code in source_codes.items():
         path_filename = PurePosixPath(filename)
-        if "contracts" in path_filename.parts and not filename.startswith("@"):
-            path_filename = PurePosixPath(
-                *path_filename.parts[path_filename.parts.index("contracts") :]
-            )
 
         # Convert "absolute" paths such as "/interfaces/IFoo.sol" into relative ones.
         # This is needed due to the following behavior from pathlib.Path:
