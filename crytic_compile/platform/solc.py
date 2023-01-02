@@ -584,6 +584,7 @@ def _run_solcs_path(
     targets_json = None
     if isinstance(solcs_path, dict):
         guessed_solcs = _guess_solc(filename, working_dir)
+        compilation_errors = []
         for guessed_solc in guessed_solcs:
             if not guessed_solc in solcs_path:
                 continue
@@ -624,12 +625,14 @@ def _run_solcs_path(
                     working_dir=working_dir,
                     force_legacy_json=force_legacy_json,
                 )
-            except InvalidCompilation:
+                break
+            except InvalidCompilation as ic:
+                compilation_errors.append(version_env+': '+ic.args[0])
                 pass
 
     if not targets_json:
         raise InvalidCompilation(
-            "Invalid solc compilation, none of the solc versions provided worked"
+            "Invalid solc compilation, none of the solc versions provided worked:\n"+'\n'.join(compilation_errors)
         )
 
     return targets_json
@@ -672,6 +675,7 @@ def _run_solcs_env(
     env = dict(os.environ) if env is None else env
     targets_json = None
     guessed_solcs = _guess_solc(filename, working_dir)
+    compilation_errors = []
     for guessed_solc in guessed_solcs:
         if solcs_env and not guessed_solc in solcs_env:
             continue
@@ -688,6 +692,7 @@ def _run_solcs_env(
                 working_dir=working_dir,
                 force_legacy_json=force_legacy_json,
             )
+            break
         except InvalidCompilation:
             pass
 
@@ -708,12 +713,14 @@ def _run_solcs_env(
                     working_dir=working_dir,
                     force_legacy_json=force_legacy_json,
                 )
-            except InvalidCompilation:
+                break
+            except InvalidCompilation as ic:
+                compilation_errors.append(version_env+': '+ic.args[0])
                 pass
 
     if not targets_json:
         raise InvalidCompilation(
-            "Invalid solc compilation, none of the solc versions provided worked"
+            "Invalid solc compilation, none of the solc versions provided worked:\n"+'\n'.join(compilation_errors)
         )
 
     return targets_json
