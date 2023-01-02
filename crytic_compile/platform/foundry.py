@@ -14,8 +14,10 @@ from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform.abstract_platform import AbstractPlatform
 from crytic_compile.platform.exceptions import InvalidCompilation
 from crytic_compile.platform.types import Type
-from crytic_compile.utils.naming import convert_filename
+from crytic_compile.utils.naming import convert_filename, extract_name
 from crytic_compile.utils.natspec import Natspec
+
+from .solc import relative_to_short
 
 # Handle cycle
 if TYPE_CHECKING:
@@ -60,14 +62,7 @@ class Foundry(AbstractPlatform):
             cmd = [
                 "forge",
                 "build",
-                "--extra-output",
-                "abi",
-                "--extra-output",
-                "userdoc",
-                "--extra-output",
-                "devdoc",
-                "--extra-output",
-                "evm.methodIdentifiers",
+                "--build-info",
                 "--force",
             ]
 
@@ -94,68 +89,99 @@ class Foundry(AbstractPlatform):
                 if stderr:
                     LOGGER.error(stderr)
 
-        filenames = Path(self._target, out_directory).rglob("*.json")
-
-        # foundry only support solc for now
-        compiler = "solc"
-        compilation_unit = CompilationUnit(crytic_compile, str(self._target))
-
-        for filename_txt in filenames:
-            with open(filename_txt, encoding="utf8") as file_desc:
-                target_loaded = json.load(file_desc)
-
-                userdoc = target_loaded.get("userdoc", {})
-                devdoc = target_loaded.get("devdoc", {})
-                natspec = Natspec(userdoc, devdoc)
-
-                if not "ast" in target_loaded:
-                    continue
-
-                filename_str = target_loaded["ast"]["absolutePath"]
-
-                try:
-                    filename = convert_filename(
-                        filename_str, lambda x: x, crytic_compile, working_dir=self._target
-                    )
-                except InvalidCompilation as i:
-                    txt = str(i)
-                    txt += "\nSomething went wrong, please open an issue in https://github.com/crytic/crytic-compile"
-                    # pylint: disable=raise-missing-from
-                    raise InvalidCompilation(txt)
-
-                source_unit = compilation_unit.create_source_unit(filename)
-
-                source_unit.ast = target_loaded["ast"]
-
-                contract_name = filename_txt.parts[-1]
-                contract_name = contract_name[: -len(".json")]
-
-                source_unit.natspec[contract_name] = natspec
-                compilation_unit.filename_to_contracts[filename].add(contract_name)
-                source_unit.contracts_names.add(contract_name)
-                source_unit.abis[contract_name] = target_loaded["abi"]
-                source_unit.bytecodes_init[contract_name] = target_loaded["bytecode"][
-                    "object"
-                ].replace("0x", "")
-                source_unit.bytecodes_runtime[contract_name] = target_loaded["deployedBytecode"][
-                    "object"
-                ].replace("0x", "")
-                source_unit.srcmaps_init[contract_name] = (
-                    target_loaded["bytecode"]["sourceMap"].split(";")
-                    if target_loaded["bytecode"].get("sourceMap")
-                    else []
-                )
-                source_unit.srcmaps_runtime[contract_name] = (
-                    target_loaded["deployedBytecode"]["sourceMap"].split(";")
-                    if target_loaded["deployedBytecode"].get("sourceMap")
-                    else []
-                )
-
-        version, optimized, runs = _get_config_info(self._target)
-
-        compilation_unit.compiler_version = CompilerVersion(
-            compiler=compiler, version=version, optimized=optimized, optimize_runs=runs
+        build_directory = Path(
+            self._target,
+            out_directory,
+            "build-info",
         )
+        files = sorted(
+            os.listdir(build_directory), key=lambda x: os.path.getmtime(Path(build_directory, x))
+        )
+        files = [f for f in files if f.endswith(".json")]
+        if not files:
+            txt = f"`forge build` failed. Can you run it?\n{build_directory} is empty"
+            raise InvalidCompilation(txt)
+
+        for file in files:
+            build_info = Path(build_directory, file)
+
+            # The file here should always ends .json, but just in case use ife
+            uniq_id = file if ".json" not in file else file[0:-5]
+            compilation_unit = CompilationUnit(crytic_compile, uniq_id)
+
+            with open(build_info, encoding="utf8") as file_desc:
+                loaded_json = json.load(file_desc)
+
+                targets_json = loaded_json["output"]
+
+                version_from_config = loaded_json["solcVersion"]  # TODO supper vyper
+                input_json = loaded_json["input"]
+                compiler = "solc" if input_json["language"] == "Solidity" else "vyper"
+                optimized = input_json["settings"]["optimizer"]["enabled"]
+
+                compilation_unit.compiler_version = CompilerVersion(
+                    compiler=compiler, version=version_from_config, optimized=optimized
+                )
+
+                skip_filename = compilation_unit.compiler_version.version in [
+                    f"0.4.{x}" for x in range(0, 10)
+                ]
+
+                if "contracts" in targets_json:
+                    for original_filename, contracts_info in targets_json["contracts"].items():
+
+                        filename = convert_filename(
+                            original_filename,
+                            relative_to_short,
+                            crytic_compile,
+                            working_dir=self._target,
+                        )
+
+                        source_unit = compilation_unit.create_source_unit(filename)
+
+                        for original_contract_name, info in contracts_info.items():
+                            contract_name = extract_name(original_contract_name)
+
+                            source_unit.contracts_names.add(contract_name)
+                            compilation_unit.filename_to_contracts[filename].add(contract_name)
+
+                            source_unit.abis[contract_name] = info["abi"]
+                            source_unit.bytecodes_init[contract_name] = info["evm"]["bytecode"][
+                                "object"
+                            ]
+                            source_unit.bytecodes_runtime[contract_name] = info["evm"][
+                                "deployedBytecode"
+                            ]["object"]
+                            source_unit.srcmaps_init[contract_name] = info["evm"]["bytecode"][
+                                "sourceMap"
+                            ].split(";")
+                            source_unit.srcmaps_runtime[contract_name] = info["evm"][
+                                "deployedBytecode"
+                            ]["sourceMap"].split(";")
+                            userdoc = info.get("userdoc", {})
+                            devdoc = info.get("devdoc", {})
+                            natspec = Natspec(userdoc, devdoc)
+                            source_unit.natspec[contract_name] = natspec
+
+                if "sources" in targets_json:
+                    for path, info in targets_json["sources"].items():
+                        if skip_filename:
+                            path = convert_filename(
+                                self._target,
+                                relative_to_short,
+                                crytic_compile,
+                                working_dir=self._target,
+                            )
+                        else:
+                            path = convert_filename(
+                                path,
+                                relative_to_short,
+                                crytic_compile,
+                                working_dir=self._target,
+                            )
+
+                        source_unit = compilation_unit.create_source_unit(path)
+                        source_unit.ast = info["ast"]
 
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:
@@ -197,65 +223,3 @@ class Foundry(AbstractPlatform):
             List[str]: The guessed unit tests commands
         """
         return ["forge test"]
-
-
-def _get_config_info(target: str) -> Tuple[str, Optional[bool], Optional[int]]:
-    """get the compiler version from solidity-files-cache.json
-
-    Args:
-        target (str): path to the project directory
-
-    Returns:
-        (str, str, str): compiler version, optimized, runs
-
-    Raises:
-        InvalidCompilation: If cache/solidity-files-cache.json cannot be parsed
-    """
-    config = Path(target, "cache", "solidity-files-cache.json")
-    if not config.exists():
-        raise InvalidCompilation(
-            "Could not find the cache/solidity-files-cache.json file."
-            + "If you are using 'cache = true' in foundry's config file, please remove it."
-            + " Otherwise please open an issue in https://github.com/crytic/crytic-compile"
-        )
-    with open(config, "r", encoding="utf8") as config_f:
-        config_dict = json.load(config_f)
-
-    version: Optional[str] = None
-    optimizer: Optional[bool] = None
-    runs: Optional[int] = None
-
-    if "files" in config_dict:
-        items = list(config_dict["files"].values())
-        # On the form
-        # { ..
-        #   "artifacts": {
-        #      "CONTRACT_NAME": {
-        #         "0.8.X+commit...": "filename"}
-        #
-        if len(items) >= 1:
-            item = items[0]
-            if "artifacts" in item:
-                items_artifact = list(item["artifacts"].values())
-                if len(items_artifact) >= 1:
-                    item_version = items_artifact[0]
-                    version = list(item_version.keys())[0]
-                    assert version
-                    plus_position = version.find("+")
-                    if plus_position > 0:
-                        version = version[:plus_position]
-            if (
-                "solcConfig" in item
-                and "settings" in item["solcConfig"]
-                and "optimizer" in item["solcConfig"]["settings"]
-            ):
-                optimizer = item["solcConfig"]["settings"]["optimizer"]["enabled"]
-                runs = item["solcConfig"]["settings"]["optimizer"].get("runs", None)
-
-    if version is None:
-        raise InvalidCompilation(
-            "Something went wrong with cache/solidity-files-cache.json parsing"
-            + ". Please open an issue in https://github.com/crytic/crytic-compile"
-        )
-
-    return version, optimizer, runs
