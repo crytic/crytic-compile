@@ -7,8 +7,9 @@ in
     pname = "crytic-compile";
     version = "0.2.5";
     format = "pyproject";
-    src = ./.;
+    src = ../.;
     propagatedBuildInputs = with python38Packages; [
+      cbor2
       pycryptodome
       setuptools
     ];

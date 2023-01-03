@@ -1,2 +1,2 @@
 { pkgs ? import <nixpkgs> {} }:
-pkgs.callPackage ./crytic-compile.nix {}
+pkgs.callPackage ./nix/crytic-compile.nix {}
