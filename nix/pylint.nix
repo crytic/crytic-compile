@@ -1,15 +1,34 @@
+{ pkgs ? import <nixpkgs> {} }:
 let
-  pkgs = import (
-    # commit hash from: https://lazamar.co.uk/nix-versions/?channel=nixpkgs-unstable&package=pylint
-    fetchTarball "https://github.com/NixOS/nixpkgs/archive/bf972dc380f36a3bf83db052380e55f0eaa7dcb6.tar.gz"
-  ) {};
-  pylint = pkgs.python3Packages.pylint.overrideAttrs (_: rec {
-    version = "2.13.4";
-    src = pkgs.fetchFromGitHub {
-      owner = "PyCQA";
-      repo = "pylint";
-      rev = "refs/tags/v${version}";
-      hash = "sha256-CMbw6D6szQvur+13halZrskSV/9rDaThMGLeGxfjqWo=";
+  astroid = pkgs.python38Packages.buildPythonPackage rec {
+    pname = "astroid";
+    version = "2.11.7";
+    src = pkgs.python38Packages.fetchPypi {
+      inherit pname version;
+      sha256 = "sha256-uyRhXHf0g3xwdmnRaQczE3SuipZGUKZpmdo/XKaNyUY=";
     };
-  });
-in pylint
+    doCheck = false;
+    propagatedBuildInputs = with pkgs.python38Packages; [
+      lazy-object-proxy
+      typing-extensions
+      wrapt
+    ];
+  };
+in
+  pkgs.python38Packages.buildPythonPackage rec {
+    pname = "pylint";
+    version = "2.13.4";
+    src = pkgs.python38Packages.fetchPypi {
+      inherit pname version;
+      sha256 = "sha256-fMbQxPYd/0QPnti2V/Ts1hXc/jU0WVPrex3HSv6QHXo=";
+    };
+    doCheck = false;
+    propagatedBuildInputs = with pkgs.python38Packages; [
+      isort
+      tomli
+      mccabe
+      platformdirs
+      dill
+      astroid
+    ];
+  }
