@@ -1,5 +1,5 @@
 
-shell:
+dev:
   nix-shell shell.nix
 
 build:
@@ -10,25 +10,31 @@ install:
   nix-env -i ./result
 
 
-
-lint: black pylint darglint mypy
+lint: black darglint mypy pylint
 
 black:
-  nix-build nix/black.nix
+  @echo -e "\nBuilding black.."
+  nix-build nix/black.nix > /dev/null
+  @echo "Running black.."
   ./result/bin/black crytic_compile --config pyproject.toml
 
-pylint:
-  nix-build nix/pylint.nix
-  ./result/bin/pylint crytic_compile --rcfile pyproject.toml
-
 darglint:
-  nix-build nix/darglint.nix
+  @echo -e "\nBuilding darglint.."
+  nix-build nix/darglint.nix > /dev/null
+  @echo "Running darglint.."
   ./result/bin/darglint crytic_compile
 
 mypy:
-  nix-build nix/mypy.nix
+  @echo -e "\nBuilding mypy.."
+  nix-build nix/mypy.nix > /dev/null
+  @echo "Running mypy.."
   ./result/bin/mypy crytic_compile
 
+pylint:
+  @echo -e "\nBuilding pylint.."
+  nix-build nix/pylint.nix > /dev/null
+  @echo "Running pylint.."
+  ./result/bin/pylint crytic_compile --rcfile pyproject.toml
 
 
 test: test-hardhat test-monorepo test-brownie
