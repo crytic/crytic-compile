@@ -1,0 +1,28 @@
+---
+name: Lint Code Base
+
+defaults:
+  run:
+    # To load bashrc
+    shell: bash -ieo pipefail {0}
+
+on:
+  pull_request:
+    branches: [master, dev]
+
+jobs:
+  lint:
+    name: Lint Code Base
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up nix
+        uses: cachix/install-nix-action@v18
+
+      - name: Install just
+        run: nix-env -iA nixpkgs.just
+
+      - name: Lint everything
+        run: just lint
