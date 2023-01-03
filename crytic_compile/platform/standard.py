@@ -11,8 +11,7 @@ from crytic_compile.compilation_unit import CompilationUnit
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform import Type as PlatformType
 from crytic_compile.platform.abstract_platform import AbstractPlatform
-from crytic_compile.utils.naming import Filename, convert_filename
-
+from crytic_compile.utils.naming import Filename
 # Cycle dependency
 from crytic_compile.utils.natspec import Natspec
 
@@ -435,15 +434,16 @@ def _load_from_compile_current(crytic_compile: "CryticCompile", loaded_json: Dic
             version=compilation_unit_json["compiler"]["version"],
             optimized=compilation_unit_json["compiler"]["optimized"],
         )
-        for contracts_data in compilation_unit_json["contracts"].values():
-            for contract_name, contract in contracts_data.items():
 
-                filename = Filename(
-                    absolute=contract["filenames"]["absolute"],
-                    relative=contract["filenames"]["relative"],
-                    short=contract["filenames"]["short"],
-                    used=contract["filenames"]["used"],
-                )
+        compilation_unit.filenames = {
+            _convert_dict_to_filename(filename) for filename in compilation_unit_json["filenames"]
+        }
+
+        for filename_str, source_unit_data in compilation_unit_json["source_units"].items():
+            filename = compilation_unit.filename_lookup(filename_str)
+            source_unit = compilation_unit.create_source_unit(filename)
+
+            for contract_name, contract in source_unit_data["contracts"].items():
                 compilation_unit.filename_to_contracts[filename].add(contract_name)
 
                 source_unit = compilation_unit.create_source_unit(filename)
@@ -465,15 +465,7 @@ def _load_from_compile_current(crytic_compile: "CryticCompile", loaded_json: Dic
                     crytic_compile.dependencies.add(filename.short)
                     crytic_compile.dependencies.add(filename.used)
 
-        compilation_unit.filenames = {
-            _convert_dict_to_filename(filename) for filename in compilation_unit_json["filenames"]
-        }
-
-        for path, ast in compilation_unit_json["asts"].items:
-            # The following might create lookup issue?
-            filename = convert_filename(path, lambda x: x, crytic_compile)
-            source_unit = compilation_unit.create_source_unit(filename)
-            source_unit.ast = ast
+            source_unit.ast = source_unit_data["ast"]
 
 
 def load_from_compile(crytic_compile: "CryticCompile", loaded_json: Dict) -> Tuple[int, List[str]]:
