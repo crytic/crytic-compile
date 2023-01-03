@@ -3,8 +3,7 @@ Module handling the compilation unit
 """
 import uuid
 from collections import defaultdict
-from typing import TYPE_CHECKING, Dict, Set
-
+from typing import TYPE_CHECKING, Dict, Set, Optional
 
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.source_unit import SourceUnit
@@ -34,6 +33,9 @@ class CompilationUnit:
 
         # set containing all the filenames of this compilation unit
         self._filenames: Set[Filename] = set()
+
+        # mapping from absolute/relative/used to filename
+        self._filenames_lookup: Optional[Dict[str, Filename]] = None
 
         # compiler.compiler
         self._compiler_version: CompilerVersion = CompilerVersion(
@@ -118,7 +120,6 @@ class CompilationUnit:
         if not filename in self._source_units:
             source_unit = SourceUnit(self, filename)  # type: ignore
             self.filenames.add(filename)
-            self.crytic_compile.filenames.add(filename)
             self._source_units[filename] = source_unit
         return self._source_units[filename]
 
@@ -193,6 +194,36 @@ class CompilationUnit:
         if absolute_filename not in d_file:
             raise ValueError("f{absolute_filename} does not exist in {d}")
         return d_file[absolute_filename]
+
+    def filename_lookup(self, filename: str) -> Filename:
+        """Return a crytic_compile.naming.Filename from a any filename
+
+        Args:
+            filename (str): filename (used/absolute/relative)
+
+        Raises:
+            ValueError: If the filename is not in the project
+
+        Returns:
+            Filename: Associated Filename object
+        """
+        # pylint: disable=import-outside-toplevel
+        from crytic_compile.platform.truffle import Truffle
+
+        if isinstance(self.crytic_compile.platform, Truffle) and filename.startswith("project:/"):
+            filename = filename[len("project:/") :]
+
+        if self._filenames_lookup is None:
+            self._filenames_lookup = {}
+            for file in self._filenames:
+                self._filenames_lookup[file.absolute] = file
+                self._filenames_lookup[file.relative] = file
+                self._filenames_lookup[file.used] = file
+        if filename not in self._filenames_lookup:
+            raise ValueError(
+                f"{filename} does not exist in {[f.absolute for f in self._filenames_lookup.values()]}"
+            )
+        return self._filenames_lookup[filename]
 
     # endregion
     ###################################################################################
