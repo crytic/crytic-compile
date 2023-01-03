@@ -40,9 +40,9 @@ jobs:
       shell: bash
       run: |
         if [ ${{ matrix.type }} = etherlime ]; then
-          echo '::set-output name=version::10.17.0'
+          echo 'version=10.17.0' >> $GITHUB_OUTPUT
         else
-          echo '::set-output name=version::lts/*'
+          echo 'version=lts/*' >> $GITHUB_OUTPUT
         fi
     - name: Set up Node
       uses: actions/setup-node@v2
