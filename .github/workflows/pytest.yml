@@ -1,3 +1,4 @@
+---
 name: Pytest
 
 defaults:
@@ -14,7 +15,7 @@ on:
     branches: [main, dev]
   schedule:
     # run CI every day even if no PRs/merges occur
-    - cron:  '0 12 * * *'
+    - cron: '0 12 * * *'
 
 jobs:
   tests:
