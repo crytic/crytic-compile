@@ -45,7 +45,7 @@ jobs:
           echo 'version=lts/*' >> $GITHUB_OUTPUT
         fi
     - name: Set up Node
-      uses: actions/setup-node@v2
+      uses: actions/setup-node@v3
       with:
         node-version: ${{ steps.node.outputs.version }}
     - name: Set up Python 3.8
