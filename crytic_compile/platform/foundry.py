@@ -1,7 +1,6 @@
 """
 Truffle platform
 """
-import json
 import logging
 import os
 import shutil
@@ -9,16 +8,9 @@ import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING, List
 
-from crytic_compile.compilation_unit import CompilationUnit
-from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform.abstract_platform import AbstractPlatform
-from crytic_compile.platform.exceptions import InvalidCompilation
 from crytic_compile.platform.types import Type
-from crytic_compile.utils.naming import convert_filename, extract_name
-from crytic_compile.utils.natspec import Natspec
 from .hardhat import hardhat_like_parsing
-
-from .solc import relative_to_short
 
 # Handle cycle
 if TYPE_CHECKING:
