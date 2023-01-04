@@ -52,7 +52,7 @@ see https://github.com/crytic/crytic-compile/wiki/Usage""",
     parser.add_argument(
         "--export-format",
         help=f"""Export json with non crytic-compile format
-            (default None. Accepted: ({", ".join([key for key in PLATFORMS_EXPORT.keys()])})""",
+            (default None. Accepted: ({", ".join(list(PLATFORMS_EXPORT))})""",
         action="store",
         dest="export_format",
         default=None,
