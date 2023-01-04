@@ -1,5 +1,4 @@
 { pkgs ? import <nixpkgs> {} }:
-
 pkgs.python39Packages.buildPythonPackage rec {
   pname = "mypy";
   version = "0.942";

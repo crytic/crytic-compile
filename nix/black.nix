@@ -9,11 +9,12 @@ pkgs.python38Packages.buildPythonPackage rec {
   };
   doCheck = false;
   propagatedBuildInputs = with pkgs.python38Packages; [
-    platformdirs
-    typing-extensions
     click
-    tomli
     mypy-extensions
     pathspec
+    platformdirs
+    setuptools_scm
+    tomli
+    typing-extensions
   ];
 }

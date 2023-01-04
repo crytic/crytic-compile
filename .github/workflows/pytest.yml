@@ -8,13 +8,7 @@ defaults:
 on:
   push:
     branches:
-      - main
-      - dev
-  pull_request:
-    branches: [main, dev]
-  schedule:
-    # run CI every day even if no PRs/merges occur
-    - cron:  '0 12 * * *'
+      - master
 
 jobs:
   tests:
@@ -23,7 +17,7 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: Set up Python 3.8
-      uses: actions/setup-python@v1
+      uses: actions/setup-python@v2
       with:
         python-version: 3.8
 
