@@ -26,6 +26,99 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger("CryticCompile")
 
 
+def hardhat_like_parsing(
+    crytic_compile: "CryticCompile", target: str, build_directory: Path, working_dir: str
+) -> None:
+    files = sorted(
+        os.listdir(build_directory), key=lambda x: os.path.getmtime(Path(build_directory, x))
+    )
+    files = [str(f) for f in files if str(f).endswith(".json")]
+    if not files:
+        txt = f"`hardhat compile` failed. Can you run it?\n{build_directory} is empty"
+        raise InvalidCompilation(txt)
+
+    for file in files:
+        build_info = Path(build_directory, file)
+
+        # The file here should always ends .json, but just in case use ife
+        uniq_id = file if ".json" not in file else file[0:-5]
+        compilation_unit = CompilationUnit(crytic_compile, uniq_id)
+
+        with open(build_info, encoding="utf8") as file_desc:
+            loaded_json = json.load(file_desc)
+
+            targets_json = loaded_json["output"]
+
+            version_from_config = loaded_json["solcVersion"]  # TODO supper vyper
+            input_json = loaded_json["input"]
+            compiler = "solc" if input_json["language"] == "Solidity" else "vyper"
+            optimized = input_json["settings"]["optimizer"]["enabled"]
+
+            compilation_unit.compiler_version = CompilerVersion(
+                compiler=compiler, version=version_from_config, optimized=optimized
+            )
+
+            skip_filename = compilation_unit.compiler_version.version in [
+                f"0.4.{x}" for x in range(0, 10)
+            ]
+
+            if "contracts" in targets_json:
+                for original_filename, contracts_info in targets_json["contracts"].items():
+
+                    filename = convert_filename(
+                        original_filename,
+                        relative_to_short,
+                        crytic_compile,
+                        working_dir=working_dir,
+                    )
+
+                    source_unit = compilation_unit.create_source_unit(filename)
+
+                    for original_contract_name, info in contracts_info.items():
+                        contract_name = extract_name(original_contract_name)
+
+                        source_unit.contracts_names.add(contract_name)
+                        compilation_unit.filename_to_contracts[filename].add(contract_name)
+
+                        source_unit.abis[contract_name] = info["abi"]
+                        source_unit.bytecodes_init[contract_name] = info["evm"]["bytecode"][
+                            "object"
+                        ]
+                        source_unit.bytecodes_runtime[contract_name] = info["evm"][
+                            "deployedBytecode"
+                        ]["object"]
+                        source_unit.srcmaps_init[contract_name] = info["evm"]["bytecode"][
+                            "sourceMap"
+                        ].split(";")
+                        source_unit.srcmaps_runtime[contract_name] = info["evm"][
+                            "deployedBytecode"
+                        ]["sourceMap"].split(";")
+                        userdoc = info.get("userdoc", {})
+                        devdoc = info.get("devdoc", {})
+                        natspec = Natspec(userdoc, devdoc)
+                        source_unit.natspec[contract_name] = natspec
+
+            if "sources" in targets_json:
+                for path, info in targets_json["sources"].items():
+                    if skip_filename:
+                        path = convert_filename(
+                            target,
+                            relative_to_short,
+                            crytic_compile,
+                            working_dir=working_dir,
+                        )
+                    else:
+                        path = convert_filename(
+                            path,
+                            relative_to_short,
+                            crytic_compile,
+                            working_dir=working_dir,
+                        )
+
+                    source_unit = compilation_unit.create_source_unit(path)
+                    source_unit.ast = info["ast"]
+
+
 class Hardhat(AbstractPlatform):
     """
     Hardhat platform
@@ -88,94 +181,7 @@ class Hardhat(AbstractPlatform):
                 if stderr:
                     LOGGER.error(stderr)
 
-        files = sorted(
-            os.listdir(build_directory), key=lambda x: os.path.getmtime(Path(build_directory, x))
-        )
-        files = [f for f in files if f.endswith(".json")]
-        if not files:
-            txt = f"`hardhat compile` failed. Can you run it?\n{build_directory} is empty"
-            raise InvalidCompilation(txt)
-
-        for file in files:
-            build_info = Path(build_directory, file)
-
-            # The file here should always ends .json, but just in case use ife
-            uniq_id = file if ".json" not in file else file[0:-5]
-            compilation_unit = CompilationUnit(crytic_compile, uniq_id)
-
-            with open(build_info, encoding="utf8") as file_desc:
-                loaded_json = json.load(file_desc)
-
-                targets_json = loaded_json["output"]
-
-                version_from_config = loaded_json["solcVersion"]  # TODO supper vyper
-                input_json = loaded_json["input"]
-                compiler = "solc" if input_json["language"] == "Solidity" else "vyper"
-                optimized = input_json["settings"]["optimizer"]["enabled"]
-
-                compilation_unit.compiler_version = CompilerVersion(
-                    compiler=compiler, version=version_from_config, optimized=optimized
-                )
-
-                skip_filename = compilation_unit.compiler_version.version in [
-                    f"0.4.{x}" for x in range(0, 10)
-                ]
-
-                if "contracts" in targets_json:
-                    for original_filename, contracts_info in targets_json["contracts"].items():
-
-                        filename = convert_filename(
-                            original_filename,
-                            relative_to_short,
-                            crytic_compile,
-                            working_dir=hardhat_working_dir,
-                        )
-
-                        source_unit = compilation_unit.create_source_unit(filename)
-
-                        for original_contract_name, info in contracts_info.items():
-                            contract_name = extract_name(original_contract_name)
-
-                            source_unit.contracts_names.add(contract_name)
-                            compilation_unit.filename_to_contracts[filename].add(contract_name)
-
-                            source_unit.abis[contract_name] = info["abi"]
-                            source_unit.bytecodes_init[contract_name] = info["evm"]["bytecode"][
-                                "object"
-                            ]
-                            source_unit.bytecodes_runtime[contract_name] = info["evm"][
-                                "deployedBytecode"
-                            ]["object"]
-                            source_unit.srcmaps_init[contract_name] = info["evm"]["bytecode"][
-                                "sourceMap"
-                            ].split(";")
-                            source_unit.srcmaps_runtime[contract_name] = info["evm"][
-                                "deployedBytecode"
-                            ]["sourceMap"].split(";")
-                            userdoc = info.get("userdoc", {})
-                            devdoc = info.get("devdoc", {})
-                            natspec = Natspec(userdoc, devdoc)
-                            source_unit.natspec[contract_name] = natspec
-
-                if "sources" in targets_json:
-                    for path, info in targets_json["sources"].items():
-                        if skip_filename:
-                            path = convert_filename(
-                                self._target,
-                                relative_to_short,
-                                crytic_compile,
-                                working_dir=hardhat_working_dir,
-                            )
-                        else:
-                            path = convert_filename(
-                                path,
-                                relative_to_short,
-                                crytic_compile,
-                                working_dir=hardhat_working_dir,
-                            )
-
-                        source_unit = compilation_unit.create_source_unit(path)
-                        source_unit.ast = info["ast"]
+        hardhat_like_parsing(crytic_compile, self._target, build_directory, hardhat_working_dir)
 
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:
