@@ -625,12 +625,11 @@ def _run_solcs_path(
                 )
                 break
             except InvalidCompilation as ic:
-                compilation_errors.append(solc_bin + ': ' + ic.args[0])
-                pass
+                compilation_errors.append(solc_bin + ": " + ic.args[0])
 
     if not targets_json:
         raise InvalidCompilation(
-            "Invalid solc compilation, none of the solc versions provided worked:\n" + '\n'.join(compilation_errors)
+            "Invalid solc compilation, none of the solc versions provided worked:\n" + "\n".join(compilation_errors)
         )
 
     return targets_json
@@ -713,12 +712,11 @@ def _run_solcs_env(
                 )
                 break
             except InvalidCompilation as ic:
-                compilation_errors.append(version_env + ': ' + ic.args[0])
-                pass
+                compilation_errors.append(version_env + ": " + ic.args[0])
 
     if not targets_json:
         raise InvalidCompilation(
-            "Invalid solc compilation, none of the solc versions provided worked:\n" + '\n'.join(compilation_errors)
+            "Invalid solc compilation, none of the solc versions provided worked:\n" + "\n".join(compilation_errors)
         )
 
     return targets_json
