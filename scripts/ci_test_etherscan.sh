@@ -10,7 +10,7 @@ solc-select use 0.4.25 --always-install
 delay_no_key () {
     # Perform a small sleep when API key is not available (e.g. on PR CI from external contributor)
     if [ "$GITHUB_ETHERSCAN" = "" ]; then
-        sleep $(( ( RANDOM % 5 )  + 1 ))s
+        sleep 5s
     fi
 }
 
