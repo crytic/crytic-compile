@@ -5,6 +5,12 @@ on:
   push:
     branches:
       - master
+      - dev
+  pull_request:
+    branches: [ master, dev ]
+  schedule:
+    # run CI every day even if no PRs/merges occur
+    - cron: '0 12 * * *'
 
 jobs:
   tests:

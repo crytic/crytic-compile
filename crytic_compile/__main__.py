@@ -13,6 +13,7 @@ from pkg_resources import require
 from crytic_compile.crytic_compile import compile_all, get_platforms
 from crytic_compile.cryticparser import DEFAULTS_FLAG_IN_CONFIG, cryticparser
 from crytic_compile.platform import InvalidCompilation
+from crytic_compile.platform.all_export import PLATFORMS_EXPORT
 from crytic_compile.utils.zip import ZIP_TYPES_ACCEPTED, save_to_zip
 
 if TYPE_CHECKING:
@@ -50,8 +51,8 @@ see https://github.com/crytic/crytic-compile/wiki/Usage""",
 
     parser.add_argument(
         "--export-format",
-        help="""Export json with non crytic-compile format
-(default None. Accepted: standard, solc, truffle)""",
+        help=f"""Export json with non crytic-compile format
+            (default None. Accepted: ({", ".join(list(PLATFORMS_EXPORT))})""",
         action="store",
         dest="export_format",
         default=None,

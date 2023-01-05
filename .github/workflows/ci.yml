@@ -5,6 +5,12 @@ on:
   push:
     branches:
       - master
+      - dev
+  pull_request:
+    branches: [ master, dev ]
+  schedule:
+    # run CI every day even if no PRs/merges occur
+    - cron: '0 12 * * *'
 
 jobs:
   tests:
@@ -13,7 +19,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "windows-2022"]
-        type: ["brownie", "buidler", "dapp", "embark", "etherlime", "hardhat", "solc", "truffle", "waffle", "foundry"]
+        type: ["brownie", "buidler", "dapp", "embark", "etherlime", "hardhat", "solc", "truffle", "waffle", "foundry", "standard"]
         exclude:
           # Currently broken, tries to pull git:// which is blocked by GH
           - type: embark
@@ -34,13 +40,13 @@ jobs:
       id: node
       shell: bash
       run: |
-        if [ ${{ matrix.type }} = etherlime ]; then
-          echo '::set-output name=version::10.17.0'
+        if [ "${{ matrix.type }}" = "etherlime" ]; then
+          echo 'version=10.17.0' >> "$GITHUB_OUTPUT"
         else
-          echo '::set-output name=version::lts/*'
+          echo 'version=lts/*' >> "$GITHUB_OUTPUT"
         fi
     - name: Set up Node
-      uses: actions/setup-node@v2
+      uses: actions/setup-node@v3
       with:
         node-version: ${{ steps.node.outputs.version }}
     - name: Set up Python 3.8
