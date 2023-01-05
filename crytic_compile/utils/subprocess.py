@@ -1,3 +1,6 @@
+"""
+Utils for running executables across platforms
+"""
 import logging
 import os
 from pathlib import Path
@@ -43,7 +46,7 @@ def run(
 
     try:
         return subprocess.run(
-            cmd, executable=subprocess_exe, cwd=subprocess_cwd, env=subprocess_env, **kwargs
+            cmd, executable=subprocess_exe, cwd=subprocess_cwd, env=subprocess_env, check=True, **kwargs
         )
     except FileNotFoundError:
         LOGGER.error("Could not execute `%s`, is it installed and in PATH?", cmd[0])
