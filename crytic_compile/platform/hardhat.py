@@ -15,11 +15,11 @@ from crytic_compile.platform.types import Type
 from crytic_compile.utils.naming import convert_filename, extract_name
 from crytic_compile.utils.natspec import Natspec
 from crytic_compile.utils.subprocess import run
-from .abstract_platform import AbstractPlatform
+from crytic_compile.platform.abstract_platform import AbstractPlatform
 
 # Handle cycle
-from .solc import relative_to_short
-from ..compilation_unit import CompilationUnit
+from crytic_compile.platform.solc import relative_to_short
+from crytic_compile.compilation_unit import CompilationUnit
 
 if TYPE_CHECKING:
     from crytic_compile import CryticCompile
@@ -122,38 +122,39 @@ class Hardhat(AbstractPlatform):
 
                 if "contracts" in targets_json:
                     for original_filename, contracts_info in targets_json["contracts"].items():
+
+                        filename = convert_filename(
+                            original_filename,
+                            relative_to_short,
+                            crytic_compile,
+                            working_dir=hardhat_working_dir,
+                        )
+
+                        source_unit = compilation_unit.create_source_unit(filename)
+
                         for original_contract_name, info in contracts_info.items():
                             contract_name = extract_name(original_contract_name)
 
-                            contract_filename = convert_filename(
-                                original_filename,
-                                relative_to_short,
-                                crytic_compile,
-                                working_dir=hardhat_working_dir,
-                            )
+                            source_unit.contracts_names.add(contract_name)
+                            compilation_unit.filename_to_contracts[filename].add(contract_name)
 
-                            compilation_unit.contracts_names.add(contract_name)
-                            compilation_unit.filename_to_contracts[contract_filename].add(
-                                contract_name
-                            )
-
-                            compilation_unit.abis[contract_name] = info["abi"]
-                            compilation_unit.bytecodes_init[contract_name] = info["evm"][
-                                "bytecode"
-                            ]["object"]
-                            compilation_unit.bytecodes_runtime[contract_name] = info["evm"][
+                            source_unit.abis[contract_name] = info["abi"]
+                            source_unit.bytecodes_init[contract_name] = info["evm"]["bytecode"][
+                                "object"
+                            ]
+                            source_unit.bytecodes_runtime[contract_name] = info["evm"][
                                 "deployedBytecode"
                             ]["object"]
-                            compilation_unit.srcmaps_init[contract_name] = info["evm"]["bytecode"][
+                            source_unit.srcmaps_init[contract_name] = info["evm"]["bytecode"][
                                 "sourceMap"
                             ].split(";")
-                            compilation_unit.srcmaps_runtime[contract_name] = info["evm"][
+                            source_unit.srcmaps_runtime[contract_name] = info["evm"][
                                 "deployedBytecode"
                             ]["sourceMap"].split(";")
                             userdoc = info.get("userdoc", {})
                             devdoc = info.get("devdoc", {})
                             natspec = Natspec(userdoc, devdoc)
-                            compilation_unit.natspec[contract_name] = natspec
+                            source_unit.natspec[contract_name] = natspec
 
                 if "sources" in targets_json:
                     for path, info in targets_json["sources"].items():
@@ -171,9 +172,9 @@ class Hardhat(AbstractPlatform):
                                 crytic_compile,
                                 working_dir=hardhat_working_dir,
                             )
-                        crytic_compile.filenames.add(path)
-                        compilation_unit.filenames.add(path)
-                        compilation_unit.asts[path.absolute] = info["ast"]
+
+                        source_unit = compilation_unit.create_source_unit(path)
+                        source_unit.ast = info["ast"]
 
     def clean(self, **kwargs: str) -> None:
         """Clean compilation artifacts

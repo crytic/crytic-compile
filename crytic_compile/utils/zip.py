@@ -38,7 +38,7 @@ def load_from_zip(target: str) -> List["CryticCompile"]:
         List[CryticCompile]: List of loaded projects
     """
     # pylint: disable=import-outside-toplevel
-    from crytic_compile.crytic_compile import CryticCompile
+    from crytic_compile import CryticCompile
 
     compilations = []
     with ZipFile(target, "r") as file_desc:

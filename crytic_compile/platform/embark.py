@@ -124,9 +124,8 @@ class Embark(AbstractPlatform):
                 filename = convert_filename(
                     k, _relative_to_short, crytic_compile, working_dir=self._target
                 )
-                compilation_unit.asts[filename.absolute] = ast
-                compilation_unit.filenames.add(filename)
-                crytic_compile.filenames.add(filename)
+                source_unit = compilation_unit.create_source_unit(filename)
+                source_unit.ast = ast
 
             if not "contracts" in targets_loaded:
                 LOGGER.error(
@@ -138,35 +137,35 @@ class Embark(AbstractPlatform):
 
             for original_contract_name, info in targets_loaded["contracts"].items():
                 contract_name = extract_name(original_contract_name)
-                contract_filename = convert_filename(
+                filename = convert_filename(
                     extract_filename(original_contract_name),
                     _relative_to_short,
                     crytic_compile,
                     working_dir=self._target,
                 )
 
-                compilation_unit.filename_to_contracts[contract_filename].add(contract_name)
-                compilation_unit.contracts_names.add(contract_name)
+                source_unit = compilation_unit.create_source_unit(filename)
+
+                compilation_unit.filename_to_contracts[filename].add(contract_name)
+                source_unit.contracts_names.add(contract_name)
 
                 if "abi" in info:
-                    compilation_unit.abis[contract_name] = info["abi"]
+                    source_unit.abis[contract_name] = info["abi"]
                 if "bin" in info:
-                    compilation_unit.bytecodes_init[contract_name] = info["bin"].replace("0x", "")
+                    source_unit.bytecodes_init[contract_name] = info["bin"].replace("0x", "")
                 if "bin-runtime" in info:
-                    compilation_unit.bytecodes_runtime[contract_name] = info["bin-runtime"].replace(
+                    source_unit.bytecodes_runtime[contract_name] = info["bin-runtime"].replace(
                         "0x", ""
                     )
                 if "srcmap" in info:
-                    compilation_unit.srcmaps_init[contract_name] = info["srcmap"].split(";")
+                    source_unit.srcmaps_init[contract_name] = info["srcmap"].split(";")
                 if "srcmap-runtime" in info:
-                    compilation_unit.srcmaps_runtime[contract_name] = info["srcmap-runtime"].split(
-                        ";"
-                    )
+                    source_unit.srcmaps_runtime[contract_name] = info["srcmap-runtime"].split(";")
 
                 userdoc = info.get("userdoc", {})
                 devdoc = info.get("devdoc", {})
                 natspec = Natspec(userdoc, devdoc)
-                compilation_unit.natspec[contract_name] = natspec
+                source_unit.natspec[contract_name] = natspec
 
     def clean(self, **_kwargs: str) -> None:
         """Clean compilation artifacts

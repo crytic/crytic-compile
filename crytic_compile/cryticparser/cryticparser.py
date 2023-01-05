@@ -16,11 +16,11 @@ def init(parser: ArgumentParser) -> None:
         parser (ArgumentParser): argparser where the cli flags are added
     """
 
-    group_solc = parser.add_argument_group("Compile options")
+    group_compile = parser.add_argument_group("Compile options")
 
     platforms = get_platforms()
 
-    group_solc.add_argument(
+    group_compile.add_argument(
         "--compile-force-framework",
         help="Force the compile to a given framework "
         f"({','.join([x.NAME.lower() for x in platforms])})",
@@ -28,21 +28,21 @@ def init(parser: ArgumentParser) -> None:
         default=DEFAULTS_FLAG_IN_CONFIG["compile_force_framework"],
     )
 
-    group_solc.add_argument(
+    group_compile.add_argument(
         "--compile-remove-metadata",
         help="Remove the metadata from the bytecodes",
         action="store_true",
         default=DEFAULTS_FLAG_IN_CONFIG["compile_remove_metadata"],
     )
 
-    group_solc.add_argument(
+    group_compile.add_argument(
         "--compile-custom-build",
         help="Replace platform specific build command",
         action="store",
         default=DEFAULTS_FLAG_IN_CONFIG["compile_custom_build"],
     )
 
-    group_solc.add_argument(
+    group_compile.add_argument(
         "--ignore-compile",
         help="Do not run compile of any platform",
         action="store_true",
@@ -53,6 +53,7 @@ def init(parser: ArgumentParser) -> None:
     _init_solc(parser)
     _init_truffle(parser)
     _init_embark(parser)
+    _init_brownie(parser)
     _init_dapp(parser)
     _init_etherlime(parser)
     _init_etherscan(parser)
@@ -60,6 +61,7 @@ def init(parser: ArgumentParser) -> None:
     _init_npx(parser)
     _init_buidler(parser)
     _init_hardhat(parser)
+    _init_foundry(parser)
 
 
 def _init_solc(parser: ArgumentParser) -> None:
@@ -230,8 +232,8 @@ def _init_brownie(parser: ArgumentParser) -> None:
     Args:
         parser (ArgumentParser): argparser where the cli flags are added
     """
-    group_embark = parser.add_argument_group("Brownie options")
-    group_embark.add_argument(
+    group_brownie = parser.add_argument_group("Brownie options")
+    group_brownie.add_argument(
         "--brownie-ignore-compile",
         help="Do not run brownie compile",
         action="store_true",
@@ -431,7 +433,7 @@ def _init_hardhat(parser: ArgumentParser) -> None:
     Args:
         parser (ArgumentParser): argparser where the cli flags are added
     """
-    group_hardhat = parser.add_argument_group("hardhat options")
+    group_hardhat = parser.add_argument_group("Hardhat options")
     group_hardhat.add_argument(
         "--hardhat-ignore-compile",
         help="Do not run hardhat compile",
@@ -463,8 +465,8 @@ def _init_foundry(parser: ArgumentParser) -> None:
     Args:
         parser (ArgumentParser): argparser where the cli flags are added
     """
-    group_hardhat = parser.add_argument_group("foundry options")
-    group_hardhat.add_argument(
+    group_foundry = parser.add_argument_group("Foundry options")
+    group_foundry.add_argument(
         "--foundry-ignore-compile",
         help="Do not run foundry compile",
         action="store_true",
@@ -472,7 +474,7 @@ def _init_foundry(parser: ArgumentParser) -> None:
         default=DEFAULTS_FLAG_IN_CONFIG["foundry_ignore_compile"],
     )
 
-    group_hardhat.add_argument(
+    group_foundry.add_argument(
         "--foundry-out-directory",
         help="Use an alternative out directory (default: out)",
         action="store",
