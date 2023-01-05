@@ -23,6 +23,7 @@ class Type(IntEnum):
     SOLC_STANDARD_JSON = 10
     BUILDER = 11
     HARDHAT = 11
+    FOUNDRY = 12
 
     STANDARD = 100
     ARCHIVE = 101
@@ -62,4 +63,6 @@ class Type(IntEnum):
             return "Builder"
         if self == Type.BROWNIE:
             return "Browner"
+        if self == Type.FOUNDRY:
+            return "Foundry"
         raise ValueError

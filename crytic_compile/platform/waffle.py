@@ -6,6 +6,7 @@ import json
 import logging
 import os
 import re
+import shutil
 import subprocess
 import tempfile
 from pathlib import Path
@@ -151,7 +152,11 @@ class Waffle(AbstractPlatform):
 
                 try:
                     with subprocess.Popen(
-                        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=target
+                        cmd,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        cwd=target,
+                        executable=shutil.which(cmd[0]),
                     ) as process:
                         stdout, stderr = process.communicate()
                         if stdout:
@@ -184,31 +189,29 @@ class Waffle(AbstractPlatform):
             )
 
             contract_name = contract[1]
+            source_unit = compilation_unit.create_source_unit(filename)
 
-            compilation_unit.asts[filename.absolute] = target_all["sources"][contract[0]]["AST"]
-            crytic_compile.filenames.add(filename)
+            source_unit.ast = target_all["sources"][contract[0]]["AST"]
             compilation_unit.filenames.add(filename)
             compilation_unit.filename_to_contracts[filename].add(contract_name)
-            compilation_unit.contracts_names.add(contract_name)
-            compilation_unit.abis[contract_name] = target_loaded["abi"]
+            source_unit.contracts_names.add(contract_name)
+            source_unit.abis[contract_name] = target_loaded["abi"]
 
             userdoc = target_loaded.get("userdoc", {})
             devdoc = target_loaded.get("devdoc", {})
             natspec = Natspec(userdoc, devdoc)
-            compilation_unit.natspec[contract_name] = natspec
+            source_unit.natspec[contract_name] = natspec
 
-            compilation_unit.bytecodes_init[contract_name] = target_loaded["evm"]["bytecode"][
-                "object"
-            ]
-            compilation_unit.srcmaps_init[contract_name] = target_loaded["evm"]["bytecode"][
+            source_unit.bytecodes_init[contract_name] = target_loaded["evm"]["bytecode"]["object"]
+            source_unit.srcmaps_init[contract_name] = target_loaded["evm"]["bytecode"][
                 "sourceMap"
             ].split(";")
-            compilation_unit.bytecodes_runtime[contract_name] = target_loaded["evm"][
-                "deployedBytecode"
-            ]["object"]
-            compilation_unit.srcmaps_runtime[contract_name] = target_loaded["evm"][
-                "deployedBytecode"
-            ]["sourceMap"].split(";")
+            source_unit.bytecodes_runtime[contract_name] = target_loaded["evm"]["deployedBytecode"][
+                "object"
+            ]
+            source_unit.srcmaps_runtime[contract_name] = target_loaded["evm"]["deployedBytecode"][
+                "sourceMap"
+            ].split(";")
 
         compilation_unit.compiler_version = CompilerVersion(
             compiler=compiler, version=version, optimized=optimized
@@ -323,7 +326,11 @@ def _get_version(compiler: str, cwd: str, config: Optional[Dict] = None) -> str:
         cmd = ["solc", "--version"]
         try:
             with subprocess.Popen(
-                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                cwd=cwd,
+                executable=shutil.which(cmd[0]),
             ) as process:
                 stdout_bytes, _ = process.communicate()
                 stdout_txt = stdout_bytes.decode()  # convert bytestrings to unicode strings
@@ -339,7 +346,11 @@ def _get_version(compiler: str, cwd: str, config: Optional[Dict] = None) -> str:
         cmd = ["solcjs", "--version"]
         try:
             with subprocess.Popen(
-                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                cwd=cwd,
+                executable=shutil.which(cmd[0]),
             ) as process:
                 stdout_bytes, _ = process.communicate()
                 stdout_txt = stdout_bytes.decode()  # convert bytestrings to unicode strings

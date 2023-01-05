@@ -8,7 +8,7 @@ import os
 import re
 import urllib.request
 from json.decoder import JSONDecodeError
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import TYPE_CHECKING, Dict, List, Union, Tuple, Optional
 
 from crytic_compile.compilation_unit import CompilationUnit
@@ -34,6 +34,7 @@ ETHERSCAN_BASE_BYTECODE = "https://%s/address/%s#code"
 SUPPORTED_NETWORK = {
     # Key, (prefix_base, perfix_bytecode)
     "mainnet:": (".etherscan.io", "etherscan.io"),
+    "optim:": ("-optimistic.etherscan.io", "optimistic.etherscan.io"),
     "ropsten:": ("-ropsten.etherscan.io", "ropsten.etherscan.io"),
     "kovan:": ("-kovan.etherscan.io", "kovan.etherscan.io"),
     "rinkeby:": ("-rinkeby.etherscan.io", "rinkeby.etherscan.io"),
@@ -44,6 +45,7 @@ SUPPORTED_NETWORK = {
     "arbi:": (".arbiscan.io", "arbiscan.io"),
     "testnet.arbi:": ("-testnet.arbiscan.io", "testnet.arbiscan.io"),
     "poly:": (".polygonscan.com", "polygonscan.com"),
+    "mumbai:": ("-testnet.polygonscan.com", "testnet.polygonscan.com"),
     "avax:": (".snowtrace.io", "snowtrace.io"),
     "testnet.avax:": ("-testnet.snowtrace.io", "testnet.snowtrace.io"),
     "ftm:": (".ftmscan.com", "ftmscan.com"),
@@ -74,13 +76,15 @@ def _handle_bytecode(crytic_compile: "CryticCompile", target: str, result_b: byt
 
     compilation_unit = CompilationUnit(crytic_compile, str(target))
 
-    compilation_unit.contracts_names.add(contract_name)
+    source_unit = compilation_unit.create_source_unit(contract_filename)
+
+    source_unit.contracts_names.add(contract_name)
     compilation_unit.filename_to_contracts[contract_filename].add(contract_name)
-    compilation_unit.abis[contract_name] = {}
-    compilation_unit.bytecodes_init[contract_name] = bytecode
-    compilation_unit.bytecodes_runtime[contract_name] = ""
-    compilation_unit.srcmaps_init[contract_name] = []
-    compilation_unit.srcmaps_runtime[contract_name] = []
+    source_unit.abis[contract_name] = {}
+    source_unit.bytecodes_init[contract_name] = bytecode
+    source_unit.bytecodes_runtime[contract_name] = ""
+    source_unit.srcmaps_init[contract_name] = []
+    source_unit.srcmaps_runtime[contract_name] = []
 
     compilation_unit.compiler_version = CompilerVersion(
         compiler="unknown", version="", optimized=False
@@ -147,16 +151,25 @@ def _handle_multiple_files(
 
     filtered_paths: List[str] = []
     for filename, source_code in source_codes.items():
-        path_filename = Path(filename)
+        path_filename = PurePosixPath(filename)
         if "contracts" in path_filename.parts and not filename.startswith("@"):
-            path_filename = Path(*path_filename.parts[path_filename.parts.index("contracts") :])
+            path_filename = PurePosixPath(
+                *path_filename.parts[path_filename.parts.index("contracts") :]
+            )
 
-        filtered_paths.append(str(path_filename))
-        path_filename = Path(directory, path_filename)
+        # Convert "absolute" paths such as "/interfaces/IFoo.sol" into relative ones.
+        # This is needed due to the following behavior from pathlib.Path:
+        # > When several absolute paths are given, the last is taken as an anchor
+        # We need to make sure this is relative, so that Path(directory, ...) remains anchored to directory
+        if path_filename.is_absolute():
+            path_filename = PurePosixPath(*path_filename.parts[1:])
 
-        if not os.path.exists(path_filename.parent):
-            os.makedirs(path_filename.parent)
-        with open(path_filename, "w", encoding="utf8") as file_desc:
+        filtered_paths.append(path_filename.as_posix())
+        path_filename_disk = Path(directory, path_filename)
+
+        if not os.path.exists(path_filename_disk.parent):
+            os.makedirs(path_filename_disk.parent)
+        with open(path_filename_disk, "w", encoding="utf8") as file_desc:
             file_desc.write(source_code["content"])
 
     return list(filtered_paths), directory
@@ -205,9 +218,11 @@ class Etherscan(AbstractPlatform):
         etherscan_api_key = kwargs.get("etherscan_api_key", None)
         arbiscan_api_key = kwargs.get("arbiscan_api_key", None)
         polygonscan_api_key = kwargs.get("polygonscan_api_key", None)
+        test_polygonscan_api_key = kwargs.get("test_polygonscan_api_key", None)
         avax_api_key = kwargs.get("avax_api_key", None)
         ftmscan_api_key = kwargs.get("ftmscan_api_key", None)
         bscan_api_key = kwargs.get("bscan_api_key", None)
+        optim_api_key = kwargs.get("optim_api_key", None)
 
         export_dir = kwargs.get("export_dir", "crytic-export")
         export_dir = os.path.join(
@@ -223,6 +238,9 @@ class Etherscan(AbstractPlatform):
         if polygonscan_api_key and "polygonscan" in etherscan_url:
             etherscan_url += f"&apikey={polygonscan_api_key}"
             etherscan_bytecode_url += f"&apikey={polygonscan_api_key}"
+        if test_polygonscan_api_key and "polygonscan" in etherscan_url:
+            etherscan_url += f"&apikey={test_polygonscan_api_key}"
+            etherscan_bytecode_url += f"&apikey={test_polygonscan_api_key}"
         if avax_api_key and "snowtrace" in etherscan_url:
             etherscan_url += f"&apikey={avax_api_key}"
             etherscan_bytecode_url += f"&apikey={avax_api_key}"
@@ -232,14 +250,25 @@ class Etherscan(AbstractPlatform):
         if bscan_api_key and "bscscan" in etherscan_url:
             etherscan_url += f"&apikey={bscan_api_key}"
             etherscan_bytecode_url += f"&apikey={bscan_api_key}"
+        if optim_api_key and "optim" in etherscan_url:
+            etherscan_url += f"&apikey={optim_api_key}"
+            etherscan_bytecode_url += f"&apikey={optim_api_key}"
 
         source_code: str = ""
         result: Dict[str, Union[bool, str, int]] = {}
         contract_name: str = ""
 
         if not only_bytecode:
-            with urllib.request.urlopen(etherscan_url) as response:
-                html = response.read()
+            if "polygon" in etherscan_url:
+                # build object with headers, then send request
+                new_etherscan_url = urllib.request.Request(
+                    etherscan_url, headers={"User-Agent": "Mozilla/5.0"}
+                )
+                with urllib.request.urlopen(new_etherscan_url) as response:
+                    html = response.read()
+            else:
+                with urllib.request.urlopen(etherscan_url) as response:
+                    html = response.read()
 
             info = json.loads(html)
 

@@ -4,6 +4,7 @@ Builder platform
 import json
 import logging
 import os
+import shutil
 import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Tuple
@@ -70,7 +71,11 @@ class Buidler(AbstractPlatform):
             )
 
             with subprocess.Popen(
-                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self._target
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                cwd=self._target,
+                executable=shutil.which(cmd[0]),
             ) as process:
 
                 stdout_bytes, stderr_bytes = process.communicate()
@@ -108,6 +113,14 @@ class Buidler(AbstractPlatform):
 
             if "contracts" in targets_json:
                 for original_filename, contracts_info in targets_json["contracts"].items():
+                    filename = convert_filename(
+                        original_filename,
+                        relative_to_short,
+                        crytic_compile,
+                        working_dir=buidler_working_dir,
+                    )
+                    source_unit = compilation_unit.create_source_unit(filename)
+
                     for original_contract_name, info in contracts_info.items():
                         contract_name = extract_name(original_contract_name)
 
@@ -117,33 +130,26 @@ class Buidler(AbstractPlatform):
                         ):
                             original_filename = "c" + original_filename
 
-                        contract_filename = convert_filename(
-                            original_filename,
-                            relative_to_short,
-                            crytic_compile,
-                            working_dir=buidler_working_dir,
-                        )
+                        source_unit.contracts_names.add(contract_name)
+                        compilation_unit.filename_to_contracts[filename].add(contract_name)
 
-                        compilation_unit.contracts_names.add(contract_name)
-                        compilation_unit.filename_to_contracts[contract_filename].add(contract_name)
-
-                        compilation_unit.abis[contract_name] = info["abi"]
-                        compilation_unit.bytecodes_init[contract_name] = info["evm"]["bytecode"][
+                        source_unit.abis[contract_name] = info["abi"]
+                        source_unit.bytecodes_init[contract_name] = info["evm"]["bytecode"][
                             "object"
                         ]
-                        compilation_unit.bytecodes_runtime[contract_name] = info["evm"][
+                        source_unit.bytecodes_runtime[contract_name] = info["evm"][
                             "deployedBytecode"
                         ]["object"]
-                        compilation_unit.srcmaps_init[contract_name] = info["evm"]["bytecode"][
+                        source_unit.srcmaps_init[contract_name] = info["evm"]["bytecode"][
                             "sourceMap"
                         ].split(";")
-                        compilation_unit.srcmaps_runtime[contract_name] = info["evm"][
+                        source_unit.srcmaps_runtime[contract_name] = info["evm"][
                             "deployedBytecode"
                         ]["sourceMap"].split(";")
                         userdoc = info.get("userdoc", {})
                         devdoc = info.get("devdoc", {})
                         natspec = Natspec(userdoc, devdoc)
-                        compilation_unit.natspec[contract_name] = natspec
+                        source_unit.natspec[contract_name] = natspec
 
             if "sources" in targets_json:
                 for path, info in targets_json["sources"].items():
@@ -162,9 +168,8 @@ class Buidler(AbstractPlatform):
                         path = convert_filename(
                             path, relative_to_short, crytic_compile, working_dir=buidler_working_dir
                         )
-                    compilation_unit.filenames.add(path)
-                    crytic_compile.filenames.add(path)
-                    compilation_unit.asts[path.absolute] = info["ast"]
+                    source_unit = compilation_unit.create_source_unit(path)
+                    source_unit.ast = info["ast"]
 
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:

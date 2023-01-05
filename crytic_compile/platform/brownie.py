@@ -4,6 +4,7 @@ Brownie platform. https://github.com/iamdefinitelyahuman/brownie
 import json
 import logging
 import os
+import shutil
 import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, List
@@ -54,7 +55,11 @@ class Brownie(AbstractPlatform):
             cmd = base_cmd + ["compile"]
             try:
                 with subprocess.Popen(
-                    cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self._target
+                    cmd,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    cwd=self._target,
+                    executable=shutil.which(cmd[0]),
                 ) as process:
                     stdout_bytes, stderr_bytes = process.communicate()
                     stdout, stderr = (
@@ -93,8 +98,10 @@ class Brownie(AbstractPlatform):
             return False
         # < 1.1.0: brownie-config.json
         # >= 1.1.0: brownie-config.yaml
-        return os.path.isfile(os.path.join(target, "brownie-config.json")) or os.path.isfile(
-            os.path.join(target, "brownie-config.yaml")
+        return (
+            os.path.isfile(os.path.join(target, "brownie-config.json"))
+            or os.path.isfile(os.path.join(target, "brownie-config.yaml"))
+            or os.path.isfile(os.path.join(target, "brownie-config.yml"))
         )
 
     def is_dependency(self, _path: str) -> bool:
@@ -161,28 +168,28 @@ def _iterate_over_files(
                 filename_txt, _relative_to_short, crytic_compile, working_dir=target
             )
 
-            compilation_unit.asts[filename.absolute] = target_loaded["ast"]
-            compilation_unit.filenames.add(filename)
-            crytic_compile.filenames.add(filename)
+            source_unit = compilation_unit.create_source_unit(filename)
+
+            source_unit.ast = target_loaded["ast"]
             contract_name = target_loaded["contractName"]
+
             compilation_unit.filename_to_contracts[filename].add(contract_name)
-            compilation_unit.contracts_names.add(contract_name)
-            compilation_unit.abis[contract_name] = target_loaded["abi"]
-            compilation_unit.bytecodes_init[contract_name] = target_loaded["bytecode"].replace(
-                "0x", ""
-            )
-            compilation_unit.bytecodes_runtime[contract_name] = target_loaded[
+
+            source_unit.contracts_names.add(contract_name)
+            source_unit.abis[contract_name] = target_loaded["abi"]
+            source_unit.bytecodes_init[contract_name] = target_loaded["bytecode"].replace("0x", "")
+            source_unit.bytecodes_runtime[contract_name] = target_loaded[
                 "deployedBytecode"
             ].replace("0x", "")
-            compilation_unit.srcmaps_init[contract_name] = target_loaded["sourceMap"].split(";")
-            compilation_unit.srcmaps_runtime[contract_name] = target_loaded[
-                "deployedSourceMap"
-            ].split(";")
+            source_unit.srcmaps_init[contract_name] = target_loaded["sourceMap"].split(";")
+            source_unit.srcmaps_runtime[contract_name] = target_loaded["deployedSourceMap"].split(
+                ";"
+            )
 
             userdoc = target_loaded.get("userdoc", {})
             devdoc = target_loaded.get("devdoc", {})
             natspec = Natspec(userdoc, devdoc)
-            compilation_unit.natspec[contract_name] = natspec
+            source_unit.natspec[contract_name] = natspec
 
     compilation_unit.compiler_version = CompilerVersion(
         compiler=compiler, version=version, optimized=optimized
@@ -199,8 +206,9 @@ def _get_version(compiler: Dict) -> str:
         str: Compiler version
     """
     version = compiler.get("version", "")
-    version = version[len("Version: ") :]
-    version = version[0 : version.find("+")]
+    if "Version:" in version:
+        version = version.split("Version:")[1].strip()
+    version = version[0 : version.find("+")]  # TODO handle not "+" not found
     return version
 
 

@@ -59,6 +59,48 @@ def combine_filename_name(filename: str, name: str) -> str:
     return filename + ":" + name
 
 
+def _verify_filename_existence(filename: Path, cwd: Path) -> Path:
+    """
+    Check if the filename exist. If it does not, try multiple heuristics to find the right filename:
+    - Look for contracts/FILENAME
+    - Look for node_modules/FILENAME
+    - Look for node_modules/FILENAME in all the parents directories
+
+
+    Args:
+        filename (Path): filename to check
+        cwd (Path): directory
+
+    Raises:
+        InvalidCompilation: if the filename is not found
+
+    Returns:
+        Path: the filename
+    """
+
+    if filename.exists():
+        return filename
+
+    if cwd.joinpath(Path("contracts"), filename).exists():
+        filename = cwd.joinpath("contracts", filename)
+    elif cwd.joinpath(filename).exists():
+        filename = cwd.joinpath(filename)
+    # how node.js loads dependencies from node_modules:
+    # https://nodejs.org/api/modules.html#loading-from-node_modules-folders
+    elif cwd.joinpath(Path("node_modules"), filename).exists():
+        filename = cwd.joinpath("node_modules", filename)
+    else:
+        for parent in cwd.parents:
+            if parent.joinpath(Path("node_modules"), filename).exists():
+                filename = parent.joinpath(Path("node_modules"), filename)
+                break
+
+    if not filename.exists():
+        raise InvalidCompilation(f"Unknown file: {filename}")
+
+    return filename
+
+
 # pylint: disable=too-many-branches
 def convert_filename(
     used_filename: Union[str, Path],
@@ -75,9 +117,6 @@ def convert_filename(
         crytic_compile (CryticCompile): Associated CryticCompile object
         working_dir (Optional[Union[str, Path]], optional): Working directory. Defaults to None.
 
-    Raises:
-        InvalidCompilation: [description]
-
     Returns:
         Filename: Filename converted
     """
@@ -91,9 +130,9 @@ def convert_filename(
     else:
         filename = Path(filename_txt)
 
+    # cwd points to the directory to be used
     if working_dir is None:
         cwd = Path.cwd()
-        working_dir = cwd
     else:
         working_dir = Path(working_dir)
         if working_dir.is_absolute():
@@ -106,16 +145,10 @@ def convert_filename(
             filename = filename.relative_to(Path(crytic_compile.package_name))
         except ValueError:
             pass
-    if not filename.exists():
-        if cwd.joinpath(Path("node_modules"), filename).exists():
-            filename = cwd.joinpath("node_modules", filename)
-        elif cwd.joinpath(Path("contracts"), filename).exists():
-            filename = cwd.joinpath("contracts", filename)
-        elif working_dir.joinpath(filename).exists():
-            filename = working_dir.joinpath(filename)
-        else:
-            raise InvalidCompilation(f"Unknown file: {filename}")
-    elif not filename.is_absolute():
+
+    filename = _verify_filename_existence(filename, cwd)
+
+    if not filename.is_absolute():
         filename = cwd.joinpath(filename)
 
     absolute = filename
@@ -123,10 +156,10 @@ def convert_filename(
 
     # Build the short path
     try:
-        if working_dir.is_absolute():
-            short = absolute.relative_to(working_dir)
+        if cwd.is_absolute():
+            short = absolute.relative_to(cwd)
         else:
-            short = relative.relative_to(working_dir)
+            short = relative.relative_to(cwd)
     except ValueError:
         short = relative
     except RuntimeError:
@@ -135,5 +168,8 @@ def convert_filename(
     short = relative_to_short(short)
 
     return Filename(
-        absolute=str(absolute), relative=str(relative), short=str(short), used=used_filename
+        absolute=str(absolute),
+        relative=relative.as_posix(),
+        short=short.as_posix(),
+        used=used_filename,
     )

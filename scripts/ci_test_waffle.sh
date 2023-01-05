@@ -1,14 +1,9 @@
 #!/usr/bin/env bash
 
-### Test truffle integration
+### Test waffle integration
 
-mkdir /tmp/waffle
-cd /tmp/waffle || exit 255
-
-curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.34.0/install.sh | bash
-source ~/.nvm/nvm.sh
-nvm install --lts
-nvm use --lts
+DIR=$(mktemp -d)
+cd "$DIR" || exit 255
 
 npm install -g ethereum-waffle
 npm install openzeppelin-solidity

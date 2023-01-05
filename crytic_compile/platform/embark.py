@@ -5,6 +5,7 @@ Embark platform. https://github.com/embark-framework/embark
 import json
 import logging
 import os
+import shutil
 import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING, List
@@ -64,7 +65,9 @@ class Embark(AbstractPlatform):
             if write_embark_json:
                 try:
                     with subprocess.Popen(
-                        ["npm", "install", plugin_name], cwd=self._target
+                        ["npm", "install", plugin_name],
+                        cwd=self._target,
+                        executable=shutil.which("npm"),
                     ) as process:
                         _, stderr = process.communicate()
                         with open(
@@ -91,7 +94,11 @@ class Embark(AbstractPlatform):
                     cmd = ["npx"] + cmd
                 # pylint: disable=consider-using-with
                 process = subprocess.Popen(
-                    cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self._target
+                    cmd,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    cwd=self._target,
+                    executable=shutil.which(cmd[0]),
                 )
             except OSError as error:
                 # pylint: disable=raise-missing-from
@@ -117,9 +124,8 @@ class Embark(AbstractPlatform):
                 filename = convert_filename(
                     k, _relative_to_short, crytic_compile, working_dir=self._target
                 )
-                compilation_unit.asts[filename.absolute] = ast
-                compilation_unit.filenames.add(filename)
-                crytic_compile.filenames.add(filename)
+                source_unit = compilation_unit.create_source_unit(filename)
+                source_unit.ast = ast
 
             if not "contracts" in targets_loaded:
                 LOGGER.error(
@@ -131,35 +137,35 @@ class Embark(AbstractPlatform):
 
             for original_contract_name, info in targets_loaded["contracts"].items():
                 contract_name = extract_name(original_contract_name)
-                contract_filename = convert_filename(
+                filename = convert_filename(
                     extract_filename(original_contract_name),
                     _relative_to_short,
                     crytic_compile,
                     working_dir=self._target,
                 )
 
-                compilation_unit.filename_to_contracts[contract_filename].add(contract_name)
-                compilation_unit.contracts_names.add(contract_name)
+                source_unit = compilation_unit.create_source_unit(filename)
+
+                compilation_unit.filename_to_contracts[filename].add(contract_name)
+                source_unit.contracts_names.add(contract_name)
 
                 if "abi" in info:
-                    compilation_unit.abis[contract_name] = info["abi"]
+                    source_unit.abis[contract_name] = info["abi"]
                 if "bin" in info:
-                    compilation_unit.bytecodes_init[contract_name] = info["bin"].replace("0x", "")
+                    source_unit.bytecodes_init[contract_name] = info["bin"].replace("0x", "")
                 if "bin-runtime" in info:
-                    compilation_unit.bytecodes_runtime[contract_name] = info["bin-runtime"].replace(
+                    source_unit.bytecodes_runtime[contract_name] = info["bin-runtime"].replace(
                         "0x", ""
                     )
                 if "srcmap" in info:
-                    compilation_unit.srcmaps_init[contract_name] = info["srcmap"].split(";")
+                    source_unit.srcmaps_init[contract_name] = info["srcmap"].split(";")
                 if "srcmap-runtime" in info:
-                    compilation_unit.srcmaps_runtime[contract_name] = info["srcmap-runtime"].split(
-                        ";"
-                    )
+                    source_unit.srcmaps_runtime[contract_name] = info["srcmap-runtime"].split(";")
 
                 userdoc = info.get("userdoc", {})
                 devdoc = info.get("devdoc", {})
                 natspec = Natspec(userdoc, devdoc)
-                compilation_unit.natspec[contract_name] = natspec
+                source_unit.natspec[contract_name] = natspec
 
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:
