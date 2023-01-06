@@ -14,28 +14,28 @@ lint: black darglint mypy pylint
 
 black:
   @echo -e "\nBuilding black.."
-  nix-build nix/black.nix > /dev/null
+  nix-build nix/black.nix
   @echo "Running black.."
   ./result/bin/black --version
   ./result/bin/black crytic_compile --config pyproject.toml
 
 darglint:
   @echo -e "\nBuilding darglint.."
-  nix-build nix/darglint.nix > /dev/null
+  nix-build nix/darglint.nix
   @echo "Running darglint.."
   ./result/bin/darglint --version
   ./result/bin/darglint crytic_compile
 
 mypy:
   @echo -e "\nBuilding mypy.."
-  nix-build nix/mypy.nix > /dev/null
+  nix-build nix/mypy.nix
   @echo "Running mypy.."
   ./result/bin/mypy --version
   ./result/bin/mypy crytic_compile
 
 pylint:
   @echo -e "\nBuilding pylint.."
-  nix-build nix/pylint.nix > /dev/null
+  nix-build nix/pylint.nix
   @echo "Running pylint.."
   ./result/bin/pylint --version
   ./result/bin/pylint crytic_compile --rcfile pyproject.toml
