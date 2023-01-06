@@ -7,7 +7,7 @@ import os
 import shutil
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform.exceptions import InvalidCompilation
@@ -52,15 +52,19 @@ class Hardhat(AbstractPlatform):
             "ignore_compile", False
         )
 
-        build_directory = Path(
-            self._target, kwargs.get("hardhat_artifacts_directory", "artifacts"), "build-info"
-        )
-
-        hardhat_working_dir = kwargs.get("hardhat_working_dir", self._target)
-
         base_cmd = ["hardhat"]
         if not kwargs.get("npx_disable", False):
             base_cmd = ["npx"] + base_cmd
+
+        detected_paths = self._get_hardhat_paths(base_cmd, kwargs)
+
+        build_directory = Path(
+            self._target,
+            detected_paths["artifacts"],
+            "build-info",
+        )
+
+        hardhat_working_dir = Path(self._target, detected_paths["root"])
 
         if not hardhat_ignore_compile:
             cmd = base_cmd + ["compile", "--force"]
@@ -217,3 +221,76 @@ class Hardhat(AbstractPlatform):
             List[str]: The guessed unit tests commands
         """
         return ["hardhat test"]
+
+    def _get_hardhat_paths(
+        self, base_cmd: List[str], args: Dict[str, str]
+    ) -> Dict[str, Union[Path, str]]:
+        """Obtain hardhat configuration paths, defaulting to the
+        standard config if needed.
+
+        Args:
+            base_cmd ([str]): hardhat command
+            args (Dict[str, str]): crytic-compile options that may affect paths
+
+        Returns:
+            Dict[str, str]: hardhat paths configuration
+        """
+        target_path = Path(self._target)
+        default_paths = {
+            "root": target_path,
+            "configFile": target_path.joinpath("hardhat.config.js"),
+            "sources": target_path.joinpath("contracts"),
+            "cache": target_path.joinpath("cache"),
+            "artifacts": target_path.joinpath("artifacts"),
+            "tests": target_path.joinpath("test"),
+        }
+        override_paths = {}
+
+        if args.get("hardhat_cache_directory", None):
+            override_paths["cache"] = Path(target_path, args["hardhat_cache_directory"])
+
+        if args.get("hardhat_artifacts_directory", None):
+            override_paths["artifacts"] = Path(target_path, args["hardhat_artifacts_directory"])
+
+        if args.get("hardhat_working_dir", None):
+            override_paths["root"] = Path(target_path, args["hardhat_working_dir"])
+
+        print_paths = "console.log(JSON.stringify(config.paths))"
+        config_str = self._run_hardhat_console(base_cmd, print_paths)
+
+        try:
+            paths = json.loads(config_str or "{}")
+            return {**default_paths, **paths, **override_paths}
+        except ValueError as e:
+            LOGGER.info("Problem deserializing hardhat configuration: %s", e)
+            return {**default_paths, **override_paths}
+
+    def _run_hardhat_console(self, base_cmd: List[str], command: str) -> Optional[str]:
+        """Run a JS command in the hardhat console
+
+        Args:
+            base_cmd ([str]): hardhat command
+            command (str): console command to run
+
+        Returns:
+            Optional[str]: command output if execution succeeds
+        """
+        with subprocess.Popen(
+            base_cmd + ["console", "--no-compile"],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=self._target,
+            executable=shutil.which(base_cmd[0]),
+        ) as process:
+            stdout_bytes, stderr_bytes = process.communicate(command.encode("utf-8"))
+            stdout, stderr = (
+                stdout_bytes.decode(),
+                stderr_bytes.decode(),
+            )
+
+            if stderr:
+                LOGGER.info("Problem executing hardhat: %s", stderr)
+                return None
+
+            return stdout
