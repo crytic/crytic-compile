@@ -42,6 +42,9 @@ def hardhat_like_parsing(
 
     Returns:
 
+    Raises:
+        InvalidCompilation: If hardhat failed to run
+
     """
     files = sorted(
         os.listdir(build_directory), key=lambda x: os.path.getmtime(Path(build_directory, x))
@@ -150,8 +153,6 @@ class Hardhat(AbstractPlatform):
             **kwargs: optional arguments. Used: "hardhat_ignore", "hardhat_ignore_compile", "ignore_compile",
                 "hardhat_artifacts_directory","hardhat_working_dir","npx_disable"
 
-        Raises:
-            InvalidCompilation: If hardhat failed to run
         """
 
         hardhat_ignore_compile = kwargs.get("hardhat_ignore_compile", False) or kwargs.get(

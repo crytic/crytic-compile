@@ -36,8 +36,6 @@ class Foundry(AbstractPlatform):
             crytic_compile (CryticCompile): CryticCompile object to populate
             **kwargs: optional arguments. Used: "foundry_ignore_compile", "foundry_out_directory"
 
-        Raises:
-            InvalidCompilation: If foundry failed to run
         """
 
         ignore_compile = kwargs.get("foundry_ignore_compile", False) or kwargs.get(
