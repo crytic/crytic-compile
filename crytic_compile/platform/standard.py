@@ -3,6 +3,7 @@ Standard crytic-compile export
 """
 import json
 import os
+from collections import defaultdict
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, List, Tuple, Type, Any
 
@@ -213,22 +214,23 @@ def generate_standard_export(crytic_compile: "CryticCompile") -> Dict:
 
     compilation_units = {}
     for key, compilation_unit in crytic_compile.compilation_units.items():
-        contracts: Dict[str, Dict[str, Any]] = {}
-        for filename, contract_names in compilation_unit.filename_to_contracts.items():
-            contracts[filename.relative] = {}
-            for contract_name in contract_names:
-                libraries = compilation_unit.libraries_names_and_patterns(contract_name)
-                contracts[filename.relative][contract_name] = {
-                    "abi": compilation_unit.abi(contract_name),
-                    "bin": compilation_unit.bytecode_init(contract_name),
-                    "bin-runtime": compilation_unit.bytecode_runtime(contract_name),
-                    "srcmap": ";".join(compilation_unit.srcmap_init(contract_name)),
-                    "srcmap-runtime": ";".join(compilation_unit.srcmap_runtime(contract_name)),
+        source_unit_dict: Dict[str, Dict[str, Dict[str, Any]]] = {}
+        for filename, source_unit in compilation_unit.source_units.items():
+            source_unit_dict[filename.relative] = defaultdict(dict)
+            source_unit_dict[filename.relative]["ast"] = source_unit.ast
+            for contract_name in source_unit.contracts_names:
+                libraries = source_unit.libraries_names_and_patterns(contract_name)
+                source_unit_dict[filename.relative]["contracts"][contract_name] = {
+                    "abi": source_unit.abi(contract_name),
+                    "bin": source_unit.bytecode_init(contract_name),
+                    "bin-runtime": source_unit.bytecode_runtime(contract_name),
+                    "srcmap": ";".join(source_unit.srcmap_init(contract_name)),
+                    "srcmap-runtime": ";".join(source_unit.srcmap_runtime(contract_name)),
                     "filenames": _convert_filename_to_dict(filename),
                     "libraries": dict(libraries) if libraries else {},
                     "is_dependency": crytic_compile.is_dependency(filename.absolute),
-                    "userdoc": compilation_unit.natspec[contract_name].userdoc.export(),
-                    "devdoc": compilation_unit.natspec[contract_name].devdoc.export(),
+                    "userdoc": source_unit.natspec[contract_name].userdoc.export(),
+                    "devdoc": source_unit.natspec[contract_name].devdoc.export(),
                 }
 
         # Create our root object to contain the contracts and other information.
@@ -243,8 +245,7 @@ def generate_standard_export(crytic_compile: "CryticCompile") -> Dict:
 
         compilation_units[key] = {
             "compiler": compiler,
-            "asts": compilation_unit.asts,
-            "contracts": contracts,
+            "source_units": source_unit_dict,
             "filenames": [
                 _convert_filename_to_dict(filename) for filename in compilation_unit.filenames
             ],
@@ -256,7 +257,7 @@ def generate_standard_export(crytic_compile: "CryticCompile") -> Dict:
         "working_dir": str(crytic_compile.working_dir),
         "type": int(crytic_compile.platform.platform_type_used),
         "unit_tests": crytic_compile.platform.guessed_tests(),
-        "crytic_version": "0.0.1",
+        "crytic_version": "0.0.2",
     }
     return output
 
@@ -269,27 +270,27 @@ def _load_from_compile_legacy1(crytic_compile: "CryticCompile", loaded_json: Dic
         loaded_json (Dict): Json representation of the CryticCompile object
     """
     compilation_unit = CompilationUnit(crytic_compile, "legacy")
-    compilation_unit.asts = loaded_json["asts"]
     compilation_unit.compiler_version = CompilerVersion(
         compiler=loaded_json["compiler"]["compiler"],
         version=loaded_json["compiler"]["version"],
         optimized=loaded_json["compiler"]["optimized"],
     )
     for contract_name, contract in loaded_json["contracts"].items():
-        compilation_unit.contracts_names.add(contract_name)
         filename = _convert_dict_to_filename(contract["filenames"])
         compilation_unit.filename_to_contracts[filename].add(contract_name)
+        source_unit = compilation_unit.create_source_unit(filename)
 
-        compilation_unit.abis[contract_name] = contract["abi"]
-        compilation_unit.bytecodes_init[contract_name] = contract["bin"]
-        compilation_unit.bytecodes_runtime[contract_name] = contract["bin-runtime"]
-        compilation_unit.srcmaps_init[contract_name] = contract["srcmap"].split(";")
-        compilation_unit.srcmaps_runtime[contract_name] = contract["srcmap-runtime"].split(";")
-        compilation_unit.libraries[contract_name] = contract["libraries"]
+        source_unit.contracts_names.add(contract_name)
+        source_unit.abis[contract_name] = contract["abi"]
+        source_unit.bytecodes_init[contract_name] = contract["bin"]
+        source_unit.bytecodes_runtime[contract_name] = contract["bin-runtime"]
+        source_unit.srcmaps_init[contract_name] = contract["srcmap"].split(";")
+        source_unit.srcmaps_runtime[contract_name] = contract["srcmap-runtime"].split(";")
+        source_unit.libraries[contract_name] = contract["libraries"]
 
         userdoc = contract.get("userdoc", {})
         devdoc = contract.get("devdoc", {})
-        compilation_unit.natspec[contract_name] = Natspec(userdoc, devdoc)
+        source_unit.natspec[contract_name] = Natspec(userdoc, devdoc)
 
         if contract["is_dependency"]:
             compilation_unit.crytic_compile.dependencies.add(filename.absolute)
@@ -308,6 +309,12 @@ def _load_from_compile_legacy1(crytic_compile: "CryticCompile", loaded_json: Dic
             filename = _convert_dict_to_filename(contract["filenames"])
             compilation_unit.filenames.add(filename)
 
+    for path, ast in loaded_json["asts"].items():
+        # The following might create lookup issue?
+        filename = crytic_compile.filename_lookup(path)
+        source_unit = compilation_unit.create_source_unit(filename)
+        source_unit.ast = ast
+
 
 def _load_from_compile_legacy2(crytic_compile: "CryticCompile", loaded_json: Dict) -> None:
     """Load from old (old) export
@@ -325,7 +332,7 @@ def _load_from_compile_legacy2(crytic_compile: "CryticCompile", loaded_json: Dic
             optimized=compilation_unit_json["compiler"]["optimized"],
         )
         for contract_name, contract in compilation_unit_json["contracts"].items():
-            compilation_unit.contracts_names.add(contract_name)
+
             filename = Filename(
                 absolute=contract["filenames"]["absolute"],
                 relative=contract["filenames"]["relative"],
@@ -334,23 +341,24 @@ def _load_from_compile_legacy2(crytic_compile: "CryticCompile", loaded_json: Dic
             )
             compilation_unit.filename_to_contracts[filename].add(contract_name)
 
-            compilation_unit.abis[contract_name] = contract["abi"]
-            compilation_unit.bytecodes_init[contract_name] = contract["bin"]
-            compilation_unit.bytecodes_runtime[contract_name] = contract["bin-runtime"]
-            compilation_unit.srcmaps_init[contract_name] = contract["srcmap"].split(";")
-            compilation_unit.srcmaps_runtime[contract_name] = contract["srcmap-runtime"].split(";")
-            compilation_unit.libraries[contract_name] = contract["libraries"]
+            source_unit = compilation_unit.create_source_unit(filename)
+            source_unit.contracts_names.add(contract_name)
+            source_unit.abis[contract_name] = contract["abi"]
+            source_unit.bytecodes_init[contract_name] = contract["bin"]
+            source_unit.bytecodes_runtime[contract_name] = contract["bin-runtime"]
+            source_unit.srcmaps_init[contract_name] = contract["srcmap"].split(";")
+            source_unit.srcmaps_runtime[contract_name] = contract["srcmap-runtime"].split(";")
+            source_unit.libraries[contract_name] = contract["libraries"]
 
             userdoc = contract.get("userdoc", {})
             devdoc = contract.get("devdoc", {})
-            compilation_unit.natspec[contract_name] = Natspec(userdoc, devdoc)
+            source_unit.natspec[contract_name] = Natspec(userdoc, devdoc)
 
             if contract["is_dependency"]:
                 crytic_compile.dependencies.add(filename.absolute)
                 crytic_compile.dependencies.add(filename.relative)
                 crytic_compile.dependencies.add(filename.short)
                 crytic_compile.dependencies.add(filename.used)
-        compilation_unit.asts = compilation_unit_json["asts"]
 
         if "filenames" in compilation_unit_json:
             compilation_unit.filenames = {
@@ -358,11 +366,65 @@ def _load_from_compile_legacy2(crytic_compile: "CryticCompile", loaded_json: Dic
                 for filename in compilation_unit_json["filenames"]
             }
         else:
-            # For legay code, we recover the filenames from the contracts list
+            # For legacy code, we recover the filenames from the contracts list
             # This is not perfect, as a filename might not be associated to any contract
             for contract_name, contract in compilation_unit_json["contracts"].items():
                 filename = _convert_dict_to_filename(contract["filenames"])
                 compilation_unit.filenames.add(filename)
+
+        for path, ast in loaded_json["asts"].items():
+            # The following might create lookup issue?
+            filename = crytic_compile.filename_lookup(path)
+            source_unit = compilation_unit.create_source_unit(filename)
+            source_unit.ast = ast
+
+
+def _load_from_compile_0_0_1(crytic_compile: "CryticCompile", loaded_json: Dict) -> None:
+    for key, compilation_unit_json in loaded_json["compilation_units"].items():
+        compilation_unit = CompilationUnit(crytic_compile, key)
+        compilation_unit.compiler_version = CompilerVersion(
+            compiler=compilation_unit_json["compiler"]["compiler"],
+            version=compilation_unit_json["compiler"]["version"],
+            optimized=compilation_unit_json["compiler"]["optimized"],
+        )
+        for contracts_data in compilation_unit_json["contracts"].values():
+            for contract_name, contract in contracts_data.items():
+
+                filename = Filename(
+                    absolute=contract["filenames"]["absolute"],
+                    relative=contract["filenames"]["relative"],
+                    short=contract["filenames"]["short"],
+                    used=contract["filenames"]["used"],
+                )
+                compilation_unit.filename_to_contracts[filename].add(contract_name)
+                source_unit = compilation_unit.create_source_unit(filename)
+                source_unit.contracts_names.add(contract_name)
+                source_unit.abis[contract_name] = contract["abi"]
+                source_unit.bytecodes_init[contract_name] = contract["bin"]
+                source_unit.bytecodes_runtime[contract_name] = contract["bin-runtime"]
+                source_unit.srcmaps_init[contract_name] = contract["srcmap"].split(";")
+                source_unit.srcmaps_runtime[contract_name] = contract["srcmap-runtime"].split(";")
+                source_unit.libraries[contract_name] = contract["libraries"]
+
+                userdoc = contract.get("userdoc", {})
+                devdoc = contract.get("devdoc", {})
+                source_unit.natspec[contract_name] = Natspec(userdoc, devdoc)
+
+                if contract["is_dependency"]:
+                    crytic_compile.dependencies.add(filename.absolute)
+                    crytic_compile.dependencies.add(filename.relative)
+                    crytic_compile.dependencies.add(filename.short)
+                    crytic_compile.dependencies.add(filename.used)
+
+        compilation_unit.filenames = {
+            _convert_dict_to_filename(filename) for filename in compilation_unit_json["filenames"]
+        }
+
+        for path, ast in compilation_unit_json["asts"].items():
+            # The following might create lookup issue?
+            filename = crytic_compile.filename_lookup(path)
+            source_unit = compilation_unit.create_source_unit(filename)
+            source_unit.ast = ast
 
 
 def _load_from_compile_current(crytic_compile: "CryticCompile", loaded_json: Dict) -> None:
@@ -373,40 +435,38 @@ def _load_from_compile_current(crytic_compile: "CryticCompile", loaded_json: Dic
             version=compilation_unit_json["compiler"]["version"],
             optimized=compilation_unit_json["compiler"]["optimized"],
         )
-        for contracts_data in compilation_unit_json["contracts"].values():
-            for contract_name, contract in contracts_data.items():
-                compilation_unit.contracts_names.add(contract_name)
-                filename = Filename(
-                    absolute=contract["filenames"]["absolute"],
-                    relative=contract["filenames"]["relative"],
-                    short=contract["filenames"]["short"],
-                    used=contract["filenames"]["used"],
-                )
+
+        compilation_unit.filenames = {
+            _convert_dict_to_filename(filename) for filename in compilation_unit_json["filenames"]
+        }
+
+        for filename_str, source_unit_data in compilation_unit_json["source_units"].items():
+            filename = compilation_unit.filename_lookup(filename_str)
+            source_unit = compilation_unit.create_source_unit(filename)
+
+            for contract_name, contract in source_unit_data["contracts"].items():
                 compilation_unit.filename_to_contracts[filename].add(contract_name)
 
-                compilation_unit.abis[contract_name] = contract["abi"]
-                compilation_unit.bytecodes_init[contract_name] = contract["bin"]
-                compilation_unit.bytecodes_runtime[contract_name] = contract["bin-runtime"]
-                compilation_unit.srcmaps_init[contract_name] = contract["srcmap"].split(";")
-                compilation_unit.srcmaps_runtime[contract_name] = contract["srcmap-runtime"].split(
-                    ";"
-                )
-                compilation_unit.libraries[contract_name] = contract["libraries"]
+                source_unit = compilation_unit.create_source_unit(filename)
+                source_unit.contracts_names.add(contract_name)
+                source_unit.abis[contract_name] = contract["abi"]
+                source_unit.bytecodes_init[contract_name] = contract["bin"]
+                source_unit.bytecodes_runtime[contract_name] = contract["bin-runtime"]
+                source_unit.srcmaps_init[contract_name] = contract["srcmap"].split(";")
+                source_unit.srcmaps_runtime[contract_name] = contract["srcmap-runtime"].split(";")
+                source_unit.libraries[contract_name] = contract["libraries"]
 
                 userdoc = contract.get("userdoc", {})
                 devdoc = contract.get("devdoc", {})
-                compilation_unit.natspec[contract_name] = Natspec(userdoc, devdoc)
+                source_unit.natspec[contract_name] = Natspec(userdoc, devdoc)
 
                 if contract["is_dependency"]:
                     crytic_compile.dependencies.add(filename.absolute)
                     crytic_compile.dependencies.add(filename.relative)
                     crytic_compile.dependencies.add(filename.short)
                     crytic_compile.dependencies.add(filename.used)
-            compilation_unit.asts = compilation_unit_json["asts"]
-            compilation_unit.filenames = {
-                _convert_dict_to_filename(filename)
-                for filename in compilation_unit_json["filenames"]
-            }
+
+            source_unit.ast = source_unit_data["ast"]
 
 
 def load_from_compile(crytic_compile: "CryticCompile", loaded_json: Dict) -> Tuple[int, List[str]]:
@@ -421,19 +481,16 @@ def load_from_compile(crytic_compile: "CryticCompile", loaded_json: Dict) -> Tup
         Tuple[int, List[str]]: (underlying platform types, guessed unit tests)
     """
     crytic_compile.package_name = loaded_json.get("package", None)
-
     if "compilation_units" not in loaded_json:
         _load_from_compile_legacy1(crytic_compile, loaded_json)
 
     elif "crytic_version" not in loaded_json:
         _load_from_compile_legacy2(crytic_compile, loaded_json)
 
+    elif loaded_json["crytic_version"] == "0.0.1":
+        _load_from_compile_0_0_1(crytic_compile, loaded_json)
     else:
         _load_from_compile_current(crytic_compile, loaded_json)
-
-    # Set our filenames
-    for compilation_unit in crytic_compile.compilation_units.values():
-        crytic_compile.filenames |= set(compilation_unit.filenames)
 
     crytic_compile.working_dir = loaded_json["working_dir"]
 

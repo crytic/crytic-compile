@@ -1,6 +1,12 @@
-.idea/
-crytic_compile.egg-info/
-__pycache__/
+*.nix
 *.pyc
+.idea/
+__pycache__/
+artifacts
 build/
+cache
+crytic_compile.egg-info/
 dist/
+node_modules
+package-lock.json
+result

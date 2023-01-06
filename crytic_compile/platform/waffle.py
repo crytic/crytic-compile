@@ -189,31 +189,29 @@ class Waffle(AbstractPlatform):
             )
 
             contract_name = contract[1]
+            source_unit = compilation_unit.create_source_unit(filename)
 
-            compilation_unit.asts[filename.absolute] = target_all["sources"][contract[0]]["AST"]
-            crytic_compile.filenames.add(filename)
+            source_unit.ast = target_all["sources"][contract[0]]["AST"]
             compilation_unit.filenames.add(filename)
             compilation_unit.filename_to_contracts[filename].add(contract_name)
-            compilation_unit.contracts_names.add(contract_name)
-            compilation_unit.abis[contract_name] = target_loaded["abi"]
+            source_unit.contracts_names.add(contract_name)
+            source_unit.abis[contract_name] = target_loaded["abi"]
 
             userdoc = target_loaded.get("userdoc", {})
             devdoc = target_loaded.get("devdoc", {})
             natspec = Natspec(userdoc, devdoc)
-            compilation_unit.natspec[contract_name] = natspec
+            source_unit.natspec[contract_name] = natspec
 
-            compilation_unit.bytecodes_init[contract_name] = target_loaded["evm"]["bytecode"][
-                "object"
-            ]
-            compilation_unit.srcmaps_init[contract_name] = target_loaded["evm"]["bytecode"][
+            source_unit.bytecodes_init[contract_name] = target_loaded["evm"]["bytecode"]["object"]
+            source_unit.srcmaps_init[contract_name] = target_loaded["evm"]["bytecode"][
                 "sourceMap"
             ].split(";")
-            compilation_unit.bytecodes_runtime[contract_name] = target_loaded["evm"][
-                "deployedBytecode"
-            ]["object"]
-            compilation_unit.srcmaps_runtime[contract_name] = target_loaded["evm"][
-                "deployedBytecode"
-            ]["sourceMap"].split(";")
+            source_unit.bytecodes_runtime[contract_name] = target_loaded["evm"]["deployedBytecode"][
+                "object"
+            ]
+            source_unit.srcmaps_runtime[contract_name] = target_loaded["evm"]["deployedBytecode"][
+                "sourceMap"
+            ].split(";")
 
         compilation_unit.compiler_version = CompilerVersion(
             compiler=compiler, version=version, optimized=optimized
