@@ -629,7 +629,8 @@ def _run_solcs_path(
 
     if not targets_json:
         raise InvalidCompilation(
-            "Invalid solc compilation, none of the solc versions provided worked:\n" + "\n".join(compilation_errors)
+            "Invalid solc compilation, none of the solc versions provided worked:\n"
+            + "\n".join(compilation_errors)
         )
 
     return targets_json
@@ -716,7 +717,8 @@ def _run_solcs_env(
 
     if not targets_json:
         raise InvalidCompilation(
-            "Invalid solc compilation, none of the solc versions provided worked:\n" + "\n".join(compilation_errors)
+            "Invalid solc compilation, none of the solc versions provided worked:\n"
+            + "\n".join(compilation_errors)
         )
 
     return targets_json
