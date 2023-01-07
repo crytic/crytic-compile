@@ -111,11 +111,11 @@ class Foundry(AbstractPlatform):
                 if not "ast" in target_loaded:
                     continue
 
-                filename = target_loaded["ast"]["absolutePath"]
+                filename_str = target_loaded["ast"]["absolutePath"]
 
                 try:
                     filename = convert_filename(
-                        filename, lambda x: x, crytic_compile, working_dir=self._target
+                        filename_str, lambda x: x, crytic_compile, working_dir=self._target
                     )
                 except InvalidCompilation as i:
                     txt = str(i)
@@ -123,29 +123,29 @@ class Foundry(AbstractPlatform):
                     # pylint: disable=raise-missing-from
                     raise InvalidCompilation(txt)
 
-                compilation_unit.asts[filename.absolute] = target_loaded["ast"]
-                crytic_compile.filenames.add(filename)
-                compilation_unit.filenames.add(filename)
+                source_unit = compilation_unit.create_source_unit(filename)
+
+                source_unit.ast = target_loaded["ast"]
 
                 contract_name = filename_txt.parts[-1]
                 contract_name = contract_name[: -len(".json")]
 
-                compilation_unit.natspec[contract_name] = natspec
+                source_unit.natspec[contract_name] = natspec
                 compilation_unit.filename_to_contracts[filename].add(contract_name)
-                compilation_unit.contracts_names.add(contract_name)
-                compilation_unit.abis[contract_name] = target_loaded["abi"]
-                compilation_unit.bytecodes_init[contract_name] = target_loaded["bytecode"][
+                source_unit.contracts_names.add(contract_name)
+                source_unit.abis[contract_name] = target_loaded["abi"]
+                source_unit.bytecodes_init[contract_name] = target_loaded["bytecode"][
                     "object"
                 ].replace("0x", "")
-                compilation_unit.bytecodes_runtime[contract_name] = target_loaded[
-                    "deployedBytecode"
-                ]["object"].replace("0x", "")
-                compilation_unit.srcmaps_init[contract_name] = (
+                source_unit.bytecodes_runtime[contract_name] = target_loaded["deployedBytecode"][
+                    "object"
+                ].replace("0x", "")
+                source_unit.srcmaps_init[contract_name] = (
                     target_loaded["bytecode"]["sourceMap"].split(";")
                     if target_loaded["bytecode"].get("sourceMap")
                     else []
                 )
-                compilation_unit.srcmaps_runtime[contract_name] = (
+                source_unit.srcmaps_runtime[contract_name] = (
                     target_loaded["deployedBytecode"]["sourceMap"].split(";")
                     if target_loaded["deployedBytecode"].get("sourceMap")
                     else []

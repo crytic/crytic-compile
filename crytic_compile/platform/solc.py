@@ -34,22 +34,22 @@ LOGGER = logging.getLogger("CryticCompile")
 def _build_contract_data(compilation_unit: "CompilationUnit") -> Dict:
     contracts = {}
 
-    for filename, contract_names in compilation_unit.filename_to_contracts.items():
-        for contract_name in contract_names:
-            abi = str(compilation_unit.abi(contract_name))
+    for filename, source_unit in compilation_unit.source_units.items():
+        for contract_name in source_unit.contracts_names:
+            abi = str(source_unit.abi(contract_name))
             abi = abi.replace("'", '"')
             abi = abi.replace("True", "true")
             abi = abi.replace("False", "false")
             abi = abi.replace(" ", "")
             exported_name = combine_filename_name(filename.absolute, contract_name)
             contracts[exported_name] = {
-                "srcmap": ";".join(compilation_unit.srcmap_init(contract_name)),
-                "srcmap-runtime": ";".join(compilation_unit.srcmap_runtime(contract_name)),
+                "srcmap": ";".join(source_unit.srcmap_init(contract_name)),
+                "srcmap-runtime": ";".join(source_unit.srcmap_runtime(contract_name)),
                 "abi": abi,
-                "bin": compilation_unit.bytecode_init(contract_name),
-                "bin-runtime": compilation_unit.bytecode_runtime(contract_name),
-                "userdoc": compilation_unit.natspec[contract_name].userdoc.export(),
-                "devdoc": compilation_unit.natspec[contract_name].devdoc.export(),
+                "bin": source_unit.bytecode_init(contract_name),
+                "bin-runtime": source_unit.bytecode_runtime(contract_name),
+                "userdoc": source_unit.natspec[contract_name].userdoc.export(),
+                "devdoc": source_unit.natspec[contract_name].devdoc.export(),
             }
     return contracts
 
@@ -178,9 +178,8 @@ class Solc(AbstractPlatform):
                     path = convert_filename(
                         path, relative_to_short, crytic_compile, working_dir=solc_working_dir
                     )
-                compilation_unit.filenames.add(path)
-                crytic_compile.filenames.add(path)
-                compilation_unit.asts[path.absolute] = info["AST"]
+                source_unit = compilation_unit.create_source_unit(path)
+                source_unit.ast = info["AST"]
 
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:
@@ -309,32 +308,35 @@ def solc_handle_contracts(
             contract_name = extract_name(original_contract_name)
             # for solc < 0.4.10 we cant retrieve the filename from the ast
             if skip_filename:
-                contract_filename = convert_filename(
+                filename = convert_filename(
                     target,
                     relative_to_short,
                     compilation_unit.crytic_compile,
                     working_dir=solc_working_dir,
                 )
             else:
-                contract_filename = convert_filename(
+                filename = convert_filename(
                     extract_filename(original_contract_name),
                     relative_to_short,
                     compilation_unit.crytic_compile,
                     working_dir=solc_working_dir,
                 )
-            compilation_unit.contracts_names.add(contract_name)
-            compilation_unit.filename_to_contracts[contract_filename].add(contract_name)
-            compilation_unit.abis[contract_name] = (
+
+            source_unit = compilation_unit.create_source_unit(filename)
+
+            source_unit.contracts_names.add(contract_name)
+            compilation_unit.filename_to_contracts[filename].add(contract_name)
+            source_unit.abis[contract_name] = (
                 json.loads(info["abi"]) if not is_above_0_8 else info["abi"]
             )
-            compilation_unit.bytecodes_init[contract_name] = info["bin"]
-            compilation_unit.bytecodes_runtime[contract_name] = info["bin-runtime"]
-            compilation_unit.srcmaps_init[contract_name] = info["srcmap"].split(";")
-            compilation_unit.srcmaps_runtime[contract_name] = info["srcmap-runtime"].split(";")
+            source_unit.bytecodes_init[contract_name] = info["bin"]
+            source_unit.bytecodes_runtime[contract_name] = info["bin-runtime"]
+            source_unit.srcmaps_init[contract_name] = info["srcmap"].split(";")
+            source_unit.srcmaps_runtime[contract_name] = info["srcmap-runtime"].split(";")
             userdoc = json.loads(info.get("userdoc", "{}")) if not is_above_0_8 else info["userdoc"]
             devdoc = json.loads(info.get("devdoc", "{}")) if not is_above_0_8 else info["devdoc"]
             natspec = Natspec(userdoc, devdoc)
-            compilation_unit.natspec[contract_name] = natspec
+            source_unit.natspec[contract_name] = natspec
 
 
 def _is_at_or_above_minor_version(compilation_unit: "CompilationUnit", version: int) -> bool:

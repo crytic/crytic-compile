@@ -19,7 +19,6 @@ from crytic_compile.platform.abstract_platform import AbstractPlatform
 from crytic_compile.platform.all_export import PLATFORMS_EXPORT
 from crytic_compile.platform.solc import Solc
 from crytic_compile.platform.standard import export_to_standard
-from crytic_compile.platform.truffle import Truffle
 from crytic_compile.utils.naming import Filename
 from crytic_compile.utils.npm import get_package_name
 from crytic_compile.utils.zip import load_from_zip
@@ -65,7 +64,7 @@ class CryticCompile:
     Main class.
     """
 
-    def __init__(self, target: Union[str, AbstractPlatform], **kwargs: str):
+    def __init__(self, target: Union[str, AbstractPlatform], **kwargs: str) -> None:
         """See https://github.com/crytic/crytic-compile/wiki/Configuration
         Target is usually a file or a project directory. It can be an AbstractPlatform
         for custom setup
@@ -77,12 +76,6 @@ class CryticCompile:
 
         # dependencies is needed for platform conversion
         self._dependencies: Set = set()
-
-        # set containing all the filenames
-        self._filenames: Set[Filename] = set()
-
-        # mapping from absolute/relative/used to filename
-        self._filenames_lookup: Optional[Dict[str, Filename]] = None
 
         self._src_content: Dict = {}
 
@@ -145,33 +138,28 @@ class CryticCompile:
         """
         count = 0
         for compilation_unit in self._compilation_units.values():
-            if contract in compilation_unit.contracts_names:
-                count += 1
+            for source_unit in compilation_unit.source_units.values():
+                if contract in source_unit.contracts_names:
+                    count += 1
         return count >= 2
 
     ###################################################################################
     ###################################################################################
-    # region Filenames
+    # region Utils
     ###################################################################################
     ###################################################################################
-
     @property
     def filenames(self) -> Set[Filename]:
-        """All the project filenames
+        """
+        Return the set of all the filenames used
 
         Returns:
-            Set[Filename]: Project's filenames
+             Set[Filename]: list of filenames
         """
-        return self._filenames
-
-    @filenames.setter
-    def filenames(self, all_filenames: Set[Filename]) -> None:
-        """Set the filenames
-
-        Args:
-            all_filenames (Set[Filename]): New filenames
-        """
-        self._filenames = all_filenames
+        filenames: Set[Filename] = set()
+        for compile_unit in self._compilation_units.values():
+            filenames = filenames.union(compile_unit.filenames)
+        return filenames
 
     def filename_lookup(self, filename: str) -> Filename:
         """Return a crytic_compile.naming.Filename from a any filename
@@ -185,21 +173,13 @@ class CryticCompile:
         Returns:
             Filename: Associated Filename object
         """
+        for compile_unit in self.compilation_units.values():
+            try:
+                return compile_unit.filename_lookup(filename)
+            except ValueError:
+                pass
 
-        if isinstance(self.platform, Truffle) and filename.startswith("project:/"):
-            filename = filename[len("project:/") :]
-
-        if self._filenames_lookup is None:
-            self._filenames_lookup = {}
-            for file in self._filenames:
-                self._filenames_lookup[file.absolute] = file
-                self._filenames_lookup[file.relative] = file
-                self._filenames_lookup[file.used] = file
-        if filename not in self._filenames_lookup:
-            raise ValueError(
-                f"{filename} does not exist in {[f.absolute for f in self._filenames_lookup.values()]}"
-            )
-        return self._filenames_lookup[filename]
+        raise ValueError(f"{filename} does not exist")
 
     @property
     def dependencies(self) -> Set[str]:
@@ -550,7 +530,8 @@ class CryticCompile:
         remove_metadata = kwargs.get("compile_remove_metadata", False)
         if remove_metadata:
             for compilation_unit in self._compilation_units.values():
-                compilation_unit.remove_metadata()
+                for source_unit in compilation_unit.source_units.values():
+                    source_unit.remove_metadata()
 
     @staticmethod
     def _run_custom_build(custom_build: str) -> None:
