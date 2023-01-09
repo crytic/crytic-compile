@@ -157,7 +157,7 @@ def run_solc_standard_json(
             stdout_b, stderr_b = process.communicate(json.dumps(solc_input).encode("utf-8"))
             stdout, stderr = (
                 stdout_b.decode(),
-                stderr_b.decode(),
+                stderr_b.decode(errors="backslashreplace"),
             )  # convert bytestrings to unicode strings
 
             solc_json_output = json.loads(stdout)
