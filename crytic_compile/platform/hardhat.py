@@ -7,13 +7,14 @@ import os
 import shutil
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform.exceptions import InvalidCompilation
 from crytic_compile.platform.types import Type
 from crytic_compile.utils.naming import convert_filename, extract_name
 from crytic_compile.utils.natspec import Natspec
+from crytic_compile.utils.subprocess import run
 from crytic_compile.platform.abstract_platform import AbstractPlatform
 
 # Handle cycle
@@ -153,13 +154,7 @@ class Hardhat(AbstractPlatform):
 
         """
 
-        hardhat_ignore_compile = kwargs.get("hardhat_ignore_compile", False) or kwargs.get(
-            "ignore_compile", False
-        )
-
-        base_cmd = ["hardhat"]
-        if not kwargs.get("npx_disable", False):
-            base_cmd = ["npx"] + base_cmd
+        hardhat_ignore_compile, base_cmd = self._settings(kwargs)
 
         detected_paths = self._get_hardhat_paths(base_cmd, kwargs)
 
@@ -198,6 +193,21 @@ class Hardhat(AbstractPlatform):
                     LOGGER.error(stderr)
 
         hardhat_like_parsing(crytic_compile, self._target, build_directory, hardhat_working_dir)
+
+    def clean(self, **kwargs: str) -> None:
+        """Clean compilation artifacts
+
+        Args:
+            **kwargs: optional arguments.
+        """
+
+        hardhat_ignore_compile, base_cmd = self._settings(kwargs)
+
+        if hardhat_ignore_compile:
+            return
+
+        for clean_cmd in [["clean"], ["clean", "--global"]]:
+            run(base_cmd + clean_cmd, cwd=self._target)
 
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:
@@ -239,6 +249,18 @@ class Hardhat(AbstractPlatform):
             List[str]: The guessed unit tests commands
         """
         return ["hardhat test"]
+
+    @staticmethod
+    def _settings(args: Dict[str, Any]) -> Tuple[bool, List[str]]:
+        hardhat_ignore_compile = args.get("hardhat_ignore_compile", False) or args.get(
+            "ignore_compile", False
+        )
+
+        base_cmd = ["hardhat"]
+        if not args.get("npx_disable", False):
+            base_cmd = ["npx"] + base_cmd
+
+        return hardhat_ignore_compile, base_cmd
 
     def _get_hardhat_paths(
         self, base_cmd: List[str], args: Dict[str, str]

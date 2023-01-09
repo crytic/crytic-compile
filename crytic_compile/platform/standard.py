@@ -94,6 +94,14 @@ class Standard(AbstractPlatform):
         self._underlying_platform = platform
         self._unit_tests = unit_tests
 
+    def clean(self, **_kwargs: str) -> None:
+        """Clean compilation artifacts
+
+        Args:
+            **_kwargs: unused.
+        """
+        return
+
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:
         """Check if the target has the standard crytic-compile format

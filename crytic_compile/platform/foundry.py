@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, List
 from crytic_compile.platform.abstract_platform import AbstractPlatform
 from crytic_compile.platform.types import Type
 from .hardhat import hardhat_like_parsing
+from crytic_compile.utils.subprocess import run
 
 # Handle cycle
 if TYPE_CHECKING:
@@ -87,6 +88,22 @@ class Foundry(AbstractPlatform):
         )
 
         hardhat_like_parsing(crytic_compile, self._target, build_directory, self._target)
+
+    def clean(self, **kwargs: str) -> None:
+        """Clean compilation artifacts
+
+        Args:
+            **kwargs: optional arguments.
+        """
+
+        ignore_compile = kwargs.get("foundry_ignore_compile", False) or kwargs.get(
+            "ignore_compile", False
+        )
+
+        if ignore_compile:
+            return
+
+        run(["forge", "clean"], cwd=self._target)
 
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:

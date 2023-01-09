@@ -82,6 +82,10 @@ class Brownie(AbstractPlatform):
 
         _iterate_over_files(crytic_compile, Path(self._target), filenames)
 
+    def clean(self, **_kwargs: str) -> None:
+        # brownie does not offer a way to clean a project
+        pass
+
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:
         """Check if the target is a brownie project

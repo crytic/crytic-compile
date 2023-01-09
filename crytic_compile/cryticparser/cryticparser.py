@@ -50,6 +50,14 @@ def init(parser: ArgumentParser) -> None:
         default=DEFAULTS_FLAG_IN_CONFIG["ignore_compile"],
     )
 
+    group_compile.add_argument(
+        "--skip-clean",
+        help="Do not attempt to clean before compiling with a platform",
+        action="store_true",
+        dest="skip_clean",
+        default=DEFAULTS_FLAG_IN_CONFIG["skip_clean"],
+    )
+
     _init_solc(parser)
     _init_truffle(parser)
     _init_embark(parser)
