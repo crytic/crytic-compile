@@ -2,7 +2,8 @@
 
 DIR=$(mktemp -d)
 
-cp tests/contract.sol "$DIR"
+cp tests/contract_with_toplevel.sol "$DIR"
+cp tests/toplevel.sol "$DIR"
 cd "$DIR" || exit 255
 
 crytic-compile contract_with_toplevel.sol --export-format archive
