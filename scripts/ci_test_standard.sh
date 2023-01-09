@@ -6,6 +6,8 @@ cp tests/contract_with_toplevel.sol "$DIR"
 cp tests/toplevel.sol "$DIR"
 cd "$DIR" || exit 255
 
+solc-select use 0.8.0 --always-install
+
 crytic-compile contract_with_toplevel.sol --export-format archive
 
 if [ $? -ne 0 ]
