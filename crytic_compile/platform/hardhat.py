@@ -205,6 +205,11 @@ class Hardhat(AbstractPlatform):
         hardhat_ignore = kwargs.get("hardhat_ignore", False)
         if hardhat_ignore:
             return False
+
+        # If there is both foundry and hardhat, foundry takes priority
+        if os.path.isfile(os.path.join(target, "foundry.toml")):
+            return False
+
         return os.path.isfile(os.path.join(target, "hardhat.config.js")) | os.path.isfile(
             os.path.join(target, "hardhat.config.ts")
         )
