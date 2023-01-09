@@ -16,6 +16,7 @@ from crytic_compile.platform.exceptions import InvalidCompilation
 from crytic_compile.platform.types import Type
 from crytic_compile.utils.naming import convert_filename
 from crytic_compile.utils.natspec import Natspec
+from crytic_compile.utils.subprocess import run
 
 # Handle cycle
 if TYPE_CHECKING:
@@ -156,6 +157,22 @@ class Foundry(AbstractPlatform):
         compilation_unit.compiler_version = CompilerVersion(
             compiler=compiler, version=version, optimized=optimized, optimize_runs=runs
         )
+
+    def clean(self, **kwargs: str) -> None:
+        """Clean compilation artifacts
+
+        Args:
+            **kwargs: optional arguments.
+        """
+
+        ignore_compile = kwargs.get("foundry_ignore_compile", False) or kwargs.get(
+            "ignore_compile", False
+        )
+
+        if ignore_compile:
+            return
+
+        run(["forge", "clean"], cwd=self._target)
 
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:

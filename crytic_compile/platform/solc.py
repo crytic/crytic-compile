@@ -181,6 +181,14 @@ class Solc(AbstractPlatform):
                 source_unit = compilation_unit.create_source_unit(path)
                 source_unit.ast = info["AST"]
 
+    def clean(self, **_kwargs: str) -> None:
+        """Clean compilation artifacts
+
+        Args:
+            **_kwargs: unused.
+        """
+        return
+
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:
         """Check if the target is a Solidity file

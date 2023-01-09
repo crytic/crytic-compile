@@ -361,6 +361,9 @@ class Etherscan(AbstractPlatform):
 
         solc_standard_json.standalone_compile(filenames, compilation_unit, working_dir=working_dir)
 
+    def clean(self, **_kwargs: str) -> None:
+        pass
+
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:
         """Check if the target is a etherscan project

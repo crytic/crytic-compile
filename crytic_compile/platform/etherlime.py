@@ -159,6 +159,10 @@ class Etherlime(AbstractPlatform):
             compiler=compiler, version=version, optimized=_is_optimized(compile_arguments)
         )
 
+    def clean(self, **_kwargs: str) -> None:
+        # TODO: research if there's a way to clean artifacts
+        pass
+
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:
         """Check if the target is an etherlime project

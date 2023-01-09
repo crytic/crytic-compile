@@ -19,6 +19,7 @@ from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform.abstract_platform import AbstractPlatform
 from crytic_compile.platform.types import Type
 from crytic_compile.utils.naming import convert_filename, extract_name
+from crytic_compile.utils.subprocess import run
 
 # Handle cycle
 from crytic_compile.utils.natspec import Natspec
@@ -117,6 +118,21 @@ class Dapp(AbstractPlatform):
         compilation_unit.compiler_version = CompilerVersion(
             compiler="solc", version=version, optimized=optimized
         )
+
+    def clean(self, **kwargs: str) -> None:
+        """Clean compilation artifacts
+
+        Args:
+            **kwargs: optional arguments.
+        """
+
+        dapp_ignore_compile = kwargs.get("dapp_ignore_compile", False) or kwargs.get(
+            "ignore_compile", False
+        )
+        if dapp_ignore_compile:
+            return
+
+        run(["dapp", "clean"], cwd=self._target)
 
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:

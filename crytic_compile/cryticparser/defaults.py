@@ -36,6 +36,7 @@ DEFAULTS_FLAG_IN_CONFIG = {
     "waffle_config_file": None,
     "npx_disable": False,
     "ignore_compile": False,
+    "skip_clean": False,
     "buidler_ignore_compile": False,
     "buidler_cache_directory": "cache",
     "buidler_skip_directory_name_fix": False,
