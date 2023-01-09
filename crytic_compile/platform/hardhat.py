@@ -161,7 +161,7 @@ class Hardhat(AbstractPlatform):
             self._target, kwargs.get("hardhat_artifacts_directory", "artifacts"), "build-info"
         )
 
-        hardhat_working_dir = kwargs.get("hardhat_working_dir", self._target)
+        hardhat_working_dir: str = kwargs.get("hardhat_working_dir", self._target)
 
         base_cmd = ["hardhat"]
         if not kwargs.get("npx_disable", False):
