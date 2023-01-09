@@ -40,9 +40,6 @@ def hardhat_like_parsing(
         build_directory: build directory
         working_dir: working directory
 
-    Returns:
-
-
     Raises:
         InvalidCompilation: If hardhat failed to run
 
