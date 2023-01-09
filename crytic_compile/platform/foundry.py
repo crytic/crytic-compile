@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, List
 
 from crytic_compile.platform.abstract_platform import AbstractPlatform
 from crytic_compile.platform.types import Type
-from .hardhat import hardhat_like_parsing
+from crytic_compile.platform.hardhat import hardhat_like_parsing
 from crytic_compile.utils.subprocess import run
 
 # Handle cycle
