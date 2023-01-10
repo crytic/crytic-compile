@@ -384,11 +384,17 @@ def get_version(solc: str, env: Optional[Dict[str, str]]) -> str:
             env=env,
             executable=shutil.which(cmd[0]),
         ) as process:
-            stdout_bytes, _ = process.communicate()
-            stdout = stdout_bytes.decode()  # convert bytestrings to unicode strings
+            stdout_bytes, stderr_bytes = process.communicate()
+            stdout, stderr = (
+                stdout_bytes.decode(errors="backslashreplace"),
+                stderr_bytes.decode(errors="backslashreplace"),
+            )  # convert bytestrings to unicode strings
             version = re.findall(r"\d+\.\d+\.\d+", stdout)
+            print(stdout)
             if len(version) == 0:
-                raise InvalidCompilation(f"Solidity version not found: {stdout}")
+                raise InvalidCompilation(
+                    f"\nSolidity version not found:\nSTDOUT:\n{stdout}\nSTDERR:\n{stderr}"
+                )
             return version[0]
     except OSError as error:
         # pylint: disable=raise-missing-from
