@@ -390,7 +390,6 @@ def get_version(solc: str, env: Optional[Dict[str, str]]) -> str:
                 stderr_bytes.decode(errors="backslashreplace"),
             )  # convert bytestrings to unicode strings
             version = re.findall(r"\d+\.\d+\.\d+", stdout)
-            print(stdout)
             if len(version) == 0:
                 raise InvalidCompilation(
                     f"\nSolidity version not found:\nSTDOUT:\n{stdout}\nSTDERR:\n{stderr}"
