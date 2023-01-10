@@ -239,8 +239,6 @@ class Hardhat(AbstractPlatform):
         )
 
         base_cmd = ["hardhat"]
-        if not args.get("npx_disable", False):
-            base_cmd = ["npx"] + base_cmd
 
         return hardhat_ignore_compile, base_cmd
 
