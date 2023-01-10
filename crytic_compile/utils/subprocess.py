@@ -58,7 +58,10 @@ def run(
         LOGGER.error("Could not execute `%s`, is it installed and in PATH?", cmd[0])
     except subprocess.CalledProcessError as e:
         LOGGER.error("'%s' returned non-zero exit code %d", cmd[0], e.returncode)
-        stdout, stderr = (e.stdout.decode().strip(), e.stderr.decode().strip())
+        stdout, stderr = (
+            e.stdout.decode(errors="backslashreplace").strip(),
+            e.stderr.decode(errors="backslashreplace").strip(),
+        )
         if stdout:
             LOGGER.error("\nstdout: ".join(stdout.split("\n")))
         if stderr:

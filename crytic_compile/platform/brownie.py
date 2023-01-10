@@ -63,8 +63,8 @@ class Brownie(AbstractPlatform):
                 ) as process:
                     stdout_bytes, stderr_bytes = process.communicate()
                     stdout, stderr = (
-                        stdout_bytes.decode(),
-                        stderr_bytes.decode(),
+                        stdout_bytes.decode(errors="backslashreplace"),
+                        stderr_bytes.decode(errors="backslashreplace"),
                     )  # convert bytestrings to unicode strings
 
                     LOGGER.info(stdout)
