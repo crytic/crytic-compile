@@ -452,7 +452,7 @@ def _load_from_compile_current(crytic_compile: "CryticCompile", loaded_json: Dic
             filename = compilation_unit.filename_lookup(filename_str)
             source_unit = compilation_unit.create_source_unit(filename)
 
-            for contract_name, contract in source_unit_data["contracts"].items():
+            for contract_name, contract in source_unit_data.get("contracts", {}).items():
                 compilation_unit.filename_to_contracts[filename].add(contract_name)
 
                 source_unit = compilation_unit.create_source_unit(filename)
