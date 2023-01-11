@@ -44,7 +44,8 @@ class Brownie(AbstractPlatform):
         Raises:
             InvalidCompilation: If brownie failed to run
         """
-        build_directory = Path("build", "contracts")
+        contracts_directory = Path("build", "contracts")
+        interfaces_directory = Path("build", "interfaces")
         brownie_ignore_compile = kwargs.get("brownie_ignore_compile", False) or kwargs.get(
             "ignore_compile", False
         )
@@ -75,10 +76,11 @@ class Brownie(AbstractPlatform):
                 # pylint: disable=raise-missing-from
                 raise InvalidCompilation(error)
 
-        if not os.path.isdir(os.path.join(self._target, build_directory)):
+        if not os.path.isdir(os.path.join(self._target, contracts_directory)):
             raise InvalidCompilation("`brownie compile` failed. Can you run it?")
 
-        filenames = list(Path(self._target, build_directory).rglob("*.json"))
+        filenames = list(Path(self._target, contracts_directory).rglob("*.json"))
+        filenames += list(Path(self._target, interfaces_directory).rglob("*.json"))
 
         _iterate_over_files(crytic_compile, Path(self._target), filenames)
 
@@ -181,14 +183,16 @@ def _iterate_over_files(
 
             source_unit.contracts_names.add(contract_name)
             source_unit.abis[contract_name] = target_loaded["abi"]
-            source_unit.bytecodes_init[contract_name] = target_loaded["bytecode"].replace("0x", "")
-            source_unit.bytecodes_runtime[contract_name] = target_loaded[
-                "deployedBytecode"
-            ].replace("0x", "")
-            source_unit.srcmaps_init[contract_name] = target_loaded["sourceMap"].split(";")
-            source_unit.srcmaps_runtime[contract_name] = target_loaded["deployedSourceMap"].split(
-                ";"
+            source_unit.bytecodes_init[contract_name] = target_loaded.get("bytecode", "").replace(
+                "0x", ""
             )
+            source_unit.bytecodes_runtime[contract_name] = target_loaded.get(
+                "deployedBytecode", ""
+            ).replace("0x", "")
+            source_unit.srcmaps_init[contract_name] = target_loaded.get("sourceMap", "").split(";")
+            source_unit.srcmaps_runtime[contract_name] = target_loaded.get(
+                "deployedSourceMap", ""
+            ).split(";")
 
             userdoc = target_loaded.get("userdoc", {})
             devdoc = target_loaded.get("devdoc", {})
