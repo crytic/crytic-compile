@@ -76,13 +76,15 @@ def _handle_bytecode(crytic_compile: "CryticCompile", target: str, result_b: byt
 
     compilation_unit = CompilationUnit(crytic_compile, str(target))
 
-    compilation_unit.contracts_names.add(contract_name)
+    source_unit = compilation_unit.create_source_unit(contract_filename)
+
+    source_unit.contracts_names.add(contract_name)
     compilation_unit.filename_to_contracts[contract_filename].add(contract_name)
-    compilation_unit.abis[contract_name] = {}
-    compilation_unit.bytecodes_init[contract_name] = bytecode
-    compilation_unit.bytecodes_runtime[contract_name] = ""
-    compilation_unit.srcmaps_init[contract_name] = []
-    compilation_unit.srcmaps_runtime[contract_name] = []
+    source_unit.abis[contract_name] = {}
+    source_unit.bytecodes_init[contract_name] = bytecode
+    source_unit.bytecodes_runtime[contract_name] = ""
+    source_unit.srcmaps_init[contract_name] = []
+    source_unit.srcmaps_runtime[contract_name] = []
 
     compilation_unit.compiler_version = CompilerVersion(
         compiler="unknown", version="", optimized=False
@@ -150,7 +152,9 @@ def _handle_multiple_files(
     filtered_paths: List[str] = []
     for filename, source_code in source_codes.items():
         path_filename = PurePosixPath(filename)
-        if "contracts" in path_filename.parts and not filename.startswith("@"):
+        # https://etherscan.io/address/0x19bb64b80cbf61e61965b0e5c2560cc7364c6546#code has an import of erc721a/contracts/ERC721A.sol
+        # if the full path is lost then won't compile
+        if "contracts" == path_filename.parts[0] and not filename.startswith("@"):
             path_filename = PurePosixPath(
                 *path_filename.parts[path_filename.parts.index("contracts") :]
             )
@@ -356,6 +360,9 @@ class Etherscan(AbstractPlatform):
         compilation_unit.compiler_version.look_for_installed_version()
 
         solc_standard_json.standalone_compile(filenames, compilation_unit, working_dir=working_dir)
+
+    def clean(self, **_kwargs: str) -> None:
+        pass
 
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:

@@ -19,6 +19,7 @@ from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform.abstract_platform import AbstractPlatform
 from crytic_compile.platform.types import Type
 from crytic_compile.utils.naming import convert_filename, extract_name
+from crytic_compile.utils.subprocess import run
 
 # Handle cycle
 from crytic_compile.utils.natspec import Natspec
@@ -69,6 +70,11 @@ class Dapp(AbstractPlatform):
                 version = re.findall(r"\d+\.\d+\.\d+", targets_json["version"])[0]
 
             for original_filename, contracts_info in targets_json["contracts"].items():
+
+                filename = convert_filename(original_filename, lambda x: x, crytic_compile)
+
+                source_unit = compilation_unit.create_source_unit(filename)
+
                 for original_contract_name, info in contracts_info.items():
                     if "metadata" in info:
                         metadata = json.loads(info["metadata"])
@@ -79,26 +85,24 @@ class Dapp(AbstractPlatform):
                         ):
                             optimized |= metadata["settings"]["optimizer"]["enabled"]
                     contract_name = extract_name(original_contract_name)
-                    compilation_unit.contracts_names.add(contract_name)
-                    compilation_unit.filename_to_contracts[original_filename].add(contract_name)
+                    source_unit.contracts_names.add(contract_name)
+                    compilation_unit.filename_to_contracts[filename].add(contract_name)
 
-                    compilation_unit.abis[contract_name] = info["abi"]
-                    compilation_unit.bytecodes_init[contract_name] = info["evm"]["bytecode"][
+                    source_unit.abis[contract_name] = info["abi"]
+                    source_unit.bytecodes_init[contract_name] = info["evm"]["bytecode"]["object"]
+                    source_unit.bytecodes_runtime[contract_name] = info["evm"]["deployedBytecode"][
                         "object"
                     ]
-                    compilation_unit.bytecodes_runtime[contract_name] = info["evm"][
-                        "deployedBytecode"
-                    ]["object"]
-                    compilation_unit.srcmaps_init[contract_name] = info["evm"]["bytecode"][
+                    source_unit.srcmaps_init[contract_name] = info["evm"]["bytecode"][
                         "sourceMap"
                     ].split(";")
-                    compilation_unit.srcmaps_runtime[contract_name] = info["evm"]["bytecode"][
+                    source_unit.srcmaps_runtime[contract_name] = info["evm"]["bytecode"][
                         "sourceMap"
                     ].split(";")
                     userdoc = info.get("userdoc", {})
                     devdoc = info.get("devdoc", {})
                     natspec = Natspec(userdoc, devdoc)
-                    compilation_unit.natspec[contract_name] = natspec
+                    source_unit.natspec[contract_name] = natspec
 
                     if version is None:
                         metadata = json.loads(info["metadata"])
@@ -108,13 +112,27 @@ class Dapp(AbstractPlatform):
                 path = convert_filename(
                     path, _relative_to_short, crytic_compile, working_dir=self._target
                 )
-                compilation_unit.filenames.add(path)
-                crytic_compile.filenames.add(path)
-                compilation_unit.asts[path.absolute] = info["ast"]
+                source_unit = compilation_unit.create_source_unit(path)
+                source_unit.ast = info["ast"]
 
         compilation_unit.compiler_version = CompilerVersion(
             compiler="solc", version=version, optimized=optimized
         )
+
+    def clean(self, **kwargs: str) -> None:
+        """Clean compilation artifacts
+
+        Args:
+            **kwargs: optional arguments.
+        """
+
+        dapp_ignore_compile = kwargs.get("dapp_ignore_compile", False) or kwargs.get(
+            "ignore_compile", False
+        )
+        if dapp_ignore_compile:
+            return
+
+        run(["dapp", "clean"], cwd=self._target)
 
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:
@@ -171,7 +189,7 @@ def _run_dapp(target: str) -> None:
         InvalidCompilation: If dapp failed to run
     """
     # pylint: disable=import-outside-toplevel
-    from crytic_compile import InvalidCompilation
+    from crytic_compile.platform.exceptions import InvalidCompilation
 
     cmd = ["dapp", "build"]
 
