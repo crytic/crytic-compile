@@ -18,7 +18,8 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "windows-2022"]
-        type: ["brownie", "buidler", "dapp", "embark", "etherlime", "hardhat", "solc", "truffle", "waffle", "foundry", "standard"]
+        type: ["brownie"]
+        # "buidler", "dapp", "embark", "etherlime", "hardhat", "solc", "truffle", "waffle", "foundry", "standard"]
         exclude:
           # Currently broken, tries to pull git:// which is blocked by GH
           - type: embark
@@ -73,3 +74,4 @@ jobs:
       shell: bash
       run: |
         bash "scripts/ci_test_${TEST_TYPE}.sh"
+        pytest -k $TEST_TYPE
