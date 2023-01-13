@@ -301,14 +301,17 @@ class Hardhat(AbstractPlatform):
             override_paths["root"] = Path(target_path, args["hardhat_working_dir"])
 
         print_paths = "console.log(JSON.stringify(config.paths))"
-        config_str = self._run_hardhat_console(base_cmd, print_paths)
 
         try:
+            config_str = self._run_hardhat_console(base_cmd, print_paths)
             paths = json.loads(config_str or "{}")
             return {**default_paths, **paths, **override_paths}
         except ValueError as e:
-            LOGGER.info("Problem deserializing hardhat configuration: %s", e)
-            return {**default_paths, **override_paths}
+            LOGGER.info("Problem deserializing hardhat configuration, using defaults: %s", e)
+        except (OSError, subprocess.SubprocessError) as e:
+            LOGGER.info("Problem executing hardhat to fetch configuration, using defaults: %s", e)
+
+        return {**default_paths, **override_paths}
 
     def _run_hardhat_console(self, base_cmd: List[str], command: str) -> Optional[str]:
         """Run a JS command in the hardhat console
