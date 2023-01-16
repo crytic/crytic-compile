@@ -280,7 +280,7 @@ class Hardhat(AbstractPlatform):
         Returns:
             Dict[str, str]: hardhat paths configuration
         """
-        target_path = Path(self._target)
+        target_path = Path(self._target).resolve()
         default_paths = {
             "root": target_path,
             "configFile": target_path.joinpath("hardhat.config.js"),
