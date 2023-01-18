@@ -71,7 +71,9 @@ class Dapp(AbstractPlatform):
 
             for original_filename, contracts_info in targets_json["contracts"].items():
 
-                filename = convert_filename(original_filename, lambda x: x, crytic_compile)
+                filename = convert_filename(
+                    original_filename, lambda x: x, crytic_compile, self._target
+                )
 
                 source_unit = compilation_unit.create_source_unit(filename)
 

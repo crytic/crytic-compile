@@ -21,10 +21,34 @@ nix-env -f "$HOME/.dapp/dapptools" -iA dapp seth solc hevm ethsign
 
 dapp init
 
+PROJECT="$PWD"
+
+echo "::group::Dapp + cwd target"
 crytic-compile . --compile-remove-metadata
 if [ $? -ne 0 ]
 then
     echo "dapp test failed"
     exit 255
 fi
+echo "::endgroup::"
 
+cd /tmp || exit 255
+
+echo "::group::Dapp + different target"
+crytic-compile "$PROJECT" --compile-remove-metadata
+if [ $? -ne 0 ]
+then
+    echo "dapp test with different target failed"
+    exit 255
+fi
+echo "::endgroup::"
+
+
+echo "::group::Dapp + different target + ignore compile"
+crytic-compile "$PROJECT" --compile-remove-metadata --ignore-compile
+if [ $? -ne 0 ]
+then
+    echo "dapp test with different target + ignore compile failed"
+    exit 255
+fi
+echo "::endgroup::"
