@@ -4,10 +4,11 @@ Brownie platform. https://github.com/iamdefinitelyahuman/brownie
 import json
 import logging
 import os
+import re
 import shutil
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List
+from typing import TYPE_CHECKING, Dict, List, Optional
 
 from crytic_compile.compilation_unit import CompilationUnit
 from crytic_compile.compiler.compiler import CompilerVersion
@@ -44,7 +45,7 @@ class Brownie(AbstractPlatform):
         Raises:
             InvalidCompilation: If brownie failed to run
         """
-        build_directory = Path("build", "contracts")
+        build_directory = _get_build_dir_from_config(self._target) or Path("build", "contracts")
         brownie_ignore_compile = kwargs.get("brownie_ignore_compile", False) or kwargs.get(
             "ignore_compile", False
         )
@@ -198,6 +199,24 @@ def _iterate_over_files(
     compilation_unit.compiler_version = CompilerVersion(
         compiler=compiler, version=version, optimized=optimized
     )
+
+def _get_build_dir_from_config(target: str) -> Optional[str]:
+    config = Path(target, "brownie-config.yml")
+    if not config.exists():
+        config = Path(target, "brownie-config.yaml")
+    if not config.exists():
+        return None
+
+    with open(config, "r", encoding="utf8") as config_f:
+        config_buffer = config_f.read().split('\n')
+
+    # config is a yaml file
+    # use regex because we don't have a yaml parser
+    for line in config_buffer:
+        match = re.search(r'build: (.*)$', line)
+        if match:
+            return match.groups()[0]
+    return None
 
 
 def _get_version(compiler: Dict) -> str:
