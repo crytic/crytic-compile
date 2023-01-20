@@ -201,6 +201,7 @@ def _iterate_over_files(
         compiler=compiler, version=version, optimized=optimized
     )
 
+
 def _get_build_dir_from_config(target: str) -> Optional[str]:
     config = Path(target, "brownie-config.yml")
     if not config.exists():
@@ -213,7 +214,7 @@ def _get_build_dir_from_config(target: str) -> Optional[str]:
     # config is a yaml file
     # use regex because we don't have a yaml parser
     for line in config_buffer:
-        match = re.search(r'build: (.*)$', line)
+        match = re.search(r"build: (.*)$", line)
         if match:
             return match.groups()[0]
     return None
