@@ -45,7 +45,8 @@ class Brownie(AbstractPlatform):
         Raises:
             InvalidCompilation: If brownie failed to run
         """
-        build_directory = _get_build_dir_from_config(self._target) or Path("build", "contracts")
+        base_build_directory = _get_build_dir_from_config(self._target) or "build"
+        build_directory = Path(base_build_directory, "contracts")
         brownie_ignore_compile = kwargs.get("brownie_ignore_compile", False) or kwargs.get(
             "ignore_compile", False
         )
@@ -208,8 +209,7 @@ def _get_build_dir_from_config(target: str) -> Optional[str]:
         return None
 
     with open(config, "r", encoding="utf8") as config_f:
-        config_buffer = config_f.read().split('\n')
-
+        config_buffer = config_f.readlines()
     # config is a yaml file
     # use regex because we don't have a yaml parser
     for line in config_buffer:
