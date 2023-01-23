@@ -33,7 +33,7 @@ jobs:
           cp mypy.ini .github/linters
 
       - name: Mypy
-        uses: github/super-linter/slim@v4.9.2
+        uses: github/super-linter/slim@v4.10.1
         if: always()
         env:
           # run linter on everything to catch preexisting problems
