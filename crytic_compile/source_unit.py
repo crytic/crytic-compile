@@ -1,5 +1,7 @@
 """
 Module handling the source unit
+Each source unit represents one file so may be associated with
+One or more source units are associated with each compilation unit
 """
 import re
 from typing import Dict, List, Optional, Union, Tuple, Set, TYPE_CHECKING
