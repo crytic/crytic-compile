@@ -1,9 +1,9 @@
 
 dev:
-  nix-shell shell.nix
+  nix develop
 
 build:
-  nix-build default.nix
+  nix build .#crytic-compile
 
 install:
   nix-env -e $(nix-env -q | grep "crytic-compile")
@@ -13,41 +13,66 @@ install:
 lint: black darglint mypy pylint
 
 black:
-  @echo -e "\nBuilding black.."
-  nix-build nix/black.nix
-  @echo "Running black.."
-  ./result/bin/black --version
-  ./result/bin/black crytic_compile --config pyproject.toml
+  @echo
+  nix develop --command black --version
+  nix develop --command black crytic_compile --config pyproject.toml
 
 darglint:
-  @echo -e "\nBuilding darglint.."
-  nix-build nix/darglint.nix
-  @echo "Running darglint.."
-  ./result/bin/darglint --version
-  ./result/bin/darglint crytic_compile
+  @echo
+  nix develop --command darglint --version
+  nix develop --command darglint crytic_compile
 
 mypy:
-  @echo -e "\nBuilding mypy.."
-  nix-build nix/mypy.nix
-  @echo "Running mypy.."
-  ./result/bin/mypy --version
-  ./result/bin/mypy crytic_compile
+  @echo
+  nix develop --command mypy --version
+  nix develop --command mypy crytic_compile
 
 pylint:
-  @echo -e "\nBuilding pylint.."
-  nix-build nix/pylint.nix
-  @echo "Running pylint.."
-  ./result/bin/pylint --version
-  ./result/bin/pylint crytic_compile --rcfile pyproject.toml
+  @echo
+  nix develop --command pylint --version
+  nix develop --command pylint crytic_compile --rcfile pyproject.toml
 
 
-test: test-hardhat test-monorepo test-brownie
-
-test-monorepo:
-	bash scripts/ci_test_monorepo.sh
-
-test-hardhat:
-	bash scripts/ci_test_hardhat.sh
+test: test-hardhat test-monorepo
 
 test-brownie:
-	bash scripts/ci_test_brownie.sh
+	echo "brownie tests not supported yet"
+
+test-buidler:
+	echo "buidler tests not supported yet"
+
+test-dapp:
+	echo "dapp tests not supported yet"
+
+test-embark:
+	echo "embark tests not supported yet"
+
+test-etherlime:
+	echo "etherlime tests not supported yet"
+
+test-etherscan:
+	echo "etherscan tests not supported yet"
+
+test-foundry:
+	echo "foundry tests not supported yet"
+
+test-hardhat:
+  @echo
+  nix develop --command bash scripts/ci_test_hardhat.sh
+
+test-monorepo:
+  @echo
+  nix develop --command bash scripts/ci_test_monorepo.sh
+
+test-solc:
+	echo "solc tests not supported yet"
+
+test-standard:
+	echo "standard tests not supported yet"
+
+test-truffle:
+	echo "truffle tests not supported yet"
+
+test-waffle:
+	echo "waffle tests not supported yet"
+
