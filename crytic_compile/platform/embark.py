@@ -104,10 +104,10 @@ class Embark(AbstractPlatform):
                 # pylint: disable=raise-missing-from
                 raise InvalidCompilation(error)
             stdout, stderr = process.communicate()
-            LOGGER.info("%s\n", stdout.decode())
+            LOGGER.info("%s\n", stdout.decode(errors="backslashreplace"))
             if stderr:
                 # Embark might return information to stderr, but compile without issue
-                LOGGER.error("%s", stderr.decode())
+                LOGGER.error("%s", stderr.decode(errors="backslashreplace"))
         infile = os.path.join(self._target, "crytic-export", "contracts-embark.json")
         if not os.path.isfile(infile):
             raise InvalidCompilation(
@@ -166,6 +166,14 @@ class Embark(AbstractPlatform):
                 devdoc = info.get("devdoc", {})
                 natspec = Natspec(userdoc, devdoc)
                 source_unit.natspec[contract_name] = natspec
+
+    def clean(self, **_kwargs: str) -> None:
+        """Clean compilation artifacts
+
+        Args:
+            **_kwargs: unused.
+        """
+        return
 
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:

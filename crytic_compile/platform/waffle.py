@@ -160,9 +160,9 @@ class Waffle(AbstractPlatform):
                     ) as process:
                         stdout, stderr = process.communicate()
                         if stdout:
-                            LOGGER.info(stdout.decode())
+                            LOGGER.info(stdout.decode(errors="backslashreplace"))
                         if stderr:
-                            LOGGER.error(stderr.decode())
+                            LOGGER.error(stderr.decode(errors="backslashreplace"))
                 except OSError as error:
                     # pylint: disable=raise-missing-from
                     raise InvalidCompilation(error)
@@ -216,6 +216,14 @@ class Waffle(AbstractPlatform):
         compilation_unit.compiler_version = CompilerVersion(
             compiler=compiler, version=version, optimized=optimized
         )
+
+    def clean(self, **_kwargs: str) -> None:
+        """Clean compilation artifacts
+
+        Args:
+            **_kwargs: unused.
+        """
+        return
 
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:

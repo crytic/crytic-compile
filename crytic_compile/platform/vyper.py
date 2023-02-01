@@ -82,6 +82,14 @@ class Vyper(AbstractPlatform):
         ast = _get_vyper_ast(target, vyper)
         source_unit.ast = ast
 
+    def clean(self, **_kwargs: str) -> None:
+        """Clean compilation artifacts
+
+        Args:
+            **_kwargs: unused.
+        """
+        return
+
     def is_dependency(self, _path: str) -> bool:
         """Check if the path is a dependency (not supported for vyper)
 

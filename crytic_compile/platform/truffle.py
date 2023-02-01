@@ -176,8 +176,8 @@ class Truffle(AbstractPlatform):
 
                 stdout_bytes, stderr_bytes = process.communicate()
                 stdout, stderr = (
-                    stdout_bytes.decode(),
-                    stderr_bytes.decode(),
+                    stdout_bytes.decode(errors="backslashreplace"),
+                    stderr_bytes.decode(errors="backslashreplace"),
                 )  # convert bytestrings to unicode strings
 
                 if truffle_overwrite_config:
@@ -278,6 +278,14 @@ class Truffle(AbstractPlatform):
         compilation_unit.compiler_version = CompilerVersion(
             compiler=compiler, version=version, optimized=optimized
         )
+
+    def clean(self, **_kwargs: str) -> None:
+        """Clean compilation artifacts
+
+        Args:
+            **_kwargs: unused.
+        """
+        return
 
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:

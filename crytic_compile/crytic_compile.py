@@ -507,7 +507,7 @@ class CryticCompile:
             )
 
         if not platform:
-            platform = next((p(target) for p in platforms if p.is_supported(target)), None)
+            platform = next((p(target) for p in platforms if p.is_supported(target, **kwargs)), None)
 
         if not platform:
             platform = Solc(target)
@@ -525,6 +525,8 @@ class CryticCompile:
             self._run_custom_build(custom_build)
 
         else:
+            if not kwargs.get("skip_clean", False) and not kwargs.get("ignore_compile", False):
+                self._platform.clean(**kwargs)
             self._platform.compile(self, **kwargs)
 
         remove_metadata = kwargs.get("compile_remove_metadata", False)
@@ -545,8 +547,8 @@ class CryticCompile:
         with subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
             stdout_bytes, stderr_bytes = process.communicate()
             stdout, stderr = (
-                stdout_bytes.decode(),
-                stderr_bytes.decode(),
+                stdout_bytes.decode(errors="backslashreplace"),
+                stderr_bytes.decode(errors="backslashreplace"),
             )  # convert bytestrings to unicode strings
 
             LOGGER.info(stdout)

@@ -94,6 +94,14 @@ class Standard(AbstractPlatform):
         self._underlying_platform = platform
         self._unit_tests = unit_tests
 
+    def clean(self, **_kwargs: str) -> None:
+        """Clean compilation artifacts
+
+        Args:
+            **_kwargs: unused.
+        """
+        return
+
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:
         """Check if the target has the standard crytic-compile format
@@ -444,7 +452,7 @@ def _load_from_compile_current(crytic_compile: "CryticCompile", loaded_json: Dic
             filename = compilation_unit.filename_lookup(filename_str)
             source_unit = compilation_unit.create_source_unit(filename)
 
-            for contract_name, contract in source_unit_data["contracts"].items():
+            for contract_name, contract in source_unit_data.get("contracts", {}).items():
                 compilation_unit.filename_to_contracts[filename].add(contract_name)
 
                 source_unit = compilation_unit.create_source_unit(filename)

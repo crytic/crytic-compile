@@ -119,6 +119,15 @@ class AbstractPlatform(metaclass=abc.ABCMeta):
         """
         return
 
+    @abc.abstractmethod
+    def clean(self, **kwargs: str) -> None:
+        """Clean compilation artifacts
+
+        Args:
+            **kwargs: optional arguments.
+        """
+        return
+
     @staticmethod
     @abc.abstractmethod
     def is_supported(target: str, **kwargs: str) -> bool:

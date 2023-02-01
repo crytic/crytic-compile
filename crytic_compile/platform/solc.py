@@ -181,6 +181,14 @@ class Solc(AbstractPlatform):
                 source_unit = compilation_unit.create_source_unit(path)
                 source_unit.ast = info["AST"]
 
+    def clean(self, **_kwargs: str) -> None:
+        """Clean compilation artifacts
+
+        Args:
+            **_kwargs: unused.
+        """
+        return
+
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:
         """Check if the target is a Solidity file
@@ -376,11 +384,16 @@ def get_version(solc: str, env: Optional[Dict[str, str]]) -> str:
             env=env,
             executable=shutil.which(cmd[0]),
         ) as process:
-            stdout_bytes, _ = process.communicate()
-            stdout = stdout_bytes.decode()  # convert bytestrings to unicode strings
+            stdout_bytes, stderr_bytes = process.communicate()
+            stdout, stderr = (
+                stdout_bytes.decode(errors="backslashreplace"),
+                stderr_bytes.decode(errors="backslashreplace"),
+            )  # convert bytestrings to unicode strings
             version = re.findall(r"\d+\.\d+\.\d+", stdout)
             if len(version) == 0:
-                raise InvalidCompilation(f"Solidity version not found: {stdout}")
+                raise InvalidCompilation(
+                    f"\nSolidity version not found:\nSTDOUT:\n{stdout}\nSTDERR:\n{stderr}"
+                )
             return version[0]
     except OSError as error:
         # pylint: disable=raise-missing-from
@@ -584,6 +597,7 @@ def _run_solcs_path(
     targets_json = None
     if isinstance(solcs_path, dict):
         guessed_solcs = _guess_solc(filename, working_dir)
+        compilation_errors = []
         for guessed_solc in guessed_solcs:
             if not guessed_solc in solcs_path:
                 continue
@@ -624,12 +638,14 @@ def _run_solcs_path(
                     working_dir=working_dir,
                     force_legacy_json=force_legacy_json,
                 )
-            except InvalidCompilation:
-                pass
+                break
+            except InvalidCompilation as ic:
+                compilation_errors.append(solc_bin + ": " + ic.args[0])
 
     if not targets_json:
         raise InvalidCompilation(
-            "Invalid solc compilation, none of the solc versions provided worked"
+            "Invalid solc compilation, none of the solc versions provided worked:\n"
+            + "\n".join(compilation_errors)
         )
 
     return targets_json
@@ -672,6 +688,7 @@ def _run_solcs_env(
     env = dict(os.environ) if env is None else env
     targets_json = None
     guessed_solcs = _guess_solc(filename, working_dir)
+    compilation_errors = []
     for guessed_solc in guessed_solcs:
         if solcs_env and not guessed_solc in solcs_env:
             continue
@@ -688,6 +705,7 @@ def _run_solcs_env(
                 working_dir=working_dir,
                 force_legacy_json=force_legacy_json,
             )
+            break
         except InvalidCompilation:
             pass
 
@@ -708,12 +726,14 @@ def _run_solcs_env(
                     working_dir=working_dir,
                     force_legacy_json=force_legacy_json,
                 )
-            except InvalidCompilation:
-                pass
+                break
+            except InvalidCompilation as ic:
+                compilation_errors.append(version_env + ": " + ic.args[0])
 
     if not targets_json:
         raise InvalidCompilation(
-            "Invalid solc compilation, none of the solc versions provided worked"
+            "Invalid solc compilation, none of the solc versions provided worked:\n"
+            + "\n".join(compilation_errors)
         )
 
     return targets_json

@@ -57,8 +57,8 @@ def _run_etherlime(target: str, npx_disable: bool, compile_arguments: Optional[s
         ) as process:
             stdout_bytes, stderr_bytes = process.communicate()
             stdout, stderr = (
-                stdout_bytes.decode(),
-                stderr_bytes.decode(),
+                stdout_bytes.decode(errors="backslashreplace"),
+                stderr_bytes.decode(errors="backslashreplace"),
             )  # convert bytestrings to unicode strings
 
             LOGGER.info(stdout)
@@ -158,6 +158,10 @@ class Etherlime(AbstractPlatform):
         compilation_unit.compiler_version = CompilerVersion(
             compiler=compiler, version=version, optimized=_is_optimized(compile_arguments)
         )
+
+    def clean(self, **_kwargs: str) -> None:
+        # TODO: research if there's a way to clean artifacts
+        pass
 
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:

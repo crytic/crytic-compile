@@ -80,8 +80,8 @@ class Buidler(AbstractPlatform):
 
                 stdout_bytes, stderr_bytes = process.communicate()
                 stdout, stderr = (
-                    stdout_bytes.decode(),
-                    stderr_bytes.decode(),
+                    stdout_bytes.decode(errors="backslashreplace"),
+                    stderr_bytes.decode(errors="backslashreplace"),
                 )  # convert bytestrings to unicode strings
 
                 LOGGER.info(stdout)
@@ -170,6 +170,10 @@ class Buidler(AbstractPlatform):
                         )
                     source_unit = compilation_unit.create_source_unit(path)
                     source_unit.ast = info["ast"]
+
+    def clean(self, **kwargs: str) -> None:
+        # TODO: call "buldler clean"?
+        pass
 
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:

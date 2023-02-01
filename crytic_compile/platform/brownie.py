@@ -63,8 +63,8 @@ class Brownie(AbstractPlatform):
                 ) as process:
                     stdout_bytes, stderr_bytes = process.communicate()
                     stdout, stderr = (
-                        stdout_bytes.decode(),
-                        stderr_bytes.decode(),
+                        stdout_bytes.decode(errors="backslashreplace"),
+                        stderr_bytes.decode(errors="backslashreplace"),
                     )  # convert bytestrings to unicode strings
 
                     LOGGER.info(stdout)
@@ -81,6 +81,10 @@ class Brownie(AbstractPlatform):
         filenames = list(Path(self._target, build_directory).rglob("*.json"))
 
         _iterate_over_files(crytic_compile, Path(self._target), filenames)
+
+    def clean(self, **_kwargs: str) -> None:
+        # brownie does not offer a way to clean a project
+        pass
 
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:

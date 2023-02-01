@@ -71,7 +71,7 @@ class Archive(AbstractPlatform):
         """Run the compilation
 
         Args:
-            crytic_compile (CryticCompile): asscoiated CryticCompile object
+            crytic_compile (CryticCompile): associated CryticCompile object
             **_kwargs: unused
         """
         # pylint: disable=import-outside-toplevel
@@ -96,6 +96,9 @@ class Archive(AbstractPlatform):
         self._target = "tmp.zip"
 
         crytic_compile.src_content = loaded_json["source_content"]
+
+    def clean(self, **_kwargs: str) -> None:
+        pass
 
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:
