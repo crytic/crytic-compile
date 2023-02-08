@@ -24,7 +24,6 @@ setup(
             "solc-select>=v1.0.0b1",
         ]
     },
-
     license="AGPL-3.0",
     long_description=long_description,
     package_data={"crytic_compile": ["py.typed"]},
