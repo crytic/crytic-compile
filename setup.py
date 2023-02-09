@@ -15,6 +15,15 @@ setup(
     packages=find_packages(),
     python_requires=">=3.8",
     install_requires=["pycryptodome>=3.4.6", "cbor2"],
+    extras_require={
+        "dev": [
+            "black==22.3.0",
+            "pylint==2.13.4",
+            "mypy==0.942",
+            "darglint==1.8.0",
+            "solc-select>=v1.0.0b1",
+        ]
+    },
     license="AGPL-3.0",
     long_description=long_description,
     package_data={"crytic_compile": ["py.typed"]},
