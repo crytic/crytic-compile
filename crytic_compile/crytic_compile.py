@@ -507,7 +507,9 @@ class CryticCompile:
             )
 
         if not platform:
-            platform = next((p(target) for p in platforms if p.is_supported(target)), None)
+            platform = next(
+                (p(target) for p in platforms if p.is_supported(target, **kwargs)), None
+            )
 
         if not platform:
             platform = Solc(target)
