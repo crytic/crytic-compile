@@ -18,7 +18,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "windows-2022"]
-        type: ["brownie", "buidler", "dapp", "embark", "etherlime", "hardhat", "solc", "truffle", "waffle", "foundry", "standard"]
+        type: ["brownie", "buidler", "dapp", "embark", "hardhat", "solc", "truffle", "waffle", "foundry", "standard"]
         exclude:
           # Currently broken, tries to pull git:// which is blocked by GH
           - type: embark
@@ -35,15 +35,6 @@ jobs:
       run: |
         echo 'C:\msys64\mingw64\bin' >> "$GITHUB_PATH"
         echo 'C:\msys64\usr\bin' >> "$GITHUB_PATH"
-    - name: Choose Node version
-      id: node
-      shell: bash
-      run: |
-        if [ "${{ matrix.type }}" = "etherlime" ]; then
-          echo 'version=10.17.0' >> "$GITHUB_OUTPUT"
-        else
-          echo 'version=lts/*' >> "$GITHUB_OUTPUT"
-        fi
     - name: Set up Node
       uses: actions/setup-node@v3
       with:
