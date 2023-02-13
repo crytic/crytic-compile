@@ -38,7 +38,7 @@ jobs:
     - name: Set up Node
       uses: actions/setup-node@v3
       with:
-        node-version: ${{ steps.node.outputs.version }}
+        node-version: 'lts/*'
     - name: Set up Python 3.8
       uses: actions/setup-python@v4
       with:
