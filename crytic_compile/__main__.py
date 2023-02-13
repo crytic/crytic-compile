@@ -34,7 +34,7 @@ def parse_args() -> argparse.Namespace:
     # Create our argument parser
     parser = argparse.ArgumentParser(
         description="""crytic-compile. For usage information,
-see https://github.com/crytic/crytic-compile/wiki/Usage""",
+see https://github.com/crytic/crytic-compile/wiki""",
         usage="crytic-compile contract.sol [flag]",
     )
 
