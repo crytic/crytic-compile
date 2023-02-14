@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Dict, List, Tuple, Type, Any
 
 from crytic_compile.compilation_unit import CompilationUnit
+from crytic_compile.source_unit import SourceUnit
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform import Type as PlatformType
 from crytic_compile.platform.abstract_platform import AbstractPlatform
@@ -226,19 +227,19 @@ def generate_standard_export(crytic_compile: "CryticCompile") -> Dict:
         for filename, source_unit in compilation_unit.source_units.items():
             source_unit_dict[filename.relative] = defaultdict(dict)
             source_unit_dict[filename.relative]["ast"] = source_unit.ast
-            for contract_name in source_unit.contracts_names:
+            for contract_name, contract in source_unit.contracts.items():
                 libraries = source_unit.libraries_names_and_patterns(contract_name)
                 source_unit_dict[filename.relative]["contracts"][contract_name] = {
-                    "abi": source_unit.abi(contract_name),
-                    "bin": source_unit.bytecode_init(contract_name),
-                    "bin-runtime": source_unit.bytecode_runtime(contract_name),
-                    "srcmap": ";".join(source_unit.srcmap_init(contract_name)),
-                    "srcmap-runtime": ";".join(source_unit.srcmap_runtime(contract_name)),
+                    "abi": contract.abi,
+                    "bin": contract.init_bytecode,
+                    "bin-runtime": contract.runtime_bytecode,
+                    "srcmap": ";".join(contract.init_srcmap),
+                    "srcmap-runtime": ";".join(contract.runtime_srcmap),
                     "filenames": _convert_filename_to_dict(filename),
                     "libraries": dict(libraries) if libraries else {},
                     "is_dependency": crytic_compile.is_dependency(filename.absolute),
-                    "userdoc": source_unit.natspec[contract_name].userdoc.export(),
-                    "devdoc": source_unit.natspec[contract_name].devdoc.export(),
+                    "userdoc": contract.natspec.userdoc.export(),
+                    "devdoc": contract.natspec.devdoc.export(),
                 }
 
         # Create our root object to contain the contracts and other information.
@@ -285,8 +286,10 @@ def _load_from_compile_legacy1(crytic_compile: "CryticCompile", loaded_json: Dic
     )
     for contract_name, contract in loaded_json["contracts"].items():
         filename = _convert_dict_to_filename(contract["filenames"])
-        compilation_unit.filename_to_contracts[filename].add(contract_name)
-        source_unit = compilation_unit.create_source_unit(filename)
+        ast = loaded_json["asts"][filename.relative]
+        source_unit = SourceUnit(compilation_unit, filename, ast)
+        #compilation_unit.filename_to_contracts[filename].add(contract_name)
+        #source_unit = compilation_unit.create_source_unit(filename)
 
         source_unit.contracts_names.add(contract_name)
         source_unit.abis[contract_name] = contract["abi"]

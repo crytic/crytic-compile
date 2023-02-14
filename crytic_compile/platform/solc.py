@@ -11,6 +11,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Dict, List, Optional, Union, Any
 
 from crytic_compile.compilation_unit import CompilationUnit
+from crytic_compile.contract import Contract
+from crytic_compile.source_unit import SourceUnit
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform.abstract_platform import AbstractPlatform
 from crytic_compile.platform.exceptions import InvalidCompilation
@@ -35,21 +37,21 @@ def _build_contract_data(compilation_unit: "CompilationUnit") -> Dict:
     contracts = {}
 
     for filename, source_unit in compilation_unit.source_units.items():
-        for contract_name in source_unit.contracts_names:
-            abi = str(source_unit.abi(contract_name))
+        for contract_name, contract in source_unit.contracts.items():
+            abi = str(contract.abi())
             abi = abi.replace("'", '"')
             abi = abi.replace("True", "true")
             abi = abi.replace("False", "false")
             abi = abi.replace(" ", "")
             exported_name = combine_filename_name(filename.absolute, contract_name)
             contracts[exported_name] = {
-                "srcmap": ";".join(source_unit.srcmap_init(contract_name)),
-                "srcmap-runtime": ";".join(source_unit.srcmap_runtime(contract_name)),
+                "srcmap": ";".join(contract.init_srcmap),
+                "srcmap-runtime": ";".join(contract.runtime_srcmap),
                 "abi": abi,
-                "bin": source_unit.bytecode_init(contract_name),
-                "bin-runtime": source_unit.bytecode_runtime(contract_name),
-                "userdoc": source_unit.natspec[contract_name].userdoc.export(),
-                "devdoc": source_unit.natspec[contract_name].devdoc.export(),
+                "bin": contract.init_bytecode,
+                "bin-runtime": contract.runtime_bytecode,
+                "userdoc": contract.natspec.userdoc.export(),
+                "devdoc": contract.natspec.devdoc.export(),
             }
     return contracts
 
@@ -71,6 +73,7 @@ def export_to_solc_from_compilation_unit(
     contracts = _build_contract_data(compilation_unit)
 
     # Create additional informational objects.
+    # TODO: Fix without the use of the `asts` function
     sources = {filename: {"AST": ast} for (filename, ast) in compilation_unit.asts.items()}
     source_list = [x.absolute for x in compilation_unit.filenames]
 
@@ -150,6 +153,7 @@ class Solc(AbstractPlatform):
         solc_working_dir = kwargs.get("solc_working_dir", None)
         force_legacy_json = kwargs.get("solc_force_legacy_json", False)
         compilation_unit = CompilationUnit(crytic_compile, str(self._target))
+        crytic_compile.compilation_units[compilation_unit.unique_id] = compilation_unit
 
         targets_json = _get_targets_json(compilation_unit, self._target, **kwargs)
 
@@ -160,26 +164,29 @@ class Solc(AbstractPlatform):
         skip_filename = compilation_unit.compiler_version.version in [
             f"0.4.{x}" for x in range(0, 10)
         ]
-
-        solc_handle_contracts(
-            targets_json, skip_filename, compilation_unit, self._target, solc_working_dir
-        )
-
+        
         if "sources" in targets_json:
             for path, info in targets_json["sources"].items():
                 if skip_filename:
-                    path = convert_filename(
+                    filename = convert_filename(
                         self._target,
                         relative_to_short,
                         crytic_compile,
                         working_dir=solc_working_dir,
                     )
                 else:
-                    path = convert_filename(
+                    filename = convert_filename(
                         path, relative_to_short, crytic_compile, working_dir=solc_working_dir
                     )
-                source_unit = compilation_unit.create_source_unit(path)
-                source_unit.ast = info["AST"]
+                ast = info["AST"]
+                source_unit = SourceUnit(compilation_unit, filename, ast)
+                compilation_unit.source_units[filename] = source_unit
+        
+        solc_handle_contracts(
+            targets_json, skip_filename, compilation_unit, self._target, solc_working_dir
+        )
+
+
 
     def clean(self, **_kwargs: str) -> None:
         """Clean compilation artifacts
@@ -309,43 +316,37 @@ def solc_handle_contracts(
         solc_working_dir (Optional[str]): Working directory for running solc
     """
     is_above_0_8 = _is_at_or_above_minor_version(compilation_unit, 8)
-
+            # for solc < 0.4.10 we cant retrieve the filename from the ast
+    
+    if skip_filename:
+        filename = convert_filename(
+            target,
+            relative_to_short,
+            compilation_unit.crytic_compile,
+            working_dir=solc_working_dir,
+        )
+    else:
+        filename = convert_filename(
+            extract_filename(original_contract_name),
+            relative_to_short,
+            compilation_unit.crytic_compile,
+            working_dir=solc_working_dir,
+        )
+    source_unit = compilation_unit.source_units[filename]
+    
     if "contracts" in targets_json:
-
         for original_contract_name, info in targets_json["contracts"].items():
             contract_name = extract_name(original_contract_name)
-            # for solc < 0.4.10 we cant retrieve the filename from the ast
-            if skip_filename:
-                filename = convert_filename(
-                    target,
-                    relative_to_short,
-                    compilation_unit.crytic_compile,
-                    working_dir=solc_working_dir,
-                )
-            else:
-                filename = convert_filename(
-                    extract_filename(original_contract_name),
-                    relative_to_short,
-                    compilation_unit.crytic_compile,
-                    working_dir=solc_working_dir,
-                )
-
-            source_unit = compilation_unit.create_source_unit(filename)
-
-            source_unit.contracts_names.add(contract_name)
-            compilation_unit.filename_to_contracts[filename].add(contract_name)
-            source_unit.abis[contract_name] = (
-                json.loads(info["abi"]) if not is_above_0_8 else info["abi"]
-            )
-            source_unit.bytecodes_init[contract_name] = info["bin"]
-            source_unit.bytecodes_runtime[contract_name] = info["bin-runtime"]
-            source_unit.srcmaps_init[contract_name] = info["srcmap"].split(";")
-            source_unit.srcmaps_runtime[contract_name] = info["srcmap-runtime"].split(";")
-            userdoc = json.loads(info.get("userdoc", "{}")) if not is_above_0_8 else info["userdoc"]
-            devdoc = json.loads(info.get("devdoc", "{}")) if not is_above_0_8 else info["devdoc"]
+            abi = info["abi"]
+            init_bytecode = info["bin"].replace("0x", "")
+            runtime_bytecode = info["bin-runtime"].replace("0x", "")
+            srcmap_init = info["srcmap"]
+            srcmap_runtime = info["srcmap-runtime"]
+            userdoc = info.get("userdoc", {})
+            devdoc = info.get("devdoc", {})
             natspec = Natspec(userdoc, devdoc)
-            source_unit.natspec[contract_name] = natspec
-
+            contract = Contract(source_unit, contract_name, abi, init_bytecode, runtime_bytecode, srcmap_init, srcmap_runtime, natspec)
+            source_unit.contracts[contract_name] = contract
 
 def _is_at_or_above_minor_version(compilation_unit: "CompilationUnit", version: int) -> bool:
     """Checks if the solc version is at or above(=newer) a given minor (0.x.0) version
@@ -428,13 +429,14 @@ def _build_options(compiler_version: CompilerVersion, force_legacy_json: bool) -
     old_04_versions = [f"0.4.{x}" for x in range(0, 12)]
     # compact-format was removed from solc 0.8.10
     explicit_compact_format = (
-        [f"0.4.{x}" for x in range(13, 27)]
+        [f"0.4.{x}" for x in range(12, 27)]
         + [f"0.5.{x}" for x in range(0, 18)]
         + [f"0.6.{x}" for x in range(0, 13)]
         + [f"0.7.{x}" for x in range(0, 7)]
         + [f"0.8.{x}" for x in range(0, 10)]
     )
     assert compiler_version.version
+    
     if compiler_version.version in old_04_versions or compiler_version.version.startswith("0.3"):
         return "abi,ast,bin,bin-runtime,srcmap,srcmap-runtime,userdoc,devdoc"
     if force_legacy_json:

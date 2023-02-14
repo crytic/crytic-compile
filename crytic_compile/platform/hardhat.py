@@ -20,9 +20,12 @@ from crytic_compile.platform.abstract_platform import AbstractPlatform
 # Handle cycle
 from crytic_compile.platform.solc import relative_to_short
 from crytic_compile.compilation_unit import CompilationUnit
+from crytic_compile.contract import Contract
+from crytic_compile.source_unit import SourceUnit
 
 if TYPE_CHECKING:
     from crytic_compile import CryticCompile
+
 
 LOGGER = logging.getLogger("CryticCompile")
 
@@ -59,81 +62,90 @@ def hardhat_like_parsing(
         # The file here should always ends .json, but just in case use ife
         uniq_id = file if ".json" not in file else file[0:-5]
         compilation_unit = CompilationUnit(crytic_compile, uniq_id)
-
+        crytic_compile.compilation_units[uniq_id] = compilation_unit
+        
         with open(build_info, encoding="utf8") as file_desc:
             loaded_json = json.load(file_desc)
 
             targets_json = loaded_json["output"]
 
-            version_from_config = loaded_json["solcVersion"]  # TODO supper vyper
+            version = loaded_json.get["solcVersion"]  # TODO supper vyper
             input_json = loaded_json["input"]
             compiler = "solc" if input_json["language"] == "Solidity" else "vyper"
             optimized = input_json["settings"]["optimizer"]["enabled"]
 
             compilation_unit.compiler_version = CompilerVersion(
-                compiler=compiler, version=version_from_config, optimized=optimized
+                compiler=compiler, version=version, optimized=optimized
             )
 
+            #compiler_version = compilation_unit.compiler_version.version
+            
+            #skip_filename = False
+            #if compiler_version.major == 0 and compiler_version.minor == 4 and compiler_version.patch >= 0 and compiler_version.patch < 10:
+            #    skip_filename = True
+            
             skip_filename = compilation_unit.compiler_version.version in [
                 f"0.4.{x}" for x in range(0, 10)
             ]
 
-            if "contracts" in targets_json:
-                for original_filename, contracts_info in targets_json["contracts"].items():
-
+            if "sources" not in targets_json or "contracts" not in targets_json:
+                LOGGER.error(
+                    "Malformed compilation JSON output"
+                )
+                raise InvalidCompilation(
+                    f"Malformed compilation JSON output"
+                )
+             
+            for path, info in targets_json["sources"].items():
+                if skip_filename:
                     filename = convert_filename(
-                        original_filename,
+                        target,
                         relative_to_short,
                         crytic_compile,
                         working_dir=working_dir,
                     )
+                else:
+                    filename = convert_filename(
+                        path,
+                        relative_to_short,
+                        crytic_compile,
+                        working_dir=working_dir,
+                    )
+                ast = info["ast"]
+                source_unit = SourceUnit(compilation_unit, filename, ast)
+                compilation_unit.source_units[filename] = source_unit
 
-                    source_unit = compilation_unit.create_source_unit(filename)
+            for original_filename, contracts_info in targets_json["contracts"].items():
 
-                    for original_contract_name, info in contracts_info.items():
-                        contract_name = extract_name(original_contract_name)
+                filename = convert_filename(
+                    original_filename,
+                    relative_to_short,
+                    crytic_compile,
+                    working_dir=working_dir,
+                )
 
-                        source_unit.contracts_names.add(contract_name)
-                        compilation_unit.filename_to_contracts[filename].add(contract_name)
+                source_unit = compilation_unit.source_units[filename]
+                for original_contract_name, info in contracts_info.items():
+                    contract_name = extract_name(original_contract_name)
 
-                        source_unit.abis[contract_name] = info["abi"]
-                        source_unit.bytecodes_init[contract_name] = info["evm"]["bytecode"][
-                            "object"
-                        ]
-                        source_unit.bytecodes_runtime[contract_name] = info["evm"][
-                            "deployedBytecode"
-                        ]["object"]
-                        source_unit.srcmaps_init[contract_name] = info["evm"]["bytecode"][
-                            "sourceMap"
-                        ].split(";")
-                        source_unit.srcmaps_runtime[contract_name] = info["evm"][
-                            "deployedBytecode"
-                        ]["sourceMap"].split(";")
-                        userdoc = info.get("userdoc", {})
-                        devdoc = info.get("devdoc", {})
-                        natspec = Natspec(userdoc, devdoc)
-                        source_unit.natspec[contract_name] = natspec
-
-            if "sources" in targets_json:
-                for path, info in targets_json["sources"].items():
-                    if skip_filename:
-                        path = convert_filename(
-                            target,
-                            relative_to_short,
-                            crytic_compile,
-                            working_dir=working_dir,
-                        )
-                    else:
-                        path = convert_filename(
-                            path,
-                            relative_to_short,
-                            crytic_compile,
-                            working_dir=working_dir,
-                        )
-
-                    source_unit = compilation_unit.create_source_unit(path)
-                    source_unit.ast = info["ast"]
-
+                    abi = info["abi"]
+                    init_bytecode = info["evm"]["bytecode"][
+                        "object"
+                    ].replace("0x", "")
+                    runtime_bytecode = info["evm"][
+                        "deployedBytecode"
+                    ]["object"].replace("0x", "")
+                    srcmap_init = info["evm"]["bytecode"][
+                        "sourceMap"
+                    ]
+                    srcmap_runtime = info["evm"][
+                        "deployedBytecode"
+                    ]["sourceMap"]
+                    userdoc = info.get("userdoc", {})
+                    devdoc = info.get("devdoc", {})
+                    natspec = Natspec(userdoc, devdoc)
+                    contract = Contract(source_unit, contract_name, abi, init_bytecode, runtime_bytecode, srcmap_init, srcmap_runtime, natspec)
+                    source_unit.contracts[contract_name] = contract
 
 class Hardhat(AbstractPlatform):
     """

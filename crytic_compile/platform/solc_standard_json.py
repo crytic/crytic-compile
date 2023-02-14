@@ -10,6 +10,8 @@ import subprocess
 from typing import TYPE_CHECKING, Dict, List, Optional, Union, Any
 
 from crytic_compile.compilation_unit import CompilationUnit
+from crytic_compile.source_unit import SourceUnit
+from crytic_compile.contract import Contract
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform.exceptions import InvalidCompilation
 from crytic_compile.platform.solc import Solc, get_version, is_optimized, relative_to_short
@@ -260,68 +262,63 @@ def parse_standard_json_output(
     """
 
     skip_filename = compilation_unit.compiler_version.version in [f"0.4.{x}" for x in range(0, 10)]
+    if "sources" not in targets_json or "contracts" not in targets_json:
+        LOGGER.error(
+            "Some error"
+        )
+        raise InvalidCompilation(
+            f"Incorrect json file generated"
+        )
 
-    if "contracts" in targets_json:
-        for file_path, file_contracts in targets_json["contracts"].items():
-            for contract_name, info in file_contracts.items():
-                # for solc < 0.4.10 we cant retrieve the filename from the ast
-                if skip_filename:
-                    filename = convert_filename(
-                        file_path,
-                        relative_to_short,
-                        compilation_unit.crytic_compile,
-                        working_dir=solc_working_dir,
-                    )
-                else:
-                    filename = convert_filename(
-                        file_path,
-                        relative_to_short,
-                        compilation_unit.crytic_compile,
-                        working_dir=solc_working_dir,
-                    )
-
-                source_unit = compilation_unit.create_source_unit(filename)
-
-                source_unit.contracts_names.add(contract_name)
-                compilation_unit.filename_to_contracts[filename].add(contract_name)
-                source_unit.abis[contract_name] = info["abi"]
-
-                userdoc = info.get("userdoc", {})
-                devdoc = info.get("devdoc", {})
-                natspec = Natspec(userdoc, devdoc)
-                source_unit.natspec[contract_name] = natspec
-
-                source_unit.bytecodes_init[contract_name] = info["evm"]["bytecode"]["object"]
-                source_unit.bytecodes_runtime[contract_name] = info["evm"]["deployedBytecode"][
-                    "object"
-                ]
-                source_unit.srcmaps_init[contract_name] = info["evm"]["bytecode"][
-                    "sourceMap"
-                ].split(";")
-                source_unit.srcmaps_runtime[contract_name] = info["evm"]["deployedBytecode"][
-                    "sourceMap"
-                ].split(";")
-
-    if "sources" in targets_json:
-        for path, info in targets_json["sources"].items():
-            if skip_filename:
-                path = convert_filename(
-                    path,
-                    relative_to_short,
-                    compilation_unit.crytic_compile,
-                    working_dir=solc_working_dir,
-                )
-            else:
-                path = convert_filename(
-                    path,
-                    relative_to_short,
-                    compilation_unit.crytic_compile,
-                    working_dir=solc_working_dir,
-                )
-            source_unit = compilation_unit.create_source_unit(path)
-
-            source_unit.ast = info.get("ast")
-
+    for path, info in targets_json["sources"].items():
+        if skip_filename:
+            filename = convert_filename(
+                path,
+                relative_to_short,
+                compilation_unit.crytic_compile,
+                working_dir=solc_working_dir,
+            )
+        else:
+            filename = convert_filename(
+                path,
+                relative_to_short,
+                compilation_unit.crytic_compile,
+                working_dir=solc_working_dir,
+            )
+        ast = info["ast"]
+        source_unit = SourceUnit(compilation_unit, filename, ast)
+        compilation_unit.source_units[filename] = source_unit
+    
+    for file_path, file_contracts in targets_json["contracts"].items():
+        # TODO: There is a bug here. Regardless of `skip_filename`, `file_path` is used
+        # for solc < 0.4.10 we cant retrieve the filename from the ast
+        if skip_filename:
+            filename = convert_filename(
+                file_path,
+                relative_to_short,
+                compilation_unit.crytic_compile,
+                working_dir=solc_working_dir,
+            )
+        else:
+            filename = convert_filename(
+                file_path,
+                relative_to_short,
+                compilation_unit.crytic_compile,
+                working_dir=solc_working_dir,
+            )
+        source_unit = compilation_unit.source_units[filename]
+        for contract_name, info in file_contracts.items():
+            abi = info["abi"]
+            init_bytecode = info["evm"]["bytecode"]["object"].replace("0x", "")
+            runtime_bytecode = info["evm"]["deployedBytecode"]["object"].replace("0x", "")
+            srcmap_init = info["evm"]["bytecode"]["sourceMap"]
+            srcmap_runtime = info["evm"]["deployedBytecode"]["sourceMap"]
+            userdoc = info.get("userdoc", {})
+            devdoc = info.get("devdoc", {})
+            natspec = Natspec(userdoc, devdoc)
+            contract = Contract(source_unit, contract_name, abi, init_bytecode, runtime_bytecode, srcmap_init, srcmap_runtime, natspec)
+            source_unit.contracts[contract_name] = contract
+            
 
 # Inherits is_dependency/is_supported from Solc
 class SolcStandardJson(Solc):
@@ -404,6 +401,7 @@ class SolcStandardJson(Solc):
         solc_working_dir: Optional[str] = kwargs.get("solc_working_dir", None)
 
         compilation_unit = CompilationUnit(crytic_compile, "standard_json")
+        crytic_compile.compilation_units[compilation_unit.unique_id] = compilation_unit
 
         compilation_unit.compiler_version = CompilerVersion(
             compiler="solc",

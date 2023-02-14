@@ -15,6 +15,8 @@ from crytic_compile.platform.abstract_platform import AbstractPlatform
 from crytic_compile.platform.exceptions import InvalidCompilation
 from crytic_compile.platform.types import Type
 from crytic_compile.utils.naming import Filename, convert_filename
+from crytic_compile.source_unit import SourceUnit
+from crytic_compile.contract import Contract
 
 # Cycle dependency
 from crytic_compile.utils.natspec import Natspec
@@ -102,6 +104,12 @@ class Brownie(AbstractPlatform):
             return False
         # < 1.1.0: brownie-config.json
         # >= 1.1.0: brownie-config.yaml
+        
+        # If there is both foundry and hardhat, foundry takes priority
+        # TODO: See if we want to prioritize foundry over brownie
+        if os.path.isfile(os.path.join(target, "foundry.toml")):
+            return False
+        
         return (
             os.path.isfile(os.path.join(target, "brownie-config.json"))
             or os.path.isfile(os.path.join(target, "brownie-config.yaml"))
@@ -144,7 +152,8 @@ def _iterate_over_files(
     version = None
 
     compilation_unit = CompilationUnit(crytic_compile, str(target))
-
+    crytic_compile.compilation_units[compilation_unit.unique_id] = compilation_unit
+    
     for original_filename in filenames:
         with open(original_filename, encoding="utf8") as f_file:
             target_loaded: Dict = json.load(f_file)
@@ -171,30 +180,23 @@ def _iterate_over_files(
             filename: Filename = convert_filename(
                 filename_txt, _relative_to_short, crytic_compile, working_dir=target
             )
+            ast = target_loaded["ast"]
+            source_unit = SourceUnit(compilation_unit, filename, ast)
+            compilation_unit.source_units[filename] = source_unit
 
-            source_unit = compilation_unit.create_source_unit(filename)
-
-            source_unit.ast = target_loaded["ast"]
             contract_name = target_loaded["contractName"]
-
-            compilation_unit.filename_to_contracts[filename].add(contract_name)
-
-            source_unit.contracts_names.add(contract_name)
-            source_unit.abis[contract_name] = target_loaded["abi"]
-            source_unit.bytecodes_init[contract_name] = target_loaded["bytecode"].replace("0x", "")
-            source_unit.bytecodes_runtime[contract_name] = target_loaded[
-                "deployedBytecode"
-            ].replace("0x", "")
-            source_unit.srcmaps_init[contract_name] = target_loaded["sourceMap"].split(";")
-            source_unit.srcmaps_runtime[contract_name] = target_loaded["deployedSourceMap"].split(
-                ";"
-            )
-
+            abi = target_loaded["abi"]
+            init_bytecode = target_loaded["bytecode"].replace("0x", "")
+            runtime_bytecode = target_loaded["deployedBytecode"].replace("0x", "")
+            srcmap_init = target_loaded["sourceMap"]
+            srcmap_runtime = target_loaded["deployedSourceMap"]
             userdoc = target_loaded.get("userdoc", {})
             devdoc = target_loaded.get("devdoc", {})
             natspec = Natspec(userdoc, devdoc)
-            source_unit.natspec[contract_name] = natspec
-
+            contract = Contract(source_unit, contract_name, abi, init_bytecode, runtime_bytecode, srcmap_init, srcmap_runtime, natspec)
+            source_unit.contracts[contract_name] = contract
+    
+    # TODO: What is going on here
     compilation_unit.compiler_version = CompilerVersion(
         compiler=compiler, version=version, optimized=optimized
     )

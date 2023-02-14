@@ -14,6 +14,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
 
 from crytic_compile.compilation_unit import CompilationUnit
+from crytic_compile.contract import Contract
+from crytic_compile.source_unit import SourceUnit
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform import solc
 from crytic_compile.platform.abstract_platform import AbstractPlatform
@@ -27,55 +29,6 @@ if TYPE_CHECKING:
     from crytic_compile import CryticCompile
 
 LOGGER = logging.getLogger("CryticCompile")
-
-
-def export_to_truffle(crytic_compile: "CryticCompile", **kwargs: str) -> List[str]:
-    """Export to the truffle format
-
-    Args:
-        crytic_compile (CryticCompile): CryticCompile object to export
-        **kwargs: optional arguments. Used: "export_dir"
-
-    Raises:
-        InvalidCompilation: If there are more than 1 compilation unit
-
-    Returns:
-        List[str]: Singleton with the generated directory
-    """
-    # Get our export directory, if it's set, we create the path.
-    export_dir = kwargs.get("export_dir", "crytic-export")
-    if export_dir and not os.path.exists(export_dir):
-        os.makedirs(export_dir)
-
-    compilation_units = list(crytic_compile.compilation_units.values())
-    if len(compilation_units) != 1:
-        raise InvalidCompilation("Truffle export require 1 compilation unit")
-    compilation_unit = compilation_units[0]
-
-    # Loop for each contract filename.
-    results: List[Dict] = []
-    for source_unit in compilation_unit.source_units.values():
-        for contract_name in source_unit.contracts_names:
-            # Create the informational object to output for this contract
-            output = {
-                "contractName": contract_name,
-                "abi": source_unit.abi(contract_name),
-                "bytecode": "0x" + source_unit.bytecode_init(contract_name),
-                "deployedBytecode": "0x" + source_unit.bytecode_runtime(contract_name),
-                "ast": source_unit.ast,
-                "userdoc": source_unit.natspec[contract_name].userdoc.export(),
-                "devdoc": source_unit.natspec[contract_name].devdoc.export(),
-            }
-            results.append(output)
-
-            # If we have an export directory, export it.
-
-            path = os.path.join(export_dir, contract_name + ".json")
-            with open(path, "w", encoding="utf8") as file_desc:
-                json.dump(output, file_desc)
-
-    return [export_dir]
-
 
 class Truffle(AbstractPlatform):
     """
@@ -200,6 +153,7 @@ class Truffle(AbstractPlatform):
         version = None
         compiler = None
         compilation_unit = CompilationUnit(crytic_compile, str(self._target))
+        crytic_compile.compilation_units[compilation_unit.unique_id] = compilation_unit
 
         for filename_txt in filenames:
             with open(filename_txt, encoding="utf8") as file_desc:
@@ -216,10 +170,6 @@ class Truffle(AbstractPlatform):
                                         optimized = metadata["settings"]["optimizer"]["enabled"]
                         except json.decoder.JSONDecodeError:
                             pass
-
-                userdoc = target_loaded.get("userdoc", {})
-                devdoc = target_loaded.get("devdoc", {})
-                natspec = Natspec(userdoc, devdoc)
 
                 if not "ast" in target_loaded:
                     continue
@@ -241,26 +191,28 @@ class Truffle(AbstractPlatform):
                     # pylint: disable=raise-missing-from
                     raise InvalidCompilation(txt)
 
-                source_unit = compilation_unit.create_source_unit(filename)
-
-                source_unit.ast = target_loaded["ast"]
-
+                ast = target_loaded["ast"]
+                source_unit = SourceUnit(compilation_unit, filename, ast)
+                compilation_unit.source_units[filename] = source_unit
+                
                 contract_name = target_loaded["contractName"]
-                source_unit.natspec[contract_name] = natspec
-                compilation_unit.filename_to_contracts[filename].add(contract_name)
-                source_unit.contracts_names.add(contract_name)
-                source_unit.abis[contract_name] = target_loaded["abi"]
-                source_unit.bytecodes_init[contract_name] = target_loaded["bytecode"].replace(
+                abi = target_loaded["abi"]
+                init_bytecode = target_loaded["bytecode"].replace(
                     "0x", ""
                 )
-                source_unit.bytecodes_runtime[contract_name] = target_loaded[
+                runtime_bytecode = target_loaded[
                     "deployedBytecode"
                 ].replace("0x", "")
-                source_unit.srcmaps_init[contract_name] = target_loaded["sourceMap"].split(";")
-                source_unit.srcmaps_runtime[contract_name] = target_loaded[
+                srcmap_init = target_loaded["sourceMap"]
+                srcmap_runtime = target_loaded[
                     "deployedSourceMap"
-                ].split(";")
-
+                ]
+                userdoc = target_loaded.get("userdoc", {})
+                devdoc = target_loaded.get("devdoc", {})
+                natspec = Natspec(userdoc, devdoc)
+                contract = Contract(source_unit, contract_name, abi, init_bytecode, runtime_bytecode, srcmap_init, srcmap_runtime, natspec)
+                source_unit.contracts[contract_name] = contract
+                
                 if compiler is None:
                     compiler = target_loaded.get("compiler", {}).get("name", None)
                 if version is None:

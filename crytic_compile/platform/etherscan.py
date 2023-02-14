@@ -78,8 +78,8 @@ def _handle_bytecode(crytic_compile: "CryticCompile", target: str, result_b: byt
 
     source_unit = compilation_unit.create_source_unit(contract_filename)
 
-    source_unit.contracts_names.add(contract_name)
-    compilation_unit.filename_to_contracts[contract_filename].add(contract_name)
+    #source_unit.contracts_names.add(contract_name)
+    #compilation_unit.filename_to_contracts[contract_filename].add(contract_name)
     source_unit.abis[contract_name] = {}
     source_unit.bytecodes_init[contract_name] = bytecode
     source_unit.bytecodes_runtime[contract_name] = ""
@@ -350,7 +350,8 @@ class Etherscan(AbstractPlatform):
                 ]
 
         compilation_unit = CompilationUnit(crytic_compile, contract_name)
-
+        crytic_compile.compilation_units[compilation_unit.unique_id] = compilation_unit
+        
         compilation_unit.compiler_version = CompilerVersion(
             compiler=kwargs.get("solc", "solc"),
             version=compiler_version,
