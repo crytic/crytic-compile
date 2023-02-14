@@ -15,6 +15,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional
 
 from crytic_compile.compilation_unit import CompilationUnit
+from crytic_compile.contract import Contract
+from crytic_compile.source_unit import SourceUnit
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform.abstract_platform import AbstractPlatform
 from crytic_compile.platform.types import Type
@@ -57,6 +59,7 @@ class Dapp(AbstractPlatform):
             _run_dapp(self._target)
 
         compilation_unit = CompilationUnit(crytic_compile, str(self._target))
+        crytic_compile.compilation_units[compilation_unit.unique_id] = compilation_unit
 
         compilation_unit.compiler_version = _get_version(self._target)
 
@@ -68,14 +71,21 @@ class Dapp(AbstractPlatform):
             version: Optional[str] = None
             if "version" in targets_json:
                 version = re.findall(r"\d+\.\d+\.\d+", targets_json["version"])[0]
-
+            
+            for path, info in targets_json["sources"].items():
+                filename = convert_filename(
+                    path, _relative_to_short, crytic_compile, working_dir=self._target
+                )
+                ast = info["ast"]
+                source_unit = SourceUnit(compilation_unit, filename, ast)
+                compilation_unit.source_units[filename] = source_unit
+            
             for original_filename, contracts_info in targets_json["contracts"].items():
-
                 filename = convert_filename(
                     original_filename, lambda x: x, crytic_compile, self._target
                 )
 
-                source_unit = compilation_unit.create_source_unit(filename)
+                source_unit = compilation_unit.source_units[filename]
 
                 for original_contract_name, info in contracts_info.items():
                     if "metadata" in info:
@@ -86,36 +96,24 @@ class Dapp(AbstractPlatform):
                             and "enabled" in metadata["settings"]["optimizer"]
                         ):
                             optimized |= metadata["settings"]["optimizer"]["enabled"]
-                    contract_name = extract_name(original_contract_name)
-                    source_unit.contracts_names.add(contract_name)
-                    compilation_unit.filename_to_contracts[filename].add(contract_name)
 
-                    source_unit.abis[contract_name] = info["abi"]
-                    source_unit.bytecodes_init[contract_name] = info["evm"]["bytecode"]["object"]
-                    source_unit.bytecodes_runtime[contract_name] = info["evm"]["deployedBytecode"][
-                        "object"
-                    ]
-                    source_unit.srcmaps_init[contract_name] = info["evm"]["bytecode"][
-                        "sourceMap"
-                    ].split(";")
-                    source_unit.srcmaps_runtime[contract_name] = info["evm"]["bytecode"][
-                        "sourceMap"
-                    ].split(";")
+                    contract_name = extract_name(original_contract_name)
+                    abi = info["abi"]
+                    init_bytecode = info["evm"]["bytecode"]["object"].replace("0x", "")
+                    runtime_bytecode = info["evm"]["deployedBytecode"]["object"].replace("0x", "")
+                    srcmap_init = info["evm"]["bytecode"][ "sourceMap"]
+                    srcmap_runtime = info["evm"]["deployedBytecode"]["sourceMap"] # TODO: Potential bug here
                     userdoc = info.get("userdoc", {})
                     devdoc = info.get("devdoc", {})
                     natspec = Natspec(userdoc, devdoc)
-                    source_unit.natspec[contract_name] = natspec
-
+                    contract = Contract(source_unit, contract_name, abi, init_bytecode, runtime_bytecode, srcmap_init, srcmap_runtime, natspec)
+                    source_unit.contracts[contract_name] = contract
+                    
                     if version is None:
                         metadata = json.loads(info["metadata"])
                         version = re.findall(r"\d+\.\d+\.\d+", metadata["compiler"]["version"])[0]
 
-            for path, info in targets_json["sources"].items():
-                path = convert_filename(
-                    path, _relative_to_short, crytic_compile, working_dir=self._target
-                )
-                source_unit = compilation_unit.create_source_unit(path)
-                source_unit.ast = info["ast"]
+
 
         compilation_unit.compiler_version = CompilerVersion(
             compiler="solc", version=version, optimized=optimized

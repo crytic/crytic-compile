@@ -8,7 +8,8 @@ import cbor2
 from Crypto.Hash import keccak
 
 from crytic_compile.utils.natspec import Natspec
-from crytic_compile.source_unit import SourceUnit
+if TYPE_CHECKING:
+    from crytic_compile.source_unit import SourceUnit
 from crytic_compile.utils.naming import combine_filename_name
 
 # pylint: disable=too-many-instance-attributes,too-many-public-methods
@@ -27,10 +28,10 @@ class Contract:
         The initialization bytecode for the contract
     runtime_bytecode: str
         The runtime bytecode of the contract
-    srcmap_init: List[str]
-        The initialization source mapping of the contract split by the semicolon delimiter
-    srcmap_runtime: List[str]
-        The runtime source mapping of the contract split by the semicolon delimiter
+    srcmap_init: str
+        The initialization source mapping of the contract
+    srcmap_runtime: str
+        The runtime source mapping of the contract
     natspec: Natspec
         The NatSpec for the contract
     function_hashes: Dict
@@ -41,7 +42,7 @@ class Contract:
         The set of library placeholders identified in the contract
     """
 
-    def __init__(self, source_unit: "SourceUnit", contract_name: str, abi: Dict, init_bytecode: str, runtime_bytecode: str, srcmap_init: List[str], srcmap_runtime: List[str], natspec: Natspec):
+    def __init__(self, source_unit: "SourceUnit", contract_name: str, abi: Dict, init_bytecode: str, runtime_bytecode: str, srcmap_init: str, srcmap_runtime: str, natspec: Natspec):
         """Initialize the Contract class"""
         
         self._source_unit: SourceUnit = source_unit
@@ -49,12 +50,13 @@ class Contract:
         self._abi: Dict = abi
         self._init_bytecode: str = init_bytecode
         self._runtime_bytecode: str = runtime_bytecode
-        self._srcmap_init: List[str] = srcmap_init
-        self._srcmap_runtime: List[str] = srcmap_runtime
+        self._srcmap_init: str = srcmap_init
+        self._srcmap_runtime: str = srcmap_runtime
         self._natspec: Natspec = natspec
         self._function_hashes: Dict = self._compute_function_hashes()
         self._events: Dict = self._compute_topics_events()
         self._placeholder_set: Set[str] = self._compute_placeholder_set()
+        # TODO: Maybe introduce metadata in a future PR
 
     # region Getters
     ###################################################################################
@@ -106,20 +108,20 @@ class Contract:
         return self._runtime_bytecode
 
     @property
-    def srcmap_init(self) -> List[str]:
+    def srcmap_init(self) -> str:
         """Return the init source mapping of the contract
 
         Returns:
-            List[str]: The initialization source mapping split into a list using the semicolon delimeter
+            str: The initialization source mapping
         """
         return self._srcmap_init
     
     @property
-    def srcmap_runtime(self) -> Dict:
+    def srcmap_runtime(self) -> str:
         """Return the runtime source mapping of the contract
 
         Returns:
-            List[str]: The runtime source mapping split into a list using the semicolon delimeter
+            str: The runtime source mapping
         """
         return self._srcmap_runtime
 
@@ -257,6 +259,21 @@ class Contract:
 
         return events
     
+    # endregion
+    ###################################################################################
+    ###################################################################################
+    
+    # region Metadata
+    ###################################################################################
+    ###################################################################################
+
+    # TODO: Metadata parsing is broken. Needs to be fixed in a separate PR
+    def metadata_of(self, name: str) -> Dict[str, Union[str, bool]]:
+        return None
+
+    def remove_metadata(self) -> None:
+        return None
+
     # endregion
     ###################################################################################
     ###################################################################################

@@ -13,6 +13,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Dict, List, Optional
 
 from crytic_compile.compilation_unit import CompilationUnit
+from crytic_compile.contract import Contract
+from crytic_compile.source_unit import SourceUnit
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform.abstract_platform import AbstractPlatform
 from crytic_compile.platform.exceptions import InvalidCompilation
@@ -180,7 +182,12 @@ class Waffle(AbstractPlatform):
         optimized = None
 
         compilation_unit = CompilationUnit(crytic_compile, str(target))
-
+        crytic_compile.compilation_units[compilation_unit.unique_id] = compilation_unit
+        
+        compilation_unit.compiler_version = CompilerVersion(
+            compiler=compiler, version=version, optimized=optimized
+        )
+        
         for contract in target_all["contracts"]:
             target_loaded = target_all["contracts"][contract]
             contract = contract.split(":")
@@ -188,34 +195,27 @@ class Waffle(AbstractPlatform):
                 contract[0], _relative_to_short, crytic_compile, working_dir=target
             )
 
-            contract_name = contract[1]
-            source_unit = compilation_unit.create_source_unit(filename)
+            ast = target_all["sources"][contract[0]]["AST"]
+            source_unit = SourceUnit(compilation_unit, filename, ast)
+            
+            contract_name = contract[1]            
+            abi = target_loaded["abi"]
+            init_bytecode = target_loaded["evm"]["bytecode"]["object"].replace("0x", "")
+            runtime_bytecode = target_loaded["evm"]["deployedBytecode"][
+                "object"
+            ].replace("0x", "")
+            srcmap_init = target_loaded["evm"]["bytecode"][
+                "sourceMap"
+            ]
 
-            source_unit.ast = target_all["sources"][contract[0]]["AST"]
-            compilation_unit.filenames.add(filename)
-            compilation_unit.filename_to_contracts[filename].add(contract_name)
-            source_unit.contracts_names.add(contract_name)
-            source_unit.abis[contract_name] = target_loaded["abi"]
-
+            srcmap_runtime = target_loaded["evm"]["deployedBytecode"][
+                "sourceMap"
+            ]
             userdoc = target_loaded.get("userdoc", {})
             devdoc = target_loaded.get("devdoc", {})
             natspec = Natspec(userdoc, devdoc)
-            source_unit.natspec[contract_name] = natspec
-
-            source_unit.bytecodes_init[contract_name] = target_loaded["evm"]["bytecode"]["object"]
-            source_unit.srcmaps_init[contract_name] = target_loaded["evm"]["bytecode"][
-                "sourceMap"
-            ].split(";")
-            source_unit.bytecodes_runtime[contract_name] = target_loaded["evm"]["deployedBytecode"][
-                "object"
-            ]
-            source_unit.srcmaps_runtime[contract_name] = target_loaded["evm"]["deployedBytecode"][
-                "sourceMap"
-            ].split(";")
-
-        compilation_unit.compiler_version = CompilerVersion(
-            compiler=compiler, version=version, optimized=optimized
-        )
+            contract = Contract(source_unit, contract_name, abi, init_bytecode, runtime_bytecode, srcmap_init, srcmap_runtime, natspec)
+            source_unit.contracts[contract_name] = contract
 
     def clean(self, **_kwargs: str) -> None:
         """Clean compilation artifacts

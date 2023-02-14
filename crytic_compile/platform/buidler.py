@@ -15,6 +15,8 @@ from crytic_compile.platform.types import Type
 from crytic_compile.utils.naming import convert_filename, extract_name
 from crytic_compile.utils.natspec import Natspec
 from crytic_compile.compilation_unit import CompilationUnit
+from crytic_compile.contract import Contract
+from crytic_compile.source_unit import SourceUnit
 from .abstract_platform import AbstractPlatform
 
 # Handle cycle
@@ -97,6 +99,7 @@ class Buidler(AbstractPlatform):
             raise InvalidCompilation(txt)
 
         compilation_unit = CompilationUnit(crytic_compile, str(target_solc_file))
+        crytic_compile.compilation_units[compilation_unit.unique_id] = compilation_unit
 
         (compiler, version_from_config, optimized) = _get_version_from_config(Path(cache_directory))
 
@@ -107,69 +110,66 @@ class Buidler(AbstractPlatform):
         skip_filename = compilation_unit.compiler_version.version in [
             f"0.4.{x}" for x in range(0, 10)
         ]
-
+        
         with open(target_solc_file, encoding="utf8") as file_desc:
             targets_json = json.load(file_desc)
+            
+            if "sources" not in targets_json or "contracts" not in targets_json:
+                LOGGER.error(
+                    "Some error"
+                )
+                raise InvalidCompilation(
+                    f"Incorrect json file generated"
+                )
+            
+            for path, info in targets_json["sources"].items():
+                if path.startswith("ontracts/") and not skip_directory_name_fix:
+                    path = "c" + path
 
-            if "contracts" in targets_json:
-                for original_filename, contracts_info in targets_json["contracts"].items():
+                if skip_filename:
                     filename = convert_filename(
-                        original_filename,
+                        self._target,
                         relative_to_short,
                         crytic_compile,
                         working_dir=buidler_working_dir,
                     )
-                    source_unit = compilation_unit.create_source_unit(filename)
+                else:
+                    filename = convert_filename(
+                        path, relative_to_short, crytic_compile, working_dir=buidler_working_dir
+                    )
+                
+                ast = info["ast"]
+                source_unit = SourceUnit(compilation_unit, filename, ast)
+                compilation_unit.source_units[filename] = source_unit
+            
+            for original_filename, contracts_info in targets_json["contracts"].items():
+                filename = convert_filename(
+                    original_filename,
+                    relative_to_short,
+                    crytic_compile,
+                    working_dir=buidler_working_dir,
+                )
+                source_unit = compilation_unit.source_units[filename]
 
-                    for original_contract_name, info in contracts_info.items():
-                        contract_name = extract_name(original_contract_name)
+                for original_contract_name, info in contracts_info.items():
+                    if (
+                        original_filename.startswith("ontracts/")
+                        and not skip_directory_name_fix
+                    ):
+                        original_filename = "c" + original_filename
+                    
+                    contract_name = extract_name(original_contract_name)
+                    abi = info["abi"]
+                    init_bytecode = info["evm"]["bytecode"]["object"].replace("0x", "")
+                    runtime_bytecode = info["evm"]["deployedBytecode"]["object"].replace("0x", "")
+                    srcmap_init = info["evm"]["bytecode"][ "sourceMap"]
+                    srcmap_runtime = info["evm"]["deployedBytecode"]["sourceMap"]
+                    userdoc = info.get("userdoc", {})
+                    devdoc = info.get("devdoc", {})
+                    natspec = Natspec(userdoc, devdoc)
+                    contract = Contract(source_unit, contract_name, abi, init_bytecode, runtime_bytecode, srcmap_init, srcmap_runtime, natspec)
+                    source_unit.contracts[contract_name] = contract
 
-                        if (
-                            original_filename.startswith("ontracts/")
-                            and not skip_directory_name_fix
-                        ):
-                            original_filename = "c" + original_filename
-
-                        source_unit.contracts_names.add(contract_name)
-                        compilation_unit.filename_to_contracts[filename].add(contract_name)
-
-                        source_unit.abis[contract_name] = info["abi"]
-                        source_unit.bytecodes_init[contract_name] = info["evm"]["bytecode"][
-                            "object"
-                        ]
-                        source_unit.bytecodes_runtime[contract_name] = info["evm"][
-                            "deployedBytecode"
-                        ]["object"]
-                        source_unit.srcmaps_init[contract_name] = info["evm"]["bytecode"][
-                            "sourceMap"
-                        ].split(";")
-                        source_unit.srcmaps_runtime[contract_name] = info["evm"][
-                            "deployedBytecode"
-                        ]["sourceMap"].split(";")
-                        userdoc = info.get("userdoc", {})
-                        devdoc = info.get("devdoc", {})
-                        natspec = Natspec(userdoc, devdoc)
-                        source_unit.natspec[contract_name] = natspec
-
-            if "sources" in targets_json:
-                for path, info in targets_json["sources"].items():
-
-                    if path.startswith("ontracts/") and not skip_directory_name_fix:
-                        path = "c" + path
-
-                    if skip_filename:
-                        path = convert_filename(
-                            self._target,
-                            relative_to_short,
-                            crytic_compile,
-                            working_dir=buidler_working_dir,
-                        )
-                    else:
-                        path = convert_filename(
-                            path, relative_to_short, crytic_compile, working_dir=buidler_working_dir
-                        )
-                    source_unit = compilation_unit.create_source_unit(path)
-                    source_unit.ast = info["ast"]
 
     def clean(self, **kwargs: str) -> None:
         # TODO: call "buldler clean"?

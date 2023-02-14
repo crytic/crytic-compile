@@ -11,6 +11,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING, List
 
 from crytic_compile.compilation_unit import CompilationUnit
+from crytic_compile.contract import Contract
+from crytic_compile.source_unit import SourceUnit
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform.abstract_platform import AbstractPlatform
 from crytic_compile.platform.exceptions import InvalidCompilation
@@ -115,6 +117,7 @@ class Embark(AbstractPlatform):
                 "(npm install -g embark)? Is embark-contract-info installed? (npm install -g embark)."
             )
         compilation_unit = CompilationUnit(crytic_compile, str(self._target))
+        crytic_compile.compilation_units[compilation_unit.unique_id] = compilation_unit
 
         compilation_unit.compiler_version = _get_version(self._target)
 
@@ -124,10 +127,10 @@ class Embark(AbstractPlatform):
                 filename = convert_filename(
                     k, _relative_to_short, crytic_compile, working_dir=self._target
                 )
-                source_unit = compilation_unit.create_source_unit(filename)
-                source_unit.ast = ast
+                source_unit = SourceUnit(compilation_unit, filename, ast)
+                compilation_unit.source_units[filename] = source_unit
 
-            if not "contracts" in targets_loaded:
+            if "sources" not in targets_loaded or "contracts" not in targets_loaded:
                 LOGGER.error(
                     "Incorrect json file generated. Are you using %s >= 1.1.0?", plugin_name
                 )
@@ -136,36 +139,25 @@ class Embark(AbstractPlatform):
                 )
 
             for original_contract_name, info in targets_loaded["contracts"].items():
-                contract_name = extract_name(original_contract_name)
                 filename = convert_filename(
                     extract_filename(original_contract_name),
                     _relative_to_short,
                     crytic_compile,
                     working_dir=self._target,
                 )
-
-                source_unit = compilation_unit.create_source_unit(filename)
-
-                compilation_unit.filename_to_contracts[filename].add(contract_name)
-                source_unit.contracts_names.add(contract_name)
-
-                if "abi" in info:
-                    source_unit.abis[contract_name] = info["abi"]
-                if "bin" in info:
-                    source_unit.bytecodes_init[contract_name] = info["bin"].replace("0x", "")
-                if "bin-runtime" in info:
-                    source_unit.bytecodes_runtime[contract_name] = info["bin-runtime"].replace(
-                        "0x", ""
-                    )
-                if "srcmap" in info:
-                    source_unit.srcmaps_init[contract_name] = info["srcmap"].split(";")
-                if "srcmap-runtime" in info:
-                    source_unit.srcmaps_runtime[contract_name] = info["srcmap-runtime"].split(";")
-
+                source_unit = compilation_unit.source_units[filename]
+                
+                contract_name = extract_name(original_contract_name)
+                abi = info["abi"]
+                init_bytecode = info["bin"].replace("0x", "")
+                runtime_bytecode = info["bin-runtime"].replace("0x", "")
+                srcmap_init = info["srcmap"]
+                srcmap_runtime = info["srcmap-runtime"]
                 userdoc = info.get("userdoc", {})
                 devdoc = info.get("devdoc", {})
                 natspec = Natspec(userdoc, devdoc)
-                source_unit.natspec[contract_name] = natspec
+                contract = Contract(source_unit, contract_name, abi, init_bytecode, runtime_bytecode, srcmap_init, srcmap_runtime, natspec)
+                source_unit.contracts[contract_name] = contract
 
     def clean(self, **_kwargs: str) -> None:
         """Clean compilation artifacts
