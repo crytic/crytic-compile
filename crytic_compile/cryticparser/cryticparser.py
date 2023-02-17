@@ -29,6 +29,13 @@ def init(parser: ArgumentParser) -> None:
     )
 
     group_compile.add_argument(
+        "--compile-libraries",
+        help='Libraries used for linking. Format: --compile-libraries "(name1, 0x00),(name2, 0x02)"',
+        action="store",
+        default=DEFAULTS_FLAG_IN_CONFIG["compile_libraries"],
+    )
+
+    group_compile.add_argument(
         "--compile-remove-metadata",
         help="Remove the metadata from the bytecodes",
         action="store_true",

@@ -13,7 +13,52 @@ from crytic_compile.utils.natspec import Natspec
 if TYPE_CHECKING:
     from crytic_compile.compilation_unit import CompilationUnit
 
-# pylint: disable=too-many-instance-attributes,too-many-public-methods
+
+def get_library_candidate(filename: Filename, contract_name: str) -> List[str]:
+    """
+    Return candidate name for library linking. A candidate is a str that might be found in other bytecodes
+
+    Args:
+        filename: filename of the contract
+        contract_name: contract name
+
+    Returns:
+        The list of candidates
+    """
+
+    # Some platform use only the contract name
+    # Some use fimename:contract_name
+
+    ret: List[str] = []
+
+    name_with_absolute_filename = filename.absolute + ":" + contract_name
+    name_with_used_filename = filename.used + ":" + contract_name
+
+    # Only 36 char were used in the past
+    # See https://docs.soliditylang.org/en/develop/using-the-compiler.html#library-linking
+    names_candidates = [
+        name_with_absolute_filename,
+        name_with_absolute_filename[0:36],
+        name_with_used_filename,
+        name_with_used_filename[0:36],
+    ]
+
+    # Solidity 0.4
+    ret.append("__" + contract_name + "_" * (38 - len(contract_name)))
+
+    for name_candidate in names_candidates:
+        # Solidity 0.4 with filename
+        ret.append("__" + name_candidate + "_" * (38 - len(name_candidate)))
+
+        # Solidity 0.5
+        sha3_result = keccak.new(digest_bits=256)
+        sha3_result.update(name_candidate.encode("utf-8"))
+        ret.append("__$" + sha3_result.hexdigest()[:34] + "$__")
+
+    return ret
+
+
+# pylint: disable=too-many-instance-attributes
 class SourceUnit:
     """SourceUnit class"""
 
@@ -112,7 +157,7 @@ class SourceUnit:
         """
         self._init_bytecodes = bytecodes
 
-    def bytecode_runtime(self, name: str, libraries: Optional[Dict[str, str]] = None) -> str:
+    def bytecode_runtime(self, name: str, libraries: Optional[Dict[str, int]] = None) -> str:
         """Return the runtime bytecode of the contract.
         If library is provided, patch the bytecode
 
@@ -126,13 +171,13 @@ class SourceUnit:
         runtime = self._runtime_bytecodes.get(name, None)
         return self._update_bytecode_with_libraries(runtime, libraries)
 
-    def bytecode_init(self, name: str, libraries: Optional[Dict[str, str]] = None) -> str:
+    def bytecode_init(self, name: str, libraries: Optional[Dict[str, int]] = None) -> str:
         """Return the init bytecode of the contract.
         If library is provided, patch the bytecode
 
         Args:
             name (str): contract name
-            libraries (Optional[Dict[str, str]], optional): lib_name => address. Defaults to None.
+            libraries (Optional[Dict[str, int]], optional): lib_name => address. Defaults to None.
 
         Returns:
             str: init bytecode
@@ -203,16 +248,16 @@ class SourceUnit:
         """
         return self._libraries
 
-    def _convert_libraries_names(self, libraries: Dict[str, str]) -> Dict[str, str]:
+    def _convert_libraries_names(self, libraries: Dict[str, int]) -> Dict[str, int]:
         """Convert the libraries names
         The name in the argument can be the library name, or filename:library_name
         The returned dict contains all the names possible with the different solc versions
 
         Args:
-            libraries (Dict[str, str]): lib_name => address
+            libraries (Dict[str, int]): lib_name => address
 
         Returns:
-            Dict[str, str]: lib_name => address
+            Dict[str, int]: lib_name => address
         """
         new_names = {}
         for (lib, addr) in libraries.items():
@@ -237,27 +282,8 @@ class SourceUnit:
                     if contract_name != lib:
                         continue
 
-                    lib_with_abs_filename = lib_filename.absolute + ":" + lib
-                    lib_with_abs_filename = lib_with_abs_filename[0:36]
-
-                    lib_4 = "__" + lib_with_abs_filename + "_" * (38 - len(lib_with_abs_filename))
-                    new_names[lib_4] = addr
-
-                    lib_with_used_filename = lib_filename.used + ":" + lib
-                    lib_with_used_filename = lib_with_used_filename[0:36]
-
-                    lib_4 = "__" + lib_with_used_filename + "_" * (38 - len(lib_with_used_filename))
-                    new_names[lib_4] = addr
-
-                    sha3_result = keccak.new(digest_bits=256)
-                    sha3_result.update(lib_with_abs_filename.encode("utf-8"))
-                    lib_5 = "__$" + sha3_result.hexdigest()[:34] + "$__"
-                    new_names[lib_5] = addr
-
-                    sha3_result = keccak.new(digest_bits=256)
-                    sha3_result.update(lib_with_used_filename.encode("utf-8"))
-                    lib_5 = "__$" + sha3_result.hexdigest()[:34] + "$__"
-                    new_names[lib_5] = addr
+                    for candidate in get_library_candidate(lib_filename, lib):
+                        new_names[candidate] = addr
 
         return new_names
 
@@ -283,57 +309,9 @@ class SourceUnit:
                 if name == lib_name:
                     return name, name
 
-                # Some platform use only the contract name
-                # Some use fimename:contract_name
-                name_with_absolute_filename = filename.absolute + ":" + name
-                name_with_absolute_filename = name_with_absolute_filename[0:36]
-
-                name_with_used_filename = filename.used + ":" + name
-                name_with_used_filename = name_with_used_filename[0:36]
-
-                # Solidity 0.4
-                solidity_0_4 = "__" + name + "_" * (38 - len(name))
-                if solidity_0_4 == lib_name:
-                    return name, solidity_0_4
-
-                # Solidity 0.4 with filename
-                solidity_0_4_filename = (
-                    "__"
-                    + name_with_absolute_filename
-                    + "_" * (38 - len(name_with_absolute_filename))
-                )
-                if solidity_0_4_filename == lib_name:
-                    return name, solidity_0_4_filename
-
-                # Solidity 0.4 with filename
-                solidity_0_4_filename = (
-                    "__" + name_with_used_filename + "_" * (38 - len(name_with_used_filename))
-                )
-                if solidity_0_4_filename == lib_name:
-                    return name, solidity_0_4_filename
-
-                # Solidity 0.5
-                sha3_result = keccak.new(digest_bits=256)
-                sha3_result.update(name.encode("utf-8"))
-                v5_name = "__$" + sha3_result.hexdigest()[:34] + "$__"
-
-                if v5_name == lib_name:
-                    return name, v5_name
-
-                # Solidity 0.5 with filename
-                sha3_result = keccak.new(digest_bits=256)
-                sha3_result.update(name_with_absolute_filename.encode("utf-8"))
-                v5_name = "__$" + sha3_result.hexdigest()[:34] + "$__"
-
-                if v5_name == lib_name:
-                    return name, v5_name
-
-                sha3_result = keccak.new(digest_bits=256)
-                sha3_result.update(name_with_used_filename.encode("utf-8"))
-                v5_name = "__$" + sha3_result.hexdigest()[:34] + "$__"
-
-                if v5_name == lib_name:
-                    return name, v5_name
+                for candidate in get_library_candidate(filename, name):
+                    if candidate == lib_name:
+                        return name, candidate
 
         # handle specific case of collision for Solidity <0.4
         # We can only detect that the second contract is meant to be the library
@@ -385,13 +363,13 @@ class SourceUnit:
         return self._libraries[name]
 
     def _update_bytecode_with_libraries(
-        self, bytecode: str, libraries: Union[None, Dict[str, str]]
+        self, bytecode: str, libraries: Union[None, Dict[str, int]]
     ) -> str:
         """Update the bytecode with the libraries address
 
         Args:
             bytecode (str): bytecode to patch
-            libraries (Union[None, Dict[str, str]]): pattern => address
+            libraries (Union[None, Dict[str, int]]): pattern => address
 
         Returns:
             str: Patched bytecode
