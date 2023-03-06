@@ -426,9 +426,9 @@ def _build_options(compiler_version: CompilerVersion, force_legacy_json: bool) -
         str: options to be passed to the CI
     """
     old_04_versions = [f"0.4.{x}" for x in range(0, 12)]
-    # compact-format was removed from solc 0.8.10
+    # compact-format was introduced in 0.4.12 and made the default in solc 0.8.10
     explicit_compact_format = (
-        [f"0.4.{x}" for x in range(13, 27)]
+        [f"0.4.{x}" for x in range(12, 27)]
         + [f"0.5.{x}" for x in range(0, 18)]
         + [f"0.6.{x}" for x in range(0, 13)]
         + [f"0.7.{x}" for x in range(0, 7)]
