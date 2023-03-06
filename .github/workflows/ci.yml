@@ -50,7 +50,7 @@ jobs:
         pip install .
     - name: Set up nix
       if: matrix.type == 'dapp'
-      uses: cachix/install-nix-action@v18
+      uses: cachix/install-nix-action@v20
     - name: Set up cachix
       if: matrix.type == 'dapp'
       uses: cachix/cachix-action@v12
