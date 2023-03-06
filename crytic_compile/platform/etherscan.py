@@ -39,6 +39,7 @@ SUPPORTED_NETWORK = {
     "kovan:": ("-kovan.etherscan.io", "kovan.etherscan.io"),
     "rinkeby:": ("-rinkeby.etherscan.io", "rinkeby.etherscan.io"),
     "goerli:": ("-goerli.etherscan.io", "goerli.etherscan.io"),
+    "sepolia:": ("-sepolia.etherscan.io", "sepolia.etherscan.io"),
     "tobalaba:": ("-tobalaba.etherscan.io", "tobalaba.etherscan.io"),
     "bsc:": (".bscscan.com", "bscscan.com"),
     "testnet.bsc:": ("-testnet.bscscan.com", "testnet.bscscan.com"),
