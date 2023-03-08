@@ -37,7 +37,6 @@ SUPPORTED_NETWORK = {
     "optim:": ("-optimistic.etherscan.io", "optimistic.etherscan.io"),
     "ropsten:": ("-ropsten.etherscan.io", "ropsten.etherscan.io"),
     "kovan:": ("-kovan.etherscan.io", "kovan.etherscan.io"),
-    "rinkeby:": ("-rinkeby.etherscan.io", "rinkeby.etherscan.io"),
     "goerli:": ("-goerli.etherscan.io", "goerli.etherscan.io"),
     "sepolia:": ("-sepolia.etherscan.io", "sepolia.etherscan.io"),
     "tobalaba:": ("-tobalaba.etherscan.io", "tobalaba.etherscan.io"),
