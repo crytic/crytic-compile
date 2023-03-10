@@ -53,6 +53,9 @@ def export_to_truffle(crytic_compile: "CryticCompile", **kwargs: str) -> List[st
     compilation_unit = compilation_units[0]
 
     # Loop for each contract filename.
+
+    libraries = compilation_unit.crytic_compile.libraries
+
     results: List[Dict] = []
     for source_unit in compilation_unit.source_units.values():
         for contract_name in source_unit.contracts_names:
@@ -60,8 +63,8 @@ def export_to_truffle(crytic_compile: "CryticCompile", **kwargs: str) -> List[st
             output = {
                 "contractName": contract_name,
                 "abi": source_unit.abi(contract_name),
-                "bytecode": "0x" + source_unit.bytecode_init(contract_name),
-                "deployedBytecode": "0x" + source_unit.bytecode_runtime(contract_name),
+                "bytecode": "0x" + source_unit.bytecode_init(contract_name, libraries),
+                "deployedBytecode": "0x" + source_unit.bytecode_runtime(contract_name, libraries),
                 "ast": source_unit.ast,
                 "userdoc": source_unit.natspec[contract_name].userdoc.export(),
                 "devdoc": source_unit.natspec[contract_name].devdoc.export(),

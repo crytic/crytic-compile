@@ -99,6 +99,14 @@ see https://github.com/crytic/crytic-compile/wiki""",
     )
 
     parser.add_argument(
+        "--print-libraries",
+        help="Print all the libraries info",
+        action="store_true",
+        dest="print_libraries",
+        default=False,
+    )
+
+    parser.add_argument(
         "--version",
         help="displays the current version",
         version=require("crytic-compile")[0].version,
@@ -185,6 +193,26 @@ def _print_filenames(compilation: "CryticCompile") -> None:
             print(f"\t\tUsed: {filename.used}")
 
 
+def _print_libraries(compilation: "CryticCompile") -> None:
+    for compilation_id, compilation_unit in compilation.compilation_units.items():
+        print(
+            f"Compilation unit: {compilation_id} solc {compilation_unit.compiler_version.version})"
+        )
+
+        libraries_to_update = compilation.libraries
+
+        print(libraries_to_update)
+        for source_unit in compilation_unit.source_units.values():
+            for contract in source_unit.contracts_names_without_libraries:
+                libs = source_unit.libraries_names(contract)
+                if libs:
+                    print(f"## {contract}")
+                    print(f"\tuses: {libs}")
+                    print(
+                        f"\truntime bytecode: {source_unit.bytecode_runtime(contract, libraries_to_update)}"
+                    )
+
+
 def main() -> None:
     """Main function run from the cli"""
     args = parse_args()
@@ -198,6 +226,8 @@ def main() -> None:
             # Print the filename of each contract (no duplicates).
             if args.print_filename:
                 _print_filenames(compilation)
+            if args.print_libraries:
+                _print_libraries(compilation)
             if args.export_format:
                 compilation.export(**vars(args))
 
