@@ -608,7 +608,7 @@ class CryticCompile:
 ###################################################################################
 ###################################################################################
 
-# TODO: refactor me to be integarted within CryticCompile.__init__
+# TODO: refactor me to be integrated within CryticCompile.__init__
 def compile_all(target: str, **kwargs: str) -> List[CryticCompile]:
     """Given a direct or glob pattern target, compiles all underlying sources and returns
     all the relevant instances of CryticCompile.

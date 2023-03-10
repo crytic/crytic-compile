@@ -1,5 +1,9 @@
 """
 Module handling the compilation unit
+Each compilation unit represents a call to the compiler
+Each compilation unit has one or more source units associated with it
+At least one compilation unit exists for each version of solc used
+    Maybe more dependending on the framework used (hardhat/foundry/etc)
 """
 import uuid
 from collections import defaultdict
@@ -170,7 +174,7 @@ class CompilationUnit:
             str: Absolute filename
         """
         # Note: we could memoize this function if the third party end up using it heavily
-        # If used_filename is already an absolute pathn no need to lookup
+        # If used_filename is already an absolute path no need to lookup
         if used_filename in self._crytic_compile.filenames:
             return used_filename
         d_file = {f.used: f.absolute for f in self._filenames}
