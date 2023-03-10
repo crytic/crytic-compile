@@ -148,7 +148,6 @@ def convert_filename(
 
     filename = _verify_filename_existence(filename, cwd)
 
-
     absolute = Path(os.path.abspath(filename))
     relative = Path(os.path.relpath(filename, Path.cwd()))
 
