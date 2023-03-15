@@ -7,6 +7,7 @@ import inspect
 import json
 import logging
 import os
+import re
 import subprocess
 import tempfile
 from collections import defaultdict
@@ -58,6 +59,24 @@ def is_supported(target: str) -> bool:
     return any(platform.is_supported(target) for platform in platforms) or target.endswith(".zip")
 
 
+def _extract_libraries(libraries_str: Optional[str]) -> Optional[Dict[str, int]]:
+
+    if not libraries_str:
+        return None
+
+    pattern = r"\((?P<name>\w+),\s*(?P<value1>0x[0-9a-fA-F]{2})\),?"
+    matches = re.findall(pattern, libraries_str)
+
+    if not matches:
+        logging.info(f"Libraries {libraries_str} could not be parsed")
+        return None
+
+    ret: Dict[str, int] = {}
+    for key, value in matches:
+        ret[key] = int(value, 16) if value.startswith("0x") else int(value)
+    return ret
+
+
 # pylint: disable=too-many-instance-attributes
 class CryticCompile:
     """
@@ -106,6 +125,8 @@ class CryticCompile:
         self._compilation_units: Dict[str, CompilationUnit] = {}
 
         self._bytecode_only = False
+
+        self.libraries: Optional[Dict[str, int]] = _extract_libraries(kwargs.get("compile_libraries", None))  # type: ignore
 
         self._compile(**kwargs)
 
@@ -587,7 +608,7 @@ class CryticCompile:
 ###################################################################################
 ###################################################################################
 
-# TODO: refactor me to be integarted within CryticCompile.__init__
+# TODO: refactor me to be integrated within CryticCompile.__init__
 def compile_all(target: str, **kwargs: str) -> List[CryticCompile]:
     """Given a direct or glob pattern target, compiles all underlying sources and returns
     all the relevant instances of CryticCompile.

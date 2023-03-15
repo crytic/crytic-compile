@@ -148,10 +148,7 @@ def convert_filename(
 
     filename = _verify_filename_existence(filename, cwd)
 
-    if not filename.is_absolute():
-        filename = cwd.joinpath(filename)
-
-    absolute = filename
+    absolute = Path(os.path.abspath(filename))
     relative = Path(os.path.relpath(filename, Path.cwd()))
 
     # Build the short path

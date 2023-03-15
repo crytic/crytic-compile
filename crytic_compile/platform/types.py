@@ -56,7 +56,7 @@ class Type(IntEnum):
         if self == Type.ARCHIVE:
             return "Archive"
         if self == Type.VYPER:
-            return "Archive"
+            return "Vyper"
         if self == Type.WAFFLE:
             return "Waffle"
         if self == Type.BUILDER:

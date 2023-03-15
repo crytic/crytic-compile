@@ -221,8 +221,10 @@ def generate_standard_export(crytic_compile: "CryticCompile") -> Dict:
     """
 
     compilation_units = {}
+    libraries_to_update = crytic_compile.libraries
     for key, compilation_unit in crytic_compile.compilation_units.items():
         source_unit_dict: Dict[str, Dict[str, Dict[str, Any]]] = {}
+
         for filename, source_unit in compilation_unit.source_units.items():
             source_unit_dict[filename.relative] = defaultdict(dict)
             source_unit_dict[filename.relative]["ast"] = source_unit.ast
@@ -230,8 +232,8 @@ def generate_standard_export(crytic_compile: "CryticCompile") -> Dict:
                 libraries = source_unit.libraries_names_and_patterns(contract_name)
                 source_unit_dict[filename.relative]["contracts"][contract_name] = {
                     "abi": source_unit.abi(contract_name),
-                    "bin": source_unit.bytecode_init(contract_name),
-                    "bin-runtime": source_unit.bytecode_runtime(contract_name),
+                    "bin": source_unit.bytecode_init(contract_name, libraries_to_update),
+                    "bin-runtime": source_unit.bytecode_runtime(contract_name, libraries_to_update),
                     "srcmap": ";".join(source_unit.srcmap_init(contract_name)),
                     "srcmap-runtime": ";".join(source_unit.srcmap_runtime(contract_name)),
                     "filenames": _convert_filename_to_dict(filename),
