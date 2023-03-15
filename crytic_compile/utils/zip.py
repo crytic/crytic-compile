@@ -32,7 +32,7 @@ def load_from_zip(target: str) -> List["CryticCompile"]:
     """Load a file from a zip
 
     Args:
-        target (str): path to the
+        target (str): path to the file
 
     Returns:
         List[CryticCompile]: List of loaded projects
