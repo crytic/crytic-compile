@@ -2,6 +2,7 @@
 """
 import logging
 from typing import Optional
+from solc_select.solc_select import installed_versions, install_artifacts
 
 LOGGER = logging.getLogger("CryticCompile")
 
@@ -40,15 +41,7 @@ class CompilerVersion:
         Returns:
 
         """
-
-        # pylint: disable=import-outside-toplevel
-        try:
-            from solc_select import solc_select
-
-            if self.version not in solc_select.installed_versions():
-                solc_select.install_artifacts([self.version])
-
-        except ImportError:
-            LOGGER.info(
-                'solc-select is not installed.\nRun "pip install solc-select" to enable automatic switch of solc versions'
-            )
+        if self.version not in installed_versions():
+            # TODO: check that the solc version was installed.
+            # Blocked by https://github.com/crytic/solc-select/issues/143
+            install_artifacts([self.version])
