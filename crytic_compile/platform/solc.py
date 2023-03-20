@@ -499,17 +499,16 @@ def _run_solc(
         raise InvalidCompilation("Incorrect file format")
 
     env_version = get_version(solc, env)
+    pragma_matches = _guess_solc(filename, working_dir)
+    if len(pragma_matches):
+        guessed_version = pragma_matches[0]
+        if version.parse(env_version) != version.parse(guessed_version):
+            solc_select.switch_global_version(guessed_version, always_install=True)
+            env_version = guessed_version
 
-    guessed_version = _guess_solc(filename, working_dir)[0]
-
-    if version.parse(env_version) != version.parse(guessed_version):
-
-        solc_select.switch_global_version(guessed_version, always_install=True)
-        env_version = guessed_version
-
-    compilation_unit.compiler_version = CompilerVersion(
-        compiler="solc", version=env_version, optimized=is_optimized(solc_arguments)
-    )
+        compilation_unit.compiler_version = CompilerVersion(
+            compiler="solc", version=env_version, optimized=is_optimized(solc_arguments)
+        )
 
     compiler_version = compilation_unit.compiler_version
     assert compiler_version
