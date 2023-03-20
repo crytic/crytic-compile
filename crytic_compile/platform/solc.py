@@ -10,6 +10,9 @@ import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, List, Optional, Union, Any
 
+from packaging import version
+from solc_select import solc_select
+
 from crytic_compile.compilation_unit import CompilationUnit
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform.abstract_platform import AbstractPlatform
@@ -479,16 +482,33 @@ def _run_solc(
     Returns:
         Dict: Json compilation artifacts
     """
+
     if not os.path.isfile(filename) and (
         not working_dir or not os.path.isfile(os.path.join(str(working_dir), filename))
     ):
-        raise InvalidCompilation(f"{filename} does not exist (are you in the correct directory?)")
+        if os.path.isdir(filename):
+            raise InvalidCompilation(
+                f"{filename} is a directory. Expected a Solidity file when not using a compilation framework."
+            )
+        else:
+            raise InvalidCompilation(
+                f"{filename} does not exist. Are you in the correct working directory?"
+            )
 
     if not filename.endswith(".sol"):
         raise InvalidCompilation("Incorrect file format")
 
+    env_version = get_version(solc, env)
+
+    guessed_version = _guess_solc(filename, working_dir)[0]
+
+    if version.parse(env_version) != version.parse(guessed_version):
+
+        solc_select.switch_global_version(guessed_version, always_install=True)
+        env_version = guessed_version
+
     compilation_unit.compiler_version = CompilerVersion(
-        compiler="solc", version=get_version(solc, env), optimized=is_optimized(solc_arguments)
+        compiler="solc", version=env_version, optimized=is_optimized(solc_arguments)
     )
 
     compiler_version = compilation_unit.compiler_version
