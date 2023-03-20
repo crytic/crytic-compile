@@ -506,9 +506,9 @@ def _run_solc(
             solc_select.switch_global_version(guessed_version, always_install=True)
             env_version = guessed_version
 
-        compilation_unit.compiler_version = CompilerVersion(
-            compiler="solc", version=env_version, optimized=is_optimized(solc_arguments)
-        )
+    compilation_unit.compiler_version = CompilerVersion(
+        compiler="solc", version=env_version, optimized=is_optimized(solc_arguments)
+    )
 
     compiler_version = compilation_unit.compiler_version
     assert compiler_version
