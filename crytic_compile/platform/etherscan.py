@@ -49,6 +49,7 @@ SUPPORTED_NETWORK = {
     "avax:": (".snowtrace.io", "snowtrace.io"),
     "testnet.avax:": ("-testnet.snowtrace.io", "testnet.snowtrace.io"),
     "ftm:": (".ftmscan.com", "ftmscan.com"),
+    "goerli.base:": ("-goerli.basescan.org", "goerli.basescan.org"),
 }
 
 
@@ -261,7 +262,7 @@ class Etherscan(AbstractPlatform):
         contract_name: str = ""
 
         if not only_bytecode:
-            if "polygon" in etherscan_url:
+            if "polygon" in etherscan_url or "basescan" in etherscan_url:
                 # build object with headers, then send request
                 new_etherscan_url = urllib.request.Request(
                     etherscan_url, headers={"User-Agent": "Mozilla/5.0"}
