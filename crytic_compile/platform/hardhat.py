@@ -132,7 +132,10 @@ def hardhat_like_parsing(
                         )
 
                     source_unit = compilation_unit.create_source_unit(path)
-                    source_unit.ast = info["ast"]
+                    try:
+                        source_unit.ast = info["ast"]
+                    except:
+                        source_unit.ast = info["legacyAST"]
 
 
 class Hardhat(AbstractPlatform):
