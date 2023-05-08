@@ -169,6 +169,11 @@ def _handle_multiple_files(
         filtered_paths.append(path_filename.as_posix())
         path_filename_disk = Path(directory, path_filename)
 
+        allowed_path = os.path.abspath(directory)
+        if os.path.commonpath((allowed_path, os.path.abspath(path_filename_disk))) != allowed_path:
+            raise IOError(
+                f"Path '{path_filename_disk}' is outside of the allowed directory: {allowed_path}"
+            )
         if not os.path.exists(path_filename_disk.parent):
             os.makedirs(path_filename_disk.parent)
         with open(path_filename_disk, "w", encoding="utf8") as file_desc:
