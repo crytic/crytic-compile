@@ -136,6 +136,9 @@ def _handle_multiple_files(
 
     Returns:
         Tuple[List[str], str]: filesnames, directory, where target_filename is the main file
+
+    Raises:
+        IOError: if the path is outside of the allowed directory
     """
     if prefix:
         directory = os.path.join(export_dir, f"{addr}{prefix}-{contract_name}")
