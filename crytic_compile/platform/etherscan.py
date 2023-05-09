@@ -277,8 +277,9 @@ class Etherscan(AbstractPlatform):
 
             if (
                 "result" in info
-                and info["result"]
-                == "Max rate limit reached, please use API Key for higher rate limit"
+                and "rate limit reached" in info["result"]
+                and "message" in info
+                and info["message"] == "NOTOK"
             ):
                 LOGGER.error("Etherscan API rate limit exceeded")
                 raise InvalidCompilation("Etherscan API rate limit exceeded")
