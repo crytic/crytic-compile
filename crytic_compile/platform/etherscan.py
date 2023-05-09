@@ -275,7 +275,11 @@ class Etherscan(AbstractPlatform):
 
             info = json.loads(html)
 
-            if "result" in info and info["result"] == "Max rate limit reached, please use API Key for higher rate limit":
+            if (
+                "result" in info
+                and info["result"]
+                == "Max rate limit reached, please use API Key for higher rate limit"
+            ):
                 LOGGER.error("Etherscan API rate limit exceeded")
                 raise InvalidCompilation("Etherscan API rate limit exceeded")
 
