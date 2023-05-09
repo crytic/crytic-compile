@@ -486,10 +486,10 @@ def _run_solc(
             raise InvalidCompilation(
                 f"{filename} is a directory. Expected a Solidity file when not using a compilation framework."
             )
-        else:
-            raise InvalidCompilation(
-                f"{filename} does not exist. Are you in the correct working directory?"
-            )
+
+        raise InvalidCompilation(
+            f"{filename} does not exist. Are you in the correct working directory?"
+        )
 
     if not filename.endswith(".sol"):
         raise InvalidCompilation(f"{filename} is not the expected format '.sol'")
