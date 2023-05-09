@@ -60,6 +60,9 @@ jobs:
       uses: cachix/cachix-action@v12
       with:
         name: dapp
+    - name: Install Foundry
+      if: matrix.type == 'foundry'
+      uses: foundry-rs/foundry-toolchain@v1
     - name: Run Tests
       env:
         TEST_TYPE: ${{ matrix.type }}
