@@ -492,7 +492,7 @@ def _run_solc(
             )
 
     if not filename.endswith(".sol"):
-        raise InvalidCompilation(f"Incorrect file format")
+        raise InvalidCompilation(f"{filename} is not the expected format '.sol'")
 
     compilation_unit.compiler_version = CompilerVersion(
         compiler="solc", version=get_version(solc, env), optimized=is_optimized(solc_arguments)
