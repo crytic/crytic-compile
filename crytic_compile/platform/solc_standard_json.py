@@ -142,6 +142,10 @@ def run_solc_standard_json(
         env["SOLC_VERSION"] = compiler_version.version
 
     stderr = ""
+    LOGGER.info(
+        "'%s' running",
+        " ".join(cmd),
+    )
     try:
 
         with subprocess.Popen(
