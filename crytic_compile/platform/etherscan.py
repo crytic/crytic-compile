@@ -79,7 +79,7 @@ def _handle_bytecode(crytic_compile: "CryticCompile", target: str, result_b: byt
 
     source_unit = compilation_unit.create_source_unit(contract_filename)
 
-    source_unit.contracts_names.add(contract_name)
+    source_unit.add_contract_name(contract_name)
     compilation_unit.filename_to_contracts[contract_filename].add(contract_name)
     source_unit.abis[contract_name] = {}
     source_unit.bytecodes_init[contract_name] = bytecode

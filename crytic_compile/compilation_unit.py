@@ -7,7 +7,7 @@ At least one compilation unit exists for each version of solc used
 """
 import uuid
 from collections import defaultdict
-from typing import TYPE_CHECKING, Dict, Set, Optional
+from typing import TYPE_CHECKING, Dict, List, Set, Optional
 
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.source_unit import SourceUnit
@@ -36,7 +36,7 @@ class CompilationUnit:
         self._source_units: Dict[Filename, SourceUnit] = {}
 
         # set containing all the filenames of this compilation unit
-        self._filenames: Set[Filename] = set()
+        self._filenames: List[Filename] = []
 
         # mapping from absolute/relative/used to filename
         self._filenames_lookup: Optional[Dict[str, Filename]] = None
@@ -114,6 +114,8 @@ class CompilationUnit:
         Create the source unit associated with the filename
         Add the relevant info in the compilation unit/crytic compile
         If the source unit already exist, return it
+        Also appends filename to the end of filenames, if not already present
+        So this function should be called in the order you want filenames to have
 
         Args:
             filename (Filename): filename of the source unit
@@ -123,8 +125,9 @@ class CompilationUnit:
         """
         if not filename in self._source_units:
             source_unit = SourceUnit(self, filename)  # type: ignore
-            self.filenames.add(filename)
             self._source_units[filename] = source_unit
+            if filename not in self.filenames:
+                self.filenames.append(filename)
         return self._source_units[filename]
 
     # endregion
@@ -135,20 +138,20 @@ class CompilationUnit:
     ###################################################################################
 
     @property
-    def filenames(self) -> Set[Filename]:
+    def filenames(self) -> List[Filename]:
         """Return the filenames used by the compilation unit
 
         Returns:
-            Set[Filename]: Filenames used by the compilation units
+            list[Filename]: Filenames used by the compilation units
         """
         return self._filenames
 
     @filenames.setter
-    def filenames(self, all_filenames: Set[Filename]) -> None:
+    def filenames(self, all_filenames: List[Filename]) -> None:
         """Set the filenames
 
         Args:
-            all_filenames (Set[Filename]): new filenames
+            all_filenames (List[Filename]): new filenames
         """
         self._filenames = all_filenames
 
