@@ -2,6 +2,9 @@
 
 DIR=$(mktemp -d)
 
+solc-select install 0.5.7
+solc-select use 0.5.7
+
 cp tests/contract.sol "$DIR"
 cd "$DIR" || exit 255
 crytic-compile contract.sol --compile-remove-metadata --export-format truffle
