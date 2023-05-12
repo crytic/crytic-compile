@@ -517,15 +517,21 @@ def _run_solc(
     if not compiler_version.version in [f"0.4.{x}" for x in range(0, 11)]:
         # Add . as default allowed path
         if "--allow-paths" not in cmd:
-            relative_filepath = filename
+            file_dir_start = os.path.normpath(os.path.dirname(filename))
+            file_dir = os.path.abspath(file_dir_start)
+            if file_dir.find(",") != -1:
+                try:
+                    file_dir = os.path.relpath(file_dir_start)
+                except ValueError:
+                    pass
 
-            if not working_dir:
-                working_dir = os.getcwd()
+            if file_dir.find(",") == -1:
+                cmd += ["--allow-paths", ".," + file_dir]
+            else:
+                LOGGER.warning(
+                    "Solc filepath contains a comma; omitting the --allow-paths argument. This may result in failed imports.\n"
+                )
 
-            if relative_filepath.startswith(str(working_dir)):
-                relative_filepath = relative_filepath[len(str(working_dir)) + 1 :]
-
-            cmd += ["--allow-paths", ".", relative_filepath]
     try:
         # pylint: disable=consider-using-with
         if env:
