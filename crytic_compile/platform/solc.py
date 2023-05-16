@@ -371,6 +371,10 @@ def get_version(solc: str, env: Optional[Dict[str, str]]) -> str:
     """
 
     cmd = [solc, "--version"]
+    LOGGER.info(
+        "'%s' running",
+        " ".join(cmd),
+    )
     try:
         with subprocess.Popen(
             cmd,
@@ -467,7 +471,7 @@ def _run_solc(
         force_legacy_json (bool): Force to use the legacy json format. Defaults to False.
 
     Raises:
-        InvalidCompilation: If solc faile to run
+        InvalidCompilation: If solc failed to run or file is not a solidity file
 
     Returns:
         Dict: Json compilation artifacts
@@ -475,10 +479,17 @@ def _run_solc(
     if not os.path.isfile(filename) and (
         not working_dir or not os.path.isfile(os.path.join(str(working_dir), filename))
     ):
-        raise InvalidCompilation(f"{filename} does not exist (are you in the correct directory?)")
+        if os.path.isdir(filename):
+            raise InvalidCompilation(
+                f"{filename} is a directory. Expected a Solidity file when not using a compilation framework."
+            )
+
+        raise InvalidCompilation(
+            f"{filename} does not exist. Are you in the correct working directory?"
+        )
 
     if not filename.endswith(".sol"):
-        raise InvalidCompilation("Incorrect file format")
+        raise InvalidCompilation(f"{filename} is not the expected format '.sol'")
 
     compilation_unit.compiler_version = CompilerVersion(
         compiler="solc", version=get_version(solc, env), optimized=is_optimized(solc_arguments)
@@ -520,6 +531,10 @@ def _run_solc(
 
             cmd += ["--allow-paths", ".", relative_filepath]
     try:
+        LOGGER.info(
+            "'%s' running",
+            " ".join(cmd),
+        )
         # pylint: disable=consider-using-with
         if env:
             process = subprocess.Popen(

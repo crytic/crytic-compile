@@ -566,7 +566,10 @@ class CryticCompile:
             custom_build (str): Command to run
         """
         cmd = custom_build.split(" ")
-
+        LOGGER.info(
+            "'%s' running",
+            " ".join(cmd),
+        )
         with subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
             stdout_bytes, stderr_bytes = process.communicate()
             stdout, stderr = (

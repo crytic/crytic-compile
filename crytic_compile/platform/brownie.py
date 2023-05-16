@@ -55,6 +55,10 @@ class Brownie(AbstractPlatform):
 
         if not brownie_ignore_compile:
             cmd = base_cmd + ["compile"]
+            LOGGER.info(
+                "'%s' running",
+                " ".join(cmd),
+            )
             try:
                 with subprocess.Popen(
                     cmd,
