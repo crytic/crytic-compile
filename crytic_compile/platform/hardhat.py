@@ -300,7 +300,7 @@ class Hardhat(AbstractPlatform):
         if args.get("hardhat_working_dir", None):
             override_paths["root"] = Path(target_path, args["hardhat_working_dir"])
 
-        print_paths = "console.log(JSON.stringify(config.paths))"
+        print_paths = "console.log(JSON.stringify(config.paths));process.exit()"
 
         try:
             config_str = self._run_hardhat_console(base_cmd, print_paths)

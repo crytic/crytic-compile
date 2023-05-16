@@ -49,6 +49,7 @@ SUPPORTED_NETWORK = {
     "avax:": (".snowtrace.io", "snowtrace.io"),
     "testnet.avax:": ("-testnet.snowtrace.io", "testnet.snowtrace.io"),
     "ftm:": (".ftmscan.com", "ftmscan.com"),
+    "goerli.base:": ("-goerli.basescan.org", "goerli.basescan.org"),
 }
 
 
@@ -136,6 +137,9 @@ def _handle_multiple_files(
 
     Returns:
         Tuple[List[str], str]: filesnames, directory, where target_filename is the main file
+
+    Raises:
+        IOError: if the path is outside of the allowed directory
     """
     if prefix:
         directory = os.path.join(export_dir, f"{addr}{prefix}-{contract_name}")
@@ -152,6 +156,10 @@ def _handle_multiple_files(
     filtered_paths: List[str] = []
     for filename, source_code in source_codes.items():
         path_filename = PurePosixPath(filename)
+        # Only keep solidity files
+        if path_filename.suffix not in [".sol", ".vy"]:
+            continue
+
         # https://etherscan.io/address/0x19bb64b80cbf61e61965b0e5c2560cc7364c6546#code has an import of erc721a/contracts/ERC721A.sol
         # if the full path is lost then won't compile
         if "contracts" == path_filename.parts[0] and not filename.startswith("@"):
@@ -169,6 +177,11 @@ def _handle_multiple_files(
         filtered_paths.append(path_filename.as_posix())
         path_filename_disk = Path(directory, path_filename)
 
+        allowed_path = os.path.abspath(directory)
+        if os.path.commonpath((allowed_path, os.path.abspath(path_filename_disk))) != allowed_path:
+            raise IOError(
+                f"Path '{path_filename_disk}' is outside of the allowed directory: {allowed_path}"
+            )
         if not os.path.exists(path_filename_disk.parent):
             os.makedirs(path_filename_disk.parent)
         with open(path_filename_disk, "w", encoding="utf8") as file_desc:
@@ -261,7 +274,7 @@ class Etherscan(AbstractPlatform):
         contract_name: str = ""
 
         if not only_bytecode:
-            if "polygon" in etherscan_url:
+            if "polygon" in etherscan_url or "basescan" in etherscan_url:
                 # build object with headers, then send request
                 new_etherscan_url = urllib.request.Request(
                     etherscan_url, headers={"User-Agent": "Mozilla/5.0"}
