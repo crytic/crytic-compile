@@ -378,6 +378,10 @@ def get_version(solc: str, env: Optional[Dict[str, str]]) -> str:
     """
 
     cmd = [solc, "--version"]
+    LOGGER.info(
+        "'%s' running",
+        " ".join(cmd),
+    )
     try:
         with subprocess.Popen(
             cmd,
@@ -527,6 +531,10 @@ def _run_solc(
 
             cmd += ["--allow-paths", ".", relative_filepath]
     try:
+        LOGGER.info(
+            "'%s' running",
+            " ".join(cmd),
+        )
         # pylint: disable=consider-using-with
         if env:
             process = subprocess.Popen(

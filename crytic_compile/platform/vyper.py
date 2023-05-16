@@ -2,6 +2,7 @@
 Vyper platform
 """
 import json
+import logging
 import os
 import shutil
 import subprocess
@@ -20,6 +21,8 @@ from crytic_compile.utils.natspec import Natspec
 
 if TYPE_CHECKING:
     from crytic_compile import CryticCompile
+
+LOGGER = logging.getLogger("CryticCompile")
 
 
 class Vyper(AbstractPlatform):
@@ -150,6 +153,10 @@ def _run_vyper(
 
     additional_kwargs: Dict = {"cwd": working_dir} if working_dir else {}
     stderr = ""
+    LOGGER.info(
+        "'%s' running",
+        " ".join(cmd),
+    )
     try:
         with subprocess.Popen(
             cmd,

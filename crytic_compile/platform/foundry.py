@@ -1,5 +1,5 @@
 """
-Truffle platform
+Foundry platform
 """
 import logging
 import os
