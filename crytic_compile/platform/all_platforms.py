@@ -8,7 +8,22 @@ from .buidler import Buidler
 from .dapp import Dapp
 from .embark import Embark
 from .etherlime import Etherlime
-from .etherscan import Etherscan
+from .etherscan import (
+    Etherscan,
+    Kovan,
+    Ropsten,
+    Rinkeby,
+    Goerli,
+    Arbitrum,
+    ArbitrumTestnet,
+    Avalanche,
+    AvalancheTestnet,
+    Binance,
+    BinanceTestnet,
+    Fantom,
+    Tobalaba,
+    Polygon,
+)
 from .hardhat import Hardhat
 from .solc import Solc
 from .solc_standard_json import SolcStandardJson
