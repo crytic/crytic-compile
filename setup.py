@@ -16,12 +16,18 @@ setup(
     python_requires=">=3.8",
     install_requires=["pycryptodome>=3.4.6", "cbor2", "solc-select>=v1.0.2"],
     extras_require={
-        "dev": [
+        "lint": [
             "black==22.3.0",
             "pylint==2.13.4",
             "mypy==0.942",
             "darglint==1.8.0",
-        ]
+        ],
+        "doc": [
+            "pdoc",
+        ],
+        "dev": [
+            "crytic-compile[lint,doc]",
+        ],
     },
     license="AGPL-3.0",
     long_description=long_description,
