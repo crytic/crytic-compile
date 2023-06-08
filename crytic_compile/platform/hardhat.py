@@ -45,12 +45,18 @@ def hardhat_like_parsing(
         InvalidCompilation: If hardhat failed to run
 
     """
+    if not os.path.isdir(build_directory):
+        txt = (
+            f"Compilation failed. Can you run build command?\n{build_directory} is not a directory."
+        )
+        raise InvalidCompilation(txt)
+
     files = sorted(
         os.listdir(build_directory), key=lambda x: os.path.getmtime(Path(build_directory, x))
     )
     files = [str(f) for f in files if str(f).endswith(".json")]
     if not files:
-        txt = f"`compile` failed. Can you run it?\n{build_directory} is empty"
+        txt = f"Compilation failed. Can you run build command?\n{build_directory} is empty."
         raise InvalidCompilation(txt)
 
     for file in files:
@@ -168,29 +174,7 @@ class Hardhat(AbstractPlatform):
 
         if not hardhat_ignore_compile:
             cmd = base_cmd + ["compile", "--force"]
-
-            LOGGER.info(
-                "'%s' running",
-                " ".join(cmd),
-            )
-
-            with subprocess.Popen(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                cwd=self._target,
-                executable=shutil.which(cmd[0]),
-            ) as process:
-
-                stdout_bytes, stderr_bytes = process.communicate()
-                stdout, stderr = (
-                    stdout_bytes.decode(errors="backslashreplace"),
-                    stderr_bytes.decode(errors="backslashreplace"),
-                )  # convert bytestrings to unicode strings
-
-                LOGGER.info(stdout)
-                if stderr:
-                    LOGGER.error(stderr)
+            run(cmd, cwd=self._target)
 
         hardhat_like_parsing(crytic_compile, self._target, build_directory, hardhat_working_dir)
 
@@ -226,6 +210,9 @@ class Hardhat(AbstractPlatform):
 
         # If there is both foundry and hardhat, foundry takes priority
         if os.path.isfile(os.path.join(target, "foundry.toml")):
+            LOGGER.info(
+                "foundry.toml found, ignoring hardhat. To force hardhat, use `--compile-force-framework hardhat`"
+            )
             return False
 
         return os.path.isfile(os.path.join(target, "hardhat.config.js")) | os.path.isfile(
