@@ -16,6 +16,10 @@ setup(
     python_requires=">=3.8",
     install_requires=["pycryptodome>=3.4.6", "cbor2", "solc-select>=v1.0.2"],
     extras_require={
+        "test": [
+            "pytest",
+            "pytest-cov",
+        ],
         "lint": [
             "black==22.3.0",
             "pylint==2.13.4",
@@ -26,7 +30,7 @@ setup(
             "pdoc",
         ],
         "dev": [
-            "crytic-compile[lint,doc]",
+            "crytic-compile[lint,doc,lint]",
         ],
     },
     license="AGPL-3.0",

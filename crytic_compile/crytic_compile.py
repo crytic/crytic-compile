@@ -666,6 +666,6 @@ def compile_all(target: str, **kwargs: str) -> List[CryticCompile]:
             for filename in filenames:
                 compilations.append(CryticCompile(filename, **kwargs))
     else:
-        raise ValueError(f"Unresolved target: {str(target)}")
+        raise ValueError(f"{str(target)} is not a file or directory.")
 
     return compilations
