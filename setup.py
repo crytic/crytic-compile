@@ -26,8 +26,11 @@ setup(
             "mypy==0.942",
             "darglint==1.8.0",
         ],
+        "doc": [
+            "pdoc",
+        ],
         "dev": [
-            "crytic-compile[test,lint]",
+            "crytic-compile[test,doc,lint]",
         ],
     },
     license="AGPL-3.0",
