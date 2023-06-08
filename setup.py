@@ -30,7 +30,7 @@ setup(
             "pdoc",
         ],
         "dev": [
-            "crytic-compile[lint,doc,lint]",
+            "crytic-compile[test,doc,lint]",
         ],
     },
     license="AGPL-3.0",
