@@ -1,3 +1,6 @@
+"""
+Test loading from a zip archive
+"""
 from pathlib import Path
 from crytic_compile.utils.zip import load_from_zip
 
@@ -12,7 +15,7 @@ def test_zip_archive() -> None:
     compilation_unit = list(compilations.compilation_units.values())[0]
     source_unit = list(compilation_unit.source_units.values())[0]
     assert "name" in source_unit.ast and source_unit.ast["name"] == "SourceUnit"
-    source_unit.abis["C"] == [
+    assert source_unit.abis["C"] == [
         {
             "constant": True,
             "inputs": [],
@@ -23,10 +26,10 @@ def test_zip_archive() -> None:
             "type": "function",
         }
     ]
-    source_unit.bytecodes_runtime[
+    assert source_unit.bytecodes_runtime[
         "C"
     ] == "6080604052348015600f57600080fd5b506004361060285760003560e01c80637c2efcba14602d575b600080fd5b60336049565b6040518082815260200191505060405180910390f35b6000548156fea165627a7a72305820e0578222cdaab073bb18ac8a7dea1887831a2ec6d5cd58cb3422a324811074db0029"
-    source_unit.srcmaps_runtime["C"] == [
+    assert source_unit.srcmaps_runtime["C"] == [
         "0:32:1:-",
         "",
         "",
