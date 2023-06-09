@@ -125,7 +125,7 @@ def _handle_single_file(
 
 def _handle_multiple_files(
     dict_source_code: Dict, addr: str, prefix: Optional[str], contract_name: str, export_dir: str
-) -> Tuple[List[str], str]:
+) -> Tuple[List[str], str, Optional[List[str]]]:
     """Handle a result with a multiple files. Generate multiple Solidity files
 
     Args:
@@ -187,7 +187,10 @@ def _handle_multiple_files(
         with open(path_filename_disk, "w", encoding="utf8") as file_desc:
             file_desc.write(source_code["content"])
 
-    return list(filtered_paths), directory
+    # TODO: maybe sanitize these to avoid e.g. path traversals?
+    remappings = dict_source_code.get("settings", {}).get("remappings", None)
+
+    return list(filtered_paths), directory, remappings
 
 
 class Etherscan(AbstractPlatform):
@@ -348,18 +351,19 @@ class Etherscan(AbstractPlatform):
             optimize_runs = int(result["Runs"])
 
         working_dir: Optional[str] = None
+        remappings: Optional[List[str]] = None
 
         try:
             # etherscan might return an object with two curly braces, {{ content }}
             dict_source_code = json.loads(source_code[1:-1])
-            filenames, working_dir = _handle_multiple_files(
+            filenames, working_dir, remappings = _handle_multiple_files(
                 dict_source_code, addr, prefix, contract_name, export_dir
             )
         except JSONDecodeError:
             try:
                 # or etherscan might return an object with single curly braces, { content }
                 dict_source_code = json.loads(source_code)
-                filenames, working_dir = _handle_multiple_files(
+                filenames, working_dir, remappings = _handle_multiple_files(
                     dict_source_code, addr, prefix, contract_name, export_dir
                 )
             except JSONDecodeError:
@@ -376,8 +380,9 @@ class Etherscan(AbstractPlatform):
             optimize_runs=optimize_runs,
         )
         compilation_unit.compiler_version.look_for_installed_version()
-
-        solc_standard_json.standalone_compile(filenames, compilation_unit, working_dir=working_dir)
+        solc_standard_json.standalone_compile(
+            filenames, compilation_unit, working_dir=working_dir, remappings=remappings
+        )
 
     def clean(self, **_kwargs: str) -> None:
         pass

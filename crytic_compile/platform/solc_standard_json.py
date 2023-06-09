@@ -26,7 +26,10 @@ LOGGER = logging.getLogger("CryticCompile")
 
 
 def standalone_compile(
-    filenames: List[str], compilation_unit: CompilationUnit, working_dir: Optional[str] = None
+    filenames: List[str],
+    compilation_unit: CompilationUnit,
+    working_dir: Optional[str] = None,
+    remappings: Optional[List[str]] = None,
 ) -> None:
     """
     Boilerplate function to run the the standardjson. compilation_unit.compiler_version must be set before calling this function
@@ -42,6 +45,7 @@ def standalone_compile(
         filenames (List[str]): list of the files to compile
         compilation_unit (CompilationUnit): compilation unit object to populate
         working_dir (Optional[str]): working directory
+        remappings (Optional[List[str]]): list of solc remaps to use
 
     Returns:
 
@@ -56,6 +60,10 @@ def standalone_compile(
 
     for filename in filenames:
         add_source_file(standard_json_dict, filename)
+
+    if remappings is not None:
+        for remap in remappings:
+            add_remapping(standard_json_dict, remap)
 
     add_optimization(
         standard_json_dict,
