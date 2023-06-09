@@ -474,7 +474,7 @@ def _run_solc(
         force_legacy_json (bool): Force to use the legacy json format. Defaults to False.
 
     Raises:
-        InvalidCompilation: If solc faile to run
+        InvalidCompilation: If solc failed to run
 
     Returns:
         Dict: Json compilation artifacts
