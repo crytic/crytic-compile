@@ -1,5 +1,5 @@
 """
-Truffle platform
+Foundry platform
 """
 import logging
 import os
@@ -55,7 +55,6 @@ class Foundry(AbstractPlatform):
                 "forge",
                 "build",
                 "--build-info",
-                "--force",
             ]
 
             LOGGER.info(

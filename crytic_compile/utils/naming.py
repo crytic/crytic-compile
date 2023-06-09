@@ -149,7 +149,12 @@ def convert_filename(
     filename = _verify_filename_existence(filename, cwd)
 
     absolute = Path(os.path.abspath(filename))
-    relative = Path(os.path.relpath(filename, Path.cwd()))
+
+    # This returns original path if *path* and *start* are on different drives (for Windows platform).
+    try:
+        relative = Path(os.path.relpath(filename, Path.cwd()))
+    except ValueError:
+        relative = Path(filename)
 
     # Build the short path
     try:
