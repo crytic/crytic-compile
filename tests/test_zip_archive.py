@@ -4,7 +4,7 @@ from crytic_compile.utils.zip import load_from_zip
 TEST_DIR = Path(__file__).resolve().parent
 
 
-def test_zip_archive():
+def test_zip_archive() -> None:
     """This tests the `_load_from_compile_0_0_1` format"""
     zip_file = Path(TEST_DIR, "call_to_variable-all.sol-0.5.8-legacy.zip").as_posix()
     compilations = load_from_zip(zip_file)[0]
