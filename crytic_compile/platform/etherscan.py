@@ -341,8 +341,10 @@ class Etherscan(AbstractPlatform):
         )[0]
 
         # etherscan can report "default" which is not a valid EVM version
-        evm_version: Optional[str] = result.get("EVMVersion", None)
-        evm_version = evm_version if evm_version != "Default" else None
+        evm_version: Optional[str] = None
+        if "EVMVersion" in result:
+            assert isinstance(result["EVMVersion"], str)
+            evm_version = result["EVMVersion"] if result["EVMVersion"] != "Default" else None
 
         optimization_used: bool = result["OptimizationUsed"] == "1"
 
