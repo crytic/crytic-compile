@@ -304,7 +304,7 @@ def parse_standard_json_output(
                         working_dir=solc_working_dir,
                     )
 
-                source_unit = compilation_unit.create_source_unit(filename)
+                source_unit = compilation_unit.source_unit(filename)
 
                 source_unit.add_contract_name(contract_name)
                 compilation_unit.filename_to_contracts[filename].add(contract_name)

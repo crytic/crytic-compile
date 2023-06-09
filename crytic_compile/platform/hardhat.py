@@ -108,7 +108,7 @@ def hardhat_like_parsing(
                         working_dir=working_dir,
                     )
 
-                    source_unit = compilation_unit.create_source_unit(filename)
+                    source_unit = compilation_unit.source_unit(filename)
 
                     for original_contract_name, info in contracts_info.items():
                         contract_name = extract_name(original_contract_name)

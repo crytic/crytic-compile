@@ -82,7 +82,7 @@ class Dapp(AbstractPlatform):
                     original_filename, lambda x: x, crytic_compile, self._target
                 )
 
-                source_unit = compilation_unit.create_source_unit(filename)
+                source_unit = compilation_unit.source_unit(filename)
 
                 for original_contract_name, info in contracts_info.items():
                     if "metadata" in info:

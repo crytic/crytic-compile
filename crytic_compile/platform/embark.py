@@ -153,7 +153,7 @@ class Embark(AbstractPlatform):
                     working_dir=self._target,
                 )
 
-                source_unit = compilation_unit.create_source_unit(filename)
+                source_unit = compilation_unit.source_unit(filename)
 
                 compilation_unit.filename_to_contracts[filename].add(contract_name)
                 source_unit.add_contract_name(contract_name)
