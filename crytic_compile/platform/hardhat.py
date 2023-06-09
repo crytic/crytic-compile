@@ -210,9 +210,6 @@ class Hardhat(AbstractPlatform):
 
         # If there is both foundry and hardhat, foundry takes priority
         if os.path.isfile(os.path.join(target, "foundry.toml")):
-            LOGGER.info(
-                "foundry.toml found, ignoring hardhat. To force hardhat, use `--compile-force-framework hardhat`"
-            )
             return False
 
         return os.path.isfile(os.path.join(target, "hardhat.config.js")) | os.path.isfile(
