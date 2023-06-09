@@ -4,7 +4,7 @@ Each source unit represents one file so may be associated with
 One or more source units are associated with each compilation unit
 """
 import re
-from typing import Dict, List, Optional, Union, Tuple, Set, TYPE_CHECKING
+from typing import Dict, List, Optional, Union, Tuple, TYPE_CHECKING
 import cbor2
 
 from Crypto.Hash import keccak
@@ -60,7 +60,7 @@ def get_library_candidate(filename: Filename, contract_name: str) -> List[str]:
     return ret
 
 
-# pylint: disable=too-many-instance-attributes
+# pylint: disable=too-many-instance-attributes,too-many-public-methods
 class SourceUnit:
     """SourceUnit class"""
 
@@ -87,10 +87,10 @@ class SourceUnit:
         self._libraries: Dict[str, List[Tuple[str, str]]] = {}
 
         # set containing all the contract names
-        self._contracts_name: Set[str] = set()
+        self._contracts_name: List[str] = []
 
         # set containing all the contract name without the libraries
-        self._contracts_name_without_libraries: Optional[Set[str]] = None
+        self._contracts_name_without_libraries: Optional[List[str]] = None
 
     # region ABI
     ###################################################################################
@@ -411,37 +411,46 @@ class SourceUnit:
     ###################################################################################
 
     @property
-    def contracts_names(self) -> Set[str]:
+    def contracts_names(self) -> List[str]:
         """Return the contracts names
 
         Returns:
-            Set[str]: List of the contracts names
+            List[str]: List of the contracts names
         """
         return self._contracts_name
 
     @contracts_names.setter
-    def contracts_names(self, names: Set[str]) -> None:
+    def contracts_names(self, names: List[str]) -> None:
         """Set the contract names
 
         Args:
-            names (Set[str]): New contracts names
+            names (List[str]): New contracts names
         """
         self._contracts_name = names
 
+    def add_contract_name(self, name: str) -> None:
+        """Add name to contracts_names, if not already present
+
+        Args:
+            name (str): Name to add to the list
+        """
+        if name not in self.contracts_names:
+            self.contracts_names.append(name)
+
     @property
-    def contracts_names_without_libraries(self) -> Set[str]:
+    def contracts_names_without_libraries(self) -> List[str]:
         """Return the contracts names without the librairies
 
         Returns:
-            Set[str]: List of contracts
+            List[str]: List of contracts
         """
         if self._contracts_name_without_libraries is None:
             libraries: List[str] = []
             for contract_name in self._contracts_name:
                 libraries += self.libraries_names(contract_name)
-            self._contracts_name_without_libraries = {
+            self._contracts_name_without_libraries = [
                 l for l in self._contracts_name if l not in set(libraries)
-            }
+            ]
         return self._contracts_name_without_libraries
 
     # endregion

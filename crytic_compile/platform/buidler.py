@@ -111,46 +111,6 @@ class Buidler(AbstractPlatform):
         with open(target_solc_file, encoding="utf8") as file_desc:
             targets_json = json.load(file_desc)
 
-            if "contracts" in targets_json:
-                for original_filename, contracts_info in targets_json["contracts"].items():
-                    filename = convert_filename(
-                        original_filename,
-                        relative_to_short,
-                        crytic_compile,
-                        working_dir=buidler_working_dir,
-                    )
-                    source_unit = compilation_unit.create_source_unit(filename)
-
-                    for original_contract_name, info in contracts_info.items():
-                        contract_name = extract_name(original_contract_name)
-
-                        if (
-                            original_filename.startswith("ontracts/")
-                            and not skip_directory_name_fix
-                        ):
-                            original_filename = "c" + original_filename
-
-                        source_unit.contracts_names.add(contract_name)
-                        compilation_unit.filename_to_contracts[filename].add(contract_name)
-
-                        source_unit.abis[contract_name] = info["abi"]
-                        source_unit.bytecodes_init[contract_name] = info["evm"]["bytecode"][
-                            "object"
-                        ]
-                        source_unit.bytecodes_runtime[contract_name] = info["evm"][
-                            "deployedBytecode"
-                        ]["object"]
-                        source_unit.srcmaps_init[contract_name] = info["evm"]["bytecode"][
-                            "sourceMap"
-                        ].split(";")
-                        source_unit.srcmaps_runtime[contract_name] = info["evm"][
-                            "deployedBytecode"
-                        ]["sourceMap"].split(";")
-                        userdoc = info.get("userdoc", {})
-                        devdoc = info.get("devdoc", {})
-                        natspec = Natspec(userdoc, devdoc)
-                        source_unit.natspec[contract_name] = natspec
-
             if "sources" in targets_json:
                 for path, info in targets_json["sources"].items():
 
@@ -170,6 +130,46 @@ class Buidler(AbstractPlatform):
                         )
                     source_unit = compilation_unit.create_source_unit(path)
                     source_unit.ast = info["ast"]
+
+            if "contracts" in targets_json:
+                for original_filename, contracts_info in targets_json["contracts"].items():
+                    filename = convert_filename(
+                        original_filename,
+                        relative_to_short,
+                        crytic_compile,
+                        working_dir=buidler_working_dir,
+                    )
+                    source_unit = compilation_unit.create_source_unit(filename)
+
+                    for original_contract_name, info in contracts_info.items():
+                        contract_name = extract_name(original_contract_name)
+
+                        if (
+                            original_filename.startswith("ontracts/")
+                            and not skip_directory_name_fix
+                        ):
+                            original_filename = "c" + original_filename
+
+                        source_unit.add_contract_name(contract_name)
+                        compilation_unit.filename_to_contracts[filename].add(contract_name)
+
+                        source_unit.abis[contract_name] = info["abi"]
+                        source_unit.bytecodes_init[contract_name] = info["evm"]["bytecode"][
+                            "object"
+                        ]
+                        source_unit.bytecodes_runtime[contract_name] = info["evm"][
+                            "deployedBytecode"
+                        ]["object"]
+                        source_unit.srcmaps_init[contract_name] = info["evm"]["bytecode"][
+                            "sourceMap"
+                        ].split(";")
+                        source_unit.srcmaps_runtime[contract_name] = info["evm"][
+                            "deployedBytecode"
+                        ]["sourceMap"].split(";")
+                        userdoc = info.get("userdoc", {})
+                        devdoc = info.get("devdoc", {})
+                        natspec = Natspec(userdoc, devdoc)
+                        source_unit.natspec[contract_name] = natspec
 
     def clean(self, **kwargs: str) -> None:
         # TODO: call "buldler clean"?
