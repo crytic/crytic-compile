@@ -94,9 +94,6 @@ def _handle_bytecode(crytic_compile: "CryticCompile", target: str, result_b: byt
     crytic_compile.bytecode_only = True
 
 
-# def _etherscan_single_file():
-
-
 def _handle_single_file(
     source_code: str, addr: str, prefix: Optional[str], contract_name: str, export_dir: str
 ) -> str:
@@ -435,15 +432,3 @@ def _convert_version(version: str) -> str:
         str: converted version
     """
     return version[1 : version.find("+")]
-
-
-def _relative_to_short(relative: Path) -> Path:
-    """Translate relative path to short (do nothing for etherscan)
-
-    Args:
-        relative (Path): path to the target
-
-    Returns:
-        Path: Translated path
-    """
-    return relative
