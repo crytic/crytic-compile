@@ -62,3 +62,14 @@ then
     exit 255
 fi
 echo "::endgroup::"
+
+# From crytic/crytic-compile#151
+echo "::group::Etherscan #6"
+crytic-compile 0x4c808e3c011514d5016536af11218eec537eb6f5 --compile-remove-metadata --etherscan-apikey "$GITHUB_ETHERSCAN"
+
+if [ $? -ne 0 ]
+then
+    echo "Etherscan #6 test failed"
+    exit 255
+fi
+echo "::endgroup::"

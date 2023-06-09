@@ -340,6 +340,10 @@ class Etherscan(AbstractPlatform):
             r"\d+\.\d+\.\d+", _convert_version(result["CompilerVersion"])
         )[0]
 
+        # etherscan can report "default" which is not a valid EVM version
+        evm_version: Optional[str] = result.get("EVMVersion", None)
+        evm_version = evm_version if evm_version != "Default" else None
+
         optimization_used: bool = result["OptimizationUsed"] == "1"
 
         optimize_runs = None
@@ -377,7 +381,11 @@ class Etherscan(AbstractPlatform):
         )
         compilation_unit.compiler_version.look_for_installed_version()
         solc_standard_json.standalone_compile(
-            filenames, compilation_unit, working_dir=working_dir, remappings=remappings
+            filenames,
+            compilation_unit,
+            working_dir=working_dir,
+            remappings=remappings,
+            evm_version=evm_version,
         )
 
     def clean(self, **_kwargs: str) -> None:
