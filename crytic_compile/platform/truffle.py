@@ -251,7 +251,7 @@ class Truffle(AbstractPlatform):
                 contract_name = target_loaded["contractName"]
                 source_unit.natspec[contract_name] = natspec
                 compilation_unit.filename_to_contracts[filename].add(contract_name)
-                source_unit.add_contract_name(contract_name)
+                source_unit.contracts_names.add(contract_name)
                 source_unit.abis[contract_name] = target_loaded["abi"]
                 source_unit.bytecodes_init[contract_name] = target_loaded["bytecode"].replace(
                     "0x", ""

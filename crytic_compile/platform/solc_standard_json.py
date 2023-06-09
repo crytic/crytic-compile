@@ -265,26 +265,6 @@ def parse_standard_json_output(
 
     skip_filename = compilation_unit.compiler_version.version in [f"0.4.{x}" for x in range(0, 10)]
 
-    if "sources" in targets_json:
-        for path, info in targets_json["sources"].items():
-            if skip_filename:
-                path = convert_filename(
-                    path,
-                    relative_to_short,
-                    compilation_unit.crytic_compile,
-                    working_dir=solc_working_dir,
-                )
-            else:
-                path = convert_filename(
-                    path,
-                    relative_to_short,
-                    compilation_unit.crytic_compile,
-                    working_dir=solc_working_dir,
-                )
-            source_unit = compilation_unit.create_source_unit(path)
-
-            source_unit.ast = info.get("ast")
-
     if "contracts" in targets_json:
         for file_path, file_contracts in targets_json["contracts"].items():
             for contract_name, info in file_contracts.items():
@@ -306,7 +286,7 @@ def parse_standard_json_output(
 
                 source_unit = compilation_unit.create_source_unit(filename)
 
-                source_unit.add_contract_name(contract_name)
+                source_unit.contracts_names.add(contract_name)
                 compilation_unit.filename_to_contracts[filename].add(contract_name)
                 source_unit.abis[contract_name] = info["abi"]
 
@@ -325,6 +305,26 @@ def parse_standard_json_output(
                 source_unit.srcmaps_runtime[contract_name] = info["evm"]["deployedBytecode"][
                     "sourceMap"
                 ].split(";")
+
+    if "sources" in targets_json:
+        for path, info in targets_json["sources"].items():
+            if skip_filename:
+                path = convert_filename(
+                    path,
+                    relative_to_short,
+                    compilation_unit.crytic_compile,
+                    working_dir=solc_working_dir,
+                )
+            else:
+                path = convert_filename(
+                    path,
+                    relative_to_short,
+                    compilation_unit.crytic_compile,
+                    working_dir=solc_working_dir,
+                )
+            source_unit = compilation_unit.create_source_unit(path)
+
+            source_unit.ast = info.get("ast")
 
 
 # Inherits is_dependency/is_supported from Solc

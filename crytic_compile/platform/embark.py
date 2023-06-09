@@ -120,15 +120,6 @@ class Embark(AbstractPlatform):
 
         with open(infile, "r", encoding="utf8") as file_desc:
             targets_loaded = json.load(file_desc)
-
-            if "sources" in targets_loaded:
-                compilation_unit.filenames = [
-                    convert_filename(
-                        path, _relative_to_short, crytic_compile, working_dir=self._target
-                    )
-                    for path in targets_loaded["sources"]
-                ]
-
             for k, ast in targets_loaded["asts"].items():
                 filename = convert_filename(
                     k, _relative_to_short, crytic_compile, working_dir=self._target
@@ -156,7 +147,7 @@ class Embark(AbstractPlatform):
                 source_unit = compilation_unit.create_source_unit(filename)
 
                 compilation_unit.filename_to_contracts[filename].add(contract_name)
-                source_unit.add_contract_name(contract_name)
+                source_unit.contracts_names.add(contract_name)
 
                 if "abi" in info:
                     source_unit.abis[contract_name] = info["abi"]

@@ -175,11 +175,11 @@ class CryticCompile:
         Return the set of all the filenames used
 
         Returns:
-             Set[Filename]: set of filenames
+             Set[Filename]: list of filenames
         """
         filenames: Set[Filename] = set()
         for compile_unit in self._compilation_units.values():
-            filenames |= set(compile_unit.filenames)
+            filenames = filenames.union(compile_unit.filenames)
         return filenames
 
     def filename_lookup(self, filename: str) -> Filename:
