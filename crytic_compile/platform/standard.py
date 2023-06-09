@@ -298,9 +298,9 @@ def _load_from_compile_legacy1(crytic_compile: "CryticCompile", loaded_json: Dic
         source_unit.ast = ast
 
     for contract_name, contract in loaded_json["contracts"].items():
-        filename = _convert_dict_to_filename(contract["filenames"])
+        filename = crytic_compile.filename_lookup(contract["filenames"]["absolute"])
         compilation_unit.filename_to_contracts[filename].add(contract_name)
-        source_unit = compilation_unit.create_source_unit(filename)
+        source_unit = compilation_unit.source_unit(filename)
 
         source_unit.add_contract_name(contract_name)
         source_unit.abis[contract_name] = contract["abi"]
@@ -351,15 +351,10 @@ def _load_from_compile_legacy2(crytic_compile: "CryticCompile", loaded_json: Dic
 
         for contract_name, contract in compilation_unit_json["contracts"].items():
 
-            filename = Filename(
-                absolute=contract["filenames"]["absolute"],
-                relative=contract["filenames"]["relative"],
-                short=contract["filenames"]["short"],
-                used=contract["filenames"]["used"],
-            )
+            filename = crytic_compile.filename_lookup(contract["filenames"]["absolute"])
             compilation_unit.filename_to_contracts[filename].add(contract_name)
 
-            source_unit = compilation_unit.create_source_unit(filename)
+            source_unit = compilation_unit.source_unit(filename)
             source_unit.add_contract_name(contract_name)
             source_unit.abis[contract_name] = contract["abi"]
             source_unit.bytecodes_init[contract_name] = contract["bin"]
@@ -400,15 +395,9 @@ def _load_from_compile_0_0_1(crytic_compile: "CryticCompile", loaded_json: Dict)
 
         for contracts_data in compilation_unit_json["contracts"].values():
             for contract_name, contract in contracts_data.items():
-
-                filename = Filename(
-                    absolute=contract["filenames"]["absolute"],
-                    relative=contract["filenames"]["relative"],
-                    short=contract["filenames"]["short"],
-                    used=contract["filenames"]["used"],
-                )
+                filename = crytic_compile.filename_lookup(contract["filenames"]["absolute"])
                 compilation_unit.filename_to_contracts[filename].add(contract_name)
-                source_unit = compilation_unit.create_source_unit(filename)
+                source_unit = compilation_unit.source_unit(filename)
                 source_unit.add_contract_name(contract_name)
                 source_unit.abis[contract_name] = contract["abi"]
                 source_unit.bytecodes_init[contract_name] = contract["bin"]
@@ -448,7 +437,7 @@ def _load_from_compile_current(crytic_compile: "CryticCompile", loaded_json: Dic
             for contract_name, contract in source_unit_data.get("contracts", {}).items():
                 compilation_unit.filename_to_contracts[filename].add(contract_name)
 
-                source_unit = compilation_unit.create_source_unit(filename)
+                source_unit = compilation_unit.source_unit(filename)
                 source_unit.add_contract_name(contract_name)
                 source_unit.abis[contract_name] = contract["abi"]
                 source_unit.bytecodes_init[contract_name] = contract["bin"]
