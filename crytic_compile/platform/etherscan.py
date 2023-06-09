@@ -184,10 +184,9 @@ def _handle_multiple_files(
         with open(path_filename_disk, "w", encoding="utf8") as file_desc:
             file_desc.write(source_code["content"])
 
-    # TODO: maybe sanitize these to avoid e.g. path traversals?
     remappings = dict_source_code.get("settings", {}).get("remappings", None)
 
-    return list(filtered_paths), directory, remappings
+    return list(filtered_paths), directory, _sanitize_remappings(remappings, directory)
 
 
 class Etherscan(AbstractPlatform):
@@ -432,3 +431,40 @@ def _convert_version(version: str) -> str:
         str: converted version
     """
     return version[1 : version.find("+")]
+
+
+def _sanitize_remappings(
+    remappings: Optional[List[str]], allowed_directory: str
+) -> Optional[List[str]]:
+    """Sanitize a list of remappings
+
+    Args:
+        remappings: (Optional[List[str]]): a list of remappings
+        allowed_directory: the allowed base directory for remaps
+
+    Returns:
+        Optional[List[str]]: a list of sanitized remappings
+    """
+
+    if remappings is None:
+        return remappings
+
+    allowed_path = os.path.abspath(allowed_directory)
+
+    remappings_clean: List[str] = []
+    for r in remappings:
+        split = r.split("=", 2)
+        if len(split) != 2:
+            LOGGER.warning("Invalid remapping %s", r)
+            continue
+
+        origin, dest = split
+        dest_disk = Path(allowed_directory, dest)
+
+        if os.path.commonpath((allowed_path, os.path.abspath(dest_disk))) != allowed_path:
+            LOGGER.warning("Remapping %s=%s is potentially unsafe, skipping", origin, dest)
+            continue
+
+        remappings_clean.append(f"{origin}={dest}")
+
+    return remappings_clean
