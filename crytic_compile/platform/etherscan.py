@@ -458,13 +458,19 @@ def _sanitize_remappings(
             LOGGER.warning("Invalid remapping %s", r)
             continue
 
-        origin, dest = split
+        origin, dest = split[0], Path(split[1])
+
+        # if path is absolute, relativize it
+        if dest.is_absolute():
+            dest = Path(*dest.parts[1:])
+
         dest_disk = Path(allowed_directory, dest)
 
         if os.path.commonpath((allowed_path, os.path.abspath(dest_disk))) != allowed_path:
             LOGGER.warning("Remapping %s=%s is potentially unsafe, skipping", origin, dest)
             continue
 
-        remappings_clean.append(f"{origin}={dest}")
+        # always use a trailing slash for the destination
+        remappings_clean.append(f"{origin}={str(dest / '_')[:-1]}")
 
     return remappings_clean
