@@ -146,13 +146,7 @@ class Embark(AbstractPlatform):
 
             for original_contract_name, info in targets_loaded["contracts"].items():
                 contract_name = extract_name(original_contract_name)
-                filename = convert_filename(
-                    extract_filename(original_contract_name),
-                    _relative_to_short,
-                    crytic_compile,
-                    working_dir=self._target,
-                )
-
+                filename = crytic_compile.filename_lookup(extract_filename(original_contract_name))
                 source_unit = compilation_unit.source_unit(filename)
 
                 compilation_unit.filename_to_contracts[filename].add(contract_name)

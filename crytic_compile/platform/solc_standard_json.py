@@ -290,19 +290,9 @@ def parse_standard_json_output(
             for contract_name, info in file_contracts.items():
                 # for solc < 0.4.10 we cant retrieve the filename from the ast
                 if skip_filename:
-                    filename = convert_filename(
-                        file_path,
-                        relative_to_short,
-                        compilation_unit.crytic_compile,
-                        working_dir=solc_working_dir,
-                    )
+                    filename = compilation_unit.crytic_compile.filename_lookup(file_path)
                 else:
-                    filename = convert_filename(
-                        file_path,
-                        relative_to_short,
-                        compilation_unit.crytic_compile,
-                        working_dir=solc_working_dir,
-                    )
+                    filename = compilation_unit.crytic_compile.filename_lookup(file_path)
 
                 source_unit = compilation_unit.source_unit(filename)
 

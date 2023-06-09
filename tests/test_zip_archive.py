@@ -87,4 +87,4 @@ def test_zip_archive() -> None:
         "",
         ":::o",
     ]
-    source_unit.hashes("C") == {"v()": 2083454138}
+    assert source_unit.hashes("C") == {"v()": 2083454138}

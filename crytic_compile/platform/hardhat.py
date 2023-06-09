@@ -101,13 +101,7 @@ def hardhat_like_parsing(
             if "contracts" in targets_json:
                 for original_filename, contracts_info in targets_json["contracts"].items():
 
-                    filename = convert_filename(
-                        original_filename,
-                        relative_to_short,
-                        crytic_compile,
-                        working_dir=working_dir,
-                    )
-
+                    filename = crytic_compile.filename_lookup(original_filename)
                     source_unit = compilation_unit.source_unit(filename)
 
                     for original_contract_name, info in contracts_info.items():

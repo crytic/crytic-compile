@@ -70,9 +70,7 @@ class Dapp(AbstractPlatform):
                 version = re.findall(r"\d+\.\d+\.\d+", targets_json["version"])[0]
 
             for path, info in targets_json["sources"].items():
-                path = convert_filename(
-                    path, _relative_to_short, crytic_compile, working_dir=self._target
-                )
+                path = crytic_compile.filename_lookup(path)
                 source_unit = compilation_unit.create_source_unit(path)
                 source_unit.ast = info["ast"]
 
