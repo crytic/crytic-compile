@@ -466,11 +466,11 @@ def _sanitize_remappings(
             LOGGER.warning("Invalid remapping %s", r)
             continue
 
-        origin, dest = split[0], Path(split[1])
+        origin, dest = split[0], PurePosixPath(split[1])
 
         # if path is absolute, relativize it
         if dest.is_absolute():
-            dest = Path(*dest.parts[1:])
+            dest = PurePosixPath(*dest.parts[1:])
 
         dest_disk = Path(allowed_directory, dest)
 
