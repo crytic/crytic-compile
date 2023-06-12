@@ -17,8 +17,11 @@ if TYPE_CHECKING:
 
 LOGGER = logging.getLogger("CryticCompile")
 
+
 @dataclass
 class Filename:
+    """Path metadata for each file in the compilation unit"""
+
     def __init__(self, absolute: str, used: str, relative: str, short: str):
         self.absolute = absolute
         self.used = used
@@ -26,7 +29,16 @@ class Filename:
         self.short = short
 
     def __hash__(self) -> int:
-       return hash(self.relative)
+        return hash(self.relative)
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Filename):
+            return NotImplemented
+        return self.relative == other.relative
+
+    def __repr__(self) -> str:
+        return f"Filename(absolute={self.absolute}, used={self.used}, relative={self.relative}, short={self.short}))"
+
 
 def extract_name(name: str) -> str:
     """Convert '/path:Contract' to Contract
@@ -178,8 +190,8 @@ def convert_filename(
     short = relative_to_short(short)
 
     return Filename(
-        absolute=str(absolute),
+        absolute=absolute.as_posix(),
         relative=relative.as_posix(),
         short=short.as_posix(),
-        used=used_filename,
+        used=used_filename.as_posix(),
     )
