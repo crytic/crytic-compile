@@ -5,7 +5,7 @@ Module handling the file naming operation (relative -> absolute, etc)
 import logging
 import os.path
 import platform
-from collections import namedtuple
+from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Union, Callable, Optional
 
@@ -17,7 +17,27 @@ if TYPE_CHECKING:
 
 LOGGER = logging.getLogger("CryticCompile")
 
-Filename = namedtuple("Filename", ["absolute", "used", "relative", "short"])
+
+@dataclass
+class Filename:
+    """Path metadata for each file in the compilation unit"""
+
+    def __init__(self, absolute: str, used: str, relative: str, short: str):
+        self.absolute = absolute
+        self.used = used
+        self.relative = relative
+        self.short = short
+
+    def __hash__(self) -> int:
+        return hash(self.relative)
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Filename):
+            return NotImplemented
+        return self.relative == other.relative
+
+    def __repr__(self) -> str:
+        return f"Filename(absolute={self.absolute}, used={self.used}, relative={self.relative}, short={self.short}))"
 
 
 def extract_name(name: str) -> str:
@@ -173,5 +193,5 @@ def convert_filename(
         absolute=str(absolute),
         relative=relative.as_posix(),
         short=short.as_posix(),
-        used=used_filename,
+        used=str(used_filename),
     )

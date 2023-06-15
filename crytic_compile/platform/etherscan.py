@@ -79,7 +79,7 @@ def _handle_bytecode(crytic_compile: "CryticCompile", target: str, result_b: byt
 
     source_unit = compilation_unit.create_source_unit(contract_filename)
 
-    source_unit.contracts_names.add(contract_name)
+    source_unit.add_contract_name(contract_name)
     compilation_unit.filename_to_contracts[contract_filename].add(contract_name)
     source_unit.abis[contract_name] = {}
     source_unit.bytecodes_init[contract_name] = bytecode
@@ -137,6 +137,9 @@ def _handle_multiple_files(
 
     Returns:
         Tuple[List[str], str]: filesnames, directory, where target_filename is the main file
+
+    Raises:
+        IOError: if the path is outside of the allowed directory
     """
     if prefix:
         directory = os.path.join(export_dir, f"{addr}{prefix}-{contract_name}")
@@ -153,6 +156,10 @@ def _handle_multiple_files(
     filtered_paths: List[str] = []
     for filename, source_code in source_codes.items():
         path_filename = PurePosixPath(filename)
+        # Only keep solidity files
+        if path_filename.suffix not in [".sol", ".vy"]:
+            continue
+
         # https://etherscan.io/address/0x19bb64b80cbf61e61965b0e5c2560cc7364c6546#code has an import of erc721a/contracts/ERC721A.sol
         # if the full path is lost then won't compile
         if "contracts" == path_filename.parts[0] and not filename.startswith("@"):
@@ -170,6 +177,11 @@ def _handle_multiple_files(
         filtered_paths.append(path_filename.as_posix())
         path_filename_disk = Path(directory, path_filename)
 
+        allowed_path = os.path.abspath(directory)
+        if os.path.commonpath((allowed_path, os.path.abspath(path_filename_disk))) != allowed_path:
+            raise IOError(
+                f"Path '{path_filename_disk}' is outside of the allowed directory: {allowed_path}"
+            )
         if not os.path.exists(path_filename_disk.parent):
             os.makedirs(path_filename_disk.parent)
         with open(path_filename_disk, "w", encoding="utf8") as file_desc:
@@ -275,9 +287,14 @@ class Etherscan(AbstractPlatform):
 
             info = json.loads(html)
 
-            if "result" in info and info["result"] == "Max rate limit reached":
+            if (
+                "result" in info
+                and "rate limit reached" in info["result"]
+                and "message" in info
+                and info["message"] == "NOTOK"
+            ):
                 LOGGER.error("Etherscan API rate limit exceeded")
-                raise InvalidCompilation("Etherscan api rate limit exceeded")
+                raise InvalidCompilation("Etherscan API rate limit exceeded")
 
             if "message" not in info:
                 LOGGER.error("Incorrect etherscan request")

@@ -44,6 +44,8 @@ jobs:
           VALIDATE_ALL_CODEBASE: true
           DEFAULT_BRANCH: master
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Until we upgrade the super linter for actionlintÒ
+          VALIDATE_GITHUB_ACTIONS: false
           # Always false
           VALIDATE_PYTHON: false
           VALIDATE_PYTHON_PYLINT: false
