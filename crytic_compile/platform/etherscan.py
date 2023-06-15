@@ -382,6 +382,14 @@ class Etherscan(AbstractPlatform):
             optimize_runs=optimize_runs,
         )
         compilation_unit.compiler_version.look_for_installed_version()
+
+        if "Proxy" in result and result["Proxy"] == "1":
+            assert "Implementation" in result
+            implementation = result["Implementation"]
+            if prefix is not None:
+                implementation = f"{prefix}:{implementation}"
+            compilation_unit.implementation_address = implementation
+
         solc_standard_json.standalone_compile(
             filenames,
             compilation_unit,
