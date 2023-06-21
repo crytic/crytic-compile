@@ -97,6 +97,10 @@ def hardhat_like_parsing(
 
                     source_unit = compilation_unit.create_source_unit(path)
                     source_unit.ast = info.get("ast", info.get("legacyAST"))
+                    if source_unit.ast is None:
+                        raise InvalidCompilation(
+                            f"AST not found for {path} in {build_info} directory"
+                        )
 
             if "contracts" in targets_json:
                 for original_filename, contracts_info in targets_json["contracts"].items():
