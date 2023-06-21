@@ -36,3 +36,47 @@ then
     exit 255
 fi
 echo "::endgroup::"
+
+delay_no_key
+
+# From crytic/crytic-compile#415
+echo "::group::Etherscan #4"
+crytic-compile 0x19c7d0fbf906c282dedb5543d098f43dfe9f856f --compile-remove-metadata --etherscan-apikey "$GITHUB_ETHERSCAN"
+
+if [ $? -ne 0 ]
+then
+    echo "Etherscan #4 test failed"
+    exit 255
+fi
+echo "::endgroup::"
+
+delay_no_key
+
+# From crytic/crytic-compile#150
+echo "::group::Etherscan #5"
+crytic-compile 0x2a311e451491091d2a1d3c43f4f5744bdb4e773a --compile-remove-metadata --etherscan-apikey "$GITHUB_ETHERSCAN"
+
+if [ $? -ne 0 ]
+then
+    echo "Etherscan #5 test failed"
+    case "$(uname -sr)" in
+        CYGWIN*|MINGW*|MSYS*)
+            echo "This test is known to fail on Windows"
+        ;;
+        *)
+            exit 255
+        ;;
+    esac
+fi
+echo "::endgroup::"
+
+# From crytic/crytic-compile#151
+echo "::group::Etherscan #6"
+crytic-compile 0x4c808e3c011514d5016536af11218eec537eb6f5 --compile-remove-metadata --etherscan-apikey "$GITHUB_ETHERSCAN"
+
+if [ $? -ne 0 ]
+then
+    echo "Etherscan #6 test failed"
+    exit 255
+fi
+echo "::endgroup::"

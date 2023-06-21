@@ -26,7 +26,11 @@ LOGGER = logging.getLogger("CryticCompile")
 
 
 def standalone_compile(
-    filenames: List[str], compilation_unit: CompilationUnit, working_dir: Optional[str] = None
+    filenames: List[str],
+    compilation_unit: CompilationUnit,
+    working_dir: Optional[str] = None,
+    remappings: Optional[List[str]] = None,
+    evm_version: Optional[str] = None,
 ) -> None:
     """
     Boilerplate function to run the the standardjson. compilation_unit.compiler_version must be set before calling this function
@@ -42,6 +46,8 @@ def standalone_compile(
         filenames (List[str]): list of the files to compile
         compilation_unit (CompilationUnit): compilation unit object to populate
         working_dir (Optional[str]): working directory
+        remappings (Optional[List[str]]): list of solc remaps to use
+        evm_version (Optional[str]): EVM version to target. None for default
 
     Returns:
 
@@ -56,6 +62,13 @@ def standalone_compile(
 
     for filename in filenames:
         add_source_file(standard_json_dict, filename)
+
+    if remappings is not None:
+        for remap in remappings:
+            add_remapping(standard_json_dict, remap)
+
+    if evm_version is not None:
+        add_evm_version(standard_json_dict, evm_version)
 
     add_optimization(
         standard_json_dict,
@@ -245,6 +258,24 @@ def add_optimization(
             json_dict["settings"]["optimizer"]["runs"] = optimize_runs
         return
     json_dict["settings"]["optimizer"] = {"enabled": False}
+
+
+def add_evm_version(json_dict: Dict, version: str) -> None:
+    """
+    Add the version of the EVM to compile for.
+
+    Can be one of the following values: homestead, tangerineWhistle,
+    spuriousDragon, byzantium, constantinople, petersburg, istanbul,
+    berlin, london or paris
+
+    Args:
+        json_dict (Dict): solc standard json input
+        version (str): the EVM version to target
+
+    Returns:
+
+    """
+    json_dict["settings"]["evmVersion"] = version
 
 
 def parse_standard_json_output(
