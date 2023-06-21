@@ -3,8 +3,6 @@ Foundry platform
 """
 import logging
 import os
-import shutil
-import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING, List
 
@@ -51,34 +49,14 @@ class Foundry(AbstractPlatform):
             )
 
         if not ignore_compile:
-            cmd = [
-                "forge",
-                "build",
-                "--build-info",
-            ]
-
-            LOGGER.info(
-                "'%s' running",
-                " ".join(cmd),
-            )
-
-            with subprocess.Popen(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+            run(
+                [
+                    "forge",
+                    "build",
+                    "--build-info",
+                ],
                 cwd=self._target,
-                executable=shutil.which(cmd[0]),
-            ) as process:
-
-                stdout_bytes, stderr_bytes = process.communicate()
-                stdout, stderr = (
-                    stdout_bytes.decode(errors="backslashreplace"),
-                    stderr_bytes.decode(errors="backslashreplace"),
-                )  # convert bytestrings to unicode strings
-
-                LOGGER.info(stdout)
-                if stderr:
-                    LOGGER.error(stderr)
+            )
 
         build_directory = Path(
             self._target,
