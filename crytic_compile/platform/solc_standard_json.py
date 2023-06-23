@@ -26,7 +26,11 @@ LOGGER = logging.getLogger("CryticCompile")
 
 
 def standalone_compile(
-    filenames: List[str], compilation_unit: CompilationUnit, working_dir: Optional[str] = None
+    filenames: List[str],
+    compilation_unit: CompilationUnit,
+    working_dir: Optional[str] = None,
+    remappings: Optional[List[str]] = None,
+    evm_version: Optional[str] = None,
 ) -> None:
     """
     Boilerplate function to run the the standardjson. compilation_unit.compiler_version must be set before calling this function
@@ -42,6 +46,8 @@ def standalone_compile(
         filenames (List[str]): list of the files to compile
         compilation_unit (CompilationUnit): compilation unit object to populate
         working_dir (Optional[str]): working directory
+        remappings (Optional[List[str]]): list of solc remaps to use
+        evm_version (Optional[str]): EVM version to target. None for default
 
     Returns:
 
@@ -56,6 +62,13 @@ def standalone_compile(
 
     for filename in filenames:
         add_source_file(standard_json_dict, filename)
+
+    if remappings is not None:
+        for remap in remappings:
+            add_remapping(standard_json_dict, remap)
+
+    if evm_version is not None:
+        add_evm_version(standard_json_dict, evm_version)
 
     add_optimization(
         standard_json_dict,
@@ -142,6 +155,10 @@ def run_solc_standard_json(
         env["SOLC_VERSION"] = compiler_version.version
 
     stderr = ""
+    LOGGER.info(
+        "'%s' running",
+        " ".join(cmd),
+    )
     try:
 
         with subprocess.Popen(
@@ -243,6 +260,24 @@ def add_optimization(
     json_dict["settings"]["optimizer"] = {"enabled": False}
 
 
+def add_evm_version(json_dict: Dict, version: str) -> None:
+    """
+    Add the version of the EVM to compile for.
+
+    Can be one of the following values: homestead, tangerineWhistle,
+    spuriousDragon, byzantium, constantinople, petersburg, istanbul,
+    berlin, london or paris
+
+    Args:
+        json_dict (Dict): solc standard json input
+        version (str): the EVM version to target
+
+    Returns:
+
+    """
+    json_dict["settings"]["evmVersion"] = version
+
+
 def parse_standard_json_output(
     targets_json: Dict, compilation_unit: CompilationUnit, solc_working_dir: Optional[str] = None
 ) -> None:
@@ -260,6 +295,26 @@ def parse_standard_json_output(
     """
 
     skip_filename = compilation_unit.compiler_version.version in [f"0.4.{x}" for x in range(0, 10)]
+
+    if "sources" in targets_json:
+        for path, info in targets_json["sources"].items():
+            if skip_filename:
+                path = convert_filename(
+                    path,
+                    relative_to_short,
+                    compilation_unit.crytic_compile,
+                    working_dir=solc_working_dir,
+                )
+            else:
+                path = convert_filename(
+                    path,
+                    relative_to_short,
+                    compilation_unit.crytic_compile,
+                    working_dir=solc_working_dir,
+                )
+            source_unit = compilation_unit.create_source_unit(path)
+
+            source_unit.ast = info.get("ast")
 
     if "contracts" in targets_json:
         for file_path, file_contracts in targets_json["contracts"].items():
@@ -282,7 +337,7 @@ def parse_standard_json_output(
 
                 source_unit = compilation_unit.create_source_unit(filename)
 
-                source_unit.contracts_names.add(contract_name)
+                source_unit.add_contract_name(contract_name)
                 compilation_unit.filename_to_contracts[filename].add(contract_name)
                 source_unit.abis[contract_name] = info["abi"]
 
@@ -301,26 +356,6 @@ def parse_standard_json_output(
                 source_unit.srcmaps_runtime[contract_name] = info["evm"]["deployedBytecode"][
                     "sourceMap"
                 ].split(";")
-
-    if "sources" in targets_json:
-        for path, info in targets_json["sources"].items():
-            if skip_filename:
-                path = convert_filename(
-                    path,
-                    relative_to_short,
-                    compilation_unit.crytic_compile,
-                    working_dir=solc_working_dir,
-                )
-            else:
-                path = convert_filename(
-                    path,
-                    relative_to_short,
-                    compilation_unit.crytic_compile,
-                    working_dir=solc_working_dir,
-                )
-            source_unit = compilation_unit.create_source_unit(path)
-
-            source_unit.ast = info.get("ast")
 
 
 # Inherits is_dependency/is_supported from Solc

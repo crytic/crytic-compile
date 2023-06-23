@@ -175,11 +175,11 @@ class CryticCompile:
         Return the set of all the filenames used
 
         Returns:
-             Set[Filename]: list of filenames
+             Set[Filename]: set of filenames
         """
         filenames: Set[Filename] = set()
         for compile_unit in self._compilation_units.values():
-            filenames = filenames.union(compile_unit.filenames)
+            filenames |= set(compile_unit.filenames)
         return filenames
 
     def filename_lookup(self, filename: str) -> Filename:
@@ -566,7 +566,10 @@ class CryticCompile:
             custom_build (str): Command to run
         """
         cmd = custom_build.split(" ")
-
+        LOGGER.info(
+            "'%s' running",
+            " ".join(cmd),
+        )
         with subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
             stdout_bytes, stderr_bytes = process.communicate()
             stdout, stderr = (
@@ -663,6 +666,6 @@ def compile_all(target: str, **kwargs: str) -> List[CryticCompile]:
             for filename in filenames:
                 compilations.append(CryticCompile(filename, **kwargs))
     else:
-        raise ValueError(f"Unresolved target: {str(target)}")
+        raise ValueError(f"{str(target)} is not a file or directory.")
 
     return compilations

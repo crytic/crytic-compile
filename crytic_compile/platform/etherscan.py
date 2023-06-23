@@ -49,6 +49,7 @@ SUPPORTED_NETWORK = {
     "avax:": (".snowtrace.io", "snowtrace.io"),
     "testnet.avax:": ("-testnet.snowtrace.io", "testnet.snowtrace.io"),
     "ftm:": (".ftmscan.com", "ftmscan.com"),
+    "goerli.base:": ("-goerli.basescan.org", "goerli.basescan.org"),
 }
 
 
@@ -78,7 +79,7 @@ def _handle_bytecode(crytic_compile: "CryticCompile", target: str, result_b: byt
 
     source_unit = compilation_unit.create_source_unit(contract_filename)
 
-    source_unit.contracts_names.add(contract_name)
+    source_unit.add_contract_name(contract_name)
     compilation_unit.filename_to_contracts[contract_filename].add(contract_name)
     source_unit.abis[contract_name] = {}
     source_unit.bytecodes_init[contract_name] = bytecode
@@ -91,9 +92,6 @@ def _handle_bytecode(crytic_compile: "CryticCompile", target: str, result_b: byt
     )
 
     crytic_compile.bytecode_only = True
-
-
-# def _etherscan_single_file():
 
 
 def _handle_single_file(
@@ -124,7 +122,7 @@ def _handle_single_file(
 
 def _handle_multiple_files(
     dict_source_code: Dict, addr: str, prefix: Optional[str], contract_name: str, export_dir: str
-) -> Tuple[List[str], str]:
+) -> Tuple[List[str], str, Optional[List[str]]]:
     """Handle a result with a multiple files. Generate multiple Solidity files
 
     Args:
@@ -136,6 +134,9 @@ def _handle_multiple_files(
 
     Returns:
         Tuple[List[str], str]: filesnames, directory, where target_filename is the main file
+
+    Raises:
+        IOError: if the path is outside of the allowed directory
     """
     if prefix:
         directory = os.path.join(export_dir, f"{addr}{prefix}-{contract_name}")
@@ -152,6 +153,10 @@ def _handle_multiple_files(
     filtered_paths: List[str] = []
     for filename, source_code in source_codes.items():
         path_filename = PurePosixPath(filename)
+        # Only keep solidity files
+        if path_filename.suffix not in [".sol", ".vy"]:
+            continue
+
         # https://etherscan.io/address/0x19bb64b80cbf61e61965b0e5c2560cc7364c6546#code has an import of erc721a/contracts/ERC721A.sol
         # if the full path is lost then won't compile
         if "contracts" == path_filename.parts[0] and not filename.startswith("@"):
@@ -169,12 +174,19 @@ def _handle_multiple_files(
         filtered_paths.append(path_filename.as_posix())
         path_filename_disk = Path(directory, path_filename)
 
+        allowed_path = os.path.abspath(directory)
+        if os.path.commonpath((allowed_path, os.path.abspath(path_filename_disk))) != allowed_path:
+            raise IOError(
+                f"Path '{path_filename_disk}' is outside of the allowed directory: {allowed_path}"
+            )
         if not os.path.exists(path_filename_disk.parent):
             os.makedirs(path_filename_disk.parent)
         with open(path_filename_disk, "w", encoding="utf8") as file_desc:
             file_desc.write(source_code["content"])
 
-    return list(filtered_paths), directory
+    remappings = dict_source_code.get("settings", {}).get("remappings", None)
+
+    return list(filtered_paths), directory, _sanitize_remappings(remappings, directory)
 
 
 class Etherscan(AbstractPlatform):
@@ -261,7 +273,7 @@ class Etherscan(AbstractPlatform):
         contract_name: str = ""
 
         if not only_bytecode:
-            if "polygon" in etherscan_url:
+            if "polygon" in etherscan_url or "basescan" in etherscan_url:
                 # build object with headers, then send request
                 new_etherscan_url = urllib.request.Request(
                     etherscan_url, headers={"User-Agent": "Mozilla/5.0"}
@@ -274,9 +286,14 @@ class Etherscan(AbstractPlatform):
 
             info = json.loads(html)
 
-            if "result" in info and info["result"] == "Max rate limit reached":
+            if (
+                "result" in info
+                and "rate limit reached" in info["result"]
+                and "message" in info
+                and info["message"] == "NOTOK"
+            ):
                 LOGGER.error("Etherscan API rate limit exceeded")
-                raise InvalidCompilation("Etherscan api rate limit exceeded")
+                raise InvalidCompilation("Etherscan API rate limit exceeded")
 
             if "message" not in info:
                 LOGGER.error("Incorrect etherscan request")
@@ -323,6 +340,12 @@ class Etherscan(AbstractPlatform):
             r"\d+\.\d+\.\d+", _convert_version(result["CompilerVersion"])
         )[0]
 
+        # etherscan can report "default" which is not a valid EVM version
+        evm_version: Optional[str] = None
+        if "EVMVersion" in result:
+            assert isinstance(result["EVMVersion"], str)
+            evm_version = result["EVMVersion"] if result["EVMVersion"] != "Default" else None
+
         optimization_used: bool = result["OptimizationUsed"] == "1"
 
         optimize_runs = None
@@ -330,18 +353,19 @@ class Etherscan(AbstractPlatform):
             optimize_runs = int(result["Runs"])
 
         working_dir: Optional[str] = None
+        remappings: Optional[List[str]] = None
 
         try:
             # etherscan might return an object with two curly braces, {{ content }}
             dict_source_code = json.loads(source_code[1:-1])
-            filenames, working_dir = _handle_multiple_files(
+            filenames, working_dir, remappings = _handle_multiple_files(
                 dict_source_code, addr, prefix, contract_name, export_dir
             )
         except JSONDecodeError:
             try:
                 # or etherscan might return an object with single curly braces, { content }
                 dict_source_code = json.loads(source_code)
-                filenames, working_dir = _handle_multiple_files(
+                filenames, working_dir, remappings = _handle_multiple_files(
                     dict_source_code, addr, prefix, contract_name, export_dir
                 )
             except JSONDecodeError:
@@ -358,8 +382,13 @@ class Etherscan(AbstractPlatform):
             optimize_runs=optimize_runs,
         )
         compilation_unit.compiler_version.look_for_installed_version()
-
-        solc_standard_json.standalone_compile(filenames, compilation_unit, working_dir=working_dir)
+        solc_standard_json.standalone_compile(
+            filenames,
+            compilation_unit,
+            working_dir=working_dir,
+            remappings=remappings,
+            evm_version=evm_version,
+        )
 
     def clean(self, **_kwargs: str) -> None:
         pass
@@ -414,13 +443,44 @@ def _convert_version(version: str) -> str:
     return version[1 : version.find("+")]
 
 
-def _relative_to_short(relative: Path) -> Path:
-    """Translate relative path to short (do nothing for etherscan)
+def _sanitize_remappings(
+    remappings: Optional[List[str]], allowed_directory: str
+) -> Optional[List[str]]:
+    """Sanitize a list of remappings
 
     Args:
-        relative (Path): path to the target
+        remappings: (Optional[List[str]]): a list of remappings
+        allowed_directory: the allowed base directory for remaps
 
     Returns:
-        Path: Translated path
+        Optional[List[str]]: a list of sanitized remappings
     """
-    return relative
+
+    if remappings is None:
+        return remappings
+
+    allowed_path = os.path.abspath(allowed_directory)
+
+    remappings_clean: List[str] = []
+    for r in remappings:
+        split = r.split("=", 2)
+        if len(split) != 2:
+            LOGGER.warning("Invalid remapping %s", r)
+            continue
+
+        origin, dest = split[0], PurePosixPath(split[1])
+
+        # if path is absolute, relativize it
+        if dest.is_absolute():
+            dest = PurePosixPath(*dest.parts[1:])
+
+        dest_disk = Path(allowed_directory, dest)
+
+        if os.path.commonpath((allowed_path, os.path.abspath(dest_disk))) != allowed_path:
+            LOGGER.warning("Remapping %s=%s is potentially unsafe, skipping", origin, dest)
+            continue
+
+        # always use a trailing slash for the destination
+        remappings_clean.append(f"{origin}={str(dest / '_')[:-1]}")
+
+    return remappings_clean

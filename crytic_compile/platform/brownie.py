@@ -55,6 +55,10 @@ class Brownie(AbstractPlatform):
 
         if not brownie_ignore_compile:
             cmd = base_cmd + ["compile"]
+            LOGGER.info(
+                "'%s' running",
+                " ".join(cmd),
+            )
             try:
                 with subprocess.Popen(
                     cmd,
@@ -181,7 +185,7 @@ def _iterate_over_files(
 
             compilation_unit.filename_to_contracts[filename].add(contract_name)
 
-            source_unit.contracts_names.add(contract_name)
+            source_unit.add_contract_name(contract_name)
             source_unit.abis[contract_name] = target_loaded["abi"]
             source_unit.bytecodes_init[contract_name] = target_loaded["bytecode"].replace("0x", "")
             source_unit.bytecodes_runtime[contract_name] = target_loaded[

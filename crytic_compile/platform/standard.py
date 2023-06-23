@@ -285,12 +285,24 @@ def _load_from_compile_legacy1(crytic_compile: "CryticCompile", loaded_json: Dic
         version=loaded_json["compiler"]["version"],
         optimized=loaded_json["compiler"]["optimized"],
     )
+
+    if "filenames" in loaded_json:
+        compilation_unit.filenames = [
+            _convert_dict_to_filename(filename) for filename in loaded_json["filenames"]
+        ]
+
+    for path, ast in loaded_json["asts"].items():
+        # The following might create lookup issue?
+        filename = crytic_compile.filename_lookup(path)
+        source_unit = compilation_unit.create_source_unit(filename)
+        source_unit.ast = ast
+
     for contract_name, contract in loaded_json["contracts"].items():
         filename = _convert_dict_to_filename(contract["filenames"])
         compilation_unit.filename_to_contracts[filename].add(contract_name)
         source_unit = compilation_unit.create_source_unit(filename)
 
-        source_unit.contracts_names.add(contract_name)
+        source_unit.add_contract_name(contract_name)
         source_unit.abis[contract_name] = contract["abi"]
         source_unit.bytecodes_init[contract_name] = contract["bin"]
         source_unit.bytecodes_runtime[contract_name] = contract["bin-runtime"]
@@ -308,23 +320,6 @@ def _load_from_compile_legacy1(crytic_compile: "CryticCompile", loaded_json: Dic
             compilation_unit.crytic_compile.dependencies.add(filename.short)
             compilation_unit.crytic_compile.dependencies.add(filename.used)
 
-    if "filenames" in loaded_json:
-        compilation_unit.filenames = {
-            _convert_dict_to_filename(filename) for filename in loaded_json["filenames"]
-        }
-    else:
-        # For legay code, we recover the filenames from the contracts list
-        # This is not perfect, as a filename might not be associated to any contract
-        for contract_name, contract in loaded_json["contracts"].items():
-            filename = _convert_dict_to_filename(contract["filenames"])
-            compilation_unit.filenames.add(filename)
-
-    for path, ast in loaded_json["asts"].items():
-        # The following might create lookup issue?
-        filename = crytic_compile.filename_lookup(path)
-        source_unit = compilation_unit.create_source_unit(filename)
-        source_unit.ast = ast
-
 
 def _load_from_compile_legacy2(crytic_compile: "CryticCompile", loaded_json: Dict) -> None:
     """Load from old (old) export
@@ -341,6 +336,19 @@ def _load_from_compile_legacy2(crytic_compile: "CryticCompile", loaded_json: Dic
             version=compilation_unit_json["compiler"]["version"],
             optimized=compilation_unit_json["compiler"]["optimized"],
         )
+
+        if "filenames" in compilation_unit_json:
+            compilation_unit.filenames = [
+                _convert_dict_to_filename(filename)
+                for filename in compilation_unit_json["filenames"]
+            ]
+
+        for path, ast in loaded_json["asts"].items():
+            # The following might create lookup issue?
+            filename = crytic_compile.filename_lookup(path)
+            source_unit = compilation_unit.create_source_unit(filename)
+            source_unit.ast = ast
+
         for contract_name, contract in compilation_unit_json["contracts"].items():
 
             filename = Filename(
@@ -352,7 +360,7 @@ def _load_from_compile_legacy2(crytic_compile: "CryticCompile", loaded_json: Dic
             compilation_unit.filename_to_contracts[filename].add(contract_name)
 
             source_unit = compilation_unit.create_source_unit(filename)
-            source_unit.contracts_names.add(contract_name)
+            source_unit.add_contract_name(contract_name)
             source_unit.abis[contract_name] = contract["abi"]
             source_unit.bytecodes_init[contract_name] = contract["bin"]
             source_unit.bytecodes_runtime[contract_name] = contract["bin-runtime"]
@@ -370,24 +378,6 @@ def _load_from_compile_legacy2(crytic_compile: "CryticCompile", loaded_json: Dic
                 crytic_compile.dependencies.add(filename.short)
                 crytic_compile.dependencies.add(filename.used)
 
-        if "filenames" in compilation_unit_json:
-            compilation_unit.filenames = {
-                _convert_dict_to_filename(filename)
-                for filename in compilation_unit_json["filenames"]
-            }
-        else:
-            # For legacy code, we recover the filenames from the contracts list
-            # This is not perfect, as a filename might not be associated to any contract
-            for contract_name, contract in compilation_unit_json["contracts"].items():
-                filename = _convert_dict_to_filename(contract["filenames"])
-                compilation_unit.filenames.add(filename)
-
-        for path, ast in loaded_json["asts"].items():
-            # The following might create lookup issue?
-            filename = crytic_compile.filename_lookup(path)
-            source_unit = compilation_unit.create_source_unit(filename)
-            source_unit.ast = ast
-
 
 def _load_from_compile_0_0_1(crytic_compile: "CryticCompile", loaded_json: Dict) -> None:
     for key, compilation_unit_json in loaded_json["compilation_units"].items():
@@ -397,6 +387,17 @@ def _load_from_compile_0_0_1(crytic_compile: "CryticCompile", loaded_json: Dict)
             version=compilation_unit_json["compiler"]["version"],
             optimized=compilation_unit_json["compiler"]["optimized"],
         )
+
+        compilation_unit.filenames = [
+            _convert_dict_to_filename(filename) for filename in compilation_unit_json["filenames"]
+        ]
+
+        for path, ast in compilation_unit_json["asts"].items():
+            # The following might create lookup issue?
+            filename = crytic_compile.filename_lookup(path)
+            source_unit = compilation_unit.create_source_unit(filename)
+            source_unit.ast = ast
+
         for contracts_data in compilation_unit_json["contracts"].values():
             for contract_name, contract in contracts_data.items():
 
@@ -408,7 +409,7 @@ def _load_from_compile_0_0_1(crytic_compile: "CryticCompile", loaded_json: Dict)
                 )
                 compilation_unit.filename_to_contracts[filename].add(contract_name)
                 source_unit = compilation_unit.create_source_unit(filename)
-                source_unit.contracts_names.add(contract_name)
+                source_unit.add_contract_name(contract_name)
                 source_unit.abis[contract_name] = contract["abi"]
                 source_unit.bytecodes_init[contract_name] = contract["bin"]
                 source_unit.bytecodes_runtime[contract_name] = contract["bin-runtime"]
@@ -426,16 +427,6 @@ def _load_from_compile_0_0_1(crytic_compile: "CryticCompile", loaded_json: Dict)
                     crytic_compile.dependencies.add(filename.short)
                     crytic_compile.dependencies.add(filename.used)
 
-        compilation_unit.filenames = {
-            _convert_dict_to_filename(filename) for filename in compilation_unit_json["filenames"]
-        }
-
-        for path, ast in compilation_unit_json["asts"].items():
-            # The following might create lookup issue?
-            filename = crytic_compile.filename_lookup(path)
-            source_unit = compilation_unit.create_source_unit(filename)
-            source_unit.ast = ast
-
 
 def _load_from_compile_current(crytic_compile: "CryticCompile", loaded_json: Dict) -> None:
     for key, compilation_unit_json in loaded_json["compilation_units"].items():
@@ -446,9 +437,9 @@ def _load_from_compile_current(crytic_compile: "CryticCompile", loaded_json: Dic
             optimized=compilation_unit_json["compiler"]["optimized"],
         )
 
-        compilation_unit.filenames = {
+        compilation_unit.filenames = [
             _convert_dict_to_filename(filename) for filename in compilation_unit_json["filenames"]
-        }
+        ]
 
         for filename_str, source_unit_data in compilation_unit_json["source_units"].items():
             filename = compilation_unit.filename_lookup(filename_str)
@@ -458,7 +449,7 @@ def _load_from_compile_current(crytic_compile: "CryticCompile", loaded_json: Dic
                 compilation_unit.filename_to_contracts[filename].add(contract_name)
 
                 source_unit = compilation_unit.create_source_unit(filename)
-                source_unit.contracts_names.add(contract_name)
+                source_unit.add_contract_name(contract_name)
                 source_unit.abis[contract_name] = contract["abi"]
                 source_unit.bytecodes_init[contract_name] = contract["bin"]
                 source_unit.bytecodes_runtime[contract_name] = contract["bin-runtime"]

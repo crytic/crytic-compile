@@ -69,6 +69,13 @@ class Dapp(AbstractPlatform):
             if "version" in targets_json:
                 version = re.findall(r"\d+\.\d+\.\d+", targets_json["version"])[0]
 
+            for path, info in targets_json["sources"].items():
+                path = convert_filename(
+                    path, _relative_to_short, crytic_compile, working_dir=self._target
+                )
+                source_unit = compilation_unit.create_source_unit(path)
+                source_unit.ast = info["ast"]
+
             for original_filename, contracts_info in targets_json["contracts"].items():
 
                 filename = convert_filename(
@@ -87,7 +94,7 @@ class Dapp(AbstractPlatform):
                         ):
                             optimized |= metadata["settings"]["optimizer"]["enabled"]
                     contract_name = extract_name(original_contract_name)
-                    source_unit.contracts_names.add(contract_name)
+                    source_unit.add_contract_name(contract_name)
                     compilation_unit.filename_to_contracts[filename].add(contract_name)
 
                     source_unit.abis[contract_name] = info["abi"]
@@ -109,13 +116,6 @@ class Dapp(AbstractPlatform):
                     if version is None:
                         metadata = json.loads(info["metadata"])
                         version = re.findall(r"\d+\.\d+\.\d+", metadata["compiler"]["version"])[0]
-
-            for path, info in targets_json["sources"].items():
-                path = convert_filename(
-                    path, _relative_to_short, crytic_compile, working_dir=self._target
-                )
-                source_unit = compilation_unit.create_source_unit(path)
-                source_unit.ast = info["ast"]
 
         compilation_unit.compiler_version = CompilerVersion(
             compiler="solc", version=version, optimized=optimized
