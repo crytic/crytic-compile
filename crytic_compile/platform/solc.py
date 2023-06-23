@@ -444,7 +444,7 @@ def _build_options(compiler_version: CompilerVersion, force_legacy_json: bool) -
     return "abi,ast,bin,bin-runtime,srcmap,srcmap-runtime,userdoc,devdoc,hashes"
 
 
-# pylint: disable=too-many-arguments,too-many-locals,too-many-branches
+# pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
 def _run_solc(
     compilation_unit: "CompilationUnit",
     filename: str,
@@ -521,15 +521,21 @@ def _run_solc(
     if not compiler_version.version in [f"0.4.{x}" for x in range(0, 11)]:
         # Add . as default allowed path
         if "--allow-paths" not in cmd:
-            relative_filepath = filename
+            file_dir_start = os.path.normpath(os.path.dirname(filename))
+            file_dir = os.path.abspath(file_dir_start)
+            if "," in file_dir:
+                try:
+                    file_dir = os.path.relpath(file_dir_start)
+                except ValueError:
+                    pass
 
-            if not working_dir:
-                working_dir = os.getcwd()
+            if "," not in file_dir:
+                cmd += ["--allow-paths", ".," + file_dir]
+            else:
+                LOGGER.warning(
+                    "Solc filepath contains a comma; omitting the --allow-paths argument. This may result in failed imports.\n"
+                )
 
-            if relative_filepath.startswith(str(working_dir)):
-                relative_filepath = relative_filepath[len(str(working_dir)) + 1 :]
-
-            cmd += ["--allow-paths", ".", relative_filepath]
     try:
         LOGGER.info(
             "'%s' running",
