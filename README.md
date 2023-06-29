@@ -1,6 +1,6 @@
 # Crytic-compile
 [![Build Status](https://img.shields.io/github/workflow/status/crytic/crytic-compile/CI/master)](https://github.com/crytic/crytic-compile/actions?query=workflow%3ACI)
-[![Slack Status](https://empireslacking.herokuapp.com/badge.svg)](https://empireslacking.herokuapp.com)
+[![Slack Status](https://slack.empirehacking.nyc/badge.svg)](https://slack.empirehacking.nyc)
 [![PyPI version](https://badge.fury.io/py/crytic-compile.svg)](https://badge.fury.io/py/crytic-compile)
 
 Library to help smart contract compilation. It includes support for:
