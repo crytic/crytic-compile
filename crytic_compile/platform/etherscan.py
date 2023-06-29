@@ -386,8 +386,8 @@ class Etherscan(AbstractPlatform):
         if "Proxy" in result and result["Proxy"] == "1":
             assert "Implementation" in result
             implementation = str(result["Implementation"])
-            if prefix is not None:
-                implementation = f"{prefix}:{implementation}"
+            if target.startswith(tuple(SUPPORTED_NETWORK)):
+                implementation = f"{target[:target.find(':')]}:{implementation}"
             compilation_unit.implementation_address = implementation
 
         solc_standard_json.standalone_compile(
