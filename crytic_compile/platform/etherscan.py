@@ -385,7 +385,7 @@ class Etherscan(AbstractPlatform):
 
         if "Proxy" in result and result["Proxy"] == "1":
             assert "Implementation" in result
-            implementation = result["Implementation"]
+            implementation = str(result["Implementation"])
             if prefix is not None:
                 implementation = f"{prefix}:{implementation}"
             compilation_unit.implementation_address = implementation
