@@ -49,14 +49,22 @@ class Foundry(AbstractPlatform):
             )
 
         if not ignore_compile:
-            run(
-                [
-                    "forge",
-                    "build",
-                    "--build-info",
-                ],
-                cwd=self._target,
-            )
+            commands_to_run = [
+                "forge",
+                "build",
+                "--build-info",
+            ]
+
+            dont_skip = kwargs.get("foundry_dont_skip", False)
+            if not dont_skip:
+                # Adding flags to skip test/ and script/ directory
+                commands_to_run += [
+                    "--skip",
+                    "test",
+                    "script",
+                ]
+
+            run(commands_to_run, cwd=self._target)
 
         build_directory = Path(
             self._target,

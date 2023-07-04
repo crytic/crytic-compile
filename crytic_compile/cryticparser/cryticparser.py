@@ -496,3 +496,11 @@ def _init_foundry(parser: ArgumentParser) -> None:
         dest="foundry_out_directory",
         default=DEFAULTS_FLAG_IN_CONFIG["foundry_out_directory"],
     )
+
+    group_foundry.add_argument(
+        "--foundry-dont-skip",
+        help='Do not add "--skip test script" flags',
+        action="store_true",
+        dest="foundry_dont_skip",
+        default=DEFAULTS_FLAG_IN_CONFIG["foundry_dont_skip"],
+    )
