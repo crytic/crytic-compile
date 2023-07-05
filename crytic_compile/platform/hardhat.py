@@ -216,8 +216,10 @@ class Hardhat(AbstractPlatform):
         if os.path.isfile(os.path.join(target, "foundry.toml")):
             return False
 
-        return os.path.isfile(os.path.join(target, "hardhat.config.js")) | os.path.isfile(
-            os.path.join(target, "hardhat.config.ts")
+        return (
+            os.path.isfile(os.path.join(target, "hardhat.config.js"))
+            or os.path.isfile(os.path.join(target, "hardhat.config.ts"))
+            or os.path.isfile(os.path.join(target, "hardhat.config.cjs"))
         )
 
     def is_dependency(self, path: str) -> bool:
