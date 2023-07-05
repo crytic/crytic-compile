@@ -60,8 +60,9 @@ class Foundry(AbstractPlatform):
                 # Adding flags to skip test/ and script/ directory
                 commands_to_run += [
                     "--skip",
-                    "test",
-                    "script",
+                    "*/test/**",
+                    "*/script/**",
+                    "--force",
                 ]
 
             run(commands_to_run, cwd=self._target)
