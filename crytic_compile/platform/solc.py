@@ -519,16 +519,21 @@ def _run_solc(
 
     additional_kwargs: Dict = {"cwd": working_dir} if working_dir else {}
     if not compiler_version.version in [f"0.4.{x}" for x in range(0, 11)]:
-        # Add . as default allowed path
+        # Add --allow-paths argument, if it isn't already specified
+        # We allow the CWD as well as the directory that contains the file
         if "--allow-paths" not in cmd:
             file_dir_start = os.path.normpath(os.path.dirname(filename))
+            # Paths in the --allow-paths arg can't contain commas, since this is the delimeter
+            # Try using absolute path; if it contains a comma, try using relative path instead
             file_dir = os.path.abspath(file_dir_start)
             if "," in file_dir:
                 try:
                     file_dir = os.path.relpath(file_dir_start)
                 except ValueError:
+                    # relpath can fail if, for example, we're on Windows and the directory is on a different drive than CWD
                     pass
 
+            # Even the relative path might have a comma in it, so we want to make sure first
             if "," not in file_dir:
                 cmd += ["--allow-paths", ".," + file_dir]
             else:
