@@ -245,12 +245,6 @@ class Waffle(AbstractPlatform):
         if waffle_ignore:
             return False
 
-        # Avoid conflicts with hardhat
-        if os.path.isfile(os.path.join(target, "hardhat.config.js")) | os.path.isfile(
-            os.path.join(target, "hardhat.config.ts")
-        ):
-            return False
-
         if os.path.isfile(os.path.join(target, "waffle.json")) or os.path.isfile(
             os.path.join(target, ".waffle.json")
         ):

@@ -35,6 +35,7 @@ setup(
     },
     license="AGPL-3.0",
     long_description=long_description,
+    long_description_content_type="text/markdown",
     package_data={"crytic_compile": ["py.typed"]},
     entry_points={"console_scripts": ["crytic-compile = crytic_compile.__main__:main"]},
 )
