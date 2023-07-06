@@ -36,14 +36,14 @@ logging.basicConfig()
 
 
 def get_platforms() -> List[Type[AbstractPlatform]]:
-    """Return the available platforms classes
+    """Return the available platforms classes in order of preference
 
     Returns:
         List[Type[AbstractPlatform]]: Available platforms
     """
     platforms = [getattr(all_platforms, name) for name in dir(all_platforms)]
     platforms = [d for d in platforms if inspect.isclass(d) and issubclass(d, AbstractPlatform)]
-    return sorted(platforms, key=lambda platform: platform.TYPE)
+    return sorted(platforms, key=lambda platform: (platform.TYPE.priority(), platform.TYPE))
 
 
 def is_supported(target: str) -> bool:

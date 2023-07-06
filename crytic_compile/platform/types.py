@@ -66,3 +66,24 @@ class Type(IntEnum):
         if self == Type.FOUNDRY:
             return "Foundry"
         raise ValueError
+
+    def priority(self) -> int:
+        """Return the priority for a certain platform.
+
+        A lower priority means the platform is more preferable. This is used to
+        consistently select a platform when two or more are available.
+
+        Returns:
+            int: priority number
+        """
+
+        if self == Type.FOUNDRY:
+            return 100
+
+        if self == Type.HARDHAT:
+            return 200
+
+        if self in [Type.TRUFFLE, Type.WAFFLE]:
+            return 300
+
+        return 1000
