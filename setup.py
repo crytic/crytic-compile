@@ -11,10 +11,10 @@ setup(
     description="Util to facilitate smart contracts compilation.",
     url="https://github.com/crytic/crytic-compile",
     author="Trail of Bits",
-    version="0.3.2",
+    version="0.3.3",
     packages=find_packages(),
     python_requires=">=3.8",
-    install_requires=["pycryptodome>=3.4.6", "cbor2", "solc-select>=v1.0.2"],
+    install_requires=["pycryptodome>=3.4.6", "cbor2", "solc-select>=v1.0.4"],
     extras_require={
         "test": [
             "pytest",
