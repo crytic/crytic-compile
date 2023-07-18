@@ -246,25 +246,25 @@ class Etherscan(AbstractPlatform):
         if etherscan_api_key and "etherscan" in etherscan_url:
             etherscan_url += f"&apikey={etherscan_api_key}"
             etherscan_bytecode_url += f"&apikey={etherscan_api_key}"
-        if arbiscan_api_key and "arbiscan" in etherscan_url:
+        elif arbiscan_api_key and "arbiscan" in etherscan_url:
             etherscan_url += f"&apikey={arbiscan_api_key}"
             etherscan_bytecode_url += f"&apikey={arbiscan_api_key}"
-        if polygonscan_api_key and "polygonscan" in etherscan_url:
+        elif polygonscan_api_key and "polygonscan" in etherscan_url:
             etherscan_url += f"&apikey={polygonscan_api_key}"
             etherscan_bytecode_url += f"&apikey={polygonscan_api_key}"
-        if test_polygonscan_api_key and "polygonscan" in etherscan_url:
+        elif test_polygonscan_api_key and "polygonscan" in etherscan_url:
             etherscan_url += f"&apikey={test_polygonscan_api_key}"
             etherscan_bytecode_url += f"&apikey={test_polygonscan_api_key}"
-        if avax_api_key and "snowtrace" in etherscan_url:
+        elif avax_api_key and "snowtrace" in etherscan_url:
             etherscan_url += f"&apikey={avax_api_key}"
             etherscan_bytecode_url += f"&apikey={avax_api_key}"
-        if ftmscan_api_key and "ftmscan" in etherscan_url:
+        elif ftmscan_api_key and "ftmscan" in etherscan_url:
             etherscan_url += f"&apikey={ftmscan_api_key}"
             etherscan_bytecode_url += f"&apikey={ftmscan_api_key}"
-        if bscan_api_key and "bscscan" in etherscan_url:
+        elif bscan_api_key and "bscscan" in etherscan_url:
             etherscan_url += f"&apikey={bscan_api_key}"
             etherscan_bytecode_url += f"&apikey={bscan_api_key}"
-        if optim_api_key and "optim" in etherscan_url:
+        elif optim_api_key and "optim" in etherscan_url:
             etherscan_url += f"&apikey={optim_api_key}"
             etherscan_bytecode_url += f"&apikey={optim_api_key}"
 
@@ -298,6 +298,10 @@ class Etherscan(AbstractPlatform):
             if "message" not in info:
                 LOGGER.error("Incorrect etherscan request")
                 raise InvalidCompilation("Incorrect etherscan request " + etherscan_url)
+            
+            if not info["message"].startswith("OK") and "Invalid API Key" in info["result"]:
+                LOGGER.error("Invalid etherscan API Key")
+                raise InvalidCompilation("Invalid etherscan API Key: " + etherscan_url)
 
             if not info["message"].startswith("OK"):
                 LOGGER.error("Contract has no public source code")
