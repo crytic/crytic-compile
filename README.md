@@ -55,7 +55,7 @@ If your project uses [libraries](https://docs.soliditylang.org/en/latest/contrac
 
 
 ```shell
-crytic-compile . --compile-libraries --compile-libraries "(SafeMath, 0xff)"
+crytic-compile . --compile-libraries "(SafeMath, 0xff)"
 ```
 
 If you are fuzzing with Echidna or Medusa, follow this [tutorial on linking libraries](https://secure-contracts.com/program-analysis/echidna/advanced/working-with-libraries.html?highlight=library#linking-libraries).
