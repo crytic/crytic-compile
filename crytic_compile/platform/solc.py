@@ -34,10 +34,11 @@ LOGGER = logging.getLogger("CryticCompile")
 def _build_contract_data(compilation_unit: "CompilationUnit") -> Dict:
     contracts = {}
 
-    libraries = compilation_unit.crytic_compile.libraries
+    libraries_to_update = compilation_unit.crytic_compile.libraries
 
     for filename, source_unit in compilation_unit.source_units.items():
         for contract_name in source_unit.contracts_names:
+            libraries = source_unit.libraries_names_and_patterns(contract_name)
             abi = str(source_unit.abi(contract_name))
             abi = abi.replace("'", '"')
             abi = abi.replace("True", "true")
@@ -48,10 +49,11 @@ def _build_contract_data(compilation_unit: "CompilationUnit") -> Dict:
                 "srcmap": ";".join(source_unit.srcmap_init(contract_name)),
                 "srcmap-runtime": ";".join(source_unit.srcmap_runtime(contract_name)),
                 "abi": abi,
-                "bin": source_unit.bytecode_init(contract_name, libraries),
-                "bin-runtime": source_unit.bytecode_runtime(contract_name, libraries),
+                "bin": source_unit.bytecode_init(contract_name, libraries_to_update),
+                "bin-runtime": source_unit.bytecode_runtime(contract_name, libraries_to_update),
                 "userdoc": source_unit.natspec[contract_name].userdoc.export(),
                 "devdoc": source_unit.natspec[contract_name].devdoc.export(),
+                "libraries": dict(libraries) if libraries else {},
             }
     return contracts
 
