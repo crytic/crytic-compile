@@ -53,7 +53,7 @@ def _build_contract_data(compilation_unit: "CompilationUnit") -> Dict:
                 "bin-runtime": source_unit.bytecode_runtime(contract_name, libraries_to_update),
                 "userdoc": source_unit.natspec[contract_name].userdoc.export(),
                 "devdoc": source_unit.natspec[contract_name].devdoc.export(),
-                "libraries": dict(libraries) if libraries else {},
+                "libraries": libraries if libraries else [],
             }
     return contracts
 
