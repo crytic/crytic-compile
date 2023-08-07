@@ -11,7 +11,7 @@ TEST_DIR = Path(__file__).resolve().parent
 LIBRARY_PLACEHOLDER_REGEX = r"__.{36}__"
 
 
-def test_library_linking():
+def test_library_linking() -> None:
     cc = CryticCompile(
         Path(TEST_DIR / "library_linking.sol").as_posix(),
         compile_libraries="(NeedsLinkingA, 0xdead),(NeedsLinkingB, 0x000000000000000000000000000000000000beef)",
@@ -45,7 +45,7 @@ def test_library_linking():
             )
 
 
-def test_library_linking_validation():
+def test_library_linking_validation() -> None:
     with pytest.raises(ValueError):
         cc = CryticCompile(
             Path(TEST_DIR / "library_linking.sol").as_posix(),
