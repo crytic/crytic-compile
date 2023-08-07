@@ -63,8 +63,8 @@ def _extract_libraries(libraries_str: Optional[str]) -> Optional[Dict[str, int]]
 
     if not libraries_str:
         return None
-
-    pattern = r"\((?P<name>\w+),\s*(?P<value1>0x[0-9a-fA-F]{2})\),?"
+    # Extract tuple like (libname1, 0x00)
+    pattern = r"\((?P<name>\w+),\s*(?P<value1>0x[0-9a-fA-F]{2,40})\),?"
     matches = re.findall(pattern, libraries_str)
 
     if not matches:
