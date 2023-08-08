@@ -299,6 +299,10 @@ class Etherscan(AbstractPlatform):
                 LOGGER.error("Incorrect etherscan request")
                 raise InvalidCompilation("Incorrect etherscan request " + etherscan_url)
 
+            if not info["message"].startswith("OK") and "Invalid API Key" in info["result"]:
+                LOGGER.error("Invalid etherscan API Key")
+                raise InvalidCompilation("Invalid etherscan API Key: " + etherscan_url)
+
             if not info["message"].startswith("OK"):
                 LOGGER.error("Contract has no public source code")
                 raise InvalidCompilation("Contract has no public source code: " + etherscan_url)
