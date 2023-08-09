@@ -4,7 +4,7 @@ Abstract Platform
 This gives the skeleton for any platform supported by crytic-compile
 """
 import abc
-from typing import TYPE_CHECKING, List, Dict
+from typing import TYPE_CHECKING, List, Dict, Any, Optional
 
 from crytic_compile.platform import Type
 from crytic_compile.utils.unit_tests import guess_tests
@@ -153,6 +153,19 @@ class AbstractPlatform(metaclass=abc.ABCMeta):
             bool: True if the target is a dependency
         """
         return False
+
+    @staticmethod
+    @abc.abstractmethod
+    def config(working_dir: str) -> Optional[Dict[str, Any]]:
+        """Return configuration data that should be passed to solc, such as version, remappings ecc.
+
+        Args:
+            working_dir (str): path to the target
+
+        Returns:
+            Optional[Dict[str, Any]]: Data such as version, remappings ecc
+        """
+        return None
 
     # Only _guessed_tests is an abstract method
     # guessed_tests will call the generic guess_tests and appends to the list
