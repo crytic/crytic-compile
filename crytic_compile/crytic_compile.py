@@ -14,7 +14,12 @@ from collections import defaultdict
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, List, Optional, Set, Tuple, Type, Union
 
-from solc_select.solc_select import switch_global_version, current_version
+from solc_select.solc_select import (
+    install_artifacts,
+    installed_versions,
+    current_version,
+    artifact_path,
+)
 from crytic_compile.compilation_unit import CompilationUnit
 from crytic_compile.platform import all_platforms, solc_standard_json
 from crytic_compile.platform.abstract_platform import AbstractPlatform
@@ -143,11 +148,18 @@ class CryticCompile:
                             "solc_version" in solc_config
                             and solc_config["solc_version"] != current_version()[0]
                         ):
-                            # Respect foundry offline option and don't install a missing solc version
-                            if "offline" in solc_config and solc_config["offline"]:
-                                switch_global_version(solc_config["solc_version"], False)
+                            solc_version = solc_config["solc_version"]
+                            if solc_version in installed_versions():
+                                kwargs["solc"] = str(artifact_path(solc_version).absolute())
                             else:
-                                switch_global_version(solc_config["solc_version"], True)
+                                # Respect foundry offline option and don't install a missing solc version
+                                if (
+                                    "offline" not in solc_config
+                                    or "offline" in solc_config
+                                    and not solc_config["offline"]
+                                ):
+                                    install_artifacts([solc_version])
+                                    kwargs["solc"] = str(artifact_path(solc_version).absolute())
                         if "optimizer" in solc_config and solc_config["optimizer"]:
                             kwargs["solc_args"] += "--optimize"
                         if "optimizer_runs" in solc_config:
