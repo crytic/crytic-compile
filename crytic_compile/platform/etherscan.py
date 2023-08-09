@@ -9,7 +9,7 @@ import re
 import urllib.request
 from json.decoder import JSONDecodeError
 from pathlib import Path, PurePosixPath
-from typing import TYPE_CHECKING, Dict, List, Union, Tuple, Optional
+from typing import TYPE_CHECKING, Dict, List, Union, Tuple, Optional, Any
 
 from crytic_compile.compilation_unit import CompilationUnit
 from crytic_compile.compiler.compiler import CompilerVersion
@@ -410,6 +410,18 @@ class Etherscan(AbstractPlatform):
         if target.startswith(tuple(SUPPORTED_NETWORK)):
             target = target[target.find(":") + 1 :]
         return bool(re.match(r"^\s*0x[a-zA-Z0-9]{40}\s*$", target))
+
+    @staticmethod
+    def config(working_dir: str) -> Optional[Dict[str, Any]]:
+        """Return configuration data that should be passed to solc, such as remappings.
+
+        Args:
+            working_dir (str): path to the working directory
+
+        Returns:
+            Dict[str, Any]: Data such as remappings
+        """
+        return None
 
     def is_dependency(self, _path: str) -> bool:
         """Check if the path is a dependency

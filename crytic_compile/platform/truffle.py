@@ -11,7 +11,7 @@ import shutil
 import subprocess
 import uuid
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Any
 
 from crytic_compile.compilation_unit import CompilationUnit
 from crytic_compile.compiler.compiler import CompilerVersion
@@ -308,6 +308,18 @@ class Truffle(AbstractPlatform):
         return os.path.isfile(os.path.join(target, "truffle.js")) or os.path.isfile(
             os.path.join(target, "truffle-config.js")
         )
+
+    @staticmethod
+    def config(working_dir: str) -> Optional[Dict[str, Any]]:
+        """Return configuration data that should be passed to solc, such as remappings.
+
+        Args:
+            working_dir (str): path to the working directory
+
+        Returns:
+            Dict[str, Any]: Data such as remappings
+        """
+        return None
 
     # pylint: disable=no-self-use
     def is_dependency(self, path: str) -> bool:

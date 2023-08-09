@@ -10,7 +10,7 @@ import shutil
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Optional
+from typing import TYPE_CHECKING, Dict, List, Optional, Any
 
 from crytic_compile.compilation_unit import CompilationUnit
 from crytic_compile.compiler.compiler import CompilerVersion
@@ -259,6 +259,18 @@ class Waffle(AbstractPlatform):
                 return "ethereum-waffle" in package["devDependencies"]
 
         return False
+
+    @staticmethod
+    def config(working_dir: str) -> Optional[Dict[str, Any]]:
+        """Return configuration data that should be passed to solc, such as remappings.
+
+        Args:
+            working_dir (str): path to the working directory
+
+        Returns:
+            Dict[str, Any]: Data such as remappings
+        """
+        return None
 
     def is_dependency(self, path: str) -> bool:
         """Check if the path is a dependency

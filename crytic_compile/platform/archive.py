@@ -7,7 +7,7 @@ Which is a map: filename -> sourcecode
 import json
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Tuple, Type, Any
+from typing import TYPE_CHECKING, Dict, List, Tuple, Type, Any, Optional
 
 from crytic_compile.platform import Type as TypePlatform
 from crytic_compile.platform import standard
@@ -117,6 +117,18 @@ class Archive(AbstractPlatform):
         if not Path(target).parts:
             return False
         return Path(target).parts[-1].endswith("_export_archive.json")
+
+    @staticmethod
+    def config(working_dir: str) -> Optional[Dict[str, Any]]:
+        """Return configuration data that should be passed to solc, such as remappings.
+
+        Args:
+            working_dir (str): path to the working directory
+
+        Returns:
+            Dict[str, Any]: Data such as remappings
+        """
+        return None
 
     def is_dependency(self, _path: str) -> bool:
         """Check if the _path is a dependency. Always false

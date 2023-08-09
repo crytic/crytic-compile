@@ -7,7 +7,7 @@ import os
 import shutil
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Tuple
+from typing import TYPE_CHECKING, List, Tuple, Optional, Dict, Any
 
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform.exceptions import InvalidCompilation
@@ -192,6 +192,18 @@ class Buidler(AbstractPlatform):
         is_javascript = os.path.isfile(os.path.join(target, "buidler.config.js"))
         is_typescript = os.path.isfile(os.path.join(target, "buidler.config.ts"))
         return is_javascript or is_typescript
+
+    @staticmethod
+    def config(working_dir: str) -> Optional[Dict[str, Any]]:
+        """Return configuration data that should be passed to solc, such as remappings.
+
+        Args:
+            working_dir (str): path to the working directory
+
+        Returns:
+            Dict[str, Any]: Data such as remappings
+        """
+        return None
 
     def is_dependency(self, path: str) -> bool:
         """Check if the path is a dependency

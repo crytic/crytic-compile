@@ -8,7 +8,7 @@ import re
 import shutil
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Optional
+from typing import TYPE_CHECKING, Dict, List, Optional, Any
 
 from crytic_compile.compilation_unit import CompilationUnit
 from crytic_compile.compiler.compiler import CompilerVersion
@@ -113,6 +113,18 @@ class Brownie(AbstractPlatform):
             or os.path.isfile(os.path.join(target, "brownie-config.yaml"))
             or os.path.isfile(os.path.join(target, "brownie-config.yml"))
         )
+
+    @staticmethod
+    def config(working_dir: str) -> Optional[Dict[str, Any]]:
+        """Return configuration data that should be passed to solc, such as remappings.
+
+        Args:
+            working_dir (str): path to the working directory
+
+        Returns:
+            Dict[str, Any]: Data such as remappings
+        """
+        return None
 
     def is_dependency(self, _path: str) -> bool:
         """Check if the path is a dependency (not supported for brownie)

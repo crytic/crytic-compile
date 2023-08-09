@@ -12,7 +12,7 @@ import subprocess
 from pathlib import Path
 
 # Cycle dependency
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, List, Optional, Dict, Any
 
 from crytic_compile.compilation_unit import CompilationUnit
 from crytic_compile.compiler.compiler import CompilerVersion
@@ -156,6 +156,18 @@ class Dapp(AbstractPlatform):
                 txt = file_desc.read()
                 return "dapp " in txt
         return False
+
+    @staticmethod
+    def config(working_dir: str) -> Optional[Dict[str, Any]]:
+        """Return configuration data that should be passed to solc, such as remappings.
+
+        Args:
+            working_dir (str): path to the working directory
+
+        Returns:
+            Dict[str, Any]: Data such as remappings
+        """
+        return None
 
     def is_dependency(self, path: str) -> bool:
         """Check if the path is a dependency (not supported for brownie)

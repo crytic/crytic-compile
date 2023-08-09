@@ -7,7 +7,7 @@ import os
 import shutil
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Optional
+from typing import TYPE_CHECKING, Dict, List, Optional, Any
 
 from crytic_compile.compilation_unit import CompilationUnit
 from crytic_compile.compiler.compiler import CompilerVersion
@@ -119,6 +119,18 @@ class Vyper(AbstractPlatform):
         if vyper_ignore:
             return False
         return os.path.isfile(target) and target.endswith(".vy")
+
+    @staticmethod
+    def config(working_dir: str) -> Optional[Dict[str, Any]]:
+        """Return configuration data that should be passed to solc, such as remappings.
+
+        Args:
+            working_dir (str): path to the working directory
+
+        Returns:
+            Dict[str, Any]: Data such as remappings
+        """
+        return None
 
     def _guessed_tests(self) -> List[str]:
         """Guess the potential unit tests commands
