@@ -14,6 +14,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, List, Optional, Set, Tuple, Type, Union
 
+from solc_select.solc_select import switch_global_version, current_version
 from crytic_compile.compilation_unit import CompilationUnit
 from crytic_compile.platform import all_platforms, solc_standard_json
 from crytic_compile.platform.abstract_platform import AbstractPlatform
@@ -116,6 +117,49 @@ class CryticCompile:
 
         if isinstance(target, str):
             platform = self._init_platform(target, **kwargs)
+            # If the platform is Solc it means we are trying to compile a single
+            # we try to see if we are in a known compilation framework to retrieve
+            # information like remappings and solc version
+            if kwargs["auto_compile"] and isinstance(platform, Solc):
+                # Try to get the platform of the current working directory
+                platform_wd = next(
+                    (
+                        p(target)
+                        for p in get_platforms()
+                        if p.is_supported(str(self._working_dir), **kwargs)
+                    ),
+                    None,
+                )
+                # If no platform has been found or if it's a Solc we can't do anything
+                if platform_wd and not isinstance(platform_wd, Solc):
+                    solc_config = platform_wd.config(str(self._working_dir))
+                    if solc_config:
+                        kwargs["solc_args"] = ""
+                        kwargs["solc_remaps"] = ""
+
+                        if "remappings" in solc_config:
+                            kwargs["solc_remaps"] = solc_config["remappings"]
+                        if (
+                            "solc_version" in solc_config
+                            and solc_config["solc_version"] != current_version()[0]
+                        ):
+                            # Respect foundry offline option and don't install a missing solc version
+                            if "offline" in solc_config and solc_config["offline"]:
+                                switch_global_version(solc_config["solc_version"], False)
+                            else:
+                                switch_global_version(solc_config["solc_version"], True)
+                        if "optimizer" in solc_config and solc_config["optimizer"]:
+                            kwargs["solc_args"] += "--optimize"
+                        if "optimizer_runs" in solc_config:
+                            kwargs[
+                                "solc_args"
+                            ] += f"--optimize-runs {solc_config['optimizer_runs']}"
+                        if "via_ir" in solc_config and solc_config["via_ir"]:
+                            kwargs["solc_args"] += "--via-ir"
+                        if "allow_paths" in solc_config:
+                            kwargs["solc_args"] += f"--allow-paths {solc_config['allow_paths']}"
+                        if "evm_version" in solc_config:
+                            kwargs["solc_args"] += f"--evm-version {solc_config['evm_version']}"
         else:
             platform = target
 
