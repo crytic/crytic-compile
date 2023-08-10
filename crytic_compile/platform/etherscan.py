@@ -9,12 +9,12 @@ import re
 import urllib.request
 from json.decoder import JSONDecodeError
 from pathlib import Path, PurePosixPath
-from typing import TYPE_CHECKING, Dict, List, Union, Tuple, Optional, Any
+from typing import TYPE_CHECKING, Dict, List, Union, Tuple, Optional
 
 from crytic_compile.compilation_unit import CompilationUnit
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform import solc_standard_json
-from crytic_compile.platform.abstract_platform import AbstractPlatform
+from crytic_compile.platform.abstract_platform import AbstractPlatform, PlatformConfig
 from crytic_compile.platform.exceptions import InvalidCompilation
 from crytic_compile.platform.types import Type
 from crytic_compile.utils.naming import Filename
@@ -412,14 +412,14 @@ class Etherscan(AbstractPlatform):
         return bool(re.match(r"^\s*0x[a-zA-Z0-9]{40}\s*$", target))
 
     @staticmethod
-    def config(working_dir: str) -> Optional[Dict[str, Any]]:
+    def config(working_dir: str) -> Optional[PlatformConfig]:
         """Return configuration data that should be passed to solc, such as remappings.
 
         Args:
             working_dir (str): path to the working directory
 
         Returns:
-            Dict[str, Any]: Data such as remappings
+            Optional[PlatformConfig]: Platform configuration data such as optimization, remappings...
         """
         return None
 

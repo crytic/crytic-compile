@@ -5,12 +5,12 @@ import json
 import os
 from collections import defaultdict
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Tuple, Type, Any
+from typing import TYPE_CHECKING, Dict, List, Tuple, Type, Any, Optional
 
 from crytic_compile.compilation_unit import CompilationUnit
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform import Type as PlatformType
-from crytic_compile.platform.abstract_platform import AbstractPlatform
+from crytic_compile.platform.abstract_platform import AbstractPlatform, PlatformConfig
 from crytic_compile.utils.naming import Filename
 
 # Cycle dependency
@@ -119,6 +119,18 @@ class Standard(AbstractPlatform):
         if not Path(target).parts:
             return False
         return Path(target).parts[-1].endswith("_export.json")
+
+    @staticmethod
+    def config(working_dir: str) -> Optional[PlatformConfig]:
+        """Return configuration data that should be passed to solc, such as remappings.
+
+        Args:
+            working_dir (str): path to the working directory
+
+        Returns:
+            Optional[PlatformConfig]: Platform configuration data such as optimization, remappings...
+        """
+        return None
 
     def is_dependency(self, path: str) -> bool:
         """Check if the target is a dependency

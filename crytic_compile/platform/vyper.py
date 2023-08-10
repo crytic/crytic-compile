@@ -7,11 +7,11 @@ import os
 import shutil
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Optional, Any
+from typing import TYPE_CHECKING, Dict, List, Optional
 
 from crytic_compile.compilation_unit import CompilationUnit
 from crytic_compile.compiler.compiler import CompilerVersion
-from crytic_compile.platform.abstract_platform import AbstractPlatform
+from crytic_compile.platform.abstract_platform import AbstractPlatform, PlatformConfig
 from crytic_compile.platform.exceptions import InvalidCompilation
 from crytic_compile.platform.types import Type
 from crytic_compile.utils.naming import convert_filename
@@ -121,14 +121,14 @@ class Vyper(AbstractPlatform):
         return os.path.isfile(target) and target.endswith(".vy")
 
     @staticmethod
-    def config(working_dir: str) -> Optional[Dict[str, Any]]:
+    def config(working_dir: str) -> Optional[PlatformConfig]:
         """Return configuration data that should be passed to solc, such as remappings.
 
         Args:
             working_dir (str): path to the working directory
 
         Returns:
-            Dict[str, Any]: Data such as remappings
+            Optional[PlatformConfig]: Platform configuration data such as optimization, remappings...
         """
         return None
 

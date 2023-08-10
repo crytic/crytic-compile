@@ -5,10 +5,10 @@ import logging
 import os
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Dict, Any
+from typing import TYPE_CHECKING, List, Optional
 import toml
 
-from crytic_compile.platform.abstract_platform import AbstractPlatform
+from crytic_compile.platform.abstract_platform import AbstractPlatform, PlatformConfig
 from crytic_compile.platform.types import Type
 from crytic_compile.platform.hardhat import hardhat_like_parsing
 from crytic_compile.utils.subprocess import run
@@ -101,17 +101,17 @@ class Foundry(AbstractPlatform):
         return os.path.isfile(os.path.join(target, "foundry.toml"))
 
     @staticmethod
-    def config(working_dir: str) -> Dict[str, Any]:
+    def config(working_dir: str) -> Optional[PlatformConfig]:
         """Return configuration data that should be passed to solc, such as remappings.
 
         Args:
             working_dir (str): path to the working directory
 
         Returns:
-            Dict[str, Any]: Data such as remappings
+            Optional[PlatformConfig]: Platform configuration data such as optimization, remappings...
         """
-        result = {}
-        result["remappings"] = (
+        result = PlatformConfig()
+        result.remappings = (
             subprocess.run(["forge", "remappings"], stdout=subprocess.PIPE, check=True)
             .stdout.decode("utf-8")
             .replace("\n", " ")
@@ -122,28 +122,34 @@ class Foundry(AbstractPlatform):
             default_profile = foundry_toml["profile"]["default"]
 
             if "solc_version" in default_profile:
-                result["solc_version"] = default_profile["solc_version"]
+                result.solc_version = default_profile["solc_version"]
             if "offline" in default_profile:
-                result["offline"] = default_profile["offline"]
+                result.offline = default_profile["offline"]
             if "optimizer" in default_profile:
-                result["optimizer"] = default_profile["optimizer"]
+                result.optimizer = default_profile["optimizer"]
             else:
                 # Default to true
-                result["optimizer"] = True
+                result.optimizer = True
             if "optimizer_runs" in default_profile:
-                result["optimizer_runs"] = default_profile["optimizer_runs"]
+                result.optimizer_runs = default_profile["optimizer_runs"]
             else:
                 # Default to 200
-                result["optimizer_runs"] = 200
+                result.optimizer_runs = 200
             if "via_ir" in default_profile:
-                result["via_ir"] = default_profile["via_ir"]
+                result.via_ir = default_profile["via_ir"]
             if "allow_paths" in default_profile:
-                result["allow_paths"] = default_profile["allow_paths"]
+                result.allow_paths = default_profile["allow_paths"]
             if "evm_version" in default_profile:
-                result["evm_version"] = default_profile["evm_version"]
+                result.evm_version = default_profile["evm_version"]
             else:
                 # Default to london
-                result["evm_version"] = "london"
+                result.evm_version = "london"
+            if "src" in default_profile:
+                result.src_path = default_profile["src"]
+            if "test" in default_profile:
+                result.tests_path = default_profile["test"]
+            if "libs" in default_profile:
+                result.libs_path = default_profile["libs"]
 
         return result
 

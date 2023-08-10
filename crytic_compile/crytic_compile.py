@@ -137,41 +137,37 @@ class CryticCompile:
                 )
                 # If no platform has been found or if it's a Solc we can't do anything
                 if platform_wd and not isinstance(platform_wd, Solc):
-                    solc_config = platform_wd.config(str(self._working_dir))
-                    if solc_config:
+                    platform_config = platform_wd.config(str(self._working_dir))
+                    if platform_config:
                         kwargs["solc_args"] = ""
                         kwargs["solc_remaps"] = ""
 
-                        if "remappings" in solc_config:
-                            kwargs["solc_remaps"] = solc_config["remappings"]
+                        if platform_config.remappings:
+                            kwargs["solc_remaps"] = platform_config.remappings
                         if (
-                            "solc_version" in solc_config
-                            and solc_config["solc_version"] != current_version()[0]
+                            platform_config.solc_version
+                            and platform_config.solc_version != current_version()[0]
                         ):
-                            solc_version = solc_config["solc_version"]
+                            solc_version = platform_config.solc_version
                             if solc_version in installed_versions():
                                 kwargs["solc"] = str(artifact_path(solc_version).absolute())
                             else:
                                 # Respect foundry offline option and don't install a missing solc version
-                                if (
-                                    "offline" not in solc_config
-                                    or "offline" in solc_config
-                                    and not solc_config["offline"]
-                                ):
+                                if not platform_config.offline:
                                     install_artifacts([solc_version])
                                     kwargs["solc"] = str(artifact_path(solc_version).absolute())
-                        if "optimizer" in solc_config and solc_config["optimizer"]:
+                        if platform_config.optimizer:
                             kwargs["solc_args"] += "--optimize"
-                        if "optimizer_runs" in solc_config:
+                        if platform_config.optimizer_runs:
                             kwargs[
                                 "solc_args"
-                            ] += f"--optimize-runs {solc_config['optimizer_runs']}"
-                        if "via_ir" in solc_config and solc_config["via_ir"]:
+                            ] += f"--optimize-runs {platform_config.optimizer_runs}"
+                        if platform_config.via_ir:
                             kwargs["solc_args"] += "--via-ir"
-                        if "allow_paths" in solc_config:
-                            kwargs["solc_args"] += f"--allow-paths {solc_config['allow_paths']}"
-                        if "evm_version" in solc_config:
-                            kwargs["solc_args"] += f"--evm-version {solc_config['evm_version']}"
+                        if platform_config.allow_paths:
+                            kwargs["solc_args"] += f"--allow-paths {platform_config.allow_paths}"
+                        if platform_config.evm_version:
+                            kwargs["solc_args"] += f"--evm-version {platform_config.evm_version}"
         else:
             platform = target
 

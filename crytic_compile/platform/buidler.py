@@ -7,7 +7,7 @@ import os
 import shutil
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Tuple, Optional, Dict, Any
+from typing import TYPE_CHECKING, List, Tuple, Optional
 
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform.exceptions import InvalidCompilation
@@ -15,7 +15,7 @@ from crytic_compile.platform.types import Type
 from crytic_compile.utils.naming import convert_filename, extract_name
 from crytic_compile.utils.natspec import Natspec
 from crytic_compile.compilation_unit import CompilationUnit
-from .abstract_platform import AbstractPlatform
+from crytic_compile.platform.abstract_platform import AbstractPlatform, PlatformConfig
 
 # Handle cycle
 from .solc import relative_to_short
@@ -194,14 +194,14 @@ class Buidler(AbstractPlatform):
         return is_javascript or is_typescript
 
     @staticmethod
-    def config(working_dir: str) -> Optional[Dict[str, Any]]:
+    def config(working_dir: str) -> Optional[PlatformConfig]:
         """Return configuration data that should be passed to solc, such as remappings.
 
         Args:
             working_dir (str): path to the working directory
 
         Returns:
-            Dict[str, Any]: Data such as remappings
+            Optional[PlatformConfig]: Platform configuration data such as optimization, remappings...
         """
         return None
 

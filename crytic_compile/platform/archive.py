@@ -13,7 +13,7 @@ from crytic_compile.platform import Type as TypePlatform
 from crytic_compile.platform import standard
 
 # Cycle dependency
-from crytic_compile.platform.abstract_platform import AbstractPlatform
+from crytic_compile.platform.abstract_platform import AbstractPlatform, PlatformConfig
 
 if TYPE_CHECKING:
     from crytic_compile import CryticCompile
@@ -119,14 +119,14 @@ class Archive(AbstractPlatform):
         return Path(target).parts[-1].endswith("_export_archive.json")
 
     @staticmethod
-    def config(working_dir: str) -> Optional[Dict[str, Any]]:
+    def config(working_dir: str) -> Optional[PlatformConfig]:
         """Return configuration data that should be passed to solc, such as remappings.
 
         Args:
             working_dir (str): path to the working directory
 
         Returns:
-            Dict[str, Any]: Data such as remappings
+            Optional[PlatformConfig]: Platform configuration data such as optimization, remappings...
         """
         return None
 
