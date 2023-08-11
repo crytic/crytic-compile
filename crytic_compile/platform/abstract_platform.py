@@ -28,6 +28,7 @@ class PlatformConfig:
     """
     This class represents a generic platform configuration
     """
+
     offline: bool = False
     remappings: Optional[str] = None
     solc_version: Optional[str] = None
@@ -39,6 +40,7 @@ class PlatformConfig:
     src_path: str = "src"
     tests_path: str = "test"
     libs_path: List[str] = field(default_factory=lambda: ["lib"])
+    scripts_path: str = "script"
 
 
 class AbstractPlatform(metaclass=abc.ABCMeta):

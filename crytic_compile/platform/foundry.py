@@ -150,6 +150,8 @@ class Foundry(AbstractPlatform):
                 result.tests_path = default_profile["test"]
             if "libs" in default_profile:
                 result.libs_path = default_profile["libs"]
+            if "script" in default_profile:
+                result.scripts_path = default_profile["script"]
 
         return result
 
