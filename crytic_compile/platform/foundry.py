@@ -26,7 +26,7 @@ class Foundry(AbstractPlatform):
     """
 
     NAME = "Foundry"
-    PROJECT_URL = "https://github.com/gakonst/foundry"
+    PROJECT_URL = "https://github.com/foundry-rs/foundry"
     TYPE = Type.FOUNDRY
 
     # pylint: disable=too-many-locals,too-many-statements,too-many-branches
