@@ -22,7 +22,7 @@ class IncorrectPlatformInitialization(Exception):
     # pylint: disable=unnecessary-pass
     pass
 
-
+# pylint: disable=too-many-instance-attributes
 @dataclass
 class PlatformConfig:
     """

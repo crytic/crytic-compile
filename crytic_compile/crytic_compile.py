@@ -90,6 +90,7 @@ class CryticCompile:
     Main class.
     """
 
+    # pylint: disable=too-many-branches
     def __init__(self, target: Union[str, AbstractPlatform], **kwargs: str) -> None:
         """See https://github.com/crytic/crytic-compile/wiki/Configuration
         Target is usually a file or a project directory. It can be an AbstractPlatform
@@ -120,6 +121,7 @@ class CryticCompile:
 
         self._working_dir = Path.cwd()
 
+        # pylint: disable=too-many-nested-blocks
         if isinstance(target, str):
             platform = self._init_platform(target, **kwargs)
             # If the platform is Solc it means we are trying to compile a single
