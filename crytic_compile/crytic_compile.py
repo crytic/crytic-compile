@@ -127,7 +127,7 @@ class CryticCompile:
             # If the platform is Solc it means we are trying to compile a single
             # we try to see if we are in a known compilation framework to retrieve
             # information like remappings and solc version
-            if kwargs["auto_compile"] and isinstance(platform, Solc):
+            if kwargs.get("auto_compile", False) and isinstance(platform, Solc):
                 # Try to get the platform of the current working directory
                 platform_wd = next(
                     (

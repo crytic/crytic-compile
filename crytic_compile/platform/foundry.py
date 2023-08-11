@@ -60,13 +60,14 @@ class Foundry(AbstractPlatform):
             compile_all = kwargs.get("foundry_compile_all", False)
 
             if not compile_all:
-                foundry_config = self.config(crytic_compile.working_dir)
-                compilation_command += [
-                    "--skip",
-                    f"*/{foundry_config.tests_path}/**",
-                    f"*/{foundry_config.scripts_path}/**",
-                    "--force",
-                ]
+                foundry_config = self.config(str(crytic_compile.working_dir.absolute()))
+                if foundry_config:
+                    compilation_command += [
+                        "--skip",
+                        f"*/{foundry_config.tests_path}/**",
+                        f"*/{foundry_config.scripts_path}/**",
+                        "--force",
+                    ]
 
             run(
                 compilation_command,
@@ -130,7 +131,7 @@ class Foundry(AbstractPlatform):
             .replace("\n", " ")
             .strip()
         )
-        with open("foundry.toml", "r") as f:
+        with open("foundry.toml", "r", encoding="utf-8") as f:
             foundry_toml = toml.loads(f.read())
             default_profile = foundry_toml["profile"]["default"]
 
