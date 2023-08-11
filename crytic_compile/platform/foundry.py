@@ -51,12 +51,25 @@ class Foundry(AbstractPlatform):
             )
 
         if not ignore_compile:
+            compilation_command = [
+                "forge",
+                "build",
+                "--build-info",
+            ]
+
+            compile_all = kwargs.get("foundry_compile_all", False)
+
+            if not compile_all:
+                foundry_config = self.config(crytic_compile.working_dir)
+                compilation_command += [
+                    "--skip",
+                    f"*/{foundry_config.tests_path}/**",
+                    f"*/{foundry_config.scripts_path}/**",
+                    "--force",
+                ]
+
             run(
-                [
-                    "forge",
-                    "build",
-                    "--build-info",
-                ],
+                compilation_command,
                 cwd=self._target,
             )
 
