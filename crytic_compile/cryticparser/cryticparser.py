@@ -330,6 +330,14 @@ def _init_etherscan(parser: ArgumentParser) -> None:
     )
 
     group_etherscan.add_argument(
+        "--basescan-apikey",
+        help="Etherscan API key.",
+        action="store",
+        dest="basescan_api_key",
+        default=DEFAULTS_FLAG_IN_CONFIG["etherscan_api_key"],
+    )
+
+    group_etherscan.add_argument(
         "--arbiscan-apikey",
         help="Etherscan API key.",
         action="store",

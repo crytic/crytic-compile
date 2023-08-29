@@ -50,6 +50,7 @@ SUPPORTED_NETWORK = {
     "testnet.avax:": ("-testnet.snowtrace.io", "testnet.snowtrace.io"),
     "ftm:": (".ftmscan.com", "ftmscan.com"),
     "goerli.base:": ("-goerli.basescan.org", "goerli.basescan.org"),
+    "base:": (".basescan.org", "basescan.org"),
 }
 
 
@@ -230,6 +231,7 @@ class Etherscan(AbstractPlatform):
         only_bytecode = kwargs.get("etherscan_only_bytecode", False)
 
         etherscan_api_key = kwargs.get("etherscan_api_key", None)
+        basescan_api_key = kwargs.get("basescan_api_key", None)
         arbiscan_api_key = kwargs.get("arbiscan_api_key", None)
         polygonscan_api_key = kwargs.get("polygonscan_api_key", None)
         test_polygonscan_api_key = kwargs.get("test_polygonscan_api_key", None)
@@ -246,6 +248,9 @@ class Etherscan(AbstractPlatform):
         if etherscan_api_key and "etherscan" in etherscan_url:
             etherscan_url += f"&apikey={etherscan_api_key}"
             etherscan_bytecode_url += f"&apikey={etherscan_api_key}"
+        if basescan_api_key and "basescan" in etherscan_url:
+            etherscan_url += f"&apikey={basescan_api_key}"
+            etherscan_bytecode_url += f"&apikey={basescan_api_key}"
         if arbiscan_api_key and "arbiscan" in etherscan_url:
             etherscan_url += f"&apikey={arbiscan_api_key}"
             etherscan_bytecode_url += f"&apikey={arbiscan_api_key}"
