@@ -103,7 +103,7 @@ class VyperStandardJson(AbstractPlatform):
                 source_unit.srcmaps_init[contract_name] = []
                 source_unit.srcmaps_runtime[contract_name] = contract_metadata["evm"][
                     "deployedBytecode"
-                ]["sourceMap"]
+                ]["sourceMap"].split(";")
                 source_unit.bytecodes_runtime[contract_name] = contract_metadata["evm"][
                     "deployedBytecode"
                 ]["object"].replace("0x", "")
