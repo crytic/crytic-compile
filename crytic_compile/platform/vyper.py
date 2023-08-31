@@ -33,28 +33,28 @@ class VyperStandardJson(AbstractPlatform):
     NAME = "vyper"
     PROJECT_URL = "https://github.com/vyperlang/vyper"
     TYPE = Type.VYPER
-    standard_json_input: Dict = {
-        "language": "Vyper",
-        "sources": {},
-        "settings": {
-            "outputSelection": {
-                "*": {
-                    "*": [
-                        "abi",
-                        "devdoc",
-                        "userdoc",
-                        "evm.bytecode",
-                        "evm.deployedBytecode",
-                        "evm.deployedBytecode.sourceMap",
-                    ],
-                    "": ["ast"],
-                }
-            }
-        },
-    }
 
     def __init__(self, target: Optional[Path] = None, **_kwargs: str):
         super().__init__(target, **_kwargs)
+        self.standard_json_input = {
+            "language": "Vyper",
+            "sources": {},
+            "settings": {
+                "outputSelection": {
+                    "*": {
+                        "*": [
+                            "abi",
+                            "devdoc",
+                            "userdoc",
+                            "evm.bytecode",
+                            "evm.deployedBytecode",
+                            "evm.deployedBytecode.sourceMap",
+                        ],
+                        "": ["ast"],
+                    }
+                }
+            },
+        }
 
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str) -> None:
         """Compile the target
@@ -75,7 +75,7 @@ class VyperStandardJson(AbstractPlatform):
         compilation_artifacts = None
         with tempfile.NamedTemporaryFile(mode="a+") as f:
             json.dump(self.standard_json_input, f)
-            f.seek(0)
+            f.flush()
             compilation_artifacts = _run_vyper_standard_json(f.name, vyper_bin)
 
         if "errors" in compilation_artifacts:
