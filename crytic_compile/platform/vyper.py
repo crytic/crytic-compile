@@ -4,7 +4,8 @@ Vyper platform
 import json
 import logging
 import os
-import tempfile
+import subprocess
+import shutil
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, List, Optional
 
@@ -72,15 +73,8 @@ class VyperStandardJson(AbstractPlatform):
             self.add_source_files([target])
 
         vyper_bin = kwargs.get("vyper", "vyper")
-        compilation_artifacts = None
-        with tempfile.NamedTemporaryFile(mode="a+") as f:
-            json.dump(self.standard_json_input, f)
-            f.flush()
-            compilation_artifacts = _run_vyper_standard_json(f.name, vyper_bin)
 
-        if "errors" in compilation_artifacts:
-            # TODO format errors
-            raise InvalidCompilation(compilation_artifacts["errors"])
+        compilation_artifacts = _run_vyper_standard_json(self.standard_json_input, vyper_bin)
         compilation_unit = CompilationUnit(crytic_compile, str(target))
 
         compiler_version = compilation_artifacts["compiler"].split("-")[1]
@@ -169,7 +163,7 @@ class VyperStandardJson(AbstractPlatform):
 
 
 def _run_vyper_standard_json(
-    standard_input_path: str,
+    standard_json_input: Dict,
     vyper: str,
     env: Optional[Dict] = None,
     working_dir: Optional[str] = None,
@@ -177,7 +171,7 @@ def _run_vyper_standard_json(
     """Run vyper and write compilation output to a file
 
     Args:
-        standard_input_path (str): path to the standard input json file
+        standard_json_input (Dict): Dict containing the vyper standard json input
         vyper (str): vyper binary
         env (Optional[Dict], optional): Environment variables. Defaults to None.
         working_dir (Optional[str], optional): Working directory. Defaults to None.
@@ -188,13 +182,29 @@ def _run_vyper_standard_json(
     Returns:
         Dict: Vyper json compilation artifact
     """
-    with tempfile.NamedTemporaryFile(mode="a+") as f:
-        cmd = [vyper, standard_input_path, "--standard-json", "-o", f.name]
-        success = run(cmd, cwd=working_dir, extra_env=env)
-        if success is None:
-            raise InvalidCompilation("Vyper compilation failed")
-        f.seek(0)
-        return json.loads(f.read())
+    cmd = [vyper, "--standard-json"]
+
+    with subprocess.Popen(
+        cmd,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+        executable=shutil.which(cmd[0]),
+    ) as process:
+
+        stdout_b, stderr_b = process.communicate(json.dumps(standard_json_input).encode("utf-8"))
+        stdout, stderr = (
+            stdout_b.decode(),
+            stderr_b.decode(errors="backslashreplace"),
+        )  # convert bytestrings to unicode strings
+
+        vyper_standard_output = json.loads(stdout)
+        if "errors" in vyper_standard_output:
+            # TODO format errors
+            raise InvalidCompilation(vyper_standard_output["errors"])
+
+        return vyper_standard_output
 
 
 def _relative_to_short(relative: Path) -> Path:
