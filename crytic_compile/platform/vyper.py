@@ -4,8 +4,7 @@ Vyper platform
 import json
 import logging
 import os
-import shutil
-import subprocess
+import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, List, Optional
 
@@ -73,13 +72,15 @@ class VyperStandardJson(AbstractPlatform):
             self.add_source_files([target])
 
         vyper_bin = kwargs.get("vyper", "vyper")
-        output_file = Path("crytic-export/standard_input.json")
-        output_file.parent.mkdir(exist_ok=True, parents=True)
-        with open(output_file, "w") as f:
-            f.write(json.dumps(self.standard_json_input))
+        compilation_artifacts = None
+        with tempfile.NamedTemporaryFile(mode="a+") as f:
+            json.dump(self.standard_json_input, f)
+            f.seek(0)
+            compilation_artifacts = _run_vyper_standard_json(f.name, vyper_bin)
 
-        compilation_artifacts = _run_vyper_standard_json(output_file.as_posix(), vyper_bin)
-
+        if "errors" in compilation_artifacts:
+            # TODO format errors
+            raise InvalidCompilation(compilation_artifacts["errors"])
         compilation_unit = CompilationUnit(crytic_compile, str(target))
 
         compiler_version = compilation_artifacts["compiler"].split("-")[1]
@@ -187,12 +188,13 @@ def _run_vyper_standard_json(
     Returns:
         Dict: Vyper json compilation artifact
     """
-    cmd = [vyper, standard_input_path, "--standard-json", "-o", "crytic-export/artifacts.json"]
-    success = run(cmd, cwd=working_dir, extra_env=env)
-    if success is None:
-        raise InvalidCompilation("Vyper compilation failed")
-    with open("crytic-export/artifacts.json", "r") as f:
-        return json.load(f)
+    with tempfile.NamedTemporaryFile(mode="a+") as f:
+        cmd = [vyper, standard_input_path, "--standard-json", "-o", f.name]
+        success = run(cmd, cwd=working_dir, extra_env=env)
+        if success is None:
+            raise InvalidCompilation("Vyper compilation failed")
+        f.seek(0)
+        return json.loads(f.read())
 
 
 def _relative_to_short(relative: Path) -> Path:
