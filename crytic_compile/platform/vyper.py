@@ -4,8 +4,8 @@ Vyper platform
 import json
 import logging
 import os
-import subprocess
 import shutil
+import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, List, Optional
 
@@ -15,7 +15,6 @@ from crytic_compile.platform.abstract_platform import AbstractPlatform
 from crytic_compile.platform.exceptions import InvalidCompilation
 from crytic_compile.platform.types import Type
 from crytic_compile.utils.naming import convert_filename
-from crytic_compile.utils.subprocess import run
 
 # Handle cycle
 from crytic_compile.utils.natspec import Natspec
@@ -112,8 +111,18 @@ class VyperStandardJson(AbstractPlatform):
             source_unit.ast = ast
 
     def add_source_files(self, file_paths: List[str]) -> None:
+        """
+        Append files
+
+        Args:
+            file_paths (List[str]): files to append
+
+        Returns:
+
+        """
+
         for file_path in file_paths:
-            with open(file_path, "r") as f:
+            with open(file_path, "r", encoding="utf8") as f:
                 self.standard_json_input["sources"][file_path] = {
                     "content": f.read(),
                 }
@@ -163,10 +172,7 @@ class VyperStandardJson(AbstractPlatform):
 
 
 def _run_vyper_standard_json(
-    standard_json_input: Dict,
-    vyper: str,
-    env: Optional[Dict] = None,
-    working_dir: Optional[str] = None,
+    standard_json_input: Dict, vyper: str, env: Optional[Dict] = None
 ) -> Dict:
     """Run vyper and write compilation output to a file
 
@@ -174,7 +180,6 @@ def _run_vyper_standard_json(
         standard_json_input (Dict): Dict containing the vyper standard json input
         vyper (str): vyper binary
         env (Optional[Dict], optional): Environment variables. Defaults to None.
-        working_dir (Optional[str], optional): Working directory. Defaults to None.
 
     Raises:
         InvalidCompilation: If vyper failed to run
@@ -194,7 +199,7 @@ def _run_vyper_standard_json(
     ) as process:
 
         stdout_b, stderr_b = process.communicate(json.dumps(standard_json_input).encode("utf-8"))
-        stdout, stderr = (
+        stdout, _stderr = (
             stdout_b.decode(),
             stderr_b.decode(errors="backslashreplace"),
         )  # convert bytestrings to unicode strings
