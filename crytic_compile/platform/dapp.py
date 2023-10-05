@@ -19,10 +19,10 @@ from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform.abstract_platform import AbstractPlatform
 from crytic_compile.platform.types import Type
 from crytic_compile.utils.naming import convert_filename, extract_name
-from crytic_compile.utils.subprocess import run
 
 # Handle cycle
 from crytic_compile.utils.natspec import Natspec
+from crytic_compile.utils.subprocess import run
 
 if TYPE_CHECKING:
     from crytic_compile import CryticCompile

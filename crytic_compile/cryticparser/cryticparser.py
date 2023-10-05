@@ -520,3 +520,11 @@ def _init_foundry(parser: ArgumentParser) -> None:
         dest="foundry_out_directory",
         default=DEFAULTS_FLAG_IN_CONFIG["foundry_out_directory"],
     )
+
+    group_foundry.add_argument(
+        "--foundry-compile-all",
+        help="Don't skip compiling test and script",
+        action="store_true",
+        dest="foundry_compile_all",
+        default=DEFAULTS_FLAG_IN_CONFIG["foundry_compile_all"],
+    )

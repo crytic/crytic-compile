@@ -14,6 +14,12 @@ from collections import defaultdict
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, List, Optional, Set, Tuple, Type, Union
 
+from solc_select.solc_select import (
+    install_artifacts,
+    installed_versions,
+    current_version,
+    artifact_path,
+)
 from crytic_compile.compilation_unit import CompilationUnit
 from crytic_compile.platform import all_platforms, solc_standard_json
 from crytic_compile.platform.abstract_platform import AbstractPlatform
@@ -84,6 +90,7 @@ class CryticCompile:
     Main class.
     """
 
+    # pylint: disable=too-many-branches
     def __init__(self, target: Union[str, AbstractPlatform], **kwargs: str) -> None:
         """See https://github.com/crytic/crytic-compile/wiki/Configuration
         Target is usually a file or a project directory. It can be an AbstractPlatform
@@ -114,8 +121,55 @@ class CryticCompile:
 
         self._working_dir = Path.cwd()
 
+        # pylint: disable=too-many-nested-blocks
         if isinstance(target, str):
             platform = self._init_platform(target, **kwargs)
+            # If the platform is Solc it means we are trying to compile a single
+            # we try to see if we are in a known compilation framework to retrieve
+            # information like remappings and solc version
+            if isinstance(platform, Solc):
+                # Try to get the platform of the current working directory
+                platform_wd = next(
+                    (
+                        p(target)
+                        for p in get_platforms()
+                        if p.is_supported(str(self._working_dir), **kwargs)
+                    ),
+                    None,
+                )
+                # If no platform has been found or if it's a Solc we can't do anything
+                if platform_wd and not isinstance(platform_wd, Solc):
+                    platform_config = platform_wd.config(str(self._working_dir))
+                    if platform_config:
+                        kwargs["solc_args"] = ""
+                        kwargs["solc_remaps"] = ""
+
+                        if platform_config.remappings:
+                            kwargs["solc_remaps"] = platform_config.remappings
+                        if (
+                            platform_config.solc_version
+                            and platform_config.solc_version != current_version()[0]
+                        ):
+                            solc_version = platform_config.solc_version
+                            if solc_version in installed_versions():
+                                kwargs["solc"] = str(artifact_path(solc_version).absolute())
+                            else:
+                                # Respect foundry offline option and don't install a missing solc version
+                                if not platform_config.offline:
+                                    install_artifacts([solc_version])
+                                    kwargs["solc"] = str(artifact_path(solc_version).absolute())
+                        if platform_config.optimizer:
+                            kwargs["solc_args"] += "--optimize"
+                        if platform_config.optimizer_runs:
+                            kwargs[
+                                "solc_args"
+                            ] += f"--optimize-runs {platform_config.optimizer_runs}"
+                        if platform_config.via_ir:
+                            kwargs["solc_args"] += "--via-ir"
+                        if platform_config.allow_paths:
+                            kwargs["solc_args"] += f"--allow-paths {platform_config.allow_paths}"
+                        if platform_config.evm_version:
+                            kwargs["solc_args"] += f"--evm-version {platform_config.evm_version}"
         else:
             platform = target
 

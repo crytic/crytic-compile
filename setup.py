@@ -14,7 +14,7 @@ setup(
     version="0.3.4",
     packages=find_packages(),
     python_requires=">=3.8",
-    install_requires=["pycryptodome>=3.4.6", "cbor2", "solc-select>=v1.0.4"],
+    install_requires=["pycryptodome>=3.4.6", "cbor2", "solc-select>=v1.0.4", "toml>=0.10.2"],
     extras_require={
         "test": [
             "pytest",
