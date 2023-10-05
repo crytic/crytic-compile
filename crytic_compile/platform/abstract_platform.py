@@ -177,7 +177,7 @@ class AbstractPlatform(metaclass=abc.ABCMeta):
         return False
 
     @staticmethod
-    def config(working_dir: str) -> Optional[PlatformConfig]:
+    def config(working_dir: str) -> Optional[PlatformConfig]:  # pylint: disable=unused-argument
         """Return configuration data that should be passed to solc, such as version, remappings ecc.
 
         Args:
