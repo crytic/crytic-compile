@@ -65,14 +65,6 @@ def init(parser: ArgumentParser) -> None:
         default=DEFAULTS_FLAG_IN_CONFIG["skip_clean"],
     )
 
-    group_compile.add_argument(
-        "--auto-compile",
-        help="Try to get the solc options automatically when compiling a single file",
-        action="store_true",
-        dest="auto_compile",
-        default=DEFAULTS_FLAG_IN_CONFIG["auto_compile"],
-    )
-
     _init_solc(parser)
     _init_truffle(parser)
     _init_embark(parser)

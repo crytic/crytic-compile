@@ -177,7 +177,6 @@ class AbstractPlatform(metaclass=abc.ABCMeta):
         return False
 
     @staticmethod
-    @abc.abstractmethod
     def config(working_dir: str) -> Optional[PlatformConfig]:
         """Return configuration data that should be passed to solc, such as version, remappings ecc.
 

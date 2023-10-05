@@ -120,18 +120,6 @@ class Vyper(AbstractPlatform):
             return False
         return os.path.isfile(target) and target.endswith(".vy")
 
-    @staticmethod
-    def config(working_dir: str) -> Optional[PlatformConfig]:
-        """Return configuration data that should be passed to solc, such as remappings.
-
-        Args:
-            working_dir (str): path to the working directory
-
-        Returns:
-            Optional[PlatformConfig]: Platform configuration data such as optimization, remappings...
-        """
-        return None
-
     def _guessed_tests(self) -> List[str]:
         """Guess the potential unit tests commands
 

@@ -309,18 +309,6 @@ class Truffle(AbstractPlatform):
             os.path.join(target, "truffle-config.js")
         )
 
-    @staticmethod
-    def config(working_dir: str) -> Optional[PlatformConfig]:
-        """Return configuration data that should be passed to solc, such as remappings.
-
-        Args:
-            working_dir (str): path to the working directory
-
-        Returns:
-            Optional[PlatformConfig]: Platform configuration data such as optimization, remappings...
-        """
-        return None
-
     # pylint: disable=no-self-use
     def is_dependency(self, path: str) -> bool:
         """Check if the path is a dependency

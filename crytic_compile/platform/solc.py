@@ -199,18 +199,6 @@ class Solc(AbstractPlatform):
         """
         return os.path.isfile(target) and target.endswith(".sol")
 
-    @staticmethod
-    def config(working_dir: str) -> Optional[PlatformConfig]:
-        """Return configuration data that should be passed to solc, such as remappings.
-
-        Args:
-            working_dir (str): path to the working directory
-
-        Returns:
-            Optional[PlatformConfig]: Platform configuration data such as optimization, remappings...
-        """
-        return None
-
     def is_dependency(self, _path: str) -> bool:
         """Check if the path is a dependency (always false for direct solc)
 

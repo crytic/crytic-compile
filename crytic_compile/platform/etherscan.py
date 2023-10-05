@@ -430,18 +430,6 @@ class Etherscan(AbstractPlatform):
             target = target[target.find(":") + 1 :]
         return bool(re.match(r"^\s*0x[a-zA-Z0-9]{40}\s*$", target))
 
-    @staticmethod
-    def config(working_dir: str) -> Optional[PlatformConfig]:
-        """Return configuration data that should be passed to solc, such as remappings.
-
-        Args:
-            working_dir (str): path to the working directory
-
-        Returns:
-            Optional[PlatformConfig]: Platform configuration data such as optimization, remappings...
-        """
-        return None
-
     def is_dependency(self, _path: str) -> bool:
         """Check if the path is a dependency
 
