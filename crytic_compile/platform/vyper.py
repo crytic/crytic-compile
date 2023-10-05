@@ -35,7 +35,7 @@ class VyperStandardJson(AbstractPlatform):
     TYPE = Type.VYPER
 
     def __init__(self, target: Optional[Path] = None, **_kwargs: str):
-        super().__init__(target, **_kwargs)
+        super().__init__(str(target), **_kwargs)
         self.standard_json_input = {
             "language": "Vyper",
             "sources": {},
@@ -123,7 +123,7 @@ class VyperStandardJson(AbstractPlatform):
 
         for file_path in file_paths:
             with open(file_path, "r", encoding="utf8") as f:
-                self.standard_json_input["sources"][file_path] = {
+                self.standard_json_input["sources"][file_path] = {  # type: ignore
                     "content": f.read(),
                 }
 
