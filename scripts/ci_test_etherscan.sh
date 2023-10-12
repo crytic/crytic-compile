@@ -12,9 +12,9 @@ delay_etherscan () {
     if [ "$GITHUB_ETHERSCAN" = "" ]; then
         sleep 5s
     else
-      # Always sleep 1 second in the CI
+      # Always sleep 2 second in the CI
       # We have a lot of concurrent github action so this is needed
-      sleep 1s
+      sleep 2s
     fi
 }
 
