@@ -14,6 +14,6 @@ from .solc import Solc
 from .solc_standard_json import SolcStandardJson
 from .standard import Standard
 from .truffle import Truffle
-from .vyper import Vyper
+from .vyper import VyperStandardJson
 from .waffle import Waffle
 from .foundry import Foundry

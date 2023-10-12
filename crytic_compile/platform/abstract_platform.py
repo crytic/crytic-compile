@@ -4,7 +4,8 @@ Abstract Platform
 This gives the skeleton for any platform supported by crytic-compile
 """
 import abc
-from typing import TYPE_CHECKING, List, Dict
+from typing import TYPE_CHECKING, List, Dict, Optional
+from dataclasses import dataclass, field
 
 from crytic_compile.platform import Type
 from crytic_compile.utils.unit_tests import guess_tests
@@ -20,6 +21,27 @@ class IncorrectPlatformInitialization(Exception):
 
     # pylint: disable=unnecessary-pass
     pass
+
+
+# pylint: disable=too-many-instance-attributes
+@dataclass
+class PlatformConfig:
+    """
+    This class represents a generic platform configuration
+    """
+
+    offline: bool = False
+    remappings: Optional[str] = None
+    solc_version: Optional[str] = None
+    optimizer: bool = False
+    optimizer_runs: Optional[int] = None
+    via_ir: bool = False
+    allow_paths: Optional[str] = None
+    evm_version: Optional[str] = None
+    src_path: str = "src"
+    tests_path: str = "test"
+    libs_path: List[str] = field(default_factory=lambda: ["lib"])
+    scripts_path: str = "script"
 
 
 class AbstractPlatform(metaclass=abc.ABCMeta):
@@ -153,6 +175,18 @@ class AbstractPlatform(metaclass=abc.ABCMeta):
             bool: True if the target is a dependency
         """
         return False
+
+    @staticmethod
+    def config(working_dir: str) -> Optional[PlatformConfig]:  # pylint: disable=unused-argument
+        """Return configuration data that should be passed to solc, such as version, remappings ecc.
+
+        Args:
+            working_dir (str): path to the target
+
+        Returns:
+            Optional[PlatformConfig]: Platform configuration data such as optimization, remappings...
+        """
+        return None
 
     # Only _guessed_tests is an abstract method
     # guessed_tests will call the generic guess_tests and appends to the list
