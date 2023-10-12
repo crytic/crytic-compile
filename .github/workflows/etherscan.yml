@@ -24,7 +24,7 @@ jobs:
         os: ["ubuntu-latest", "windows-2022"]
         type: ["etherscan"]
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set up shell
       if: runner.os == 'Windows'
       run: |

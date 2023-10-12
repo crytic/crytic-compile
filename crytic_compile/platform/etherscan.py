@@ -50,6 +50,9 @@ SUPPORTED_NETWORK = {
     "testnet.avax:": ("-testnet.snowtrace.io", "testnet.snowtrace.io"),
     "ftm:": (".ftmscan.com", "ftmscan.com"),
     "goerli.base:": ("-goerli.basescan.org", "goerli.basescan.org"),
+    "base:": (".basescan.org", "basescan.org"),
+    "gno:": (".gnosisscan.io", "gnosisscan.io"),
+    "polyzk:": ("-zkevm.polygonscan.com", "zkevm.polygonscan.com"),
 }
 
 
@@ -237,6 +240,9 @@ class Etherscan(AbstractPlatform):
         ftmscan_api_key = kwargs.get("ftmscan_api_key", None)
         bscan_api_key = kwargs.get("bscan_api_key", None)
         optim_api_key = kwargs.get("optim_api_key", None)
+        base_api_key = kwargs.get("base_api_key", None)
+        gno_api_key = kwargs.get("gno_api_key", None)
+        polyzk_api_key = kwargs.get("polyzk_api_key", None)
 
         export_dir = kwargs.get("export_dir", "crytic-export")
         export_dir = os.path.join(
@@ -267,6 +273,15 @@ class Etherscan(AbstractPlatform):
         if optim_api_key and "optim" in etherscan_url:
             etherscan_url += f"&apikey={optim_api_key}"
             etherscan_bytecode_url += f"&apikey={optim_api_key}"
+        if base_api_key and "base" in etherscan_url:
+            etherscan_url += f"&apikey={base_api_key}"
+            etherscan_bytecode_url += f"&apikey={base_api_key}"
+        if gno_api_key and "gno" in etherscan_url:
+            etherscan_url += f"&apikey={gno_api_key}"
+            etherscan_bytecode_url += f"&apikey={gno_api_key}"
+        if polyzk_api_key and "zkevm" in etherscan_url:
+            etherscan_url += f"&apikey={polyzk_api_key}"
+            etherscan_bytecode_url += f"&apikey={polyzk_api_key}"
 
         source_code: str = ""
         result: Dict[str, Union[bool, str, int]] = {}
@@ -298,6 +313,10 @@ class Etherscan(AbstractPlatform):
             if "message" not in info:
                 LOGGER.error("Incorrect etherscan request")
                 raise InvalidCompilation("Incorrect etherscan request " + etherscan_url)
+
+            if not info["message"].startswith("OK") and "Invalid API Key" in info["result"]:
+                LOGGER.error("Invalid etherscan API Key")
+                raise InvalidCompilation("Invalid etherscan API Key: " + etherscan_url)
 
             if not info["message"].startswith("OK"):
                 LOGGER.error("Contract has no public source code")
@@ -382,6 +401,14 @@ class Etherscan(AbstractPlatform):
             optimize_runs=optimize_runs,
         )
         compilation_unit.compiler_version.look_for_installed_version()
+
+        if "Proxy" in result and result["Proxy"] == "1":
+            assert "Implementation" in result
+            implementation = str(result["Implementation"])
+            if target.startswith(tuple(SUPPORTED_NETWORK)):
+                implementation = f"{target[:target.find(':')]}:{implementation}"
+            compilation_unit.implementation_address = implementation
+
         solc_standard_json.standalone_compile(
             filenames,
             compilation_unit,
