@@ -405,6 +405,15 @@ class SolcStandardJson(Solc):
         """
         add_source_file(self._json, file_path)
 
+    def add_source_files(self, files_path: List[str]) -> None:
+        """Append files
+
+        Args:
+            files_path (List[str]): files to append
+        """
+        for file_path in files_path:
+            add_source_file(self._json, file_path)
+
     def add_remapping(self, remapping: str) -> None:
         """Append our remappings
 
