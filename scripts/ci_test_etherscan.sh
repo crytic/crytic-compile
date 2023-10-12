@@ -7,10 +7,14 @@ cd "$DIR" || exit 255
 
 solc-select use 0.4.25 --always-install
 
-delay_no_key () {
+delay_etherscan () {
     # Perform a small sleep when API key is not available (e.g. on PR CI from external contributor)
     if [ "$GITHUB_ETHERSCAN" = "" ]; then
         sleep 5s
+    else
+      # Always sleep 1 second in the CI
+      # We have a lot of concurrent github action so this is needed
+      sleep 1s
     fi
 }
 
@@ -24,7 +28,7 @@ then
 fi
 echo "::endgroup::"
 
-delay_no_key
+delay_etherscan
 
 # From crytic/slither#1154
 echo "::group::Etherscan #3"
@@ -37,7 +41,7 @@ then
 fi
 echo "::endgroup::"
 
-delay_no_key
+delay_etherscan
 
 # From crytic/crytic-compile#415
 echo "::group::Etherscan #4"
@@ -50,7 +54,7 @@ then
 fi
 echo "::endgroup::"
 
-delay_no_key
+delay_etherscan
 
 # From crytic/crytic-compile#150
 echo "::group::Etherscan #5"
@@ -69,6 +73,8 @@ then
     esac
 fi
 echo "::endgroup::"
+
+delay_etherscan
 
 # From crytic/crytic-compile#151
 echo "::group::Etherscan #6"
