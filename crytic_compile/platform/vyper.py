@@ -78,7 +78,7 @@ class VyperStandardJson(AbstractPlatform):
 
         compiler_version = compilation_artifacts["compiler"].split("-")[1]
         if compiler_version != "0.3.7":
-            logging.info("Vyper != 0.3.7 support is a best effort and might fail")
+            LOGGER.info("Vyper != 0.3.7 support is a best effort and might fail")
         compilation_unit.compiler_version = CompilerVersion(
             compiler="vyper", version=compiler_version, optimized=False
         )
