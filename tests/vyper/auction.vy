@@ -37,6 +37,11 @@ pendingReturns: HashMap[address, uint256]
 # Create a blinded auction with `_biddingTime` seconds bidding time and
 # `_revealTime` seconds reveal time on behalf of the beneficiary address
 # `_beneficiary`.
+@external
+def __init__(_beneficiary: address, _biddingTime: uint256, _revealTime: uint256):
+    self.beneficiary = _beneficiary
+    self.biddingEnd = block.timestamp + _biddingTime
+    self.revealEnd = self.biddingEnd + _revealTime
 
 
 # Place a blinded bid with:
