@@ -21,7 +21,9 @@ from solc_select.solc_select import (
     artifact_path,
 )
 from crytic_compile.compilation_unit import CompilationUnit
-from crytic_compile.platform import all_platforms, solc_standard_json
+from crytic_compile.platform import all_platforms
+from crytic_compile.platform.solc_standard_json import SolcStandardJson
+from crytic_compile.platform.vyper import VyperStandardJson
 from crytic_compile.platform.abstract_platform import AbstractPlatform
 from crytic_compile.platform.all_export import PLATFORMS_EXPORT
 from crytic_compile.platform.solc import Solc
@@ -676,18 +678,14 @@ def compile_all(target: str, **kwargs: str) -> List[CryticCompile]:
         **kwargs: optional arguments. Used: "solc_standard_json"
 
     Raises:
-        ValueError: If the target could not be compiled
+        NotImplementedError: If the target could not be compiled
 
     Returns:
         List[CryticCompile]: Returns a list of CryticCompile instances for all compilations which occurred.
     """
     use_solc_standard_json = kwargs.get("solc_standard_json", False)
 
-    # Attempt to perform glob expansion of target/filename
-    globbed_targets = glob.glob(target, recursive=True)
-
     # Check if the target refers to a valid target already.
-    # If it does not, we assume it's a glob pattern.
     compilations: List[CryticCompile] = []
     if os.path.isfile(target) or is_supported(target):
         if target.endswith(".zip"):
@@ -699,28 +697,33 @@ def compile_all(target: str, **kwargs: str) -> List[CryticCompile]:
                     compilations = load_from_zip(tmp.name)
         else:
             compilations.append(CryticCompile(target, **kwargs))
-    elif os.path.isdir(target) or len(globbed_targets) > 0:
-        # We create a new glob to find solidity files at this path (in case this is a directory)
-        filenames = glob.glob(os.path.join(target, "*.sol"))
-        if not filenames:
-            filenames = glob.glob(os.path.join(target, "*.vy"))
-            if not filenames:
-                filenames = globbed_targets
-
+    elif os.path.isdir(target):
+        solidity_filenames = glob.glob(os.path.join(target, "*.sol"))
+        vyper_filenames = glob.glob(os.path.join(target, "*.vy"))
         # Determine if we're using --standard-solc option to
         # aggregate many files into a single compilation.
         if use_solc_standard_json:
             # If we're using standard solc, then we generated our
             # input to create a single compilation with all files
-            standard_json = solc_standard_json.SolcStandardJson()
-            for filename in filenames:
-                standard_json.add_source_file(filename)
-            compilations.append(CryticCompile(standard_json, **kwargs))
+            solc_standard_json = SolcStandardJson()
+            solc_standard_json.add_source_files(solidity_filenames)
+            compilations.append(CryticCompile(solc_standard_json, **kwargs))
         else:
             # We compile each file and add it to our compilations.
-            for filename in filenames:
+            for filename in solidity_filenames:
                 compilations.append(CryticCompile(filename, **kwargs))
+
+        if vyper_filenames:
+            vyper_standard_json = VyperStandardJson()
+            vyper_standard_json.add_source_files(vyper_filenames)
+            compilations.append(CryticCompile(vyper_standard_json, **kwargs))
     else:
-        raise ValueError(f"{str(target)} is not a file or directory.")
+        raise NotImplementedError()
+        # TODO split glob into language
+        # # Attempt to perform glob expansion of target/filename
+        # globbed_targets = glob.glob(target, recursive=True)
+        # print(globbed_targets)
+
+        # raise ValueError(f"{str(target)} is not a file or directory.")
 
     return compilations
