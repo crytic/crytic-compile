@@ -14,8 +14,16 @@ from collections import defaultdict
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, List, Optional, Set, Tuple, Type, Union
 
+from solc_select.solc_select import (
+    install_artifacts,
+    installed_versions,
+    current_version,
+    artifact_path,
+)
 from crytic_compile.compilation_unit import CompilationUnit
-from crytic_compile.platform import all_platforms, solc_standard_json
+from crytic_compile.platform import all_platforms
+from crytic_compile.platform.solc_standard_json import SolcStandardJson
+from crytic_compile.platform.vyper import VyperStandardJson
 from crytic_compile.platform.abstract_platform import AbstractPlatform
 from crytic_compile.platform.all_export import PLATFORMS_EXPORT
 from crytic_compile.platform.solc import Solc
@@ -84,6 +92,7 @@ class CryticCompile:
     Main class.
     """
 
+    # pylint: disable=too-many-branches
     def __init__(self, target: Union[str, AbstractPlatform], **kwargs: str) -> None:
         """See https://github.com/crytic/crytic-compile/wiki/Configuration
         Target is usually a file or a project directory. It can be an AbstractPlatform
@@ -114,8 +123,55 @@ class CryticCompile:
 
         self._working_dir = Path.cwd()
 
+        # pylint: disable=too-many-nested-blocks
         if isinstance(target, str):
             platform = self._init_platform(target, **kwargs)
+            # If the platform is Solc it means we are trying to compile a single
+            # we try to see if we are in a known compilation framework to retrieve
+            # information like remappings and solc version
+            if isinstance(platform, Solc):
+                # Try to get the platform of the current working directory
+                platform_wd = next(
+                    (
+                        p(target)
+                        for p in get_platforms()
+                        if p.is_supported(str(self._working_dir), **kwargs)
+                    ),
+                    None,
+                )
+                # If no platform has been found or if it's a Solc we can't do anything
+                if platform_wd and not isinstance(platform_wd, Solc):
+                    platform_config = platform_wd.config(str(self._working_dir))
+                    if platform_config:
+                        kwargs["solc_args"] = ""
+                        kwargs["solc_remaps"] = ""
+
+                        if platform_config.remappings:
+                            kwargs["solc_remaps"] = platform_config.remappings
+                        if (
+                            platform_config.solc_version
+                            and platform_config.solc_version != current_version()[0]
+                        ):
+                            solc_version = platform_config.solc_version
+                            if solc_version in installed_versions():
+                                kwargs["solc"] = str(artifact_path(solc_version).absolute())
+                            else:
+                                # Respect foundry offline option and don't install a missing solc version
+                                if not platform_config.offline:
+                                    install_artifacts([solc_version])
+                                    kwargs["solc"] = str(artifact_path(solc_version).absolute())
+                        if platform_config.optimizer:
+                            kwargs["solc_args"] += "--optimize"
+                        if platform_config.optimizer_runs:
+                            kwargs[
+                                "solc_args"
+                            ] += f"--optimize-runs {platform_config.optimizer_runs}"
+                        if platform_config.via_ir:
+                            kwargs["solc_args"] += "--via-ir"
+                        if platform_config.allow_paths:
+                            kwargs["solc_args"] += f"--allow-paths {platform_config.allow_paths}"
+                        if platform_config.evm_version:
+                            kwargs["solc_args"] += f"--evm-version {platform_config.evm_version}"
         else:
             platform = target
 
@@ -622,18 +678,14 @@ def compile_all(target: str, **kwargs: str) -> List[CryticCompile]:
         **kwargs: optional arguments. Used: "solc_standard_json"
 
     Raises:
-        ValueError: If the target could not be compiled
+        NotImplementedError: If the target could not be compiled
 
     Returns:
         List[CryticCompile]: Returns a list of CryticCompile instances for all compilations which occurred.
     """
     use_solc_standard_json = kwargs.get("solc_standard_json", False)
 
-    # Attempt to perform glob expansion of target/filename
-    globbed_targets = glob.glob(target, recursive=True)
-
     # Check if the target refers to a valid target already.
-    # If it does not, we assume it's a glob pattern.
     compilations: List[CryticCompile] = []
     if os.path.isfile(target) or is_supported(target):
         if target.endswith(".zip"):
@@ -645,28 +697,33 @@ def compile_all(target: str, **kwargs: str) -> List[CryticCompile]:
                     compilations = load_from_zip(tmp.name)
         else:
             compilations.append(CryticCompile(target, **kwargs))
-    elif os.path.isdir(target) or len(globbed_targets) > 0:
-        # We create a new glob to find solidity files at this path (in case this is a directory)
-        filenames = glob.glob(os.path.join(target, "*.sol"))
-        if not filenames:
-            filenames = glob.glob(os.path.join(target, "*.vy"))
-            if not filenames:
-                filenames = globbed_targets
-
+    elif os.path.isdir(target):
+        solidity_filenames = glob.glob(os.path.join(target, "*.sol"))
+        vyper_filenames = glob.glob(os.path.join(target, "*.vy"))
         # Determine if we're using --standard-solc option to
         # aggregate many files into a single compilation.
         if use_solc_standard_json:
             # If we're using standard solc, then we generated our
             # input to create a single compilation with all files
-            standard_json = solc_standard_json.SolcStandardJson()
-            for filename in filenames:
-                standard_json.add_source_file(filename)
-            compilations.append(CryticCompile(standard_json, **kwargs))
+            solc_standard_json = SolcStandardJson()
+            solc_standard_json.add_source_files(solidity_filenames)
+            compilations.append(CryticCompile(solc_standard_json, **kwargs))
         else:
             # We compile each file and add it to our compilations.
-            for filename in filenames:
+            for filename in solidity_filenames:
                 compilations.append(CryticCompile(filename, **kwargs))
+
+        if vyper_filenames:
+            vyper_standard_json = VyperStandardJson()
+            vyper_standard_json.add_source_files(vyper_filenames)
+            compilations.append(CryticCompile(vyper_standard_json, **kwargs))
     else:
-        raise ValueError(f"{str(target)} is not a file or directory.")
+        raise NotImplementedError()
+        # TODO split glob into language
+        # # Attempt to perform glob expansion of target/filename
+        # globbed_targets = glob.glob(target, recursive=True)
+        # print(globbed_targets)
+
+        # raise ValueError(f"{str(target)} is not a file or directory.")
 
     return compilations

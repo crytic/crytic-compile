@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger("CryticCompile")
 
 
-class Vyper(AbstractPlatform):
+class VyperStandardJson(AbstractPlatform):
     """
     Vyper platform
     """
@@ -33,6 +33,28 @@ class Vyper(AbstractPlatform):
     NAME = "vyper"
     PROJECT_URL = "https://github.com/vyperlang/vyper"
     TYPE = Type.VYPER
+
+    def __init__(self, target: Optional[Path] = None, **_kwargs: str):
+        super().__init__(str(target), **_kwargs)
+        self.standard_json_input = {
+            "language": "Vyper",
+            "sources": {},
+            "settings": {
+                "outputSelection": {
+                    "*": {
+                        "*": [
+                            "abi",
+                            "devdoc",
+                            "userdoc",
+                            "evm.bytecode",
+                            "evm.deployedBytecode",
+                            "evm.deployedBytecode.sourceMap",
+                        ],
+                        "": ["ast"],
+                    }
+                }
+            },
+        }
 
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str) -> None:
         """Compile the target
@@ -44,46 +66,67 @@ class Vyper(AbstractPlatform):
 
         """
         target = self._target
+        # If the target was a directory `add_source_file` should have been called
+        # by `compile_all`. Otherwise, we should have a single file target.
+        if self._target is not None and os.path.isfile(self._target):
+            self.add_source_files([target])
 
-        vyper = kwargs.get("vyper", "vyper")
+        vyper_bin = kwargs.get("vyper", "vyper")
 
-        targets_json = _run_vyper(target, vyper)
-
-        assert "version" in targets_json
+        compilation_artifacts = _run_vyper_standard_json(self.standard_json_input, vyper_bin)
         compilation_unit = CompilationUnit(crytic_compile, str(target))
 
+        compiler_version = compilation_artifacts["compiler"].split("-")[1]
+        if compiler_version != "0.3.7":
+            LOGGER.info("Vyper != 0.3.7 support is a best effort and might fail")
         compilation_unit.compiler_version = CompilerVersion(
-            compiler="vyper", version=targets_json["version"], optimized=False
+            compiler="vyper", version=compiler_version, optimized=False
         )
 
-        assert target in targets_json
+        for source_file, contract_info in compilation_artifacts["contracts"].items():
+            filename = convert_filename(source_file, _relative_to_short, crytic_compile)
+            source_unit = compilation_unit.create_source_unit(filename)
+            for contract_name, contract_metadata in contract_info.items():
+                source_unit.add_contract_name(contract_name)
+                compilation_unit.filename_to_contracts[filename].add(contract_name)
 
-        info = targets_json[target]
-        filename = convert_filename(target, _relative_to_short, crytic_compile)
+                source_unit.abis[contract_name] = contract_metadata["abi"]
+                source_unit.bytecodes_init[contract_name] = contract_metadata["evm"]["bytecode"][
+                    "object"
+                ].replace("0x", "")
+                # Vyper does not provide the source mapping for the init bytecode
+                source_unit.srcmaps_init[contract_name] = []
+                source_unit.srcmaps_runtime[contract_name] = contract_metadata["evm"][
+                    "deployedBytecode"
+                ]["sourceMap"].split(";")
+                source_unit.bytecodes_runtime[contract_name] = contract_metadata["evm"][
+                    "deployedBytecode"
+                ]["object"].replace("0x", "")
+                source_unit.natspec[contract_name] = Natspec(
+                    contract_metadata["userdoc"], contract_metadata["devdoc"]
+                )
 
-        contract_name = Path(target).parts[-1]
+        for source_file, ast in compilation_artifacts["sources"].items():
+            filename = convert_filename(source_file, _relative_to_short, crytic_compile)
+            source_unit = compilation_unit.create_source_unit(filename)
+            source_unit.ast = ast
 
-        source_unit = compilation_unit.create_source_unit(filename)
+    def add_source_files(self, file_paths: List[str]) -> None:
+        """
+        Append files
 
-        source_unit.add_contract_name(contract_name)
-        compilation_unit.filename_to_contracts[filename].add(contract_name)
-        source_unit.abis[contract_name] = info["abi"]
-        source_unit.bytecodes_init[contract_name] = info["bytecode"].replace("0x", "")
-        source_unit.bytecodes_runtime[contract_name] = info["bytecode_runtime"].replace("0x", "")
-        # Vyper does not provide the source mapping for the init bytecode
-        source_unit.srcmaps_init[contract_name] = []
-        # info["source_map"]["pc_pos_map"] contains the source mapping in a simpler format
-        # However pc_pos_map_compressed" seems to follow solc's format, so for convenience
-        # We store the same
-        # TODO: create SourceMapping class, so that srcmaps_runtime would store an class
-        # That will give more flexebility to different compilers
-        source_unit.srcmaps_runtime[contract_name] = info["source_map"]["pc_pos_map_compressed"]
+        Args:
+            file_paths (List[str]): files to append
 
-        # Natspec not yet handled for vyper
-        source_unit.natspec[contract_name] = Natspec({}, {})
+        Returns:
 
-        ast = _get_vyper_ast(target, vyper)
-        source_unit.ast = ast
+        """
+
+        for file_path in file_paths:
+            with open(file_path, "r", encoding="utf8") as f:
+                self.standard_json_input["sources"][file_path] = {  # type: ignore
+                    "content": f.read(),
+                }
 
     def clean(self, **_kwargs: str) -> None:
         """Clean compilation artifacts
@@ -129,16 +172,15 @@ class Vyper(AbstractPlatform):
         return []
 
 
-def _run_vyper(
-    filename: str, vyper: str, env: Optional[Dict] = None, working_dir: Optional[str] = None
+def _run_vyper_standard_json(
+    standard_json_input: Dict, vyper: str, env: Optional[Dict] = None
 ) -> Dict:
-    """Run vyper
+    """Run vyper and write compilation output to a file
 
     Args:
-        filename (str): vyper file
+        standard_json_input (Dict): Dict containing the vyper standard json input
         vyper (str): vyper binary
         env (Optional[Dict], optional): Environment variables. Defaults to None.
-        working_dir (Optional[str], optional): Working directory. Defaults to None.
 
     Raises:
         InvalidCompilation: If vyper failed to run
@@ -146,81 +188,29 @@ def _run_vyper(
     Returns:
         Dict: Vyper json compilation artifact
     """
-    if not os.path.isfile(filename):
-        raise InvalidCompilation(f"{filename} does not exist (are you in the correct directory?)")
+    cmd = [vyper, "--standard-json"]
 
-    cmd = [vyper, filename, "-f", "combined_json"]
+    with subprocess.Popen(
+        cmd,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+        executable=shutil.which(cmd[0]),
+    ) as process:
 
-    additional_kwargs: Dict = {"cwd": working_dir} if working_dir else {}
-    stderr = ""
-    LOGGER.info(
-        "'%s' running",
-        " ".join(cmd),
-    )
-    try:
-        with subprocess.Popen(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            env=env,
-            executable=shutil.which(cmd[0]),
-            **additional_kwargs,
-        ) as process:
-            stdout, stderr = process.communicate()
-            res = stdout.split(b"\n")
-            res = res[-2]
-            return json.loads(res)
-    except OSError as error:
-        # pylint: disable=raise-missing-from
-        raise InvalidCompilation(error)
-    except json.decoder.JSONDecodeError:
-        # pylint: disable=raise-missing-from
-        raise InvalidCompilation(f"Invalid vyper compilation\n{stderr}")
+        stdout_b, stderr_b = process.communicate(json.dumps(standard_json_input).encode("utf-8"))
+        stdout, _stderr = (
+            stdout_b.decode(),
+            stderr_b.decode(errors="backslashreplace"),
+        )  # convert bytestrings to unicode strings
 
+        vyper_standard_output = json.loads(stdout)
+        if "errors" in vyper_standard_output:
+            # TODO format errors
+            raise InvalidCompilation(vyper_standard_output["errors"])
 
-def _get_vyper_ast(
-    filename: str, vyper: str, env: Optional[Dict] = None, working_dir: Optional[str] = None
-) -> Dict:
-    """Get ast from vyper
-
-    Args:
-        filename (str): vyper file
-        vyper (str): vyper binary
-        env (Dict, optional): Environment variables. Defaults to None.
-        working_dir (str, optional): Working directory. Defaults to None.
-
-    Raises:
-        InvalidCompilation: If vyper failed to run
-
-    Returns:
-        Dict: [description]
-    """
-    if not os.path.isfile(filename):
-        raise InvalidCompilation(f"{filename} does not exist (are you in the correct directory?)")
-
-    cmd = [vyper, filename, "-f", "ast"]
-
-    additional_kwargs: Dict = {"cwd": working_dir} if working_dir else {}
-    stderr = ""
-    try:
-        with subprocess.Popen(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            env=env,
-            executable=shutil.which(cmd[0]),
-            **additional_kwargs,
-        ) as process:
-            stdout, stderr = process.communicate()
-            res = stdout.split(b"\n")
-            res = res[-2]
-            return json.loads(res)
-    except json.decoder.JSONDecodeError:
-        # pylint: disable=raise-missing-from
-        raise InvalidCompilation(f"Invalid vyper compilation\n{stderr}")
-    except Exception as exception:
-        # pylint: disable=raise-missing-from
-        raise InvalidCompilation(exception)
+        return vyper_standard_output
 
 
 def _relative_to_short(relative: Path) -> Path:

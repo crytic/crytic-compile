@@ -22,7 +22,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "windows-2022"]
-        type: ["brownie", "buidler", "dapp", "embark", "hardhat", "solc", "truffle", "waffle", "foundry", "standard"]
+        type: ["brownie", "buidler", "dapp", "embark", "hardhat", "solc", "truffle", "waffle", "foundry", "standard", "vyper", "solc_multi_file", "hardhat_multi_file"]
         exclude:
           # Currently broken, tries to pull git:// which is blocked by GH
           - type: embark
@@ -33,7 +33,7 @@ jobs:
           - os: windows-2022
             type: foundry
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set up shell
       if: runner.os == 'Windows'
       run: |
@@ -54,7 +54,7 @@ jobs:
         pip install .
     - name: Set up nix
       if: matrix.type == 'dapp'
-      uses: cachix/install-nix-action@v20
+      uses: cachix/install-nix-action@v23
     - name: Set up cachix
       if: matrix.type == 'dapp'
       uses: cachix/cachix-action@v12
