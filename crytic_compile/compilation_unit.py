@@ -46,6 +46,10 @@ class CompilationUnit:
             compiler="N/A", version="N/A", optimized=False
         )
 
+        # if the compilation unit comes from etherscan-like service and is a proxy,
+        # store the implementation address
+        self._implementation_address: Optional[str] = None
+
         self._crytic_compile: "CryticCompile" = crytic_compile
 
         if unique_id == ".":
@@ -129,6 +133,24 @@ class CompilationUnit:
             if filename not in self.filenames:
                 self.filenames.append(filename)
         return self._source_units[filename]
+
+    @property
+    def implementation_address(self) -> Optional[str]:
+        """Return the implementation address if the compilation unit is a proxy
+
+        Returns:
+            Optional[str]: Implementation address
+        """
+        return self._implementation_address
+
+    @implementation_address.setter
+    def implementation_address(self, implementation: str) -> None:
+        """Set the implementation address
+
+        Args:
+            implementation (str): Implementation address
+        """
+        self._implementation_address = implementation
 
     # endregion
     ###################################################################################
