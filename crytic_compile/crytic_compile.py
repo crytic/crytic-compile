@@ -36,14 +36,14 @@ logging.basicConfig()
 
 
 def get_platforms() -> List[Type[AbstractPlatform]]:
-    """Return the available platforms classes
+    """Return the available platforms classes in order of preference
 
     Returns:
         List[Type[AbstractPlatform]]: Available platforms
     """
     platforms = [getattr(all_platforms, name) for name in dir(all_platforms)]
     platforms = [d for d in platforms if inspect.isclass(d) and issubclass(d, AbstractPlatform)]
-    return sorted(platforms, key=lambda platform: platform.TYPE)
+    return sorted(platforms, key=lambda platform: (platform.TYPE.priority(), platform.TYPE))
 
 
 def is_supported(target: str) -> bool:
@@ -63,13 +63,14 @@ def _extract_libraries(libraries_str: Optional[str]) -> Optional[Dict[str, int]]
 
     if not libraries_str:
         return None
-
-    pattern = r"\((?P<name>\w+),\s*(?P<value1>0x[0-9a-fA-F]{2})\),?"
+    # Extract tuple like (libname1, 0x00)
+    pattern = r"\((?P<name>\w+),\s*(?P<value1>0x[0-9a-fA-F]{2,40})\),?"
     matches = re.findall(pattern, libraries_str)
 
     if not matches:
-        logging.info(f"Libraries {libraries_str} could not be parsed")
-        return None
+        raise ValueError(
+            f"Invalid library linking directive\nGot:\n{libraries_str}\nExpected format:\n(libname1, 0x00),(libname2, 0x02)"
+        )
 
     ret: Dict[str, int] = {}
     for key, value in matches:

@@ -11,10 +11,10 @@ setup(
     description="Util to facilitate smart contracts compilation.",
     url="https://github.com/crytic/crytic-compile",
     author="Trail of Bits",
-    version="0.3.2",
+    version="0.3.4",
     packages=find_packages(),
     python_requires=">=3.8",
-    install_requires=["pycryptodome>=3.4.6", "cbor2", "solc-select>=v1.0.2"],
+    install_requires=["pycryptodome>=3.4.6", "cbor2", "solc-select>=v1.0.4"],
     extras_require={
         "test": [
             "pytest",
@@ -35,6 +35,7 @@ setup(
     },
     license="AGPL-3.0",
     long_description=long_description,
+    long_description_content_type="text/markdown",
     package_data={"crytic_compile": ["py.typed"]},
     entry_points={"console_scripts": ["crytic-compile = crytic_compile.__main__:main"]},
 )
