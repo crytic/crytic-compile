@@ -5,7 +5,8 @@ import logging
 import os
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, List, Optional, Dict, TypeVar
+
 import toml
 
 from crytic_compile.platform.abstract_platform import AbstractPlatform, PlatformConfig
@@ -16,6 +17,8 @@ from crytic_compile.utils.subprocess import run
 # Handle cycle
 if TYPE_CHECKING:
     from crytic_compile import CryticCompile
+
+T = TypeVar("T")
 
 LOGGER = logging.getLogger("CryticCompile")
 
@@ -135,8 +138,21 @@ class Foundry(AbstractPlatform):
             foundry_toml = toml.loads(f.read())
             default_profile = foundry_toml["profile"]["default"]
 
-            if "solc_version" in default_profile:
-                result.solc_version = default_profile["solc_version"]
+            def lookup_by_keys(keys: List[str], dictionary: Dict[str, T]) -> Optional[T]:
+                for key in keys:
+                    if key in dictionary:
+                        return dictionary[key]
+                return None
+
+            # Foundry supports snake and kebab case.
+            result.solc_version = lookup_by_keys(
+                ["solc", "solc_version", "solc-version"], default_profile
+            )
+            via_ir = lookup_by_keys(["via_ir", "via-ir"], default_profile)
+            if via_ir:
+                result.via_ir = via_ir
+            result.allow_paths = lookup_by_keys(["allow_paths", "allow-paths"], default_profile)
+
             if "offline" in default_profile:
                 result.offline = default_profile["offline"]
             if "optimizer" in default_profile:
@@ -144,17 +160,15 @@ class Foundry(AbstractPlatform):
             else:
                 # Default to true
                 result.optimizer = True
-            if "optimizer_runs" in default_profile:
-                result.optimizer_runs = default_profile["optimizer_runs"]
-            else:
+            optimizer_runs = lookup_by_keys(["optimizer_runs", "optimizer-runs"], default_profile)
+            if optimizer_runs is None:
                 # Default to 200
                 result.optimizer_runs = 200
-            if "via_ir" in default_profile:
-                result.via_ir = default_profile["via_ir"]
-            if "allow_paths" in default_profile:
-                result.allow_paths = default_profile["allow_paths"]
-            if "evm_version" in default_profile:
-                result.evm_version = default_profile["evm_version"]
+            else:
+                result.optimizer_runs = optimizer_runs
+            evm_version = lookup_by_keys(["evm_version", "evm-version"], default_profile)
+            if evm_version is None:
+                result.evm_version = evm_version
             else:
                 # Default to london
                 result.evm_version = "london"
