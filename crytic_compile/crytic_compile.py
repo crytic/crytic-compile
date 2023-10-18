@@ -17,7 +17,6 @@ from typing import TYPE_CHECKING, Dict, List, Optional, Set, Tuple, Type, Union
 from solc_select.solc_select import (
     install_artifacts,
     installed_versions,
-    current_version,
     artifact_path,
 )
 from crytic_compile.compilation_unit import CompilationUnit
@@ -86,6 +85,31 @@ def _extract_libraries(libraries_str: Optional[str]) -> Optional[Dict[str, int]]
     return ret
 
 
+def _configure_solc(solc_requested: str, offline: bool) -> str:
+    """
+    Determine which solc binary to use based on the requested version or path (e.g. '0.8.0' or '/usr/bin/solc-0.8.0').
+
+    Args:
+        solc_requested (str): solc version or path
+        offline (bool): whether to allow network requests
+
+    Returns:
+        str: path to solc binary
+    """
+    if Path(solc_requested).exists():
+        solc_path = Path(solc_requested)
+    else:
+        solc_version = solc_requested
+        if solc_requested in installed_versions():
+            solc_path = artifact_path(solc_requested)
+        else:
+            # Respect foundry offline option and skip installation.
+            if not offline:
+                install_artifacts([solc_version])
+            solc_path = artifact_path(solc_version)
+    return solc_path.absolute().as_posix()
+
+
 # pylint: disable=too-many-instance-attributes
 class CryticCompile:
     """
@@ -139,7 +163,7 @@ class CryticCompile:
                     ),
                     None,
                 )
-                # If no platform has been found or if it's a Solc we can't do anything
+                # If no platform has been found or if it's the Solc platform, we can't automatically compile.
                 if platform_wd and not isinstance(platform_wd, Solc):
                     platform_config = platform_wd.config(str(self._working_dir))
                     if platform_config:
@@ -148,18 +172,13 @@ class CryticCompile:
 
                         if platform_config.remappings:
                             kwargs["solc_remaps"] = platform_config.remappings
-                        if (
-                            platform_config.solc_version
-                            and platform_config.solc_version != current_version()[0]
-                        ):
-                            solc_version = platform_config.solc_version
-                            if solc_version in installed_versions():
-                                kwargs["solc"] = str(artifact_path(solc_version).absolute())
-                            else:
-                                # Respect foundry offline option and don't install a missing solc version
-                                if not platform_config.offline:
-                                    install_artifacts([solc_version])
-                                    kwargs["solc"] = str(artifact_path(solc_version).absolute())
+                        if platform_config.solc_version is None:
+                            message = f"Could not detect solc version from {platform_wd.NAME} config. Falling back to system version..."
+                            LOGGER.warning(message)
+                        else:
+                            kwargs["solc"] = _configure_solc(
+                                platform_config.solc_version, platform_config.offline
+                            )
                         if platform_config.optimizer:
                             kwargs["solc_args"] += "--optimize"
                         if platform_config.optimizer_runs:
