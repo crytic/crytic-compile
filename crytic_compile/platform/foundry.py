@@ -63,7 +63,7 @@ class Foundry(AbstractPlatform):
             compile_all = kwargs.get("foundry_compile_all", False)
 
             if not compile_all:
-                foundry_config = self.config(str(crytic_compile.working_dir.absolute()))
+                foundry_config = self.config(str(crytic_compile.working_dir.joinpath(self._target).absolute()))
                 if foundry_config:
                     compilation_command += [
                         "--skip",
@@ -129,12 +129,12 @@ class Foundry(AbstractPlatform):
         """
         result = PlatformConfig()
         result.remappings = (
-            subprocess.run(["forge", "remappings"], stdout=subprocess.PIPE, check=True)
+            subprocess.run(["forge", "remappings"], stdout=subprocess.PIPE, check=True, cwd=working_dir)
             .stdout.decode("utf-8")
             .replace("\n", " ")
             .strip()
         )
-        with open("foundry.toml", "r", encoding="utf-8") as f:
+        with open(str(Path(working_dir, "foundry.toml").absolute()), "r", encoding="utf-8") as f:
             foundry_toml = toml.loads(f.read())
             default_profile = foundry_toml["profile"]["default"]
 
