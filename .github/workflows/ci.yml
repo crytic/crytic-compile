@@ -40,7 +40,7 @@ jobs:
         echo 'C:\msys64\mingw64\bin' >> "$GITHUB_PATH"
         echo 'C:\msys64\usr\bin' >> "$GITHUB_PATH"
     - name: Set up Node
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version: 18.15
     - name: Set up Python 3.8
