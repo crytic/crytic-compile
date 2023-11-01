@@ -474,6 +474,7 @@ class SolcStandardJson(Solc):
             self.to_dict(),
             compilation_unit.compiler_version,
             solc_disable_warnings=solc_disable_warnings,
+            working_dir=solc_working_dir,
         )
 
         parse_standard_json_output(
