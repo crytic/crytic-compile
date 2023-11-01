@@ -437,7 +437,7 @@ class SolcStandardJson(Solc):
         Args:
             crytic_compile (CryticCompile): Associated CryticCompile object
             **kwargs: optional arguments. Used: "solc", "solc_disable_warnings", "solc_args", "solc_working_dir",
-                "solc_remaps"
+                "solc_remaps", "solc_env"
         """
 
         solc: str = kwargs.get("solc", "solc")
@@ -446,12 +446,13 @@ class SolcStandardJson(Solc):
 
         solc_remaps: Optional[Union[str, List[str]]] = kwargs.get("solc_remaps", None)
         solc_working_dir: Optional[str] = kwargs.get("solc_working_dir", None)
+        solc_env: Optional[Dict] = kwargs.get("solc_env", None)
 
         compilation_unit = CompilationUnit(crytic_compile, "standard_json")
 
         compilation_unit.compiler_version = CompilerVersion(
             compiler="solc",
-            version=get_version(solc, None),
+            version=get_version(solc, solc_env),
             optimized=is_optimized(solc_arguments),
         )
 
