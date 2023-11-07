@@ -7,7 +7,7 @@ import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional, Dict, TypeVar
 
-import toml
+import json
 
 from crytic_compile.platform.abstract_platform import AbstractPlatform, PlatformConfig
 from crytic_compile.platform.types import Type
@@ -63,7 +63,7 @@ class Foundry(AbstractPlatform):
             compile_all = kwargs.get("foundry_compile_all", False)
 
             if not compile_all:
-                foundry_config = self.config(str(crytic_compile.working_dir.absolute()))
+                foundry_config = self.config(self._target)
                 if foundry_config:
                     compilation_command += [
                         "--skip",
@@ -118,68 +118,62 @@ class Foundry(AbstractPlatform):
         return os.path.isfile(os.path.join(target, "foundry.toml"))
 
     @staticmethod
-    def config(working_dir: str) -> Optional[PlatformConfig]:
+    def config(target: str) -> Optional[PlatformConfig]:
         """Return configuration data that should be passed to solc, such as remappings.
 
         Args:
-            working_dir (str): path to the working directory
+            target (str): path to the target
 
         Returns:
             Optional[PlatformConfig]: Platform configuration data such as optimization, remappings...
         """
         result = PlatformConfig()
-        result.remappings = (
-            subprocess.run(["forge", "remappings"], stdout=subprocess.PIPE, check=True)
-            .stdout.decode("utf-8")
-            .replace("\n", " ")
-            .strip()
+        LOGGER.info("'forge config --json' running")
+        json_config = json.loads(
+            subprocess.run(["forge", "config", "--json"], stdout=subprocess.PIPE, check=True).stdout
         )
-        with open("foundry.toml", "r", encoding="utf-8") as f:
-            foundry_toml = toml.loads(f.read())
-            default_profile = foundry_toml["profile"]["default"]
+        result.remappings = json_config["remappings"]
 
-            def lookup_by_keys(keys: List[str], dictionary: Dict[str, T]) -> Optional[T]:
-                for key in keys:
-                    if key in dictionary:
-                        return dictionary[key]
-                return None
+        def lookup_by_keys(keys: List[str], dictionary: Dict[str, T]) -> Optional[T]:
+            for key in keys:
+                if key in dictionary:
+                    return dictionary[key]
+            return None
 
-            # Foundry supports snake and kebab case.
-            result.solc_version = lookup_by_keys(
-                ["solc", "solc_version", "solc-version"], default_profile
-            )
-            via_ir = lookup_by_keys(["via_ir", "via-ir"], default_profile)
-            if via_ir:
-                result.via_ir = via_ir
-            result.allow_paths = lookup_by_keys(["allow_paths", "allow-paths"], default_profile)
+        # Foundry supports snake and kebab case.
+        result.solc_version = lookup_by_keys(["solc", "solc_version", "solc-version"], json_config)
+        via_ir = lookup_by_keys(["via_ir", "via-ir"], json_config)
+        if via_ir:
+            result.via_ir = via_ir
+        result.allow_paths = lookup_by_keys(["allow_paths", "allow-paths"], json_config)
 
-            if "offline" in default_profile:
-                result.offline = default_profile["offline"]
-            if "optimizer" in default_profile:
-                result.optimizer = default_profile["optimizer"]
-            else:
-                # Default to true
-                result.optimizer = True
-            optimizer_runs = lookup_by_keys(["optimizer_runs", "optimizer-runs"], default_profile)
-            if optimizer_runs is None:
-                # Default to 200
-                result.optimizer_runs = 200
-            else:
-                result.optimizer_runs = optimizer_runs
-            evm_version = lookup_by_keys(["evm_version", "evm-version"], default_profile)
-            if evm_version is None:
-                result.evm_version = evm_version
-            else:
-                # Default to london
-                result.evm_version = "london"
-            if "src" in default_profile:
-                result.src_path = default_profile["src"]
-            if "test" in default_profile:
-                result.tests_path = default_profile["test"]
-            if "libs" in default_profile:
-                result.libs_path = default_profile["libs"]
-            if "script" in default_profile:
-                result.scripts_path = default_profile["script"]
+        if "offline" in json_config:
+            result.offline = json_config["offline"]
+        if "optimizer" in json_config:
+            result.optimizer = json_config["optimizer"]
+        else:
+            # Default to true
+            result.optimizer = True
+        optimizer_runs = lookup_by_keys(["optimizer_runs", "optimizer-runs"], json_config)
+        if optimizer_runs is None:
+            # Default to 200
+            result.optimizer_runs = 200
+        else:
+            result.optimizer_runs = optimizer_runs
+        evm_version = lookup_by_keys(["evm_version", "evm-version"], json_config)
+        if evm_version is None:
+            result.evm_version = evm_version
+        else:
+            # Default to london
+            result.evm_version = "london"
+        if "src" in json_config:
+            result.src_path = json_config["src"]
+        if "test" in json_config:
+            result.tests_path = json_config["test"]
+        if "libs" in json_config:
+            result.libs_path = json_config["libs"]
+        if "script" in json_config:
+            result.scripts_path = json_config["script"]
 
         return result
 
