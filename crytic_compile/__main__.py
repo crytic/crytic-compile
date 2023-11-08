@@ -2,13 +2,12 @@
 This is the Slither cli script
 """
 import argparse
+from importlib.metadata import version
 import json
 import logging
 import os
 import sys
 from typing import TYPE_CHECKING, Any, Optional
-
-from pkg_resources import require
 
 from crytic_compile.crytic_compile import compile_all, get_platforms
 from crytic_compile.cryticparser import DEFAULTS_FLAG_IN_CONFIG, cryticparser
@@ -109,7 +108,7 @@ see https://github.com/crytic/crytic-compile/wiki""",
     parser.add_argument(
         "--version",
         help="displays the current version",
-        version=require("crytic-compile")[0].version,
+        version=version("crytic-compile"),
         action="version",
     )
 
