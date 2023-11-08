@@ -22,6 +22,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "windows-2022"]
+        python: ${{ (github.event_name == 'pull_request' && fromJSON('["3.8", "3.12"]')) || fromJSON('["3.8", "3.9", "3.10", "3.11", "3.12"]') }}
         type: ["brownie", "buidler", "dapp", "embark", "hardhat", "solc", "truffle", "waffle", "foundry", "standard", "vyper", "solc_multi_file", "hardhat_multi_file"]
         exclude:
           # Currently broken, tries to pull git:// which is blocked by GH
@@ -43,10 +44,10 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: 18.15
-    - name: Set up Python 3.8
+    - name: Set up Python ${{ matrix.python }}
       uses: actions/setup-python@v4
       with:
-        python-version: 3.8
+        python-version: ${{ matrix.python }}
     - name: Install dependencies
       run: |
         pip install "solc-select>=v1.0.0b1"
