@@ -25,6 +25,7 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger("CryticCompile")
 
 
+# pylint: disable=too-many-arguments
 def standalone_compile(
     filenames: List[str],
     compilation_unit: CompilationUnit,
