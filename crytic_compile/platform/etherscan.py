@@ -376,6 +376,7 @@ class Etherscan(AbstractPlatform):
         try:
             # etherscan might return an object with two curly braces, {{ content }}
             dict_source_code = json.loads(source_code[1:-1])
+            assert isinstance(dict_source_code, dict)
             filenames, working_dir, remappings = _handle_multiple_files(
                 dict_source_code, addr, prefix, contract_name, export_dir
             )
@@ -383,6 +384,7 @@ class Etherscan(AbstractPlatform):
             try:
                 # or etherscan might return an object with single curly braces, { content }
                 dict_source_code = json.loads(source_code)
+                assert isinstance(dict_source_code, dict)
                 filenames, working_dir, remappings = _handle_multiple_files(
                     dict_source_code, addr, prefix, contract_name, export_dir
                 )
