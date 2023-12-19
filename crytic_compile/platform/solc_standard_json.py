@@ -4,15 +4,20 @@ Handle compilation through the standard solc json format
 import json
 import logging
 import os
-from pathlib import Path
 import shutil
 import subprocess
-from typing import TYPE_CHECKING, Dict, List, Optional, Union, Any
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
 from crytic_compile.compilation_unit import CompilationUnit
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform.exceptions import InvalidCompilation
-from crytic_compile.platform.solc import Solc, get_version, is_optimized, relative_to_short
+from crytic_compile.platform.solc import (
+    Solc,
+    get_version,
+    is_optimized,
+    relative_to_short,
+)
 from crytic_compile.platform.types import Type
 from crytic_compile.utils.naming import convert_filename
 
@@ -160,7 +165,6 @@ def run_solc_standard_json(
         " ".join(cmd),
     )
     try:
-
         with subprocess.Popen(
             cmd,
             stdin=subprocess.PIPE,
@@ -170,7 +174,6 @@ def run_solc_standard_json(
             executable=shutil.which(cmd[0]),
             **additional_kwargs,
         ) as process:
-
             stdout_b, stderr_b = process.communicate(json.dumps(solc_input).encode("utf-8"))
             stdout, stderr = (
                 stdout_b.decode(),
@@ -453,7 +456,9 @@ class SolcStandardJson(Solc):
         compilation_unit.compiler_version = CompilerVersion(
             compiler="solc",
             version=get_version(solc, solc_env),
-            optimized=is_optimized(solc_arguments),
+            optimized=is_optimized(solc_arguments)
+            or self.to_dict().get("settings", {}).get("optimizer", {}).get("enabled", False),
+            optimize_runs=self.to_dict().get("settings", {}).get("optimizer", {}).get("runs", None),
         )
 
         add_optimization(
