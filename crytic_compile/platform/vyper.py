@@ -206,9 +206,21 @@ def _run_vyper_standard_json(
         )  # convert bytestrings to unicode strings
 
         vyper_standard_output = json.loads(stdout)
+
         if "errors" in vyper_standard_output:
-            # TODO format errors
-            raise InvalidCompilation(vyper_standard_output["errors"])
+
+            has_errors = False
+            for diagnostic in vyper_standard_output["errors"]:
+
+                if diagnostic["severity"] == "warning":
+                    continue
+
+                msg = diagnostic.get("formattedMessage", diagnostic["message"])
+                LOGGER.error(msg)
+                has_errors = True
+
+            if has_errors:
+                raise InvalidCompilation("Vyper compilation errored")
 
         return vyper_standard_output
 
