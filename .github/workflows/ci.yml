@@ -51,7 +51,7 @@ jobs:
       with:
         node-version: 18.15
     - name: Set up Python ${{ matrix.python }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python }}
     - name: Install dependencies
