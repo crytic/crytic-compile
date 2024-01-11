@@ -5,7 +5,7 @@ import logging
 import os
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional, Dict, TypeVar
+from typing import TYPE_CHECKING, List, Optional, TypeVar
 
 import json
 
