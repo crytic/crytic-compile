@@ -118,11 +118,11 @@ class Foundry(AbstractPlatform):
         return os.path.isfile(os.path.join(target, "foundry.toml"))
 
     @staticmethod
-    def config(target: str) -> Optional[PlatformConfig]:
+    def config(working_dir: str) -> Optional[PlatformConfig]:
         """Return configuration data that should be passed to solc, such as remappings.
 
         Args:
-            target (str): path to the target
+            working_dir (str): path to the working_dir
 
         Returns:
             Optional[PlatformConfig]: Platform configuration data such as optimization, remappings...
@@ -130,7 +130,9 @@ class Foundry(AbstractPlatform):
         result = PlatformConfig()
         LOGGER.info("'forge config --json' running")
         json_config = json.loads(
-            subprocess.run(["forge", "config", "--json"], stdout=subprocess.PIPE, check=True).stdout
+            subprocess.run(
+                ["forge", "config", "--json"], cwd=working_dir, stdout=subprocess.PIPE, check=True
+            ).stdout
         )
 
         # Solc configurations
