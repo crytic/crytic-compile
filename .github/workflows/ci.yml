@@ -33,8 +33,8 @@ jobs:
           # Explore foundry support in windows
           - os: windows-2022
             type: foundry
-          # brownie does not install correctly with Python 3.12
-          - python: 3.12
+          # brownie does not install correctly
+          - python: [3.10, 3.11, 3.12]
             type: brownie
           # TODO: review failure executing npx on Windows
           - os: windows-2022
