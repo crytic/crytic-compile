@@ -372,9 +372,11 @@ class Etherscan(AbstractPlatform):
         working_dir: Optional[str] = None
         remappings: Optional[List[str]] = None
 
+        dict_source_code: Optional[Dict] = None
         try:
             # etherscan might return an object with two curly braces, {{ content }}
             dict_source_code = json.loads(source_code[1:-1])
+            assert isinstance(dict_source_code, dict)
             filenames, working_dir, remappings = _handle_multiple_files(
                 dict_source_code, addr, prefix, contract_name, export_dir
             )
@@ -382,6 +384,7 @@ class Etherscan(AbstractPlatform):
             try:
                 # or etherscan might return an object with single curly braces, { content }
                 dict_source_code = json.loads(source_code)
+                assert isinstance(dict_source_code, dict)
                 filenames, working_dir, remappings = _handle_multiple_files(
                     dict_source_code, addr, prefix, contract_name, export_dir
                 )
@@ -389,6 +392,11 @@ class Etherscan(AbstractPlatform):
                 filenames = [
                     _handle_single_file(source_code, addr, prefix, contract_name, export_dir)
                 ]
+
+        # viaIR is not exposed on the top level JSON offered by etherscan, so we need to inspect the settings
+        via_ir_enabled: Optional[bool] = None
+        if isinstance(dict_source_code, dict):
+            via_ir_enabled = dict_source_code.get("settings", {}).get("viaIR", None)
 
         compilation_unit = CompilationUnit(crytic_compile, contract_name)
 
@@ -413,6 +421,7 @@ class Etherscan(AbstractPlatform):
             working_dir=working_dir,
             remappings=remappings,
             evm_version=evm_version,
+            via_ir=via_ir_enabled,
         )
 
     def clean(self, **_kwargs: str) -> None:
