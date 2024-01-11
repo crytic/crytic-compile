@@ -132,48 +132,22 @@ class Foundry(AbstractPlatform):
         json_config = json.loads(
             subprocess.run(["forge", "config", "--json"], stdout=subprocess.PIPE, check=True).stdout
         )
-        result.remappings = json_config["remappings"]
 
-        def lookup_by_keys(keys: List[str], dictionary: Dict[str, T]) -> Optional[T]:
-            for key in keys:
-                if key in dictionary:
-                    return dictionary[key]
-            return None
+        # Solc configurations
+        result.solc_version = json_config.get("solc")
+        result.via_ir = json_config.get("via_ir")
+        result.allow_paths = json_config.get("allow_paths")
+        result.offline = json_config.get("offline")
+        result.evm_version = json_config.get("evm_version")
+        result.optimizer = json_config.get("optimizer")
+        result.optimizer_runs = json_config.get("optimizer_runs")
+        result.remappings = json_config.get("remappings")
 
-        # Foundry supports snake and kebab case.
-        result.solc_version = lookup_by_keys(["solc", "solc_version", "solc-version"], json_config)
-        via_ir = lookup_by_keys(["via_ir", "via-ir"], json_config)
-        if via_ir:
-            result.via_ir = via_ir
-        result.allow_paths = lookup_by_keys(["allow_paths", "allow-paths"], json_config)
-
-        if "offline" in json_config:
-            result.offline = json_config["offline"]
-        if "optimizer" in json_config:
-            result.optimizer = json_config["optimizer"]
-        else:
-            # Default to true
-            result.optimizer = True
-        optimizer_runs = lookup_by_keys(["optimizer_runs", "optimizer-runs"], json_config)
-        if optimizer_runs is None:
-            # Default to 200
-            result.optimizer_runs = 200
-        else:
-            result.optimizer_runs = optimizer_runs
-        evm_version = lookup_by_keys(["evm_version", "evm-version"], json_config)
-        if evm_version is None:
-            result.evm_version = evm_version
-        else:
-            # Default to london
-            result.evm_version = "london"
-        if "src" in json_config:
-            result.src_path = json_config["src"]
-        if "test" in json_config:
-            result.tests_path = json_config["test"]
-        if "libs" in json_config:
-            result.libs_path = json_config["libs"]
-        if "script" in json_config:
-            result.scripts_path = json_config["script"]
+        # Foundry project configurations
+        result.src_path = json_config.get("src")
+        result.tests_path = json_config.get("test")
+        result.libs_path = json_config.get("libs")
+        result.scripts_path = json_config.get("script")
 
         return result
 
