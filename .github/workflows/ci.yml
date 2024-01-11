@@ -36,9 +36,6 @@ jobs:
           # brownie does not install correctly with Python 3.12
           - python: 3.12
             type: brownie
-          # TODO: review failure executing npx on Windows
-          - os: windows-2022
-            python: 3.12
     steps:
     - uses: actions/checkout@v4
     - name: Set up shell
