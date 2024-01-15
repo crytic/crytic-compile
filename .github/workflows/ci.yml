@@ -69,7 +69,7 @@ jobs:
       uses: cachix/install-nix-action@v24
     - name: Set up cachix
       if: matrix.type == 'dapp'
-      uses: cachix/cachix-action@v13
+      uses: cachix/cachix-action@v14
       with:
         name: dapp
     - name: Install Foundry
