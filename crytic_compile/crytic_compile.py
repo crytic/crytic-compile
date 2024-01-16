@@ -737,12 +737,11 @@ def compile_all(target: str, **kwargs: str) -> List[CryticCompile]:
             vyper_standard_json.add_source_files(vyper_filenames)
             compilations.append(CryticCompile(vyper_standard_json, **kwargs))
     else:
-        raise NotImplementedError()
         # TODO split glob into language
         # # Attempt to perform glob expansion of target/filename
         # globbed_targets = glob.glob(target, recursive=True)
         # print(globbed_targets)
 
-        # raise ValueError(f"{str(target)} is not a file or directory.")
+        raise ValueError(f"{str(target)} is not a file or directory.")
 
     return compilations
