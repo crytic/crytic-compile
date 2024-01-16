@@ -22,6 +22,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "windows-2022"]
+        python: ${{ (github.event_name == 'pull_request' && fromJSON('["3.8", "3.12"]')) || fromJSON('["3.8", "3.9", "3.10", "3.11", "3.12"]') }}
         type: ["brownie", "buidler", "dapp", "embark", "hardhat", "solc", "truffle", "waffle", "foundry", "standard", "vyper", "solc_multi_file", "hardhat_multi_file"]
         exclude:
           # Currently broken, tries to pull git:// which is blocked by GH
@@ -32,6 +33,18 @@ jobs:
           # Explore foundry support in windows
           - os: windows-2022
             type: foundry
+          # brownie does not install correctly with Python 3.10
+          - python: 3.10
+            type: brownie
+          # brownie does not install correctly with Python 3.11
+          - python: 3.11
+            type: brownie
+          # brownie does not install correctly with Python 3.12
+          - python: 3.12
+            type: brownie
+          # TODO: review failure executing npx on Windows
+          - os: windows-2022
+            python: 3.12
     steps:
     - uses: actions/checkout@v4
     - name: Set up shell
@@ -43,15 +56,14 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: 18.15
-    - name: Set up Python 3.8
+    - name: Set up Python ${{ matrix.python }}
       uses: actions/setup-python@v5
       with:
-        python-version: 3.8
+        python-version: ${{ matrix.python }}
     - name: Install dependencies
       run: |
-        pip install "solc-select>=v1.0.0b1"
-        solc-select use 0.5.7 --always-install
         pip install .
+        solc-select use 0.5.7 --always-install
     - name: Set up nix
       if: matrix.type == 'dapp'
       uses: cachix/install-nix-action@v24
