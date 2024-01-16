@@ -13,7 +13,9 @@ setup(
     author="Trail of Bits",
     version="0.3.4",
     packages=find_packages(),
-    python_requires=">=3.8",
+    # Python 3.12.0 on Windows suffers from https://github.com/python/cpython/issues/109590
+    # breaking some of our integrations. The issue is fixed in 3.12.1
+    python_requires=">=3.8,!=3.12.0",
     install_requires=["pycryptodome>=3.4.6", "cbor2", "solc-select>=v1.0.4"],
     extras_require={
         "test": [
