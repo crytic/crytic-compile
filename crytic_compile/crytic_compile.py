@@ -697,7 +697,7 @@ def compile_all(target: str, **kwargs: str) -> List[CryticCompile]:
         **kwargs: optional arguments. Used: "solc_standard_json"
 
     Raises:
-        NotImplementedError: If the target could not be compiled
+        ValueError: If the target could not be compiled
 
     Returns:
         List[CryticCompile]: Returns a list of CryticCompile instances for all compilations which occurred.
