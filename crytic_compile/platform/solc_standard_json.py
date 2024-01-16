@@ -25,12 +25,14 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger("CryticCompile")
 
 
+# pylint: disable=too-many-arguments
 def standalone_compile(
     filenames: List[str],
     compilation_unit: CompilationUnit,
     working_dir: Optional[str] = None,
     remappings: Optional[List[str]] = None,
     evm_version: Optional[str] = None,
+    via_ir: Optional[bool] = None,
 ) -> None:
     """
     Boilerplate function to run the the standardjson. compilation_unit.compiler_version must be set before calling this function
@@ -48,6 +50,7 @@ def standalone_compile(
         working_dir (Optional[str]): working directory
         remappings (Optional[List[str]]): list of solc remaps to use
         evm_version (Optional[str]): EVM version to target. None for default
+        via_ir (Optional[bool]): whether to enable the viaIR compilation flag. None for unset
 
     Returns:
 
@@ -69,6 +72,9 @@ def standalone_compile(
 
     if evm_version is not None:
         add_evm_version(standard_json_dict, evm_version)
+
+    if via_ir is not None:
+        add_via_ir(standard_json_dict, via_ir)
 
     add_optimization(
         standard_json_dict,
@@ -276,6 +282,20 @@ def add_evm_version(json_dict: Dict, version: str) -> None:
 
     """
     json_dict["settings"]["evmVersion"] = version
+
+
+def add_via_ir(json_dict: Dict, enabled: bool) -> None:
+    """
+    Enable or disable the "viaIR" compilation flag.
+
+    Args:
+        json_dict (Dict): solc standard json input
+        enabled (bool): whether viaIR is enabled
+
+    Returns:
+
+    """
+    json_dict["settings"]["viaIR"] = enabled
 
 
 def parse_standard_json_output(
