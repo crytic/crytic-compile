@@ -423,51 +423,20 @@ class Etherscan(AbstractPlatform):
             evm_version=evm_version,
             via_ir=via_ir_enabled,
         )
+        
+        metadata_config = {
+            "solc_remaps": remappings if remappings else {},
+            "solc_solcs_select": compiler_version,
+            "solc_args": ("--via-ir" if via_ir_enabled else "")
+            + ("--optimize --optimize-runs " + str(optimize_runs) if optimize_runs else "")
+            + ("--evm-version " + evm_version if evm_version else ""),
+        }
 
-        # Process filenames in target compilationUnit to build solc_remaps.txt
-        remaps = self.solc_remaps_generator(compilation_unit)
-
-        # Convert to string to use with crytic-compile Target.sol --solc-remaps $(cat solc_remaps.txt)
-        remaps_str = ",".join(remaps)
-        with open(os.path.join(working_dir, "solc_remaps.txt"), "w") as f:
-            f.write(f'"{remaps_str}"')
-
-    def solc_remaps_generator(self, compilationTarget: CompilationUnit) -> List[str]:
-        """Generate remapings for --solc-remaps argument. Uses absolute paths.
-
-        Args:
-            compilationTarget (CompilationUnit): current compilation target
-
-        Returns:
-            List[str]: List of remappings deduced from filenames and compilationUnit.source_units
-        """
-        solc_remaps = []
-        processed_remaps = set()  # Avoid duplicates
-        source_units = compilationTarget.source_units
-        for filename, source_unit in source_units.items():
-            short_name = filename.short
-            if short_name.startswith("@"):
-                remap_name = short_name.split("/", 1)[0]
-
-                # Skip if this remap_name has already been processed
-                if remap_name in processed_remaps:
-                    continue
-
-                remap_path = filename.absolute
-
-                # Extract the path up to and including the remap_name directory
-                remap_index = remap_path.find(remap_name + "/")
-                if remap_index != -1:
-                    remap_path = remap_path[: remap_index + len(remap_name)]
-
-                print(f"{remap_name}={remap_path}")
-
-                solc_remaps.append(f"{remap_name}={remap_path}")
-
-                # Mark this remap_name as processed
-                processed_remaps.add(remap_name)
-
-        return solc_remaps
+        with open(
+            os.path.join(working_dir if working_dir else export_dir, "crytic_compile.config.json"),
+            "w",
+        ) as f:
+            json.dump(metadata_config, f)
 
     def clean(self, **_kwargs: str) -> None:
         pass
