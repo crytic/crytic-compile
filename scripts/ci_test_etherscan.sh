@@ -99,3 +99,34 @@ then
     exit 255
 fi
 echo "::endgroup::"
+
+# From crytic/crytic-compile#544
+echo "::group::Etherscan #8"
+crytic-compile 0x9AB6b21cDF116f611110b048987E58894786C244 --etherscan-apikey "$GITHUB_ETHERSCAN"
+
+if [ $? -ne 0 ]
+then
+    echo "Etherscan #8 test failed"
+    exit 255
+fi
+
+dir_name=$(ls crytic-export/etherscan-contracts/ | grep 0x9AB6b21cDF116f611110b048987E58894786C244)
+cd crytic-export/etherscan-contracts/$dir_name
+
+if [ ! -f crytic_compile.config.json ]; then
+    echo "crytic_compile.config.json does not exist"
+    exit 255
+fi
+
+# TODO: Globbing at crytic_compile.py:720 to run with '.'
+crytic-compile 'contracts/InterestRates/InterestRatePositionManager.f.sol' --config-file crytic_compile.config.json
+
+if [ $? -ne 0 ]
+then
+    echo "crytic-compile command failed"
+    exit 255
+fi
+
+cd ../../../
+
+echo "::endgroup::"
