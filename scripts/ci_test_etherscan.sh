@@ -110,8 +110,8 @@ then
     exit 255
 fi
 
-dir_name=$(ls crytic-export/etherscan-contracts/ | grep 0x9AB6b21cDF116f611110b048987E58894786C244)
-cd crytic-export/etherscan-contracts/$dir_name
+dir_name=$(find crytic-export/etherscan-contracts/ -type d -name "*0x9AB6b21cDF116f611110b048987E58894786C244*" -print -quit)
+cd "$dir_name" || { echo "Failed to change directory"; exit 255; }
 
 if [ ! -f crytic_compile.config.json ]; then
     echo "crytic_compile.config.json does not exist"
