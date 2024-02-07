@@ -474,7 +474,9 @@ def _convert_version(version: str) -> str:
     Returns:
         str: converted version
     """
-    return version[1 : version.find("+")]
+    if "+" in version:
+        return version[1 : version.find("+")]
+    return version[1:]
 
 
 def _sanitize_remappings(
