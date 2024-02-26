@@ -9,9 +9,6 @@ DAI_BYTECODE = """608060405234801561001057600080fd5b506040516120d33803806120d383
 
 
 def metadata_checks(crytic_compile_instance: CryticCompile):
-    crytic_compile_instance = CryticCompile(
-        "0x6B175474E89094C44Da98b954EedeAC495271d0F",  # solc 0.5.12
-    )
     assert len(crytic_compile_instance.compilation_units) == 1
     unit = list(crytic_compile_instance.compilation_units.values())[0]
 
