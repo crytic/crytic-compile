@@ -50,11 +50,10 @@ def test_metadata_deferred() -> None:
     """Test the metadata with deferred compilation."""
     crytic_compile_instance = CryticCompile(
         "0x6B175474E89094C44Da98b954EedeAC495271d0F",  # solc 0.5.12
-        defer_compilation=True,
+        crytic_defer_compilation="true",
     )
     assert len(crytic_compile_instance.compilation_units) == 0
 
     crytic_compile_instance.compile()
 
     metadata_checks(crytic_compile_instance)
-
