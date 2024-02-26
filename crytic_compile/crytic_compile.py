@@ -113,9 +113,8 @@ class CryticCompile:
     Main class.
     """
 
-    def __init__(
-        self, target: str | AbstractPlatform, defer_compilation: bool = False, **kwargs: str
-    ) -> None:
+    # pylint: disable=too-many-branches
+    def __init__(self, target: str | AbstractPlatform, **kwargs: str) -> None:
         """See https://github.com/crytic/crytic-compile/wiki/Configuration
         Target is usually a file or a project directory. It can be an AbstractPlatform
         for custom setup
@@ -209,7 +208,7 @@ class CryticCompile:
 
         self.compilation_kwargs = kwargs
 
-        if not defer_compilation:
+        if not kwargs.get("crytic_defer_compilation") == "true":
             self._compile(**kwargs)
 
     @property
