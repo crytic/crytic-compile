@@ -113,7 +113,9 @@ class CryticCompile:
     Main class.
     """
 
-    def __init__(self, target: str | AbstractPlatform, **kwargs: str) -> None:
+    def __init__(
+        self, target: str | AbstractPlatform, defer_compilation: bool = False, **kwargs: str
+    ) -> None:
         """See https://github.com/crytic/crytic-compile/wiki/Configuration
         Target is usually a file or a project directory. It can be an AbstractPlatform
         for custom setup
@@ -205,7 +207,10 @@ class CryticCompile:
             kwargs.get("compile_libraries", None)
         )
 
-        self._compile(**kwargs)
+        self.compilation_kwargs = kwargs
+
+        if not defer_compilation:
+            self._compile(**kwargs)
 
     @property
     def target(self) -> str:
@@ -633,6 +638,9 @@ class CryticCompile:
             for compilation_unit in self._compilation_units.values():
                 for source_unit in compilation_unit.source_units.values():
                     source_unit.remove_metadata()
+
+    def compile(self, **kwargs: str) -> None:
+        return self._compile(**self.compilation_kwargs)
 
     @staticmethod
     def _run_custom_build(custom_build: str) -> None:
