@@ -638,7 +638,10 @@ class CryticCompile:
                 for source_unit in compilation_unit.source_units.values():
                     source_unit.remove_metadata()
 
-    def compile(self, **kwargs: str) -> None:
+    def compile(self) -> None:
+        """Compile the project. The kwargs provided during object initialization will be used.
+        This function is useful when paired with the `crytic_defer_compilation` kwargs option.
+        """
         return self._compile(**self.compilation_kwargs)
 
     @staticmethod
