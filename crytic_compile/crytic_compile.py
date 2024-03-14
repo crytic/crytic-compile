@@ -145,8 +145,9 @@ class CryticCompile:
         # Note: line 1 is at index 0
         self._cached_line_to_code: Dict[Filename, List[bytes]] = {}
 
-        if kwargs.get("cwd") is not None:
-            self._working_dir = Path(kwargs.get("cwd"))
+        custom_cwd = kwargs.get("cwd")
+        if custom_cwd is not None:
+            self._working_dir = Path(custom_cwd)
         else:
             self._working_dir = Path.cwd()
 
