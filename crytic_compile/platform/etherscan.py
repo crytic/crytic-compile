@@ -424,6 +424,28 @@ class Etherscan(AbstractPlatform):
             via_ir=via_ir_enabled,
         )
 
+        metadata_config = {
+            "solc_remaps": remappings if remappings else {},
+            "solc_solcs_select": compiler_version,
+            "solc_args": " ".join(
+                filter(
+                    None,
+                    [
+                        "--via-ir" if via_ir_enabled else "",
+                        "--optimize --optimize-runs " + str(optimize_runs) if optimize_runs else "",
+                        "--evm-version " + evm_version if evm_version else "",
+                    ],
+                )
+            ),
+        }
+
+        with open(
+            os.path.join(working_dir if working_dir else export_dir, "crytic_compile.config.json"),
+            "w",
+            encoding="utf-8",
+        ) as f:
+            json.dump(metadata_config, f)
+
     def clean(self, **_kwargs: str) -> None:
         pass
 
@@ -474,7 +496,9 @@ def _convert_version(version: str) -> str:
     Returns:
         str: converted version
     """
-    return version[1 : version.find("+")]
+    if "+" in version:
+        return version[1 : version.find("+")]
+    return version[1:]
 
 
 def _sanitize_remappings(
