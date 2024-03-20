@@ -124,7 +124,7 @@ class CryticCompile:
 
         Args:
             target (Union[str, AbstractPlatform]): Target
-            **kwargs: additional arguments
+            **kwargs: additional arguments. Used: "cwd"
         """
 
         # dependencies is needed for platform conversion
@@ -145,7 +145,11 @@ class CryticCompile:
         # Note: line 1 is at index 0
         self._cached_line_to_code: Dict[Filename, List[bytes]] = {}
 
-        self._working_dir = Path.cwd()
+        custom_cwd = kwargs.get("cwd")
+        if custom_cwd is not None:
+            self._working_dir = Path(custom_cwd)
+        else:
+            self._working_dir = Path.cwd()
 
         # pylint: disable=too-many-nested-blocks
         if isinstance(target, str):
