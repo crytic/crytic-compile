@@ -40,4 +40,4 @@ jobs:
         pip install solc-select
     - name: Run Tests
       run: |
-        pytest tests/test_metadata.py
+        pytest tests
