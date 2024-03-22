@@ -250,7 +250,7 @@ class CompilationUnit:
                 self._filenames_lookup[file.used] = file
         if filename not in self._filenames_lookup:
             raise ValueError(
-                f"{filename} does not exist in {[f.absolute for f in self._filenames_lookup.values()]}"
+                f"{filename} does not exist in {[f for f in self._filenames_lookup.values()]}"
             )
         return self._filenames_lookup[filename]
 

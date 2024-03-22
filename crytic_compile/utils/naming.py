@@ -141,12 +141,14 @@ def convert_filename(
         Filename: Filename converted
     """
     filename_txt = used_filename
+    print("target",used_filename)
     if platform.system() == "Windows":
         elements = list(Path(filename_txt).parts)
         if elements[0] == "/" or elements[0] == "\\":
             elements = elements[1:]  # remove '/'
             elements[0] = elements[0] + ":/"  # add :/
         filename = Path(*elements)
+        print("windows target", filename)
     else:
         filename = Path(filename_txt)
 
@@ -190,7 +192,7 @@ def convert_filename(
     short = relative_to_short(short)
 
     return Filename(
-        absolute=str(absolute),
+        absolute=absolute.as_posix(),
         relative=relative.as_posix(),
         short=short.as_posix(),
         used=str(used_filename),

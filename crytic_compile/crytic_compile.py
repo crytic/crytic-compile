@@ -278,7 +278,7 @@ class CryticCompile:
             try:
                 return compile_unit.filename_lookup(filename)
             except ValueError:
-                pass
+                return compile_unit.filename_lookup(filename)
 
         raise ValueError(f"{filename} does not exist")
 
