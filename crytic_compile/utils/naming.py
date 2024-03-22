@@ -188,10 +188,11 @@ def convert_filename(
         short = relative
 
     short = relative_to_short(short)
-
+    # Starting with v0.8.8 (https://github.com/ethereum/solidity/pull/11545), solc normalizes the paths to not include the drive on Windows,
+    # so it's important we use posix path here to avoid issues with the path comparison.
     return Filename(
-        absolute=str(absolute),
+        absolute=absolute.as_posix(),
         relative=relative.as_posix(),
         short=short.as_posix(),
-        used=str(used_filename),
+        used=Path(used_filename).as_posix(),
     )
