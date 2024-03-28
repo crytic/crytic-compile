@@ -410,6 +410,14 @@ def _init_etherscan(parser: ArgumentParser) -> None:
     )
 
     group_etherscan.add_argument(
+        "--blast-apikey",
+        help="Blastscan API key.",
+        action="store",
+        dest="blast_api_key",
+        default=DEFAULTS_FLAG_IN_CONFIG["etherscan_api_key"],
+    )
+
+    group_etherscan.add_argument(
         "--etherscan-export-directory",
         help="Directory in which to save the analyzed contracts.",
         action="store",

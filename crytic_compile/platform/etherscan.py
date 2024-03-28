@@ -51,6 +51,7 @@ SUPPORTED_NETWORK = {
     "base:": (".basescan.org", "basescan.org"),
     "gno:": (".gnosisscan.io", "gnosisscan.io"),
     "polyzk:": ("-zkevm.polygonscan.com", "zkevm.polygonscan.com"),
+    "blast:": (".blastscan.io", "blastscan.io"),
 }
 
 
@@ -241,6 +242,7 @@ class Etherscan(AbstractPlatform):
         base_api_key = kwargs.get("base_api_key", None)
         gno_api_key = kwargs.get("gno_api_key", None)
         polyzk_api_key = kwargs.get("polyzk_api_key", None)
+        blast_api_key = kwargs.get("blast_api_key", None)
 
         export_dir = kwargs.get("export_dir", "crytic-export")
         export_dir = os.path.join(
@@ -280,6 +282,9 @@ class Etherscan(AbstractPlatform):
         if polyzk_api_key and "zkevm" in etherscan_url:
             etherscan_url += f"&apikey={polyzk_api_key}"
             etherscan_bytecode_url += f"&apikey={polyzk_api_key}"
+        if blast_api_key and "blast" in etherscan_url:
+            etherscan_url += f"&apikey={blast_api_key}"
+            etherscan_bytecode_url += f"&apikey={blast_api_key}"
 
         source_code: str = ""
         result: Dict[str, Union[bool, str, int]] = {}
