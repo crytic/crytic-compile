@@ -14,7 +14,7 @@ then
     echo "Truffle test failed"
     exit 255
 fi
-# TODO: for some reason truffle output is not deterministc
+# TODO: for some reason truffle output is not deterministic
 # The assigned id changes
 #cd -
 #
