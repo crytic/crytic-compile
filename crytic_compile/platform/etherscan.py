@@ -248,7 +248,7 @@ class Etherscan(AbstractPlatform):
         export_dir = os.path.join(
             export_dir, kwargs.get("etherscan_export_dir", "etherscan-contracts")
         )
-        
+
         if arbiscan_api_key and "arbiscan" in etherscan_url:
             etherscan_url += f"&apikey={arbiscan_api_key}"
             etherscan_bytecode_url += f"&apikey={arbiscan_api_key}"
