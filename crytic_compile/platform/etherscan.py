@@ -310,6 +310,8 @@ class Etherscan(AbstractPlatform):
         only_bytecode = kwargs.get("etherscan_only_bytecode", False)
 
         etherscan_api_key = kwargs.get("etherscan_api_key", None)
+        if etherscan_api_key is None:
+            etherscan_api_key = os.getenv("ETHERSCAN_API_KEY")
 
         export_dir = kwargs.get("export_dir", "crytic-export")
         export_dir = os.path.join(
