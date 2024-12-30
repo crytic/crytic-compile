@@ -27,32 +27,101 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger("CryticCompile")
 
 
-ETHERSCAN_BASE = "https://api%s/api?module=contract&action=getsourcecode&address=%s"
+# Etherscan v1 API style (per-scanner URL)
+ETHERSCAN_BASE_V1 = "https://api%s/api?module=contract&action=getsourcecode&address=%s"
 
+# Etherscan v2 API style (unified)
+ETHERSCAN_BASE_V2 = (
+    "https://api.etherscan.io/v2/api?chainid=%s&module=contract&action=getsourcecode&address=%s"
+)
+
+# Bytecode URL style (for scraping)
 ETHERSCAN_BASE_BYTECODE = "https://%s/address/%s#code"
 
-SUPPORTED_NETWORK = {
-    # Key, (prefix_base, perfix_bytecode)
-    "mainet:": (".etherscan.io", "etherscan.io"),
-    "optim:": ("-optimistic.etherscan.io", "optimistic.etherscan.io"),
-    "goerli:": ("-goerli.etherscan.io", "goerli.etherscan.io"),
-    "sepolia:": ("-sepolia.etherscan.io", "sepolia.etherscan.io"),
-    "tobalaba:": ("-tobalaba.etherscan.io", "tobalaba.etherscan.io"),
-    "bsc:": (".bscscan.com", "bscscan.com"),
-    "testnet.bsc:": ("-testnet.bscscan.com", "testnet.bscscan.com"),
-    "arbi:": (".arbiscan.io", "arbiscan.io"),
-    "testnet.arbi:": ("-testnet.arbiscan.io", "testnet.arbiscan.io"),
-    "poly:": (".polygonscan.com", "polygonscan.com"),
-    "mumbai:": ("-testnet.polygonscan.com", "testnet.polygonscan.com"),
-    "avax:": (".snowtrace.io", "snowtrace.io"),
-    "testnet.avax:": ("-testnet.snowtrace.io", "testnet.snowtrace.io"),
-    "ftm:": (".ftmscan.com", "ftmscan.com"),
-    "goerli.base:": ("-goerli.basescan.org", "goerli.basescan.org"),
-    "base:": (".basescan.org", "basescan.org"),
-    "gno:": (".gnosisscan.io", "gnosisscan.io"),
-    "polyzk:": ("-zkevm.polygonscan.com", "zkevm.polygonscan.com"),
-    "blast:": (".blastscan.io", "blastscan.io"),
+# v1 style scanners
+SUPPORTED_NETWORK_V1: Dict[str, Tuple[str, str]] = {
+    # None at this time. External tracer instances not operated by Etherscan would be here
 }
+
+# v2 style scanners
+SUPPORTED_NETWORK_V2: Dict[str, Tuple[str, str]] = {
+    # Key, (chainid, perfix_bytecode)
+    "mainnet": ("1", "etherscan.io"),
+    "sepolia": ("11155111", "sepolia.etherscan.io"),
+    "holesky": ("17000", "holesky.etherscan.io"),
+    "bsc": ("56", "bscscan.com"),
+    "testnet.bsc": ("97", "testnet.bscscan.com"),
+    "poly": ("137", "polygonscan.com"),
+    "amoy.poly": ("80002", "amoy.polygonscan.com"),
+    "polyzk": ("1101", "zkevm.polygonscan.com"),
+    "cardona.polyzk": ("2442", "cardona-zkevm.polygonscan.com"),
+    "base": ("8453", "basescan.org"),
+    "sepolia.base": ("84532", "sepolia.basescan.org"),
+    "arbi": ("42161", "arbiscan.io"),
+    "nova.arbi": ("42170", "nova.arbiscan.io"),
+    "sepolia.arbi": ("421614", "sepolia.arbiscan.io"),
+    "linea": ("59144", "lineascan.build"),
+    "sepolia.linea": ("59141", "sepolia.lineascan.build"),
+    "ftm": ("250", "ftmscan.com"),
+    "testnet.ftm": ("4002", "testnet.ftmscan.com"),
+    "blast": ("81457", "blastscan.io"),
+    "sepolia.blast": ("168587773", "sepolia.blastscan.io"),
+    "optim": ("10", "optimistic.etherscan.io"),
+    "sepolia.optim": ("11155420", "sepolia-optimism.etherscan.io"),
+    "avax": ("43114", "snowscan.xyz"),
+    "testnet.avax": ("43113", "testnet.snowscan.xyz"),
+    "bttc": ("199", "bttcscan.com"),
+    "testnet.bttc": ("1028", "testnet.bttcscan.com"),
+    "celo": ("42220", "celoscan.io"),
+    "alfajores.celo": ("44787", "alfajores.celoscan.io"),
+    "cronos": ("25", "cronoscan.com"),
+    "frax": ("252", "fraxscan.com"),
+    "holesky.frax": ("2522", "holesky.fraxscan.com"),
+    "gno": ("100", "gnosisscan.io"),
+    "kroma": ("255", "kromascan.com"),
+    "sepolia.kroma": ("2358", "sepolia.kromascan.com"),
+    "mantle": ("5000", "mantlescan.xyz"),
+    "sepolia.mantle": ("5003", "sepolia.mantlescan.xyz"),
+    "moonbeam": ("1284", "moonbeam.moonscan.io"),
+    "moonriver": ("1285", "moonriver.moonscan.io"),
+    "moonbase": ("1287", "moonbase.moonscan.io"),
+    "opbnb": ("204", "opbnb.bscscan.com"),
+    "testnet.opbnb": ("5611", "opbnb-testnet.bscscan.com"),
+    "scroll": ("534352", "scrollscan.com"),
+    "sepolia.scroll": ("534351", "sepolia.scrollscan.com"),
+    "taiko": ("167000", "taikoscan.io"),
+    "hekla.taiko": ("167009", "hekla.taikoscan.io"),
+    "wemix": ("1111", "wemixscan.com"),
+    "testnet.wemix": ("1112", "testnet.wemixscan.com"),
+    "era.zksync": ("324", "era.zksync.network"),
+    "sepoliaera.zksync": ("300", "sepolia-era.zksync.network"),
+    "xai": ("660279", "xaiscan.io"),
+    "sepolia.xai": ("37714555429", "sepolia.xaiscan.io"),
+}
+
+SUPPORTED_NETWORK = {**SUPPORTED_NETWORK_V1, **SUPPORTED_NETWORK_V2}
+
+
+def generate_supported_network_v2_list() -> None:
+    """Manual function to generate a dictionary for updating the SUPPORTED_NETWORK_V2 array"""
+
+    with urllib.request.urlopen("https://api.etherscan.io/v2/chainlist") as response:
+        items = response.read()
+    networks = json.loads(items)
+
+    id2name = {}
+    for name, (chainid, _) in SUPPORTED_NETWORK_V2.items():
+        id2name[chainid] = name
+
+    results = {}
+    for network in networks["result"]:
+        name = id2name.get(network["chainid"], f"{network['chainid']}")
+        results[name] = (
+            network["chainid"],
+            network["blockexplorer"].replace("https://", "").strip("/"),
+        )
+
+    print(results)
 
 
 def _handle_bytecode(crytic_compile: "CryticCompile", target: str, result_b: bytes) -> None:
@@ -215,15 +284,24 @@ class Etherscan(AbstractPlatform):
 
         target = self._target
 
-        if target.startswith(tuple(SUPPORTED_NETWORK)):
-            prefix: Union[None, str] = SUPPORTED_NETWORK[target[: target.find(":") + 1]][0]
-            prefix_bytecode = SUPPORTED_NETWORK[target[: target.find(":") + 1]][1]
-            addr = target[target.find(":") + 1 :]
-            etherscan_url = ETHERSCAN_BASE % (prefix, addr)
-            etherscan_bytecode_url = ETHERSCAN_BASE_BYTECODE % (prefix_bytecode, addr)
+        api_key_required = None
 
+        if target.startswith(tuple(SUPPORTED_NETWORK_V2)):
+            api_key_required = 2
+            prefix, addr = target.split(":", 2)
+            chainid, prefix_bytecode = SUPPORTED_NETWORK_V2[prefix]
+            etherscan_url = ETHERSCAN_BASE_V2 % (chainid, addr)
+            etherscan_bytecode_url = ETHERSCAN_BASE_BYTECODE % (prefix_bytecode, addr)
+        elif target.startswith(tuple(SUPPORTED_NETWORK_V1)):
+            api_key_required = 1
+            prefix = SUPPORTED_NETWORK_V1[target[: target.find(":") + 1]][0]
+            prefix_bytecode = SUPPORTED_NETWORK_V1[target[: target.find(":") + 1]][1]
+            addr = target[target.find(":") + 1 :]
+            etherscan_url = ETHERSCAN_BASE_V1 % (prefix, addr)
+            etherscan_bytecode_url = ETHERSCAN_BASE_BYTECODE % (prefix_bytecode, addr)
         else:
-            etherscan_url = ETHERSCAN_BASE % (".etherscan.io", target)
+            api_key_required = 2
+            etherscan_url = ETHERSCAN_BASE_V2 % ("1", target)
             etherscan_bytecode_url = ETHERSCAN_BASE_BYTECODE % ("etherscan.io", target)
             addr = target
             prefix = None
@@ -232,75 +310,36 @@ class Etherscan(AbstractPlatform):
         only_bytecode = kwargs.get("etherscan_only_bytecode", False)
 
         etherscan_api_key = kwargs.get("etherscan_api_key", None)
-        arbiscan_api_key = kwargs.get("arbiscan_api_key", None)
-        polygonscan_api_key = kwargs.get("polygonscan_api_key", None)
-        test_polygonscan_api_key = kwargs.get("test_polygonscan_api_key", None)
-        avax_api_key = kwargs.get("avax_api_key", None)
-        ftmscan_api_key = kwargs.get("ftmscan_api_key", None)
-        bscan_api_key = kwargs.get("bscan_api_key", None)
-        optim_api_key = kwargs.get("optim_api_key", None)
-        base_api_key = kwargs.get("base_api_key", None)
-        gno_api_key = kwargs.get("gno_api_key", None)
-        polyzk_api_key = kwargs.get("polyzk_api_key", None)
-        blast_api_key = kwargs.get("blast_api_key", None)
+        if etherscan_api_key is None:
+            etherscan_api_key = os.getenv("ETHERSCAN_API_KEY")
 
         export_dir = kwargs.get("export_dir", "crytic-export")
         export_dir = os.path.join(
             export_dir, kwargs.get("etherscan_export_dir", "etherscan-contracts")
         )
 
-        if etherscan_api_key and "etherscan" in etherscan_url:
+        if api_key_required == 2 and etherscan_api_key:
             etherscan_url += f"&apikey={etherscan_api_key}"
             etherscan_bytecode_url += f"&apikey={etherscan_api_key}"
-        if arbiscan_api_key and "arbiscan" in etherscan_url:
-            etherscan_url += f"&apikey={arbiscan_api_key}"
-            etherscan_bytecode_url += f"&apikey={arbiscan_api_key}"
-        if polygonscan_api_key and "polygonscan" in etherscan_url:
-            etherscan_url += f"&apikey={polygonscan_api_key}"
-            etherscan_bytecode_url += f"&apikey={polygonscan_api_key}"
-        if test_polygonscan_api_key and "polygonscan" in etherscan_url:
-            etherscan_url += f"&apikey={test_polygonscan_api_key}"
-            etherscan_bytecode_url += f"&apikey={test_polygonscan_api_key}"
-        if avax_api_key and "snowtrace" in etherscan_url:
-            etherscan_url += f"&apikey={avax_api_key}"
-            etherscan_bytecode_url += f"&apikey={avax_api_key}"
-        if ftmscan_api_key and "ftmscan" in etherscan_url:
-            etherscan_url += f"&apikey={ftmscan_api_key}"
-            etherscan_bytecode_url += f"&apikey={ftmscan_api_key}"
-        if bscan_api_key and "bscscan" in etherscan_url:
-            etherscan_url += f"&apikey={bscan_api_key}"
-            etherscan_bytecode_url += f"&apikey={bscan_api_key}"
-        if optim_api_key and "optim" in etherscan_url:
-            etherscan_url += f"&apikey={optim_api_key}"
-            etherscan_bytecode_url += f"&apikey={optim_api_key}"
-        if base_api_key and "base" in etherscan_url:
-            etherscan_url += f"&apikey={base_api_key}"
-            etherscan_bytecode_url += f"&apikey={base_api_key}"
-        if gno_api_key and "gno" in etherscan_url:
-            etherscan_url += f"&apikey={gno_api_key}"
-            etherscan_bytecode_url += f"&apikey={gno_api_key}"
-        if polyzk_api_key and "zkevm" in etherscan_url:
-            etherscan_url += f"&apikey={polyzk_api_key}"
-            etherscan_bytecode_url += f"&apikey={polyzk_api_key}"
-        if blast_api_key and "blast" in etherscan_url:
-            etherscan_url += f"&apikey={blast_api_key}"
-            etherscan_bytecode_url += f"&apikey={blast_api_key}"
+        # API key handling for external tracers would be here e.g.
+        # elif api_key_required == 1 and avax_api_key and "snowtrace" in etherscan_url:
+        #    etherscan_url += f"&apikey={avax_api_key}"
+        #    etherscan_bytecode_url += f"&apikey={avax_api_key}"
 
         source_code: str = ""
         result: Dict[str, Union[bool, str, int]] = {}
         contract_name: str = ""
 
         if not only_bytecode:
-            if "polygon" in etherscan_url or "basescan" in etherscan_url:
-                # build object with headers, then send request
-                new_etherscan_url = urllib.request.Request(
-                    etherscan_url, headers={"User-Agent": "Mozilla/5.0"}
-                )
-                with urllib.request.urlopen(new_etherscan_url) as response:
-                    html = response.read()
-            else:
-                with urllib.request.urlopen(etherscan_url) as response:
-                    html = response.read()
+            # build object with headers, then send request
+            new_etherscan_url = urllib.request.Request(
+                etherscan_url,
+                headers={
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36 crytic-compile/0"
+                },
+            )
+            with urllib.request.urlopen(new_etherscan_url) as response:
+                html = response.read()
 
             info = json.loads(html)
 

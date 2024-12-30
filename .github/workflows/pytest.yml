@@ -41,5 +41,7 @@ jobs:
             solc-select use latest --always-install
 
       - name: Run Tests
+        env:
+          ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
         run: |
           pytest tests

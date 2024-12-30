@@ -330,90 +330,10 @@ def _init_etherscan(parser: ArgumentParser) -> None:
     )
 
     group_etherscan.add_argument(
-        "--arbiscan-apikey",
-        help="Etherscan API key.",
-        action="store",
-        dest="arbiscan_api_key",
-        default=DEFAULTS_FLAG_IN_CONFIG["etherscan_api_key"],
-    )
-
-    group_etherscan.add_argument(
-        "--polygonscan-apikey",
-        help="Etherscan API key.",
-        action="store",
-        dest="polygonscan_api_key",
-        default=DEFAULTS_FLAG_IN_CONFIG["etherscan_api_key"],
-    )
-
-    group_etherscan.add_argument(
-        "--test-polygonscan-apikey",
-        help="Etherscan API key.",
-        action="store",
-        dest="test_polygonscan_api_key",
-        default=DEFAULTS_FLAG_IN_CONFIG["etherscan_api_key"],
-    )
-
-    group_etherscan.add_argument(
         "--avax-apikey",
         help="Etherscan API key.",
         action="store",
         dest="avax_api_key",
-        default=DEFAULTS_FLAG_IN_CONFIG["etherscan_api_key"],
-    )
-
-    group_etherscan.add_argument(
-        "--ftmscan-apikey",
-        help="Etherscan API key.",
-        action="store",
-        dest="ftmscan_api_key",
-        default=DEFAULTS_FLAG_IN_CONFIG["etherscan_api_key"],
-    )
-
-    group_etherscan.add_argument(
-        "--bscan-apikey",
-        help="Etherscan API key.",
-        action="store",
-        dest="bscan_api_key",
-        default=DEFAULTS_FLAG_IN_CONFIG["etherscan_api_key"],
-    )
-
-    group_etherscan.add_argument(
-        "--optim-apikey",
-        help="Optimistic API key.",
-        action="store",
-        dest="optim_api_key",
-        default=DEFAULTS_FLAG_IN_CONFIG["etherscan_api_key"],
-    )
-
-    group_etherscan.add_argument(
-        "--base-apikey",
-        help="Basescan API key.",
-        action="store",
-        dest="base_api_key",
-        default=DEFAULTS_FLAG_IN_CONFIG["etherscan_api_key"],
-    )
-
-    group_etherscan.add_argument(
-        "--gno-apikey",
-        help="Gnosisscan API key.",
-        action="store",
-        dest="gno_api_key",
-        default=DEFAULTS_FLAG_IN_CONFIG["etherscan_api_key"],
-    )
-
-    group_etherscan.add_argument(
-        "--polyzk-apikey",
-        help="zkEVM Polygonscan API key.",
-        action="store",
-        dest="polyzk_api_key",
-        default=DEFAULTS_FLAG_IN_CONFIG["etherscan_api_key"],
-    )
-
-    group_etherscan.add_argument(
-        "--blast-apikey",
-        help="Blastscan API key.",
-        action="store",
-        dest="blast_api_key",
         default=DEFAULTS_FLAG_IN_CONFIG["etherscan_api_key"],
     )
 

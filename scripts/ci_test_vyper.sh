@@ -2,7 +2,7 @@
 
 ### Test vyper integration
 
-pip install vyper
+pip install 'vyper>=0.3.7,<0.4'
 
 echo "Testing vyper integration of $(realpath "$(which crytic-compile)")"
 
