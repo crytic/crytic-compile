@@ -74,7 +74,8 @@ def hardhat_like_parsing(
             version_from_config = loaded_json["solcVersion"]  # TODO supper vyper
             input_json = loaded_json["input"]
             compiler = "solc" if input_json["language"] == "Solidity" else "vyper"
-            optimized = input_json["settings"]["optimizer"]["enabled"]
+            # Foundry has the optimizer dict empty when the "optimizer" key is not set in foundry.toml
+            optimized = input_json["settings"]["optimizer"].get("enabled", False)
 
             compilation_unit.compiler_version = CompilerVersion(
                 compiler=compiler, version=version_from_config, optimized=optimized
