@@ -321,7 +321,7 @@ def _load_config(config_file: str) -> Dict:
 
 
 def _get_version(compiler: str, cwd: str, config: Optional[Dict] = None) -> str:
-    """Return the solidity verison used
+    """Return the solidity version used
 
     Args:
         compiler (str): compiler used

@@ -42,7 +42,7 @@ jobs:
     - name: Run Tests
       env:
         TEST_TYPE: ${{ matrix.type }}
-        GITHUB_ETHERSCAN: ${{ secrets.GITHUB_ETHERSCAN }}
+        ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
       shell: bash
       run: |
         bash "scripts/ci_test_${TEST_TYPE}.sh"

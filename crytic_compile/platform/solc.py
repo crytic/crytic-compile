@@ -468,7 +468,7 @@ def _run_solc(
         solc_disable_warnings (bool): If True, disable solc warnings
         solc_arguments (Optional[str]): Additional solc cli arguments
         solc_remaps (Optional[Union[str, List[str]]], optional): Solc remaps. Can be a string where remap are separated with space, or list of str, or a list of. Defaults to None.
-        env (Optional[Dict]): Environement variable when solc is run. Defaults to None.
+        env (Optional[Dict]): Environment variable when solc is run. Defaults to None.
         working_dir (Optional[Union[Path, str]]): Working directory when solc is run. Defaults to None.
         force_legacy_json (bool): Force to use the legacy json format. Defaults to False.
 
@@ -607,7 +607,7 @@ def _run_solcs_path(
         solc_disable_warnings (bool): If True, disable solc warnings
         solc_arguments (str): Additional solc cli arguments
         solc_remaps (Optional[Union[str, List[str]]], optional): Solc remaps. Can be a string where remap are separated with space, or list of str, or a list of. Defaults to None.
-        env (Optional[Dict]): Environement variable when solc is run. Defaults to None.
+        env (Optional[Dict]): Environment variable when solc is run. Defaults to None.
         working_dir (Optional[Union[Path, str]], optional): Working directory when solc is run. Defaults to None.
         force_legacy_json (bool): Force to use the legacy json format. Defaults to False.
 
@@ -697,7 +697,7 @@ def _run_solcs_env(
         solc_disable_warnings (bool): If True, disable solc warnings
         solc_arguments (str): Additional solc cli arguments
         solc_remaps (Optional[Union[str, List[str]]], optional): Solc remaps. Can be a string where remap are separated with space, or list of str, or a list of. Defaults to None.
-        env (Optional[Dict], optional): Environement variable when solc is run. Defaults to None.
+        env (Optional[Dict], optional): Environment variable when solc is run. Defaults to None.
         working_dir (Optional[Union[Path, str]], optional): Working directory when solc is run. Defaults to None.
         solcs_env (Optional[List[str]]): List of solc env variable to try. Defaults to None.
         force_legacy_json (bool): Force to use the legacy json format. Defaults to False.

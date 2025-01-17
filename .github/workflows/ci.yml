@@ -63,10 +63,10 @@ jobs:
         solc-select use 0.5.7 --always-install
     - name: Set up nix
       if: matrix.type == 'dapp'
-      uses: cachix/install-nix-action@v25
+      uses: cachix/install-nix-action@v30
     - name: Set up cachix
       if: matrix.type == 'dapp'
-      uses: cachix/cachix-action@v14
+      uses: cachix/cachix-action@v15
       with:
         name: dapp
     - name: Install Foundry
@@ -75,7 +75,6 @@ jobs:
     - name: Run Tests
       env:
         TEST_TYPE: ${{ matrix.type }}
-        GITHUB_ETHERSCAN: ${{ secrets.GITHUB_ETHERSCAN }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       shell: bash
       run: |
