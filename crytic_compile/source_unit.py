@@ -15,6 +15,8 @@ from crytic_compile.utils.natspec import Natspec
 if TYPE_CHECKING:
     from crytic_compile.compilation_unit import CompilationUnit
 
+LIBRARY_PATTERN = re.compile(r"__.{36}__")
+
 
 def get_library_candidate(filename: Filename, contract_name: str) -> List[str]:
     """
@@ -348,8 +350,9 @@ class SourceUnit:
         return [name for (name, _) in self._libraries[name]]
 
     def libraries_names_and_patterns(self, name: str) -> List[Tuple[str, str]]:
-        """Return the names and the patterns of the libraries used by the contract
-
+        """Return the names and the patterns of the libraries used by the contract.
+            The libraries are recursively resolved and ordered by dependency (post-order traversal).
+            Thus, they can be deployed first to last and linked as needed.
         Args:
             name (str): contract name
 
@@ -358,10 +361,19 @@ class SourceUnit:
         """
 
         if name not in self._libraries:
-            init = re.findall(r"__.{36}__", self.bytecode_init(name))
-            runtime = re.findall(r"__.{36}__", self.bytecode_runtime(name))
-            libraires = [self._library_name_lookup(x, name) for x in set(init + runtime)]
-            self._libraries[name] = [lib for lib in libraires if lib]
+            resolved = []
+
+            def dep_resolve(name, resolved):
+                init = re.findall(r"__.{36}__", self.bytecode_init(name))
+                runtime = re.findall(r"__.{36}__", self.bytecode_runtime(name))
+                libs = [self._library_name_lookup(x, name) for x in set(init + runtime)]
+                for (lib, placeholder) in libs:
+                    if lib not in resolved:
+                        dep_resolve(lib, resolved)
+                        resolved.append({"name": lib, "placeholder": placeholder})
+
+            dep_resolve(name, resolved)
+            self._libraries[name] = resolved
         return self._libraries[name]
 
     def _update_bytecode_with_libraries(
