@@ -97,6 +97,21 @@ SUPPORTED_NETWORK_V2: Dict[str, Tuple[str, str]] = {
     "sepoliaera.zksync": ("300", "sepolia-era.zksync.network"),
     "xai": ("660279", "xaiscan.io"),
     "sepolia.xai": ("37714555429", "sepolia.xaiscan.io"),
+    "xdc": ("50", "https://xdcscan.com"),
+    "testnet.xdc": ("51", "https://testnet.xdcscan.com"),
+    "apechain": ("33139", "https://apescan.io"),
+    "curtis.apechain": ("33111", "https://curtis.apescan.io"),
+    "world": ("480", "https://worldscan.org"),
+    "sepolia.world": ("4801", "https://sepolia.worldscan.org"),
+    "sophon": ("50104", "https://sophscan.xyz"),
+    "testnet.sophon": ("531050104", "https://testnet.sophscan.xyz"),
+    "sonic": ("146", "https://sonicscan.org"),
+    "testnet.sonic": ("57054", "https://testnet.sonicscan.org"),
+    "unichain": ("130", "https://uniscan.xyz"),
+    "sepolia.unichain": ("1301", "https://sepolia.uniscan.xyz"),
+    "abstract": ("2741", "https://abscan.org"),
+    "sepolia.abstract": ("11124", "https://sepolia.abscan.org"),
+    "berachain": ("80094", "https://berascan.com"),
 }
 
 SUPPORTED_NETWORK = {**SUPPORTED_NETWORK_V1, **SUPPORTED_NETWORK_V2}
