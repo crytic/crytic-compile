@@ -139,7 +139,7 @@ class CryticCompile:
         # We decided to favor the running time versus memory
         self._cached_offset_to_line: Dict[Filename, Dict[int, Tuple[int, int]]] = {}
         # Lines are indexed from 1
-        self._cached_line_to_offset: Dict[Filename, Dict[int, int]] = defaultdict(dict)
+        self._cached_line_to_offset: Dict[Filename, Dict[Tuple[int, int], int]] = defaultdict(dict)
 
         # Return the line from the line number
         # Note: line 1 is at index 0
@@ -342,16 +342,19 @@ class CryticCompile:
         acc = 0
         lines_delimiters: Dict[int, Tuple[int, int]] = {}
         for line_number, x in enumerate(source_code):
-            self._cached_line_to_offset[file][line_number + 1] = acc
 
             for i in range(acc, acc + len(x)):
-                lines_delimiters[i] = (line_number + 1, i - acc + 1)
+                line_and_char_position = (line_number + 1, i - acc + 1)
+                lines_delimiters[i] = line_and_char_position
+                self._cached_line_to_offset[file][line_and_char_position] = i
 
             acc += len(x)
         lines_delimiters[acc] = (len(source_code) + 1, 0)
         self._cached_offset_to_line[file] = lines_delimiters
 
-    def get_line_from_offset(self, filename: Union[Filename, str], offset: int) -> Tuple[int, int]:
+    def get_line_and_character_from_offset(
+        self, filename: Union[Filename, str], offset: int
+    ) -> Tuple[int, int]:
         """Return the line from a given offset
 
         Args:
@@ -371,12 +374,15 @@ class CryticCompile:
         lines_delimiters = self._cached_offset_to_line[file]
         return lines_delimiters[offset]
 
-    def get_global_offset_from_line(self, filename: Union[Filename, str], line: int) -> int:
-        """Return the global offset from a given line
+    def get_global_offset_from_line_and_character(
+        self, filename: Union[Filename, str], line: int, char_position: int = 1
+    ) -> int:
+        """Return the global offset from a given line and charater
 
         Args:
             filename (Union[Filename, str]): filename
             line (int): line
+            char_position (int): Line offset. Added to the global offset of the line starting position
 
         Returns:
             int: global offset
@@ -388,7 +394,7 @@ class CryticCompile:
         if file not in self._cached_line_to_offset:
             self._get_cached_offset_to_line(file)
 
-        return self._cached_line_to_offset[file][line]
+        return self._cached_line_to_offset[file][(line, char_position)]
 
     def _get_cached_line_to_code(self, file: Filename) -> None:
         """Compute the cached lines
