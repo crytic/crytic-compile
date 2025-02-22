@@ -165,7 +165,7 @@ class Foundry(AbstractPlatform):
         """
         if path in self._cached_dependencies:
             return self._cached_dependencies[path]
-        ret = "lib" in Path(path).parts
+        ret = "lib" in Path(path).parts or "node_modules" in Path(path).parts
         self._cached_dependencies[path] = ret
         return ret
 
