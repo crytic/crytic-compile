@@ -7,13 +7,13 @@ normalize_file() {
 def sort_deps:
   if type == "object" then
     # Process each key-value pair
-    to_entries | map(
+    with_entries(
       if .key == "contractDependencies" and (.value | type == "array") then
         .value = (.value | sort)
       else
         .value = (.value | sort_deps)
       end
-    ) | from_entries
+    )
   elif type == "array" then
     # Process each array element recursively
     map(sort_deps)
