@@ -43,7 +43,6 @@ def _build_contract_data(compilation_unit: "CompilationUnit") -> Dict:
             abi = abi.replace("'", '"')
             abi = abi.replace("True", "true")
             abi = abi.replace("False", "false")
-            abi = abi.replace(" ", "")
             exported_name = combine_filename_name(filename.absolute, contract_name)
             contracts[exported_name] = {
                 "srcmap": ";".join(source_unit.srcmap_init(contract_name)),
