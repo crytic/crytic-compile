@@ -11,7 +11,7 @@ setup(
     description="Util to facilitate smart contracts compilation.",
     url="https://github.com/crytic/crytic-compile",
     author="Trail of Bits",
-    version="0.3.9",
+    version="0.3.10",
     packages=find_packages(),
     # Python 3.12.0 on Windows suffers from https://github.com/python/cpython/issues/109590
     # breaking some of our integrations. The issue is fixed in 3.12.1
