@@ -58,9 +58,46 @@ def _build_contract_data(compilation_unit: "CompilationUnit") -> dict:
     return contracts
 
 
+def _export_link_info(compilation_unit: "CompilationUnit", key: str, export_dir: str) -> str:
+    """Export linking information to a separate file.
+
+    Args:
+        compilation_unit (CompilationUnit): Compilation unit to export
+        key (str): Filename Id
+        export_dir (str): Export directory
+
+    Returns:
+        str: path to the generated file"""
+
+    autolink_path = os.path.join(export_dir, f"{key}.link")
+
+    # Get library addresses if they exist
+    library_addresses = {}
+    if compilation_unit.crytic_compile.libraries:
+        library_addresses = {
+            name: f"0x{addr:040x}"
+            for name, addr in compilation_unit.crytic_compile.libraries.items()
+        }
+
+    # Filter deployment order to only include libraries that have addresses
+    full_deployment_order = compilation_unit.crytic_compile.deployment_order or []
+    filtered_deployment_order = [lib for lib in full_deployment_order if lib in library_addresses]
+
+    # Create autolink output with deployment order and library addresses
+    autolink_output = {
+        "deployment_order": filtered_deployment_order,
+        "library_addresses": library_addresses,
+    }
+
+    with open(autolink_path, "w", encoding="utf8") as file_desc:
+        json.dump(autolink_output, file_desc, indent=2)
+
+    return autolink_path
+
+
 def export_to_solc_from_compilation_unit(
     compilation_unit: "CompilationUnit", key: str, export_dir: str
-) -> str | None:
+) -> list[str] | None:
     """Export the compilation unit to the standard solc output format.
     The exported file will be $key.json
 
@@ -70,7 +107,7 @@ def export_to_solc_from_compilation_unit(
         export_dir (str): Export directory
 
     Returns:
-        Optional[str]: path to the file generated
+        Optional[List[str]]: path to the files generated
     """
     contracts = _build_contract_data(compilation_unit)
 
@@ -89,7 +126,15 @@ def export_to_solc_from_compilation_unit(
 
         with open(path, "w", encoding="utf8") as file_desc:
             json.dump(output, file_desc)
-        return path
+
+        paths = [path]
+
+        # Export link info if compile_autolink or compile_libraries was used
+        if compilation_unit.crytic_compile.libraries:
+            link_path = _export_link_info(compilation_unit, key, export_dir)
+            paths.append(link_path)
+
+        return paths
     return None
 
 
@@ -111,17 +156,18 @@ def export_to_solc(crytic_compile: "CryticCompile", **kwargs: str) -> list[str]:
 
     if len(crytic_compile.compilation_units) == 1:
         compilation_unit = list(crytic_compile.compilation_units.values())[0]
-        path = export_to_solc_from_compilation_unit(compilation_unit, "combined_solc", export_dir)
-        if path:
-            return [path]
+        paths = export_to_solc_from_compilation_unit(compilation_unit, "combined_solc", export_dir)
+        if paths:
+            return paths
         return []
 
-    paths = []
+    all_paths = []
     for key, compilation_unit in crytic_compile.compilation_units.items():
-        path = export_to_solc_from_compilation_unit(compilation_unit, key, export_dir)
-        if path:
-            paths.append(path)
-    return paths
+        paths = export_to_solc_from_compilation_unit(compilation_unit, key, export_dir)
+        if paths:
+            all_paths.extend(paths)
+
+    return all_paths
 
 
 class Solc(AbstractPlatform):

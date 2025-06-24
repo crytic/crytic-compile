@@ -37,6 +37,13 @@ def init(parser: ArgumentParser) -> None:
     )
 
     group_compile.add_argument(
+        "--compile-autolink",
+        help="Automatically link all found libraries with sequential addresses starting from 0xa070",
+        action="store_true",
+        default=DEFAULTS_FLAG_IN_CONFIG["compile_autolink"],
+    )
+
+    group_compile.add_argument(
         "--compile-remove-metadata",
         help="Remove the metadata from the bytecodes",
         action="store_true",

@@ -29,6 +29,7 @@ from crytic_compile.platform.solc import Solc
 from crytic_compile.platform.solc_standard_json import SolcStandardJson
 from crytic_compile.platform.standard import export_to_standard
 from crytic_compile.platform.vyper import VyperStandardJson
+from crytic_compile.utils.libraries import generate_library_addresses, get_deployment_order
 from crytic_compile.utils.naming import Filename
 from crytic_compile.utils.npm import get_package_name
 from crytic_compile.utils.zip import load_from_zip
@@ -200,6 +201,10 @@ class CryticCompile:
         self._compilation_units: dict[str, CompilationUnit] = {}
 
         self._bytecode_only = False
+
+        self._autolink: bool = kwargs.get("compile_autolink", False)  # type: ignore
+
+        self._autolink_deployment_order: list[str] | None = None
 
         self.libraries: dict[str, int] | None = _extract_libraries(
             kwargs.get("compile_libraries", None)
@@ -628,11 +633,59 @@ class CryticCompile:
                 self._platform.clean(**kwargs)
             self._platform.compile(self, **kwargs)
 
+        # Handle autolink after compilation
+        if self._autolink:
+            self._apply_autolink()
+
         remove_metadata = kwargs.get("compile_remove_metadata", False)
         if remove_metadata:
             for compilation_unit in self._compilation_units.values():
                 for source_unit in compilation_unit.source_units.values():
                     source_unit.remove_metadata()
+
+    def _apply_autolink(self) -> None:
+        """Apply automatic library linking with sequential addresses"""
+
+        # Collect all libraries that need linking and compute deployment info
+        all_libraries_needed: set[str] = set()
+        all_dependencies: dict[str, list[str]] = {}
+        all_target_contracts: list[str] = []
+
+        for compilation_unit in self._compilation_units.values():
+            # Build dependency graph for this compilation unit
+            for source_unit in compilation_unit.source_units.values():
+                all_target_contracts.extend(source_unit.contracts_names_without_libraries)
+
+                for contract_name in source_unit.contracts_names:
+                    deps = source_unit.libraries_names(contract_name)
+
+                    if deps or contract_name in all_target_contracts:
+                        all_dependencies[contract_name] = deps
+                        all_libraries_needed.update(deps)
+
+        # Calculate deployment order globally
+        deployment_order, _ = get_deployment_order(all_dependencies, all_target_contracts)
+        self._autolink_deployment_order = deployment_order
+
+        if all_libraries_needed:
+            # Apply the library linking (similar to compile_libraries but auto-generated)
+            library_addresses = generate_library_addresses(all_libraries_needed)
+
+            if self.libraries is None:
+                self.libraries = {}
+
+            # Respect any user-provided addresses through compile_libraries
+            library_addresses.update(self.libraries)
+            self.libraries = library_addresses
+
+    @property
+    def deployment_order(self) -> list[str] | None:
+        """Return the library deployment order.
+
+        Returns:
+            list[str] | None: Library deployment order
+        """
+        return self._autolink_deployment_order
 
     @staticmethod
     def _run_custom_build(custom_build: str) -> None:
