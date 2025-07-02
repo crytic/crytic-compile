@@ -79,8 +79,8 @@ class Foundry(AbstractPlatform):
                 if foundry_config:
                     compilation_command += [
                         "--skip",
-                        f"*/{foundry_config.tests_path}/**",
-                        f"*/{foundry_config.scripts_path}/**",
+                        f"./{foundry_config.tests_path}/**",
+                        f"./{foundry_config.scripts_path}/**",
                         "--force",
                     ]
 
