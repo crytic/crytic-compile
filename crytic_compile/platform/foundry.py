@@ -2,10 +2,9 @@
 Foundry platform
 """
 import logging
-import os
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional, TypeVar
+from typing import TYPE_CHECKING, List, Optional, TypeVar, Union
 
 import json
 
@@ -32,6 +31,14 @@ class Foundry(AbstractPlatform):
     PROJECT_URL = "https://github.com/foundry-rs/foundry"
     TYPE = Type.FOUNDRY
 
+    def __init__(self, target: str, **_kwargs: str):
+        super().__init__(target, **_kwargs)
+
+        project_root = Foundry.locate_project_root(target)
+        # if we are initializing this, it is indeed a foundry project and thus has a root path
+        assert project_root is not None
+        self._project_root: Path = project_root
+
     # pylint: disable=too-many-locals,too-many-statements,too-many-branches
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str) -> None:
         """Compile
@@ -52,18 +59,23 @@ class Foundry(AbstractPlatform):
             LOGGER.info(
                 "--ignore-compile used, if something goes wrong, consider removing the ignore compile flag"
             )
-
-        if not ignore_compile:
+        else:
             compilation_command = [
                 "forge",
                 "build",
                 "--build-info",
             ]
 
+            targeted_build = not self._project_root.samefile(self._target)
+            if targeted_build:
+                compilation_command += [
+                    str(Path(self._target).resolve().relative_to(self._project_root))
+                ]
+
             compile_all = kwargs.get("foundry_compile_all", False)
 
-            if not compile_all:
-                foundry_config = self.config(self._target)
+            if not targeted_build and not compile_all:
+                foundry_config = self.config(self._project_root)
                 if foundry_config:
                     compilation_command += [
                         "--skip",
@@ -74,16 +86,18 @@ class Foundry(AbstractPlatform):
 
             run(
                 compilation_command,
-                cwd=self._target,
+                cwd=self._project_root,
             )
 
         build_directory = Path(
-            self._target,
+            self._project_root,
             out_directory,
             "build-info",
         )
 
-        hardhat_like_parsing(crytic_compile, self._target, build_directory, self._target)
+        hardhat_like_parsing(
+            crytic_compile, str(self._target), build_directory, str(self._project_root)
+        )
 
     def clean(self, **kwargs: str) -> None:
         """Clean compilation artifacts
@@ -99,7 +113,38 @@ class Foundry(AbstractPlatform):
         if ignore_compile:
             return
 
-        run(["forge", "clean"], cwd=self._target)
+        run(["forge", "clean"], cwd=self._project_root)
+
+    @staticmethod
+    def locate_project_root(file_or_dir: str) -> Optional[Path]:
+        """Determine the project root (if the target is a Foundry project)
+
+        Foundry projects are detected through the presence of their
+        configuration file. See the following for reference:
+
+        https://github.com/foundry-rs/foundry/blob/6983a938580a1eb25d9dbd61eb8cad8cd137a86d/crates/config/README.md#foundrytoml
+
+        Args:
+            file_or_dir (str): path to the target
+
+        Returns:
+            Optional[Path]: path to the project root, if found
+        """
+
+        target = Path(file_or_dir).resolve()
+
+        # if the target is a directory, see if it has a foundry config
+        if target.is_dir() and (target / "foundry.toml").is_file():
+            return target
+
+        # if the target is a file, it might be a specific contract
+        # within a foundry project. Look in parent directories for a
+        # config file
+        for p in target.parents:
+            if (p / "foundry.toml").is_file():
+                return p
+
+        return None
 
     @staticmethod
     def is_supported(target: str, **kwargs: str) -> bool:
@@ -115,10 +160,10 @@ class Foundry(AbstractPlatform):
         if kwargs.get("foundry_ignore", False):
             return False
 
-        return os.path.isfile(os.path.join(target, "foundry.toml"))
+        return Foundry.locate_project_root(target) is not None
 
     @staticmethod
-    def config(working_dir: str) -> Optional[PlatformConfig]:
+    def config(working_dir: Union[str, Path]) -> Optional[PlatformConfig]:
         """Return configuration data that should be passed to solc, such as remappings.
 
         Args:
