@@ -658,10 +658,11 @@ class CryticCompile:
 
                 for contract_name in source_unit.contracts_names:
                     deps = source_unit.libraries_names(contract_name)
-
-                    if deps or contract_name in all_target_contracts:
+                    if deps:
                         all_dependencies[contract_name] = deps
                         all_libraries_needed.update(deps)
+
+        all_target_contracts = [c for c in all_target_contracts if c not in all_libraries_needed]
 
         # Calculate deployment order globally
         deployment_order, _ = get_deployment_order(all_dependencies, all_target_contracts)
