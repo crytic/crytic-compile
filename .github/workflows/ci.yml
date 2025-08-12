@@ -43,7 +43,7 @@ jobs:
           - python: 3.12
             type: brownie
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     - name: Set up shell
       if: runner.os == 'Windows'
       run: |
