@@ -112,6 +112,7 @@ SUPPORTED_NETWORK_V2: Dict[str, Tuple[str, str]] = {
     "abstract": ("2741", "abscan.org"),
     "sepolia.abstract": ("11124", "sepolia.abscan.org"),
     "berachain": ("80094", "berascan.com"),
+    "testnet.monad": ("10143", "testnet.monadscan.com"),
 }
 
 SUPPORTED_NETWORK = {**SUPPORTED_NETWORK_V1, **SUPPORTED_NETWORK_V2}
