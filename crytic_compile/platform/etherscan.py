@@ -71,7 +71,7 @@ SUPPORTED_NETWORK_V2: Dict[str, Tuple[str, str]] = {
     "avax": ("43114", "snowscan.xyz"),
     "testnet.avax": ("43113", "testnet.snowscan.xyz"),
     "bttc": ("199", "bttcscan.com"),
-    "testnet.bttc": ("1028", "testnet.bttcscan.com"),
+    "testnet.bttc": ("1029", "testnet.bttcscan.com"),
     "celo": ("42220", "celoscan.io"),
     "alfajores.celo": ("44787", "alfajores.celoscan.io"),
     "cronos": ("25", "cronoscan.com"),
@@ -113,6 +113,16 @@ SUPPORTED_NETWORK_V2: Dict[str, Tuple[str, str]] = {
     "sepolia.abstract": ("11124", "sepolia.abscan.org"),
     "berachain": ("80094", "berascan.com"),
     "testnet.monad": ("10143", "testnet.monadscan.com"),
+    "560048": ("560048", "hoodi.etherscan.io"),
+    "43521": ("43521", "testnet.memecorescan.io"),
+    "80069": ("80069", "testnet.berascan.com"),
+    "1923": ("1923", "swellchainscan.io"),
+    "1924": ("1924", "sepolia.swellchainscan.io"),
+    "999": ("999", "hyperevmscan.io"),
+    "747474": ("747474", "katanascan.com"),
+    "1329": ("1329", "seiscan.io"),
+    "1328": ("1328", "testnet.seiscan.io"),
+
 }
 
 SUPPORTED_NETWORK = {**SUPPORTED_NETWORK_V1, **SUPPORTED_NETWORK_V2}
