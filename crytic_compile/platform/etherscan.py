@@ -122,7 +122,6 @@ SUPPORTED_NETWORK_V2: Dict[str, Tuple[str, str]] = {
     "katana": ("747474", "katanascan.com"),
     "sei": ("1329", "seiscan.io"),
     "testnet.sei": ("1328", "testnet.seiscan.io"),
-
 }
 
 SUPPORTED_NETWORK = {**SUPPORTED_NETWORK_V1, **SUPPORTED_NETWORK_V2}
