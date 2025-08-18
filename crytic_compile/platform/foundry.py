@@ -53,7 +53,7 @@ class Foundry(AbstractPlatform):
             "ignore_compile", False
         )
 
-        out_directory = kwargs.get("foundry_out_directory", "out")
+        foundry_config = None
 
         if ignore_compile:
             LOGGER.info(
@@ -74,20 +74,24 @@ class Foundry(AbstractPlatform):
 
             compile_all = kwargs.get("foundry_compile_all", False)
 
-            if not targeted_build and not compile_all:
-                foundry_config = self.config(self._project_root)
-                if foundry_config:
-                    compilation_command += [
-                        "--skip",
-                        f"./{foundry_config.tests_path}/**",
-                        f"./{foundry_config.scripts_path}/**",
-                        "--force",
-                    ]
+            foundry_config = self.config(self._project_root)
+
+            if not targeted_build and not compile_all and foundry_config:
+                compilation_command += [
+                    "--skip",
+                    f"./{foundry_config.tests_path}/**",
+                    f"./{foundry_config.scripts_path}/**",
+                    "--force",
+                ]
 
             run(
                 compilation_command,
                 cwd=self._project_root,
             )
+
+        out_directory_detected = foundry_config.out_path if foundry_config else "out"
+        out_directory_config = kwargs.get("foundry_out_directory", None)
+        out_directory = out_directory_config if out_directory_config else out_directory_detected
 
         build_directory = Path(
             self._project_root,
@@ -195,6 +199,7 @@ class Foundry(AbstractPlatform):
         result.tests_path = json_config.get("test")
         result.libs_path = json_config.get("libs")
         result.scripts_path = json_config.get("script")
+        result.out_path = json_config.get("out")
 
         return result
 
