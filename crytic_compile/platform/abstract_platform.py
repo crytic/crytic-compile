@@ -42,6 +42,7 @@ class PlatformConfig:
     tests_path: str = "test"
     libs_path: List[str] = field(default_factory=lambda: ["lib"])
     scripts_path: str = "script"
+    out_path: str = "out"
 
 
 class AbstractPlatform(metaclass=abc.ABCMeta):
