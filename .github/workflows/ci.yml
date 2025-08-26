@@ -33,15 +33,6 @@ jobs:
           # Explore foundry support in windows
           - os: windows-2022
             type: foundry
-          # brownie does not install correctly with Python 3.10
-          - python: 3.10
-            type: brownie
-          # brownie does not install correctly with Python 3.11
-          - python: 3.11
-            type: brownie
-          # brownie does not install correctly with Python 3.12
-          - python: 3.12
-            type: brownie
     steps:
     - uses: actions/checkout@v5
     - name: Set up shell
