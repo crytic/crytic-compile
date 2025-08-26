@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 DIR=$(mktemp -d)
 
@@ -8,34 +9,25 @@ cd "$DIR" || exit 255
 
 solc-select use 0.8.0 --always-install
 
-crytic-compile contract_with_toplevel.sol --export-format archive
-
-if [ $? -ne 0 ]
+if ! crytic-compile contract_with_toplevel.sol --export-format archive
 then
     echo "Standard test failed"
     exit 255
 fi
 
-crytic-compile crytic-export/contract_with_toplevel.sol_export_archive.json
-
-if [ $? -ne 0 ]
+if ! crytic-compile crytic-export/contract_with_toplevel.sol_export_archive.json
 then
     echo "Standard test failed"
     exit 255
 fi
 
-
-crytic-compile contract_with_toplevel.sol --export-zip test.zip
-
-if [ $? -ne 0 ]
+if ! crytic-compile contract_with_toplevel.sol --export-zip test.zip
 then
     echo "Standard test failed"
     exit 255
 fi
 
-crytic-compile test.zip
-
-if [ $? -ne 0 ]
+if ! crytic-compile test.zip
 then
     echo "Standard test failed"
     exit 255

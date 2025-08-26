@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 ### Test buidler integration
 
@@ -6,8 +7,7 @@ cd tests/buidler || exit 255
 
 npm install --save-dev @nomiclabs/buidler
 
-crytic-compile .
-if [ $? -ne 0 ]
+if ! crytic-compile .
 then
     echo "buidler test failed"
     exit 255

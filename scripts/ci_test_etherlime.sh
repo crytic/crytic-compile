@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 ### Test etherlime integration
 
@@ -7,9 +8,8 @@ cd "$DIR" || exit 255
 
 npm i -g etherlime
 etherlime init
-crytic-compile . --compile-remove-metadata
 
-if [ $? -ne 0 ]
+if ! crytic-compile . --compile-remove-metadata
 then
     echo "Etherlime test failed"
     exit 255

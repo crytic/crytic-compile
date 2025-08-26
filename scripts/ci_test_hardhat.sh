@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 echo "Testing hardhat integration of $(realpath "$(which crytic-compile)")"
 
