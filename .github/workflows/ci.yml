@@ -21,17 +21,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ["ubuntu-latest", "windows-2022"]
+        os: ["ubuntu-latest", "windows-2025"]
         python: ${{ (github.event_name == 'pull_request' && fromJSON('["3.8", "3.13"]')) || fromJSON('["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]') }}
         type: ["brownie", "buidler", "dapp", "embark", "hardhat", "solc", "truffle", "waffle", "foundry", "standard", "vyper", "solc_multi_file", "hardhat_multi_file"]
         exclude:
           # Currently broken, tries to pull git:// which is blocked by GH
           - type: embark
           # Requires nix
-          - os: windows-2022
+          - os: windows-2025
             type: dapp
           # Explore foundry support in windows
-          - os: windows-2022
+          - os: windows-2025
             type: foundry
     steps:
     - uses: actions/checkout@v5
