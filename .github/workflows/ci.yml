@@ -22,7 +22,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "windows-2022"]
-        python: ${{ (github.event_name == 'pull_request' && fromJSON('["3.8", "3.12"]')) || fromJSON('["3.8", "3.9", "3.10", "3.11", "3.12"]') }}
+        python: ${{ (github.event_name == 'pull_request' && fromJSON('["3.8", "3.13"]')) || fromJSON('["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]') }}
         type: ["brownie", "buidler", "dapp", "embark", "hardhat", "solc", "truffle", "waffle", "foundry", "standard", "vyper", "solc_multi_file", "hardhat_multi_file"]
         exclude:
           # Currently broken, tries to pull git:// which is blocked by GH
