@@ -10,8 +10,7 @@ mkdir forge_test
 cd forge_test || exit 255
 forge init
 
-crytic-compile .
-if [ $? -ne 0 ]
+if ! crytic-compile .
 then
     echo "foundry test 1 failed"
     exit 255
@@ -27,8 +26,7 @@ forge init
 
 sed -i 's/^out\s*=.*$/out = "foobar"/' foundry.toml
 
-crytic-compile .
-if [ $? -ne 0 ]
+if ! crytic-compile .
 then
     echo "foundry test 2 failed"
     exit 255
@@ -43,8 +41,7 @@ forge init
 
 cd /tmp || exit 255
 
-crytic-compile ./forge_test3
-if [ $? -ne 0 ]
+if ! crytic-compile ./forge_test3
 then
     echo "foundry test 3 failed"
     exit 255

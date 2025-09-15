@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 ### Test dapp integration
 
@@ -24,8 +25,7 @@ dapp init
 PROJECT="$PWD"
 
 echo "::group::Dapp + cwd target"
-crytic-compile . --compile-remove-metadata
-if [ $? -ne 0 ]
+if ! crytic-compile . --compile-remove-metadata
 then
     echo "dapp test failed"
     exit 255
@@ -35,8 +35,7 @@ echo "::endgroup::"
 cd /tmp || exit 255
 
 echo "::group::Dapp + different target"
-crytic-compile "$PROJECT" --compile-remove-metadata
-if [ $? -ne 0 ]
+if ! crytic-compile "$PROJECT" --compile-remove-metadata
 then
     echo "dapp test with different target failed"
     exit 255
@@ -45,8 +44,7 @@ echo "::endgroup::"
 
 
 echo "::group::Dapp + different target + ignore compile"
-crytic-compile "$PROJECT" --compile-remove-metadata --ignore-compile
-if [ $? -ne 0 ]
+if ! crytic-compile "$PROJECT" --compile-remove-metadata --ignore-compile
 then
     echo "dapp test with different target + ignore compile failed"
     exit 255
