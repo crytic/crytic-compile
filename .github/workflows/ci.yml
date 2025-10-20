@@ -45,7 +45,7 @@ jobs:
         echo 'C:\msys64\mingw64\bin' >> "$GITHUB_PATH"
         echo 'C:\msys64\usr\bin' >> "$GITHUB_PATH"
     - name: Set up Node
-      uses: actions/setup-node@v5
+      uses: actions/setup-node@v6
       with:
         node-version: ${{ matrix.node-version || '18.15' }}
     - name: Set up Python ${{ matrix.python }}
