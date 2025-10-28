@@ -68,7 +68,7 @@ class Foundry(AbstractPlatform):
         Args:
             crytic_compile (CryticCompile): CryticCompile object to populate
             **kwargs: optional arguments. Used: "foundry_ignore_compile", "foundry_out_directory",
-                "foundry_build_info_directory", "foundry_deny"
+                "foundry_build_info_directory", "foundry_deny", "foundry_no_force"
 
         """
 
@@ -105,8 +105,23 @@ class Foundry(AbstractPlatform):
                 ]
 
             compile_all = kwargs.get("foundry_compile_all", False)
+            no_force = kwargs.get("foundry_no_force", False)
 
             foundry_config = self.config(self._project_root)
+
+            # When no_force is enabled, we must compile all files (including tests)
+            # to ensure test changes are detected. Otherwise tests would be skipped
+            # and test modifications wouldn't trigger recompilation.
+            # We also clean build-info to prevent multiple compilation units from accumulating.
+            if no_force:
+                compile_all = True
+                out_dir = foundry_config.out_path if foundry_config else "out"
+                build_info_dir = Path(self._project_root, out_dir, "build-info")
+                if build_info_dir.exists():
+                    import shutil
+
+                    shutil.rmtree(build_info_dir)
+                    LOGGER.info("Cleaned %s for fresh build-info generation", build_info_dir)
 
             if not targeted_build and not compile_all and foundry_config:
                 compilation_command += [
