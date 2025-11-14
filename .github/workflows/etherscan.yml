@@ -21,17 +21,17 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: ["ubuntu-latest", "windows-2022"]
+        os: ["ubuntu-latest", "windows-2025"]
         type: ["etherscan"]
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     - name: Set up shell
       if: runner.os == 'Windows'
       run: |
         echo 'C:\msys64\mingw64\bin' >> "$GITHUB_PATH"
         echo 'C:\msys64\usr\bin' >> "$GITHUB_PATH"
     - name: Set up Python 3.8
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: 3.8
     - name: Install dependencies

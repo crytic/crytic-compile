@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 ### Test truffle integration
 
@@ -7,9 +8,8 @@ cd "$DIR" || exit 255
 
 npm install -g truffle
 truffle unbox metacoin
-crytic-compile . --compile-remove-metadata
 
-if [ $? -ne 0 ]
+if ! crytic-compile . --compile-remove-metadata
 then
     echo "Truffle test failed"
     exit 255

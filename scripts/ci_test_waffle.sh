@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 ### Test waffle integration
 
@@ -15,9 +16,7 @@ echo 'contract Test {
 
 cd ..
 
-crytic-compile . --compile-remove-metadata --compile-force-framework Waffle
-
-if [ $? -ne 0 ]
+if ! crytic-compile . --compile-remove-metadata --compile-force-framework Waffle
 then
     echo "Waffle test failed"
     exit 255

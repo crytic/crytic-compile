@@ -44,7 +44,7 @@ DEFAULTS_FLAG_IN_CONFIG = {
     "hardhat_cache_directory": None,
     "hardhat_artifacts_directory": None,
     "foundry_ignore_compile": False,
-    "foundry_out_directory": "out",
+    "foundry_out_directory": None,
     "foundry_compile_all": False,
     "export_dir": "crytic-export",
     "compile_libraries": None,
