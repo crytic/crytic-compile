@@ -107,7 +107,7 @@ def hardhat_like_parsing(
                             working_dir=working_dir,
                         )
                     else:
-                        m = re.match(r"npm/([^@/]+)@[^/]+/(.+)", path)
+                        m = re.match(r"npm/(.+?)@[^/]+/(.+)", path)
                         if m:
                             package = m.group(1)
                             rest = m.group(2)
@@ -135,7 +135,7 @@ def hardhat_like_parsing(
             if "contracts" in targets_json:
                 for original_filename, contracts_info in targets_json["contracts"].items():
 
-                    v = re.match(r"npm/([^@/]+)@[^/]+/(.+)", original_filename)
+                    v = re.match(r"npm/(.+?)@[^/]+/(.+)", original_filename)
                     if v:
                         package = v.group(1)
                         rest = v.group(2)
