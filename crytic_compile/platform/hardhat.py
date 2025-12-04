@@ -6,6 +6,7 @@ import logging
 import os
 import shutil
 import subprocess
+import re
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
@@ -69,13 +70,22 @@ def hardhat_like_parsing(
         with open(build_info, encoding="utf8") as file_desc:
             loaded_json = json.load(file_desc)
 
-            targets_json = loaded_json["output"]
+            if "output" in loaded_json:
+                targets_json = loaded_json["output"]
+            else:
+                output_file = Path(build_directory, uniq_id + ".output.json")
+                with open(output_file, encoding="utf8") as file_desc_output:
+                    loaded_output_json = json.load(file_desc_output)
+                targets_json = loaded_output_json["output"]
 
             version_from_config = loaded_json["solcVersion"]  # TODO supper vyper
             input_json = loaded_json["input"]
             compiler = "solc" if input_json["language"] == "Solidity" else "vyper"
             # Foundry has the optimizer dict empty when the "optimizer" key is not set in foundry.toml
-            optimized = input_json["settings"]["optimizer"].get("enabled", False)
+            if "optimizer" in input_json["settings"]:
+                optimized = input_json["settings"]["optimizer"].get("enabled", False)
+            else:
+                optimized = False
 
             compilation_unit.compiler_version = CompilerVersion(
                 compiler=compiler, version=version_from_config, optimized=optimized
@@ -95,6 +105,17 @@ def hardhat_like_parsing(
                             working_dir=working_dir,
                         )
                     else:
+                        m = re.match(r"npm/([^@/]+)@[^/]+/(.+)", path)
+                        if m:
+                            package = m.group(1)
+                            rest = m.group(2)
+                            path = f"{package}/{rest}"
+
+                        # CASE 2 — project/contracts/... → contracts/...
+                        m = re.match(r"project/contracts/(.+)", path)
+                        if m:
+                            path = f"contracts/{m.group(1)}"
+
                         path = convert_filename(
                             path,
                             relative_to_short,
@@ -111,6 +132,17 @@ def hardhat_like_parsing(
 
             if "contracts" in targets_json:
                 for original_filename, contracts_info in targets_json["contracts"].items():
+
+                    v = re.match(r"npm/([^@/]+)@[^/]+/(.+)", original_filename)
+                    if v:
+                        package = v.group(1)
+                        rest = v.group(2)
+                        original_filename = f"{package}/{rest}"
+
+                    # CASE 2 — project/contracts/... → contracts/...
+                    p = re.match(r"project/contracts/(.+)", original_filename)
+                    if p:
+                        original_filename = f"contracts/{p.group(1)}"
 
                     filename = convert_filename(
                         original_filename,
