@@ -60,6 +60,8 @@ def hardhat_like_parsing(
         txt = f"Compilation failed. Can you run build command?\n{build_directory} is empty."
         raise InvalidCompilation(txt)
 
+    files = [f for f in files if not f.endswith(".output.json")]
+
     for file in files:
         build_info = Path(build_directory, file)
 
@@ -355,6 +357,10 @@ class Hardhat(AbstractPlatform):
                 stdout_bytes.decode(),
                 stderr_bytes.decode(errors="backslashreplace"),
             )
+
+            # Detect '>' in stdout and remove it
+            if stdout.startswith(">"):
+                stdout = stdout[1:].lstrip()
 
             if stderr:
                 LOGGER.info("Problem executing hardhat: %s", stderr)
