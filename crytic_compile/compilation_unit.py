@@ -241,9 +241,6 @@ class CompilationUnit:
         from crytic_compile.platform.truffle import Truffle
         from crytic_compile.platform.hardhat import Hardhat
 
-        print(f"X filename: {filename}")
-        print(f"X platform: {self.crytic_compile.platform}")
-
         if isinstance(self.crytic_compile.platform, Truffle) and filename.startswith("project:/"):
             filename = filename[len("project:/") :]
 
