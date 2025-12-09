@@ -107,16 +107,17 @@ def hardhat_like_parsing(
                             working_dir=working_dir,
                         )
                     else:
-                        m = re.match(r"npm/(.+?)@[^/]+/(.+)", path)
-                        if m:
-                            package = m.group(1)
-                            rest = m.group(2)
+                        # CASE 1 — npm/... → ...
+                        hh3_npm_path = re.match(r"npm/(.+?)@[^/]+/(.+)", path)
+                        if hh3_npm_path:
+                            package = hh3_npm_path.group(1)
+                            rest = hh3_npm_path.group(2)
                             path = f"{package}/{rest}"
 
-                        # CASE 2 — project/contracts/... → contracts/...
-                        m = re.match(r"project/contracts/(.+)", path)
-                        if m:
-                            path = f"contracts/{m.group(1)}"
+                        # project/contracts/... → contracts/...
+                        hh3_contracts_path = re.match(r"project/contracts/(.+)", path)
+                        if hh3_contracts_path:
+                            path = f"contracts/{hh3_contracts_path.group(1)}"
 
                         path = convert_filename(
                             path,
@@ -135,16 +136,17 @@ def hardhat_like_parsing(
             if "contracts" in targets_json:
                 for original_filename, contracts_info in targets_json["contracts"].items():
 
-                    v = re.match(r"npm/(.+?)@[^/]+/(.+)", original_filename)
-                    if v:
-                        package = v.group(1)
-                        rest = v.group(2)
+                    # CASE 1 — npm/... → ...
+                    hh3_npm_path = re.match(r"npm/(.+?)@[^/]+/(.+)", original_filename)
+                    if hh3_npm_path:
+                        package = hh3_npm_path.group(1)
+                        rest = hh3_npm_path.group(2)
                         original_filename = f"{package}/{rest}"
 
                     # CASE 2 — project/contracts/... → contracts/...
-                    p = re.match(r"project/contracts/(.+)", original_filename)
-                    if p:
-                        original_filename = f"contracts/{p.group(1)}"
+                    hh3_contracts_path = re.match(r"project/contracts/(.+)", original_filename)
+                    if hh3_contracts_path:
+                        original_filename = f"contracts/{hh3_contracts_path.group(1)}"
 
                     filename = convert_filename(
                         original_filename,
