@@ -158,6 +158,14 @@ def hardhat_like_parsing(
 
 def get_targets_json(loaded_json: dict, build_directory: Path, uniq_id: str) -> dict:
     """Get the targets json from the loaded json
+
+    Args:
+        loaded_json: The loaded json from the build directory
+        build_directory: The build directory
+        uniq_id: The artifact unique id
+
+    Returns:
+        dict: The targets json
     """
     if "output" in loaded_json:
         return loaded_json["output"]
