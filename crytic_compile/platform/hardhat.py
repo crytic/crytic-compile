@@ -1,6 +1,7 @@
 """
 Hardhat platform
 """
+
 import json
 import logging
 import os
@@ -25,6 +26,7 @@ if TYPE_CHECKING:
     from crytic_compile import CryticCompile
 
 LOGGER = logging.getLogger("CryticCompile")
+
 
 # pylint: disable=too-many-locals
 def hardhat_like_parsing(
@@ -176,6 +178,7 @@ def get_targets_json(loaded_json: dict, build_directory: Path, uniq_id: str) -> 
     with open(output_file, encoding="utf8") as file_desc_output:
         loaded_output_json = json.load(file_desc_output)
     return loaded_output_json["output"]
+
 
 class Hardhat(AbstractPlatform):
     """
