@@ -6,6 +6,7 @@ At least one compilation unit exists for each version of solc used
     Maybe more dependending on the framework used (hardhat/foundry/etc)
 """
 import uuid
+import re
 from collections import defaultdict
 from typing import TYPE_CHECKING, Dict, List, Set, Optional
 
@@ -238,9 +239,26 @@ class CompilationUnit:
         """
         # pylint: disable=import-outside-toplevel
         from crytic_compile.platform.truffle import Truffle
+        from crytic_compile.platform.hardhat import Hardhat
+
+        print(f"X filename: {filename}")
+        print(f"X platform: {self.crytic_compile.platform}")
 
         if isinstance(self.crytic_compile.platform, Truffle) and filename.startswith("project:/"):
             filename = filename[len("project:/") :]
+
+        if isinstance(self.crytic_compile.platform, Hardhat):
+            # CASE 1 — npm/... → ...
+            hh3_npm_path = re.match(r"npm/(.+?)@[^/]+/(.+)", filename)
+            if hh3_npm_path:
+                package = hh3_npm_path.group(1)
+                rest = hh3_npm_path.group(2)
+                filename = f"{package}/{rest}"
+
+            # project/contracts/... → contracts/...
+            hh3_contracts_path = re.match(r"project/contracts/(.+)", filename)
+            if hh3_contracts_path:
+                filename = f"contracts/{hh3_contracts_path.group(1)}"
 
         if self._filenames_lookup is None:
             self._filenames_lookup = {}

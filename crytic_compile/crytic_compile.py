@@ -274,18 +274,6 @@ class CryticCompile:
         Returns:
             Filename: Associated Filename object
         """
-        # CASE 1 — npm/... → ...
-        hh3_npm_path = re.match(r"npm/(.+?)@[^/]+/(.+)", filename)
-        if hh3_npm_path:
-            package = hh3_npm_path.group(1)
-            rest = hh3_npm_path.group(2)
-            filename = f"{package}/{rest}"
-
-        # project/contracts/... → contracts/...
-        hh3_contracts_path = re.match(r"project/contracts/(.+)", filename)
-        if hh3_contracts_path:
-            filename = f"contracts/{hh3_contracts_path.group(1)}"
-
         for compile_unit in self.compilation_units.values():
             try:
                 return compile_unit.filename_lookup(filename)
