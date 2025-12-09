@@ -54,12 +54,14 @@ def hardhat_like_parsing(
     files = sorted(
         os.listdir(build_directory), key=lambda x: os.path.getmtime(Path(build_directory, x))
     )
-    # files = [str(f) for f in files if str(f).endswith(".json")]
-    files = [f for f in files if not f.endswith(".output.json")]
+
+    files = [str(f) for f in files if str(f).endswith(".json")]
 
     if not files:
         txt = f"Compilation failed. Can you run build command?\n{build_directory} is empty."
         raise InvalidCompilation(txt)
+
+    files = [f for f in files if not f.endswith(".output.json")]
 
     for file in files:
         build_info = Path(build_directory, file)

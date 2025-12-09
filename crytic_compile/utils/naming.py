@@ -1,6 +1,7 @@
 """
 Module handling the file naming operation (relative -> absolute, etc)
 """
+
 import re
 
 import logging
@@ -197,6 +198,7 @@ def convert_filename(
         short=short.as_posix(),
         used=Path(used_filename).as_posix(),
     )
+
 
 def process_hardhat_v3_filename(filename: str) -> str:
     """Process hardhat v3 filename format
