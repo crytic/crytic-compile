@@ -274,7 +274,7 @@ class CryticCompile:
         Returns:
             Filename: Associated Filename object
         """
-
+        # CASE 1 — npm/... → ...
         hh3_npm_path = re.match(r"npm/(.+?)@[^/]+/(.+)", filename)
         if hh3_npm_path:
             package = hh3_npm_path.group(1)
