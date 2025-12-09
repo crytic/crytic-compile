@@ -38,7 +38,7 @@ jobs:
           - os: windows-2025
             type: foundry
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - name: Set up shell
       if: runner.os == 'Windows'
       run: |
