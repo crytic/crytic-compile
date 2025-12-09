@@ -6,7 +6,6 @@ import logging
 import os
 import shutil
 import subprocess
-import re
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
@@ -18,7 +17,7 @@ from crytic_compile.platform.exceptions import InvalidCompilation
 # Handle cycle
 from crytic_compile.platform.solc import relative_to_short
 from crytic_compile.platform.types import Type
-from crytic_compile.utils.naming import convert_filename, extract_name
+from crytic_compile.utils.naming import convert_filename, extract_name, process_hardhat_v3_filename
 from crytic_compile.utils.natspec import Natspec
 from crytic_compile.utils.subprocess import run
 
@@ -55,12 +54,12 @@ def hardhat_like_parsing(
     files = sorted(
         os.listdir(build_directory), key=lambda x: os.path.getmtime(Path(build_directory, x))
     )
-    files = [str(f) for f in files if str(f).endswith(".json")]
+    # files = [str(f) for f in files if str(f).endswith(".json")]
+    files = [f for f in files if not f.endswith(".output.json")]
+
     if not files:
         txt = f"Compilation failed. Can you run build command?\n{build_directory} is empty."
         raise InvalidCompilation(txt)
-
-    files = [f for f in files if not f.endswith(".output.json")]
 
     for file in files:
         build_info = Path(build_directory, file)
@@ -72,22 +71,17 @@ def hardhat_like_parsing(
         with open(build_info, encoding="utf8") as file_desc:
             loaded_json = json.load(file_desc)
 
-            if "output" in loaded_json:
-                targets_json = loaded_json["output"]
-            else:
-                output_file = Path(build_directory, uniq_id + ".output.json")
-                with open(output_file, encoding="utf8") as file_desc_output:
-                    loaded_output_json = json.load(file_desc_output)
-                targets_json = loaded_output_json["output"]
+            targets_json = get_targets_json(loaded_json, build_directory, uniq_id)
 
             version_from_config = loaded_json["solcVersion"]  # TODO supper vyper
             input_json = loaded_json["input"]
             compiler = "solc" if input_json["language"] == "Solidity" else "vyper"
             # Foundry has the optimizer dict empty when the "optimizer" key is not set in foundry.toml
-            if "optimizer" in input_json["settings"]:
-                optimized = input_json["settings"]["optimizer"].get("enabled", False)
-            else:
-                optimized = False
+            optimized = (
+                input_json["settings"]["optimizer"].get("enabled", False)
+                if "optimizer" in input_json["settings"]
+                else False
+            )
 
             compilation_unit.compiler_version = CompilerVersion(
                 compiler=compiler, version=version_from_config, optimized=optimized
@@ -107,17 +101,7 @@ def hardhat_like_parsing(
                             working_dir=working_dir,
                         )
                     else:
-                        # CASE 1 — npm/... → ...
-                        hh3_npm_path = re.match(r"npm/(.+?)@[^/]+/(.+)", path)
-                        if hh3_npm_path:
-                            package = hh3_npm_path.group(1)
-                            rest = hh3_npm_path.group(2)
-                            path = f"{package}/{rest}"
-
-                        # project/contracts/... → contracts/...
-                        hh3_contracts_path = re.match(r"project/contracts/(.+)", path)
-                        if hh3_contracts_path:
-                            path = f"contracts/{hh3_contracts_path.group(1)}"
+                        path = process_hardhat_v3_filename(path)
 
                         path = convert_filename(
                             path,
@@ -136,17 +120,7 @@ def hardhat_like_parsing(
             if "contracts" in targets_json:
                 for original_filename, contracts_info in targets_json["contracts"].items():
 
-                    # CASE 1 — npm/... → ...
-                    hh3_npm_path = re.match(r"npm/(.+?)@[^/]+/(.+)", original_filename)
-                    if hh3_npm_path:
-                        package = hh3_npm_path.group(1)
-                        rest = hh3_npm_path.group(2)
-                        original_filename = f"{package}/{rest}"
-
-                    # CASE 2 — project/contracts/... → contracts/...
-                    hh3_contracts_path = re.match(r"project/contracts/(.+)", original_filename)
-                    if hh3_contracts_path:
-                        original_filename = f"contracts/{hh3_contracts_path.group(1)}"
+                    original_filename = process_hardhat_v3_filename(original_filename)
 
                     filename = convert_filename(
                         original_filename,
@@ -181,6 +155,17 @@ def hardhat_like_parsing(
                         natspec = Natspec(userdoc, devdoc)
                         source_unit.natspec[contract_name] = natspec
 
+
+def get_targets_json(loaded_json: dict, build_directory: Path, uniq_id: str) -> dict:
+    """Get the targets json from the loaded json
+    """
+    if "output" in loaded_json:
+        return loaded_json["output"]
+    # v3 support
+    output_file = Path(build_directory, uniq_id + ".output.json")
+    with open(output_file, encoding="utf8") as file_desc_output:
+        loaded_output_json = json.load(file_desc_output)
+    return loaded_output_json["output"]
 
 class Hardhat(AbstractPlatform):
     """

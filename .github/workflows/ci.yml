@@ -28,6 +28,9 @@ jobs:
           # buidler requires older NodeJS
           - type: buidler
             node-version: 12
+
+          - type: hardhat_v3
+            node-version: 22
         exclude:
           # Currently broken, tries to pull git:// which is blocked by GH
           - type: embark
