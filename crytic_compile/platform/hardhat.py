@@ -362,6 +362,12 @@ class Hardhat(AbstractPlatform):
             if stdout.startswith(">"):
                 stdout = stdout[1:].lstrip()
 
+            # Detect unexpected output in stdout
+            brace_index = stdout.find("{")
+            if brace_index > 2:
+                LOGGER.info("Unexpected output from Hardhat, trying to parse it anyway: %s", stdout)
+                stdout = stdout[brace_index:]
+
             if stderr:
                 LOGGER.info("Problem executing hardhat: %s", stderr)
                 return None
