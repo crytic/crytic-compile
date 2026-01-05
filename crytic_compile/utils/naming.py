@@ -2,6 +2,8 @@
 Module handling the file naming operation (relative -> absolute, etc)
 """
 
+import re
+
 import logging
 import os.path
 import platform
@@ -196,3 +198,27 @@ def convert_filename(
         short=short.as_posix(),
         used=Path(used_filename).as_posix(),
     )
+
+
+def process_hardhat_v3_filename(filename: str) -> str:
+    """Process hardhat v3 filename format
+    If the filename is in v3 format, it will be converted to v2 format.
+
+    Args:
+        filename (str): filename to convert
+
+    Returns:
+        str: converted filename
+    """
+    # CASE 1 — npm/... → ...
+    hh3_npm_path = re.match(r"npm/(.+?)@[^/]+/(.+)", filename)
+    if hh3_npm_path:
+        package = hh3_npm_path.group(1)
+        rest = hh3_npm_path.group(2)
+        filename = f"{package}/{rest}"
+
+    # CASE 2 — project/contracts/... → contracts/...
+    hh3_contracts_path = re.match(r"project/contracts/(.+)", filename)
+    if hh3_contracts_path:
+        filename = f"contracts/{hh3_contracts_path.group(1)}"
+    return filename

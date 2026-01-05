@@ -1,6 +1,7 @@
 """
 Hardhat platform
 """
+
 import json
 import logging
 import os
@@ -17,7 +18,7 @@ from crytic_compile.platform.exceptions import InvalidCompilation
 # Handle cycle
 from crytic_compile.platform.solc import relative_to_short
 from crytic_compile.platform.types import Type
-from crytic_compile.utils.naming import convert_filename, extract_name
+from crytic_compile.utils.naming import convert_filename, extract_name, process_hardhat_v3_filename
 from crytic_compile.utils.natspec import Natspec
 from crytic_compile.utils.subprocess import run
 
@@ -25,6 +26,7 @@ if TYPE_CHECKING:
     from crytic_compile import CryticCompile
 
 LOGGER = logging.getLogger("CryticCompile")
+
 
 # pylint: disable=too-many-locals
 def hardhat_like_parsing(
@@ -54,10 +56,14 @@ def hardhat_like_parsing(
     files = sorted(
         os.listdir(build_directory), key=lambda x: os.path.getmtime(Path(build_directory, x))
     )
+
     files = [str(f) for f in files if str(f).endswith(".json")]
+
     if not files:
         txt = f"Compilation failed. Can you run build command?\n{build_directory} is empty."
         raise InvalidCompilation(txt)
+
+    files = [f for f in files if not f.endswith(".output.json")]
 
     for file in files:
         build_info = Path(build_directory, file)
@@ -69,13 +75,17 @@ def hardhat_like_parsing(
         with open(build_info, encoding="utf8") as file_desc:
             loaded_json = json.load(file_desc)
 
-            targets_json = loaded_json["output"]
+            targets_json = get_targets_json(loaded_json, build_directory, uniq_id)
 
             version_from_config = loaded_json["solcVersion"]  # TODO supper vyper
             input_json = loaded_json["input"]
             compiler = "solc" if input_json["language"] == "Solidity" else "vyper"
             # Foundry has the optimizer dict empty when the "optimizer" key is not set in foundry.toml
-            optimized = input_json["settings"]["optimizer"].get("enabled", False)
+            optimized = (
+                input_json["settings"]["optimizer"].get("enabled", False)
+                if "optimizer" in input_json["settings"]
+                else False
+            )
 
             compilation_unit.compiler_version = CompilerVersion(
                 compiler=compiler, version=version_from_config, optimized=optimized
@@ -95,6 +105,8 @@ def hardhat_like_parsing(
                             working_dir=working_dir,
                         )
                     else:
+                        path = process_hardhat_v3_filename(path)
+
                         path = convert_filename(
                             path,
                             relative_to_short,
@@ -111,6 +123,8 @@ def hardhat_like_parsing(
 
             if "contracts" in targets_json:
                 for original_filename, contracts_info in targets_json["contracts"].items():
+
+                    original_filename = process_hardhat_v3_filename(original_filename)
 
                     filename = convert_filename(
                         original_filename,
@@ -144,6 +158,26 @@ def hardhat_like_parsing(
                         devdoc = info.get("devdoc", {})
                         natspec = Natspec(userdoc, devdoc)
                         source_unit.natspec[contract_name] = natspec
+
+
+def get_targets_json(loaded_json: dict, build_directory: Path, uniq_id: str) -> dict:
+    """Get the targets json from the loaded json
+
+    Args:
+        loaded_json: The loaded json from the build directory
+        build_directory: The build directory
+        uniq_id: The artifact unique id
+
+    Returns:
+        dict: The targets json
+    """
+    if "output" in loaded_json:
+        return loaded_json["output"]
+    # v3 support
+    output_file = Path(build_directory, uniq_id + ".output.json")
+    with open(output_file, encoding="utf8") as file_desc_output:
+        loaded_output_json = json.load(file_desc_output)
+    return loaded_output_json["output"]
 
 
 class Hardhat(AbstractPlatform):
@@ -323,6 +357,16 @@ class Hardhat(AbstractPlatform):
                 stdout_bytes.decode(),
                 stderr_bytes.decode(errors="backslashreplace"),
             )
+
+            # Detect '>' in stdout and remove it
+            if stdout.startswith(">"):
+                stdout = stdout[1:].lstrip()
+
+            # Detect unexpected output in stdout
+            brace_index = stdout.find("{")
+            if brace_index > 2:
+                LOGGER.info("Unexpected output from Hardhat, trying to parse it anyway: %s", stdout)
+                stdout = stdout[brace_index:]
 
             if stderr:
                 LOGGER.info("Problem executing hardhat: %s", stderr)
