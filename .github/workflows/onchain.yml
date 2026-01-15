@@ -1,5 +1,5 @@
 ---
-name: Etherscan
+name: Onchain
 
 on:
   push:
@@ -22,7 +22,7 @@ jobs:
     strategy:
       matrix:
         os: ["ubuntu-latest", "windows-2025"]
-        type: ["etherscan"]
+        type: ["etherscan", "sourcify"]
     steps:
     - uses: actions/checkout@v6
     - name: Set up shell
