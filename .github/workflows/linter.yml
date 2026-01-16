@@ -24,8 +24,8 @@ jobs:
         with:
           args: "format --check"
 
-  mypy:
-    name: Mypy
+  ty:
+    name: ty
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -33,7 +33,7 @@ jobs:
         with:
           python-version: "3.10"
       - run: uv sync --extra lint
-      - run: uv run mypy crytic_compile/
+      - run: uv run ty check crytic_compile/
 
   shell:
     name: ShellCheck

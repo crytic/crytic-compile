@@ -28,7 +28,7 @@ Homepage = "https://github.com/crytic/crytic-compile"
 
 [project.optional-dependencies]
 test = ["pytest", "pytest-cov"]
-lint = ["ruff>=0.8", "mypy>=1.0"]
+lint = ["ruff>=0.8", "ty"]
 doc = ["pdoc"]
 dev = ["crytic-compile[test,lint,doc]"]
 
@@ -49,15 +49,5 @@ ignore = ["E501"]
 [tool.ruff.format]
 quote-style = "double"
 
-[tool.mypy]
-python_version = "3.10"
-warn_incomplete_stub = true
-ignore_missing_imports = true
-disallow_untyped_calls = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-check_untyped_defs = true
-disallow_untyped_decorators = true
-warn_redundant_casts = true
-warn_no_return = true
-warn_unreachable = true
+[tool.ty.environment]
+python-version = "3.10"
