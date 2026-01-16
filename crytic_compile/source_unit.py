@@ -3,10 +3,11 @@ Module handling the source unit
 Each source unit represents one file so may be associated with
 One or more source units are associated with each compilation unit
 """
-import re
-from typing import Dict, List, Optional, Union, Tuple, TYPE_CHECKING
-import cbor2
 
+import re
+from typing import TYPE_CHECKING
+
+import cbor2
 from Crypto.Hash import keccak
 
 from crytic_compile.utils.naming import Filename
@@ -16,7 +17,7 @@ if TYPE_CHECKING:
     from crytic_compile.compilation_unit import CompilationUnit
 
 
-def get_library_candidate(filename: Filename, contract_name: str) -> List[str]:
+def get_library_candidate(filename: Filename, contract_name: str) -> list[str]:
     """
     Return candidate name for library linking. A candidate is a str that might be found in other bytecodes
 
@@ -31,7 +32,7 @@ def get_library_candidate(filename: Filename, contract_name: str) -> List[str]:
     # Some platform use only the contract name
     # Some use fimename:contract_name
 
-    ret: List[str] = []
+    ret: list[str] = []
 
     name_with_absolute_filename = filename.absolute + ":" + contract_name
     name_with_used_filename = filename.used + ":" + contract_name
@@ -65,39 +66,38 @@ class SourceUnit:
     """SourceUnit class"""
 
     def __init__(self, compilation_unit: "CompilationUnit", filename: Filename):
-
         self.filename = filename
-        self.compilation_unit: "CompilationUnit" = compilation_unit
+        self.compilation_unit: CompilationUnit = compilation_unit
 
         # ABI, bytecode and srcmap are indexed by contract_name
-        self._abis: Dict = {}
-        self._runtime_bytecodes: Dict = {}
-        self._init_bytecodes: Dict = {}
-        self._hashes: Dict = {}
-        self._events: Dict = {}
-        self._srcmaps: Dict[str, List[str]] = {}
-        self._srcmaps_runtime: Dict[str, List[str]] = {}
-        self.ast: Dict = {}
+        self._abis: dict = {}
+        self._runtime_bytecodes: dict = {}
+        self._init_bytecodes: dict = {}
+        self._hashes: dict = {}
+        self._events: dict = {}
+        self._srcmaps: dict[str, list[str]] = {}
+        self._srcmaps_runtime: dict[str, list[str]] = {}
+        self.ast: dict = {}
 
         # Natspec
-        self._natspec: Dict[str, Natspec] = {}
+        self._natspec: dict[str, Natspec] = {}
 
         # Libraries used by the contract
         # contract_name -> (library, pattern)
-        self._libraries: Dict[str, List[Tuple[str, str]]] = {}
+        self._libraries: dict[str, list[tuple[str, str]]] = {}
 
         # set containing all the contract names
-        self._contracts_name: List[str] = []
+        self._contracts_name: list[str] = []
 
         # set containing all the contract name without the libraries
-        self._contracts_name_without_libraries: Optional[List[str]] = None
+        self._contracts_name_without_libraries: list[str] | None = None
 
     # region ABI
     ###################################################################################
     ###################################################################################
 
     @property
-    def abis(self) -> Dict:
+    def abis(self) -> dict:
         """Return the ABIs
 
         Returns:
@@ -105,7 +105,7 @@ class SourceUnit:
         """
         return self._abis
 
-    def abi(self, name: str) -> Dict:
+    def abi(self, name: str) -> dict:
         """Get the ABI from a contract
 
         Args:
@@ -124,7 +124,7 @@ class SourceUnit:
     ###################################################################################
 
     @property
-    def bytecodes_runtime(self) -> Dict[str, str]:
+    def bytecodes_runtime(self) -> dict[str, str]:
         """Return the runtime bytecodes
 
         Returns:
@@ -133,7 +133,7 @@ class SourceUnit:
         return self._runtime_bytecodes
 
     @bytecodes_runtime.setter
-    def bytecodes_runtime(self, bytecodes: Dict[str, str]) -> None:
+    def bytecodes_runtime(self, bytecodes: dict[str, str]) -> None:
         """Set the bytecodes runtime
 
         Args:
@@ -142,7 +142,7 @@ class SourceUnit:
         self._runtime_bytecodes = bytecodes
 
     @property
-    def bytecodes_init(self) -> Dict[str, str]:
+    def bytecodes_init(self) -> dict[str, str]:
         """Return the init bytecodes
 
         Returns:
@@ -151,7 +151,7 @@ class SourceUnit:
         return self._init_bytecodes
 
     @bytecodes_init.setter
-    def bytecodes_init(self, bytecodes: Dict[str, str]) -> None:
+    def bytecodes_init(self, bytecodes: dict[str, str]) -> None:
         """Set the bytecodes init
 
         Args:
@@ -159,7 +159,7 @@ class SourceUnit:
         """
         self._init_bytecodes = bytecodes
 
-    def bytecode_runtime(self, name: str, libraries: Optional[Dict[str, int]] = None) -> str:
+    def bytecode_runtime(self, name: str, libraries: dict[str, int] | None = None) -> str:
         """Return the runtime bytecode of the contract.
         If library is provided, patch the bytecode
 
@@ -173,7 +173,7 @@ class SourceUnit:
         runtime = self._runtime_bytecodes.get(name, None)
         return self._update_bytecode_with_libraries(runtime, libraries)
 
-    def bytecode_init(self, name: str, libraries: Optional[Dict[str, int]] = None) -> str:
+    def bytecode_init(self, name: str, libraries: dict[str, int] | None = None) -> str:
         """Return the init bytecode of the contract.
         If library is provided, patch the bytecode
 
@@ -195,7 +195,7 @@ class SourceUnit:
     ###################################################################################
 
     @property
-    def srcmaps_init(self) -> Dict[str, List[str]]:
+    def srcmaps_init(self) -> dict[str, list[str]]:
         """Return the srcmaps init
 
         Returns:
@@ -204,7 +204,7 @@ class SourceUnit:
         return self._srcmaps
 
     @property
-    def srcmaps_runtime(self) -> Dict[str, List[str]]:
+    def srcmaps_runtime(self) -> dict[str, list[str]]:
         """Return the srcmaps runtime
 
         Returns:
@@ -212,7 +212,7 @@ class SourceUnit:
         """
         return self._srcmaps_runtime
 
-    def srcmap_init(self, name: str) -> List[str]:
+    def srcmap_init(self, name: str) -> list[str]:
         """Return the srcmap init of a contract
 
         Args:
@@ -223,7 +223,7 @@ class SourceUnit:
         """
         return self._srcmaps.get(name, [])
 
-    def srcmap_runtime(self, name: str) -> List[str]:
+    def srcmap_runtime(self, name: str) -> list[str]:
         """Return the srcmap runtime of a contract
 
         Args:
@@ -242,7 +242,7 @@ class SourceUnit:
     ###################################################################################
 
     @property
-    def libraries(self) -> Dict[str, List[Tuple[str, str]]]:
+    def libraries(self) -> dict[str, list[tuple[str, str]]]:
         """Return the libraries used
 
         Returns:
@@ -250,7 +250,7 @@ class SourceUnit:
         """
         return self._libraries
 
-    def _convert_libraries_names(self, libraries: Dict[str, int]) -> Dict[str, int]:
+    def _convert_libraries_names(self, libraries: dict[str, int]) -> dict[str, int]:
         """Convert the libraries names
         The name in the argument can be the library name, or filename:library_name
         The returned dict contains all the names possible with the different solc versions
@@ -262,7 +262,7 @@ class SourceUnit:
             Dict[str, int]: lib_name => address
         """
         new_names = {}
-        for (lib, addr) in libraries.items():
+        for lib, addr in libraries.items():
             # Prior solidity 0.5
             # libraries were on the format __filename:contract_name_____
             # From solidity 0.5,
@@ -289,9 +289,7 @@ class SourceUnit:
 
         return new_names
 
-    def _library_name_lookup(
-        self, lib_name: str, original_contract: str
-    ) -> Optional[Tuple[str, str]]:
+    def _library_name_lookup(self, lib_name: str, original_contract: str) -> tuple[str, str] | None:
         """Do a lookup on a library name to its name used in contracts
         The library can be:
         - the original contract name
@@ -330,7 +328,7 @@ class SourceUnit:
 
         return None
 
-    def libraries_names(self, name: str) -> List[str]:
+    def libraries_names(self, name: str) -> list[str]:
         """Return the names of the libraries used by the contract
 
         Args:
@@ -347,7 +345,7 @@ class SourceUnit:
             self._libraries[name] = [lib for lib in libraires if lib]
         return [name for (name, _) in self._libraries[name]]
 
-    def libraries_names_and_patterns(self, name: str) -> List[Tuple[str, str]]:
+    def libraries_names_and_patterns(self, name: str) -> list[tuple[str, str]]:
         """Return the names and the patterns of the libraries used by the contract
 
         Args:
@@ -365,7 +363,7 @@ class SourceUnit:
         return self._libraries[name]
 
     def _update_bytecode_with_libraries(
-        self, bytecode: str, libraries: Union[None, Dict[str, int]]
+        self, bytecode: str, libraries: None | dict[str, int]
     ) -> str:
         """Update the bytecode with the libraries address
 
@@ -395,7 +393,7 @@ class SourceUnit:
     ###################################################################################
 
     @property
-    def natspec(self) -> Dict[str, Natspec]:
+    def natspec(self) -> dict[str, Natspec]:
         """Return the natspec of the contracts
 
         Returns:
@@ -411,7 +409,7 @@ class SourceUnit:
     ###################################################################################
 
     @property
-    def contracts_names(self) -> List[str]:
+    def contracts_names(self) -> list[str]:
         """Return the contracts names
 
         Returns:
@@ -420,7 +418,7 @@ class SourceUnit:
         return self._contracts_name
 
     @contracts_names.setter
-    def contracts_names(self, names: List[str]) -> None:
+    def contracts_names(self, names: list[str]) -> None:
         """Set the contract names
 
         Args:
@@ -438,14 +436,14 @@ class SourceUnit:
             self.contracts_names.append(name)
 
     @property
-    def contracts_names_without_libraries(self) -> List[str]:
+    def contracts_names_without_libraries(self) -> list[str]:
         """Return the contracts names without the librairies
 
         Returns:
             List[str]: List of contracts
         """
         if self._contracts_name_without_libraries is None:
-            libraries: List[str] = []
+            libraries: list[str] = []
             for contract_name in self._contracts_name:
                 libraries += self.libraries_names(contract_name)
             self._contracts_name_without_libraries = [
@@ -460,7 +458,7 @@ class SourceUnit:
     ###################################################################################
     ###################################################################################
 
-    def hashes(self, name: str) -> Dict[str, int]:
+    def hashes(self, name: str) -> dict[str, int]:
         """Return the hashes of the functions
 
         Args:
@@ -469,7 +467,7 @@ class SourceUnit:
         Returns:
             Dict[str, int]: (function name => signature)
         """
-        if not name in self._hashes:
+        if name not in self._hashes:
             self._compute_hashes(name)
         return self._hashes[name]
 
@@ -497,7 +495,7 @@ class SourceUnit:
     ###################################################################################
     ###################################################################################
 
-    def events_topics(self, name: str) -> Dict[str, Tuple[int, List[bool]]]:
+    def events_topics(self, name: str) -> dict[str, tuple[int, list[bool]]]:
         """Return the topics of the contract's events
 
         Args:
@@ -506,7 +504,7 @@ class SourceUnit:
         Returns:
             Dict[str, Tuple[int, List[bool]]]: event signature => topic hash, [is_indexed for each parameter]
         """
-        if not name in self._events:
+        if name not in self._events:
             self._compute_topics_events(name)
         return self._events[name]
 
@@ -536,7 +534,7 @@ class SourceUnit:
     ###################################################################################
     ###################################################################################
 
-    def metadata_of(self, name: str) -> Dict[str, Union[str, bool]]:
+    def metadata_of(self, name: str) -> dict[str, str | bool]:
         """Return the parsed metadata of a contract by name
 
         Args:
@@ -583,7 +581,7 @@ class SourceUnit:
         http://solidity.readthedocs.io/en/v0.4.24/metadata.html#encoding-of-the-metadata-hash-in-the-bytecode
         """
         # the metadata is at the end of the runtime(!) bytecode of each contract
-        for (key, bytecode) in self._runtime_bytecodes.items():
+        for key, bytecode in self._runtime_bytecodes.items():
             if not bytecode or bytecode == "0x":
                 continue
             # the last two bytes contain the length of the preceding metadata.

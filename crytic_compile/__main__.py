@@ -1,13 +1,14 @@
 """
 This is the Slither cli script
 """
+
 import argparse
-from importlib.metadata import version
 import json
 import logging
 import os
 import sys
-from typing import TYPE_CHECKING, Any, Optional
+from importlib.metadata import version
+from typing import TYPE_CHECKING, Any
 
 from crytic_compile.crytic_compile import compile_all, get_platforms
 from crytic_compile.cryticparser import DEFAULTS_FLAG_IN_CONFIG, cryticparser
@@ -157,7 +158,7 @@ class ShowPlatforms(argparse.Action):  # pylint: disable=too-few-public-methods
         parser: argparse.ArgumentParser,
         args: Any,
         values: Any,
-        option_string: Optional[str] = None,
+        option_string: str | None = None,
     ) -> None:
         """Action performed
 

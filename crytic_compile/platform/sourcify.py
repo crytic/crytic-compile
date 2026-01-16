@@ -11,7 +11,7 @@ import re
 import urllib.request
 from importlib.metadata import version
 from pathlib import Path, PurePosixPath
-from typing import TYPE_CHECKING, Any, Dict, List, Tuple
+from typing import TYPE_CHECKING, Any
 from urllib.error import HTTPError, URLError
 
 from crytic_compile.compilation_unit import CompilationUnit
@@ -58,11 +58,11 @@ def _parse_chain_id(chain_id_str: str) -> str:
 
 
 def _write_source_files(
-    sources: Dict[str, Dict[str, str]],
+    sources: dict[str, dict[str, str]],
     addr: str,
     chain_id: str,
     export_dir: str,
-) -> Tuple[str, List[str]]:
+) -> tuple[str, list[str]]:
     """Write source files to disk.
 
     Args:
@@ -79,7 +79,7 @@ def _write_source_files(
     """
     directory = os.path.join(export_dir, f"sourcify-{chain_id}-{addr}")
 
-    filenames: List[str] = []
+    filenames: list[str] = []
 
     for filename, source_info in sources.items():
         content = source_info.get("content", "")
@@ -100,7 +100,7 @@ def _write_source_files(
         # Security check: ensure path stays within allowed directory
         allowed_path = os.path.abspath(directory)
         if os.path.commonpath((allowed_path, os.path.abspath(path_filename_disk))) != allowed_path:
-            raise IOError(
+            raise OSError(
                 f"Path '{path_filename_disk}' is outside of the allowed directory: {allowed_path}"
             )
 
@@ -113,7 +113,7 @@ def _write_source_files(
     return directory, filenames
 
 
-def _fetch_sourcify_data(chain_id: str, addr: str) -> Dict[str, Any]:
+def _fetch_sourcify_data(chain_id: str, addr: str) -> dict[str, Any]:
     """Fetch contract data from Sourcify API.
 
     Args:
@@ -165,7 +165,7 @@ def _fetch_sourcify_data(chain_id: str, addr: str) -> Dict[str, Any]:
     return data
 
 
-def _write_config_file(working_dir: str, compiler_version: str, settings: Dict[str, Any]) -> None:
+def _write_config_file(working_dir: str, compiler_version: str, settings: dict[str, Any]) -> None:
     """Write crytic_compile.config.json file.
 
     Args:
@@ -180,7 +180,7 @@ def _write_config_file(working_dir: str, compiler_version: str, settings: Dict[s
     via_ir = settings.get("viaIR")
     remappings = settings.get("remappings", [])
 
-    solc_args: List[str] = []
+    solc_args: list[str] = []
     if via_ir:
         solc_args.append("--via-ir")
     if optimization_used:
@@ -188,7 +188,7 @@ def _write_config_file(working_dir: str, compiler_version: str, settings: Dict[s
     if evm_version:
         solc_args.append(f"--evm-version {evm_version}")
 
-    metadata_config: Dict[str, Any] = {
+    metadata_config: dict[str, Any] = {
         "solc_remaps": _sanitize_remappings(remappings, working_dir) if remappings else {},
         "solc_solcs_select": compiler_version,
         "solc_args": " ".join(solc_args),
@@ -307,7 +307,7 @@ class Sourcify(AbstractPlatform):
         """
         return False
 
-    def _guessed_tests(self) -> List[str]:
+    def _guessed_tests(self) -> list[str]:
         """Guess the potential unit tests commands.
 
         Returns:

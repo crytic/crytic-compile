@@ -12,7 +12,7 @@ import subprocess
 from pathlib import Path
 
 # Cycle dependency
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING
 
 from crytic_compile.compilation_unit import CompilationUnit
 from crytic_compile.compiler.compiler import CompilerVersion
@@ -62,10 +62,10 @@ class Dapp(AbstractPlatform):
 
         optimized = False
 
-        with open(os.path.join(directory, "dapp.sol.json"), "r", encoding="utf8") as file_desc:
+        with open(os.path.join(directory, "dapp.sol.json"), encoding="utf8") as file_desc:
             targets_json = json.load(file_desc)
 
-            version: Optional[str] = None
+            version: str | None = None
             if "version" in targets_json:
                 version = re.findall(r"\d+\.\d+\.\d+", targets_json["version"])[0]
 
@@ -77,7 +77,6 @@ class Dapp(AbstractPlatform):
                 source_unit.ast = info["ast"]
 
             for original_filename, contracts_info in targets_json["contracts"].items():
-
                 filename = convert_filename(
                     original_filename, lambda x: x, crytic_compile, self._target
                 )
@@ -172,7 +171,7 @@ class Dapp(AbstractPlatform):
         self._cached_dependencies[path] = ret
         return "lib" in Path(path).parts
 
-    def _guessed_tests(self) -> List[str]:
+    def _guessed_tests(self) -> list[str]:
         """Guess the potential unit tests commands
 
         Returns:
@@ -219,7 +218,7 @@ def _get_version(target: str) -> CompilerVersion:
         CompilerVersion: compiler information
     """
     files = glob.glob(target + "/**/*meta.json", recursive=True)
-    version: Optional[str] = None
+    version: str | None = None
     optimized = None
     compiler = "solc"
     for file in files:

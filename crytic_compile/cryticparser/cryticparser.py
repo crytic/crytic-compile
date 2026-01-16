@@ -3,6 +3,7 @@ Module handling the cli arguments
 
 Call cryticparser.init(parser: ArgumentParser) to setup all the crytic-compile arguments in the argument parser
 """
+
 from argparse import ArgumentParser
 
 from crytic_compile.crytic_compile import get_platforms

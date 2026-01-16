@@ -1,11 +1,12 @@
 """
 Handle ZIP operations
 """
+
 import json
 import zipfile
 
 # Cycle dependency
-from typing import TYPE_CHECKING, List, Union
+from typing import TYPE_CHECKING
 from zipfile import ZipFile
 
 from crytic_compile.platform.archive import generate_archive_export
@@ -14,7 +15,7 @@ if TYPE_CHECKING:
     from crytic_compile import CryticCompile
 
 
-def _to_str(txt: Union[bytes, str]) -> str:
+def _to_str(txt: bytes | str) -> str:
     """Convert bytes to an utf8 str. Do nothing if its already a str
 
     Args:
@@ -28,7 +29,7 @@ def _to_str(txt: Union[bytes, str]) -> str:
     return txt
 
 
-def load_from_zip(target: str) -> List["CryticCompile"]:
+def load_from_zip(target: str) -> list["CryticCompile"]:
     """Load a file from a zip
 
     Args:
@@ -60,7 +61,7 @@ ZIP_TYPES_ACCEPTED = {
 
 
 def save_to_zip(
-    crytic_compiles: List["CryticCompile"], zip_filename: str, zip_type: str = "lzma"
+    crytic_compiles: list["CryticCompile"], zip_filename: str, zip_type: str = "lzma"
 ) -> None:
     """Save projects to a zip
 

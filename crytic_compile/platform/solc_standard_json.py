@@ -1,13 +1,14 @@
 """
 Handle compilation through the standard solc json format
 """
+
 import json
 import logging
 import os
 import shutil
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any
 
 from crytic_compile.compilation_unit import CompilationUnit
 from crytic_compile.compiler.compiler import CompilerVersion
@@ -32,12 +33,12 @@ LOGGER = logging.getLogger("CryticCompile")
 
 # pylint: disable=too-many-arguments
 def standalone_compile(
-    filenames: List[str],
+    filenames: list[str],
     compilation_unit: CompilationUnit,
-    working_dir: Optional[str] = None,
-    remappings: Optional[List[str]] = None,
-    evm_version: Optional[str] = None,
-    via_ir: Optional[bool] = None,
+    working_dir: str | None = None,
+    remappings: list[str] | None = None,
+    evm_version: str | None = None,
+    via_ir: bool | None = None,
 ) -> None:
     """
     Boilerplate function to run the the standardjson. compilation_unit.compiler_version must be set before calling this function
@@ -65,7 +66,7 @@ def standalone_compile(
         LOGGER.error("The compiler version of the compilation unit must be set")
         return
 
-    standard_json_dict: Dict = {}
+    standard_json_dict: dict = {}
     build_standard_json_default(standard_json_dict)
 
     for filename in filenames:
@@ -97,7 +98,7 @@ def standalone_compile(
     parse_standard_json_output(targets_json, compilation_unit, solc_working_dir=working_dir)
 
 
-def build_standard_json_default(json_dict: Dict) -> None:
+def build_standard_json_default(json_dict: dict) -> None:
     """
     Populate the given json_dict with the default values for the solc standard json input
     Only write values for which the keys are not existing
@@ -137,11 +138,11 @@ def build_standard_json_default(json_dict: Dict) -> None:
 
 # pylint: disable=too-many-locals
 def run_solc_standard_json(
-    solc_input: Dict,
+    solc_input: dict,
     compiler_version: CompilerVersion,
     solc_disable_warnings: bool = False,
-    working_dir: Optional[str] = None,
-) -> Dict:
+    working_dir: str | None = None,
+) -> dict:
     """Run the solc standard json compilation.
     Ensure that crytic_compile.compiler_version is set prior calling _run_solc
 
@@ -159,7 +160,7 @@ def run_solc_standard_json(
     """
     working_dir_resolved = Path(working_dir if working_dir else ".").resolve()
     cmd = [compiler_version.compiler, "--standard-json", "--allow-paths", str(working_dir_resolved)]
-    additional_kwargs: Dict = {"cwd": working_dir} if working_dir else {}
+    additional_kwargs: dict = {"cwd": working_dir} if working_dir else {}
 
     env = dict(os.environ)
     if compiler_version.version:
@@ -219,7 +220,7 @@ def run_solc_standard_json(
         raise InvalidCompilation(f"Invalid solc compilation {stderr}")
 
 
-def add_source_file(json_dict: Dict, file_path: str) -> None:
+def add_source_file(json_dict: dict, file_path: str) -> None:
     """
     Add a path to the solc standard json input
 
@@ -233,7 +234,7 @@ def add_source_file(json_dict: Dict, file_path: str) -> None:
     json_dict["sources"][file_path] = {"urls": [file_path]}
 
 
-def add_remapping(json_dict: Dict, remapping: str) -> None:
+def add_remapping(json_dict: dict, remapping: str) -> None:
     """
     Add a remapping to the solc standard json input
 
@@ -247,9 +248,7 @@ def add_remapping(json_dict: Dict, remapping: str) -> None:
     json_dict["settings"]["remappings"].append(remapping)
 
 
-def add_optimization(
-    json_dict: Dict, optimize: Optional[bool], optimize_runs: Optional[int]
-) -> None:
+def add_optimization(json_dict: dict, optimize: bool | None, optimize_runs: int | None) -> None:
     """
     Add optimization settings to the solc standard json input
 
@@ -269,7 +268,7 @@ def add_optimization(
     json_dict["settings"]["optimizer"] = {"enabled": False}
 
 
-def add_evm_version(json_dict: Dict, version: str) -> None:
+def add_evm_version(json_dict: dict, version: str) -> None:
     """
     Add the version of the EVM to compile for.
 
@@ -287,7 +286,7 @@ def add_evm_version(json_dict: Dict, version: str) -> None:
     json_dict["settings"]["evmVersion"] = version
 
 
-def add_via_ir(json_dict: Dict, enabled: bool) -> None:
+def add_via_ir(json_dict: dict, enabled: bool) -> None:
     """
     Enable or disable the "viaIR" compilation flag.
 
@@ -302,7 +301,7 @@ def add_via_ir(json_dict: Dict, enabled: bool) -> None:
 
 
 def parse_standard_json_output(
-    targets_json: Dict, compilation_unit: CompilationUnit, solc_working_dir: Optional[str] = None
+    targets_json: dict, compilation_unit: CompilationUnit, solc_working_dir: str | None = None
 ) -> None:
     """
     Parse the targets_json output from solc, and populate compilation_unit accordingly
@@ -391,7 +390,7 @@ class SolcStandardJson(Solc):
     PROJECT_URL = "https://solidity.readthedocs.io/en/latest/using-the-compiler.html#compiler-input-and-output-json-description"
     TYPE = Type.SOLC_STANDARD_JSON
 
-    def __init__(self, target: Union[str, dict] = None, **kwargs: str):
+    def __init__(self, target: str | dict = None, **kwargs: str):
         """Initializes an object which represents solc standard json
 
         Args:
@@ -405,10 +404,10 @@ class SolcStandardJson(Solc):
         super().__init__(str(target), **kwargs)
 
         if target is None:
-            self._json: Dict = {}
+            self._json: dict = {}
         elif isinstance(target, str):
             if os.path.isfile(target):
-                with open(target, mode="r", encoding="utf-8") as target_file:
+                with open(target, encoding="utf-8") as target_file:
                     self._json = json.load(target_file)
             else:
                 self._json = json.loads(target)
@@ -428,7 +427,7 @@ class SolcStandardJson(Solc):
         """
         add_source_file(self._json, file_path)
 
-    def add_source_files(self, files_path: List[str]) -> None:
+    def add_source_files(self, files_path: list[str]) -> None:
         """Append files
 
         Args:
@@ -445,7 +444,7 @@ class SolcStandardJson(Solc):
         """
         add_remapping(self._json, remapping)
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         """Patch in our desired output types
 
         Returns:
@@ -467,9 +466,9 @@ class SolcStandardJson(Solc):
         solc_disable_warnings: bool = kwargs.get("solc_disable_warnings", False)
         solc_arguments: str = kwargs.get("solc_args", "")
 
-        solc_remaps: Optional[Union[str, List[str]]] = kwargs.get("solc_remaps", None)
-        solc_working_dir: Optional[str] = kwargs.get("solc_working_dir", None)
-        solc_env: Optional[Dict] = kwargs.get("solc_env", None)
+        solc_remaps: str | list[str] | None = kwargs.get("solc_remaps", None)
+        solc_working_dir: str | None = kwargs.get("solc_working_dir", None)
+        solc_env: dict | None = kwargs.get("solc_env", None)
 
         compilation_unit = CompilationUnit(crytic_compile, "standard_json")
 
@@ -506,7 +505,7 @@ class SolcStandardJson(Solc):
             targets_json, compilation_unit, solc_working_dir=solc_working_dir
         )
 
-    def _guessed_tests(self) -> List[str]:
+    def _guessed_tests(self) -> list[str]:
         """Guess the potential unit tests commands
 
         Returns:

@@ -1,16 +1,16 @@
 """
 Foundry platform
 """
+
+import json
 import logging
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional, TypeVar, Union
-
-import json
+from typing import TYPE_CHECKING, TypeVar
 
 from crytic_compile.platform.abstract_platform import AbstractPlatform, PlatformConfig
-from crytic_compile.platform.types import Type
 from crytic_compile.platform.hardhat import hardhat_like_parsing
+from crytic_compile.platform.types import Type
 from crytic_compile.utils.subprocess import run
 
 # Handle cycle
@@ -120,7 +120,7 @@ class Foundry(AbstractPlatform):
         run(["forge", "clean"], cwd=self._project_root)
 
     @staticmethod
-    def locate_project_root(file_or_dir: str) -> Optional[Path]:
+    def locate_project_root(file_or_dir: str) -> Path | None:
         """Determine the project root (if the target is a Foundry project)
 
         Foundry projects are detected through the presence of their
@@ -167,7 +167,7 @@ class Foundry(AbstractPlatform):
         return Foundry.locate_project_root(target) is not None
 
     @staticmethod
-    def config(working_dir: Union[str, Path]) -> Optional[PlatformConfig]:
+    def config(working_dir: str | Path) -> PlatformConfig | None:
         """Return configuration data that should be passed to solc, such as remappings.
 
         Args:
@@ -220,7 +220,7 @@ class Foundry(AbstractPlatform):
         return ret
 
     # pylint: disable=no-self-use
-    def _guessed_tests(self) -> List[str]:
+    def _guessed_tests(self) -> list[str]:
         """Guess the potential unit tests commands
 
         Returns:

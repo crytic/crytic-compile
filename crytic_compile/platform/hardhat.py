@@ -8,7 +8,7 @@ import os
 import shutil
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any
 
 from crytic_compile.compilation_unit import CompilationUnit
 from crytic_compile.compiler.compiler import CompilerVersion
@@ -123,7 +123,6 @@ def hardhat_like_parsing(
 
             if "contracts" in targets_json:
                 for original_filename, contracts_info in targets_json["contracts"].items():
-
                     original_filename = process_hardhat_v3_filename(original_filename)
 
                     filename = convert_filename(
@@ -268,7 +267,7 @@ class Hardhat(AbstractPlatform):
         self._cached_dependencies[path] = ret
         return ret
 
-    def _guessed_tests(self) -> List[str]:
+    def _guessed_tests(self) -> list[str]:
         """Guess the potential unit tests commands
 
         Returns:
@@ -277,7 +276,7 @@ class Hardhat(AbstractPlatform):
         return ["hardhat test"]
 
     @staticmethod
-    def _settings(args: Dict[str, Any]) -> Tuple[bool, List[str]]:
+    def _settings(args: dict[str, Any]) -> tuple[bool, list[str]]:
         hardhat_ignore_compile = args.get("hardhat_ignore_compile", False) or args.get(
             "ignore_compile", False
         )
@@ -289,8 +288,8 @@ class Hardhat(AbstractPlatform):
         return hardhat_ignore_compile, base_cmd
 
     def _get_hardhat_paths(
-        self, base_cmd: List[str], args: Dict[str, str]
-    ) -> Dict[str, Union[Path, str]]:
+        self, base_cmd: list[str], args: dict[str, str]
+    ) -> dict[str, Path | str]:
         """Obtain hardhat configuration paths, defaulting to the
         standard config if needed.
 
@@ -334,7 +333,7 @@ class Hardhat(AbstractPlatform):
 
         return {**default_paths, **override_paths}
 
-    def _run_hardhat_console(self, base_cmd: List[str], command: str) -> Optional[str]:
+    def _run_hardhat_console(self, base_cmd: list[str], command: str) -> str | None:
         """Run a JS command in the hardhat console
 
         Args:
