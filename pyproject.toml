@@ -1,6 +1,6 @@
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["uv_build>=0.6,<0.7"]
+build-backend = "uv_build"
 
 [project]
 name = "crytic-compile"
@@ -35,8 +35,8 @@ dev = ["crytic-compile[test,lint,doc]"]
 [project.scripts]
 crytic-compile = "crytic_compile.__main__:main"
 
-[tool.hatch.build.targets.wheel]
-packages = ["crytic_compile"]
+[tool.uv.build-backend]
+module-root = ""
 
 [tool.ruff]
 line-length = 100

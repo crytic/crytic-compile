@@ -245,7 +245,7 @@ config = Foundry.config(working_dir)
 
 **Python version**: 3.10+ (3.12.0 excluded due to Windows bug)
 
-**Build system**: hatchling (pyproject.toml)
+**Build system**: uv_build (pyproject.toml)
 
 **Dependencies**: Minimal - pycryptodome (keccak), cbor2 (metadata), solc-select (compiler management)
 

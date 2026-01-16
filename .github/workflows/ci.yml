@@ -7,9 +7,6 @@ on:
       - master
       - dev
   pull_request:
-  schedule:
-    # run CI every day even if no PRs/merges occur
-    - cron: '0 12 * * *'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

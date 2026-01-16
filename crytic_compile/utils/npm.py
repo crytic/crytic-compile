@@ -4,18 +4,18 @@ Module handling NPM related features
 
 import json
 from pathlib import Path
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 # Cycle dependency
 if TYPE_CHECKING:
     from crytic_compile.platform.solc_standard_json import SolcStandardJson
 
 
-def get_package_name(target_txt: Union[str, "SolcStandardJson"]) -> str | None:
+def get_package_name(target_txt: "str | SolcStandardJson") -> str | None:
     """Return the npm package's name
 
     Args:
-        target_txt (Union[str,SolcStandardJson): path to the target
+        target_txt (str | SolcStandardJson): path to the target
 
     Returns:
         Optional[str]: npm package name
