@@ -7,7 +7,7 @@ on:
       - master
       - dev
   pull_request:
-    branches: [ master, dev ]
+    branches: [master, dev]
   schedule:
     # run CI every day even if no PRs/merges occur
     - cron: '0 12 * * *'
@@ -15,6 +15,9 @@ on:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   tests:
@@ -24,26 +27,29 @@ jobs:
         os: ["ubuntu-latest", "windows-2025"]
         type: ["etherscan", "sourcify"]
     steps:
-    - uses: actions/checkout@v6
-    - name: Set up shell
-      if: runner.os == 'Windows'
-      run: |
-        echo 'C:\msys64\mingw64\bin' >> "$GITHUB_PATH"
-        echo 'C:\msys64\usr\bin' >> "$GITHUB_PATH"
-    - name: Set up Python 3.10
-      uses: astral-sh/setup-uv@v7
-      with:
-        python-version: "3.10"
-        activate-environment: true
-    - name: Install dependencies
-      run: |
-        uv pip install "solc-select>=v1.0.0b1"
-        solc-select use 0.5.7 --always-install
-        uv pip install .
-    - name: Run Tests
-      env:
-        TEST_TYPE: ${{ matrix.type }}
-        ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
-      shell: bash
-      run: |
-        bash "scripts/ci_test_${TEST_TYPE}.sh"
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Set up shell
+        if: runner.os == 'Windows'
+        run: |
+          echo 'C:\msys64\mingw64\bin' >> "$GITHUB_PATH"
+          echo 'C:\msys64\usr\bin' >> "$GITHUB_PATH"
+      - name: Set up Python 3.10
+        uses: astral-sh/setup-uv@f06b870e0a91d23284a3013acc55e6f88ab4b904  # v7
+        with:
+          python-version: "3.10"
+          activate-environment: true
+          enable-cache: true
+      - name: Install dependencies
+        run: |
+          uv pip install "solc-select>=v1.0.0b1"
+          solc-select use 0.5.7 --always-install
+          uv pip install .
+      - name: Run Tests
+        env:
+          TEST_TYPE: ${{ matrix.type }}
+          ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
+        shell: bash
+        run: |
+          bash "scripts/ci_test_${TEST_TYPE}.sh"

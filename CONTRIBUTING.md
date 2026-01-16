@@ -35,5 +35,24 @@ To run them locally:
 
 Tool versions are managed in `pyproject.toml`.
 
+### Pre-commit Hooks
+
+We use [prek](https://github.com/j178/prek), a fast Rust-based pre-commit runner:
+
+```bash
+prek install               # One-time setup (done by make dev)
+prek run --all-files       # Run manually on all files
+prek auto-update --cooldown-days 7  # Update hook versions
+```
+
 ## Development Environment
-Instructions for installing a development version of crytic-compile can be found in our [wiki](https://github.com/crytic/crytic-compile/wiki/Developer-installation).
+
+```bash
+# Install uv if you haven't already
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Setup development environment
+make dev  # Installs dependencies and pre-commit hooks
+```
+
+For alternative installation methods, see our [wiki](https://github.com/crytic/crytic-compile/wiki/Developer-installation).

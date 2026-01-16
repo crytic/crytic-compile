@@ -12,7 +12,7 @@ cd - || exit 255
 node tests/process_combined_solc.js "$DIR/hardhat-multi-file/crytic-export/combined_solc.json" "$DIR"
 DIFF=$(diff -r "$DIR/hardhat-multi-file/crytic-export" tests/expected/hardhat-multi-file)
 if [ "$?" != "0" ] || [ "$DIFF" != "" ]
-then  
+then
     echo "hardhat-multi-file test failed"
     echo "$DIFF"
     exit 255

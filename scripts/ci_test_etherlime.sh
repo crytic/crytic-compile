@@ -14,4 +14,3 @@ then
     echo "Etherlime test failed"
     exit 255
 fi
-

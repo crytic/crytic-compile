@@ -20,9 +20,8 @@ fi
 #
 #DIFF=$(diff "$DIR/crytic-export/contracts.json" tests/expected/truffle-metacoin.json)
 #if [ "$DIFF" != "" ]
-#then  
+#then
 #    echo "Truffle test failed"
 #    echo $DIFF
 #    exit 255
 #fi
-

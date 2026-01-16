@@ -50,7 +50,7 @@ esac
 
 DIFF=$(diff -r "$DIR/solc-multi-file/crytic-export" tests/expected/solc-multi-file)
 if [ "$?" != "0" ] || [ "$DIFF" != "" ]
-then  
+then
     echo "solc-multi-file test failed"
     echo "$DIFF"
     exit 255

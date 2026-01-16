@@ -1,0 +1,8 @@
+# ShellCheck configuration
+# Used by both standalone shellcheck and actionlint's embedded checks
+
+# SC1090: Can't follow non-constant source
+# SC2028: echo may not expand escape sequences (info-level, not an error)
+# SC2103: Use a ( subshell ) to avoid changing directory
+# SC2181: Check exit code directly with if mycmd; not with $?
+disable=SC1090,SC2028,SC2103,SC2181

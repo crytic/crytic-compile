@@ -11,16 +11,21 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   ruff:
     name: Ruff
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      - uses: astral-sh/ruff-action@v2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: astral-sh/ruff-action@0448d28b97107c864cdac36fccec40207dd11e35  # v2
         with:
           args: "check"
-      - uses: astral-sh/ruff-action@v2
+      - uses: astral-sh/ruff-action@0448d28b97107c864cdac36fccec40207dd11e35  # v2
         with:
           args: "format --check"
 
@@ -28,10 +33,13 @@ jobs:
     name: ty
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      - uses: astral-sh/setup-uv@v7
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@f06b870e0a91d23284a3013acc55e6f88ab4b904  # v7
         with:
           python-version: "3.10"
+          enable-cache: true
       - run: uv sync --extra lint
       - run: uv run ty check crytic_compile/
 
@@ -39,7 +47,9 @@ jobs:
     name: ShellCheck
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          persist-credentials: false
       - name: ShellCheck
         run: find scripts -name "*.sh" -exec shellcheck -e SC1090 -e SC2181 -e SC2103 {} +
 
@@ -47,6 +57,8 @@ jobs:
     name: YAML Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      - run: pip install yamllint
-      - run: yamllint -d relaxed .github/workflows/
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@f06b870e0a91d23284a3013acc55e6f88ab4b904  # v7
+      - run: uv tool run yamllint -c .yamllint .github/workflows/

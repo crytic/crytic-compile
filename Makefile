@@ -5,6 +5,7 @@ TEST_MODULE := tests
 
 dev:
 	uv sync --extra dev
+	prek install
 
 lint:
 	uv run ruff check $(PY_MODULE) $(TEST_MODULE)
