@@ -390,7 +390,7 @@ class SolcStandardJson(Solc):
     PROJECT_URL = "https://solidity.readthedocs.io/en/latest/using-the-compiler.html#compiler-input-and-output-json-description"
     TYPE = Type.SOLC_STANDARD_JSON
 
-    def __init__(self, target: str | dict = None, **kwargs: str):
+    def __init__(self, target: str | dict | None = None, **kwargs: str):
         """Initializes an object which represents solc standard json
 
         Args:

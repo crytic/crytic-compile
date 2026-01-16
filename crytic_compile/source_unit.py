@@ -114,7 +114,7 @@ class SourceUnit:
         Returns:
             Dict: ABI (solc/vyper format)
         """
-        return self._abis.get(name, None)
+        return self._abis.get(name, {})
 
     # endregion
     ###################################################################################
@@ -170,7 +170,7 @@ class SourceUnit:
         Returns:
             str: runtime bytecode
         """
-        runtime = self._runtime_bytecodes.get(name, None)
+        runtime = self._runtime_bytecodes.get(name, "")
         return self._update_bytecode_with_libraries(runtime, libraries)
 
     def bytecode_init(self, name: str, libraries: dict[str, int] | None = None) -> str:
@@ -184,7 +184,7 @@ class SourceUnit:
         Returns:
             str: init bytecode
         """
-        init = self._init_bytecodes.get(name, None)
+        init = self._init_bytecodes.get(name, "")
         return self._update_bytecode_with_libraries(init, libraries)
 
     # endregion
