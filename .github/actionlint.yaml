@@ -1,0 +1,8 @@
+---
+# Actionlint configuration
+# https://github.com/rhysd/actionlint/blob/main/docs/config.md
+
+# Allow ubuntu-slim runner (new lightweight GitHub-hosted runner)
+self-hosted-runner:
+  labels:
+    - ubuntu-slim
