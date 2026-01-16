@@ -22,7 +22,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "windows-2025"]
-        python: ${{ (github.event_name == 'pull_request' && fromJSON('["3.8", "3.13"]')) || fromJSON('["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]') }}
+        python: ${{ (github.event_name == 'pull_request' && fromJSON('["3.10", "3.14"]')) || fromJSON('["3.10", "3.11", "3.12", "3.13", "3.14"]') }}
         type: ["brownie", "buidler", "dapp", "embark", "hardhat", "solc", "truffle", "waffle", "foundry", "standard", "vyper", "solc_multi_file", "hardhat_multi_file", "hardhat_v3"]
         include:
           # buidler requires older NodeJS
@@ -52,12 +52,13 @@ jobs:
       with:
         node-version: ${{ matrix.node-version || '18.15' }}
     - name: Set up Python ${{ matrix.python }}
-      uses: actions/setup-python@v6
+      uses: astral-sh/setup-uv@v7
       with:
         python-version: ${{ matrix.python }}
+        activate-environment: true
     - name: Install dependencies
       run: |
-        pip install .
+        uv pip install .
         solc-select use 0.5.7 --always-install
     - name: Set up nix
       if: matrix.type == 'dapp'
