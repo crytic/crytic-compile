@@ -2,6 +2,16 @@
 .. include:: ../README.md
 """
 
+__all__ = [
+    "CompilationUnit",
+    "CryticCompile",
+    "compile_all",
+    "is_supported",
+    "cryticparser",
+    "InvalidCompilation",
+    "save_to_zip",
+]
+
 from .compilation_unit import CompilationUnit
 from .crytic_compile import CryticCompile, compile_all, is_supported
 from .cryticparser import cryticparser

@@ -447,7 +447,7 @@ class SourceUnit:
             for contract_name in self._contracts_name:
                 libraries += self.libraries_names(contract_name)
             self._contracts_name_without_libraries = [
-                l for l in self._contracts_name if l not in set(libraries)
+                c for c in self._contracts_name if c not in set(libraries)
             ]
         return self._contracts_name_without_libraries
 
@@ -549,11 +549,8 @@ class SourceUnit:
         # the metadata is at the end of the runtime(!) bytecode
         try:
             bytecode = self._runtime_bytecodes[name]
-            print("runtime bytecode", bytecode)
-        except:
-            raise ValueError(  # pylint: disable=raise-missing-from
-                f"contract {name} does not exist"
-            )
+        except KeyError:
+            raise ValueError(f"contract {name} does not exist") from None
 
         # the last two bytes contain the length of the preceding metadata.
         metadata_length = int(f"0x{bytecode[-4:]}", base=16)
@@ -570,7 +567,7 @@ class SourceUnit:
                 # there might be nested items or other unforeseen errors
                 try:
                     metadata_decoded[k] = v.hex()
-                except:  # pylint: disable=bare-except
+                except Exception:
                     pass
 
         return metadata_decoded
