@@ -12,6 +12,7 @@ Library to help smart contract compilation. It includes support for:
 - [Dapp](https://dapp.tools/dapp/)
 - [Embark](https://embark.status.im/)
 - [Etherlime](https://github.com/LimeChain/etherlime)
+- [Sourcify](https://sourcify.dev/)
 - [Etherscan](https://etherscan.io/) (including several alt-chain explorers and testnets)
 - [Truffle](https://truffleframework.com/)
 - [Waffle](https://github.com/EthWorks/Waffle)
