@@ -39,7 +39,6 @@ class Dapp(AbstractPlatform):
     PROJECT_URL = "https://github.com/dapphub/dapptools"
     TYPE = Type.DAPP
 
-    # pylint: disable=too-many-locals
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str) -> None:
         """Run the compilation
 
@@ -189,7 +188,7 @@ def _run_dapp(target: str) -> None:
     Raises:
         InvalidCompilation: If dapp failed to run
     """
-    # pylint: disable=import-outside-toplevel
+
     from crytic_compile.platform.exceptions import InvalidCompilation
 
     cmd = ["dapp", "build"]
@@ -204,7 +203,6 @@ def _run_dapp(target: str) -> None:
         ) as process:
             _, _ = process.communicate()
     except OSError as error:
-        # pylint: disable=raise-missing-from
         raise InvalidCompilation(error)
 
 

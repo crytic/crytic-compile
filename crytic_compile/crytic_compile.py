@@ -41,9 +41,6 @@ LOGGER = logging.getLogger("CryticCompile")
 logging.basicConfig()
 
 
-# pylint: disable=too-many-lines
-
-
 def get_platforms() -> list[type[AbstractPlatform]]:
     """Return the available platforms classes in order of preference
 
@@ -111,13 +108,11 @@ def _configure_solc(solc_requested: str, offline: bool) -> str:
     return solc_path.absolute().as_posix()
 
 
-# pylint: disable=too-many-instance-attributes
 class CryticCompile:
     """
     Main class.
     """
 
-    # pylint: disable=too-many-branches
     def __init__(self, target: str | AbstractPlatform, **kwargs: str) -> None:
         """See https://github.com/crytic/crytic-compile/wiki/Configuration
         Target is usually a file or a project directory. It can be an AbstractPlatform
@@ -152,7 +147,6 @@ class CryticCompile:
         else:
             self._working_dir = Path.cwd()
 
-        # pylint: disable=too-many-nested-blocks
         if isinstance(target, str):
             platform = self._init_platform(target, **kwargs)
             # If the platform is Solc it means we are trying to compile a single
@@ -588,7 +582,6 @@ class CryticCompile:
     ###################################################################################
     ###################################################################################
 
-    # pylint: disable=no-self-use
     def _init_platform(self, target: str, **kwargs: str) -> AbstractPlatform:
         """Init the platform
 

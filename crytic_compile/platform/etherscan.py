@@ -284,7 +284,6 @@ class Etherscan(AbstractPlatform):
     PROJECT_URL = "https://etherscan.io/"
     TYPE = Type.ETHERSCAN
 
-    # pylint: disable=too-many-locals,too-many-branches,too-many-statements
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str) -> None:
         """Run the compilation
 

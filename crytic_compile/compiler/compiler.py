@@ -7,7 +7,6 @@ from solc_select.solc_select import install_artifacts, installed_versions
 LOGGER = logging.getLogger("CryticCompile")
 
 
-# pylint: disable=too-few-public-methods
 class CompilerVersion:
     """
     Class representing the compiler information

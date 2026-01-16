@@ -39,7 +39,6 @@ class Foundry(AbstractPlatform):
         assert project_root is not None
         self._project_root: Path = project_root
 
-    # pylint: disable=too-many-locals,too-many-statements,too-many-branches
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str) -> None:
         """Compile
 
@@ -203,7 +202,6 @@ class Foundry(AbstractPlatform):
 
         return result
 
-    # pylint: disable=no-self-use
     def is_dependency(self, path: str) -> bool:
         """Check if the path is a dependency
 
@@ -219,7 +217,6 @@ class Foundry(AbstractPlatform):
         self._cached_dependencies[path] = ret
         return ret
 
-    # pylint: disable=no-self-use
     def _guessed_tests(self) -> list[str]:
         """Guess the potential unit tests commands
 

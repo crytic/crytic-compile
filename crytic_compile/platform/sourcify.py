@@ -38,7 +38,7 @@ def _get_user_agent() -> str:
     """
     try:
         pkg_version = version("crytic-compile")
-    except Exception:  # pylint: disable=broad-except
+    except Exception:
         pkg_version = "unknown"
     return f"crytic-compile/{pkg_version}"
 
@@ -208,9 +208,7 @@ class Sourcify(AbstractPlatform):
     PROJECT_URL = "https://sourcify.dev/"
     TYPE = Type.SOURCIFY
 
-    def compile(  # pylint: disable=too-many-locals
-        self, crytic_compile: "CryticCompile", **kwargs: str
-    ) -> None:
+    def compile(self, crytic_compile: "CryticCompile", **kwargs: str) -> None:
         """Run the compilation by fetching from Sourcify.
 
         Args:

@@ -396,7 +396,6 @@ def get_version(solc: str, env: dict[str, str] | None) -> str:
                 )
             return version[0]
     except OSError as error:
-        # pylint: disable=raise-missing-from
         raise InvalidCompilation(error)
 
 
@@ -445,7 +444,6 @@ def _build_options(compiler_version: CompilerVersion, force_legacy_json: bool) -
     return "abi,ast,bin,bin-runtime,srcmap,srcmap-runtime,userdoc,devdoc,hashes"
 
 
-# pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
 def _run_solc(
     compilation_unit: "CompilationUnit",
     filename: str,
@@ -547,7 +545,7 @@ def _run_solc(
             "'%s' running",
             " ".join(cmd),
         )
-        # pylint: disable=consider-using-with
+
         if env:
             process = subprocess.Popen(
                 cmd,
@@ -566,7 +564,6 @@ def _run_solc(
                 executable=shutil.which(cmd[0]),
             )
     except OSError as error:
-        # pylint: disable=raise-missing-from
         raise InvalidCompilation(error)
     stdout_, stderr_ = process.communicate()
     stdout, stderr = (
@@ -581,11 +578,9 @@ def _run_solc(
         ret: dict = json.loads(stdout)
         return ret
     except json.decoder.JSONDecodeError:
-        # pylint: disable=raise-missing-from
         raise InvalidCompilation(f"Invalid solc compilation {stderr}")
 
 
-# pylint: disable=too-many-arguments
 def _run_solcs_path(
     compilation_unit: "CompilationUnit",
     filename: str,
@@ -673,7 +668,6 @@ def _run_solcs_path(
     return targets_json
 
 
-# pylint: disable=too-many-arguments
 def _run_solcs_env(
     compilation_unit: "CompilationUnit",
     filename: str,

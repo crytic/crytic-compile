@@ -148,7 +148,7 @@ see https://github.com/crytic/crytic-compile/wiki""",
     return args
 
 
-class ShowPlatforms(argparse.Action):  # pylint: disable=too-few-public-methods
+class ShowPlatforms(argparse.Action):
     """
     This class is used to print the different platforms supported to the log
     See --supported-platforms

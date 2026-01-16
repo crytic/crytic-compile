@@ -28,7 +28,6 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger("CryticCompile")
 
 
-# pylint: disable=too-many-locals
 def hardhat_like_parsing(
     crytic_compile: "CryticCompile", target: str, build_directory: Path, working_dir: str
 ) -> None:

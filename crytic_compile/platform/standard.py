@@ -83,7 +83,7 @@ class Standard(AbstractPlatform):
             **_kwargs: optional arguments. Not used
 
         """
-        # pylint: disable=import-outside-toplevel
+
         from crytic_compile.crytic_compile import get_platforms
 
         with open(self._target, encoding="utf8") as file_desc:

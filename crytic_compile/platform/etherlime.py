@@ -66,7 +66,6 @@ def _run_etherlime(target: str, npx_disable: bool, compile_arguments: str | None
             if stderr:
                 LOGGER.error(stderr)
     except OSError as error:
-        # pylint: disable=raise-missing-from
         raise InvalidCompilation(error)
 
 
@@ -79,7 +78,6 @@ class Etherlime(AbstractPlatform):
     PROJECT_URL = "https://github.com/LimeChain/etherlime"
     TYPE = Type.ETHERLIME
 
-    # pylint: disable=too-many-locals
     def compile(self, crytic_compile: "CryticCompile", **kwargs: Any) -> None:
         """Run the compilation
 

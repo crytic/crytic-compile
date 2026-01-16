@@ -37,7 +37,6 @@ class Waffle(AbstractPlatform):
     PROJECT_URL = "https://github.com/EthWorks/Waffle"
     TYPE = Type.WAFFLE
 
-    # pylint: disable=too-many-locals,too-many-branches,too-many-statements
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str) -> None:
         """Compile the project and populate the CryticCompile object
 
@@ -164,7 +163,6 @@ class Waffle(AbstractPlatform):
                         if stderr:
                             LOGGER.error(stderr.decode(errors="backslashreplace"))
                 except OSError as error:
-                    # pylint: disable=raise-missing-from
                     raise InvalidCompilation(error)
 
         if not os.path.isdir(os.path.join(target, build_directory)):
@@ -357,7 +355,6 @@ def _get_version(compiler: str, cwd: str, config: dict | None = None) -> str:
                     if "Version" in line:
                         version = re.findall(r"\d+\.\d+\.\d+", line)[0]
         except OSError as error:
-            # pylint: disable=raise-missing-from
             raise InvalidCompilation(error)
 
     elif compiler in ["solc-js"]:
@@ -374,7 +371,6 @@ def _get_version(compiler: str, cwd: str, config: dict | None = None) -> str:
                 stdout_txt = stdout_bytes.decode()  # convert bytestrings to unicode strings
                 version = re.findall(r"\d+\.\d+\.\d+", stdout_txt)[0]
         except OSError as error:
-            # pylint: disable=raise-missing-from
             raise InvalidCompilation(error)
 
     else:

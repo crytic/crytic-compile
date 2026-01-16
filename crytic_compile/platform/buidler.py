@@ -36,7 +36,6 @@ class Buidler(AbstractPlatform):
     PROJECT_URL = "https://github.com/nomiclabs/buidler"
     TYPE = Type.BUILDER
 
-    # pylint: disable=too-many-locals,too-many-statements,too-many-branches
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str) -> None:
         """Run the compilation
 

@@ -75,7 +75,7 @@ class Archive(AbstractPlatform):
             crytic_compile (CryticCompile): associated CryticCompile object
             **_kwargs: unused
         """
-        # pylint: disable=import-outside-toplevel
+
         from crytic_compile.crytic_compile import get_platforms
 
         try:

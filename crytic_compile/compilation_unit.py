@@ -20,7 +20,6 @@ if TYPE_CHECKING:
     from crytic_compile import CryticCompile
 
 
-# pylint: disable=too-many-instance-attributes
 class CompilationUnit:
     """CompilationUnit class"""
 
@@ -239,7 +238,6 @@ class CompilationUnit:
         Returns:
             Filename: Associated Filename object
         """
-        # pylint: disable=import-outside-toplevel
         from crytic_compile.platform.hardhat import Hardhat
         from crytic_compile.platform.truffle import Truffle
 

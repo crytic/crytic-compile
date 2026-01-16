@@ -31,7 +31,6 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger("CryticCompile")
 
 
-# pylint: disable=too-many-arguments
 def standalone_compile(
     filenames: list[str],
     compilation_unit: CompilationUnit,
@@ -136,7 +135,6 @@ def build_standard_json_default(json_dict: dict) -> None:
         }
 
 
-# pylint: disable=too-many-locals
 def run_solc_standard_json(
     solc_input: dict,
     compiler_version: CompilerVersion,
@@ -212,11 +210,9 @@ def run_solc_standard_json(
             return solc_json_output
 
     except OSError as error:
-        # pylint: disable=raise-missing-from
         raise InvalidCompilation(error)
 
     except json.decoder.JSONDecodeError:
-        # pylint: disable=raise-missing-from
         raise InvalidCompilation(f"Invalid solc compilation {stderr}")
 
 
@@ -452,7 +448,6 @@ class SolcStandardJson(Solc):
         """
         return self._json
 
-    # pylint: disable=too-many-locals
     def compile(self, crytic_compile: "CryticCompile", **kwargs: Any) -> None:
         """[summary]
 

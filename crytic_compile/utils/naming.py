@@ -123,7 +123,6 @@ def _verify_filename_existence(filename: Path, cwd: Path) -> Path:
     return filename
 
 
-# pylint: disable=too-many-branches
 def convert_filename(
     used_filename: str | Path,
     relative_to_short: Callable[[Path], Path],

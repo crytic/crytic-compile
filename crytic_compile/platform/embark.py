@@ -35,7 +35,6 @@ class Embark(AbstractPlatform):
     PROJECT_URL = "https://github.com/embarklabs/embark"
     TYPE = Type.EMBARK
 
-    # pylint:disable=too-many-branches,too-many-statements,too-many-locals
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str) -> None:
         """Run the compilation
 
@@ -75,7 +74,6 @@ class Embark(AbstractPlatform):
                         ) as outfile:
                             json.dump(embark_json, outfile, indent=2)
                 except OSError as error:
-                    # pylint: disable=raise-missing-from
                     raise InvalidCompilation(error)
 
         else:
@@ -92,7 +90,7 @@ class Embark(AbstractPlatform):
                 cmd = ["embark", "build", "--contracts"]
                 if not kwargs.get("npx_disable", False):
                     cmd = ["npx"] + cmd
-                # pylint: disable=consider-using-with
+
                 process = subprocess.Popen(
                     cmd,
                     stdout=subprocess.PIPE,
@@ -101,7 +99,6 @@ class Embark(AbstractPlatform):
                     executable=shutil.which(cmd[0]),
                 )
             except OSError as error:
-                # pylint: disable=raise-missing-from
                 raise InvalidCompilation(error)
             stdout, stderr = process.communicate()
             LOGGER.info("%s\n", stdout.decode(errors="backslashreplace"))

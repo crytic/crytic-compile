@@ -90,7 +90,6 @@ class Truffle(AbstractPlatform):
     PROJECT_URL = "https://github.com/trufflesuite/truffle"
     TYPE = Type.TRUFFLE
 
-    # pylint: disable=too-many-locals,too-many-statements,too-many-branches
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str) -> None:
         """Compile
 
@@ -207,7 +206,7 @@ class Truffle(AbstractPlatform):
         for filename_txt in filenames:
             with open(filename_txt, encoding="utf8") as file_desc:
                 target_loaded = json.load(file_desc)
-                # pylint: disable=too-many-nested-blocks
+
                 if optimized is None:
                     if "metadata" in target_loaded:
                         metadata = target_loaded["metadata"]
@@ -241,7 +240,7 @@ class Truffle(AbstractPlatform):
                 except InvalidCompilation as i:
                     txt = str(i)
                     txt += "\nConsider removing the build/contracts content (rm build/contracts/*)"
-                    # pylint: disable=raise-missing-from
+
                     raise InvalidCompilation(txt)
 
                 source_unit = compilation_unit.create_source_unit(filename)
@@ -309,7 +308,6 @@ class Truffle(AbstractPlatform):
             os.path.join(target, "truffle-config.js")
         )
 
-    # pylint: disable=no-self-use
     def is_dependency(self, path: str) -> bool:
         """Check if the path is a dependency
 
@@ -325,7 +323,6 @@ class Truffle(AbstractPlatform):
         self._cached_dependencies[path] = ret
         return ret
 
-    # pylint: disable=no-self-use
     def _guessed_tests(self) -> list[str]:
         """Guess the potential unit tests commands
 
@@ -400,7 +397,6 @@ def _get_version(truffle_call: list[str], cwd: str) -> tuple[str, str]:
 
             raise InvalidCompilation(f"Solidity version not found {stdout}")
     except OSError as error:
-        # pylint: disable=raise-missing-from
         raise InvalidCompilation(f"Truffle failed: {error}")
 
 

@@ -20,11 +20,9 @@ class IncorrectPlatformInitialization(Exception):
     Exception raises if a platform was not properly defined
     """
 
-    # pylint: disable=unnecessary-pass
     pass
 
 
-# pylint: disable=too-many-instance-attributes
 @dataclass
 class PlatformConfig:
     """
@@ -179,7 +177,7 @@ class AbstractPlatform(metaclass=abc.ABCMeta):
         return False
 
     @staticmethod
-    def config(working_dir: str) -> PlatformConfig | None:  # pylint: disable=unused-argument
+    def config(working_dir: str) -> PlatformConfig | None:
         """Return configuration data that should be passed to solc, such as version, remappings ecc.
 
         Args:

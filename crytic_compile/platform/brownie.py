@@ -79,7 +79,6 @@ class Brownie(AbstractPlatform):
                         LOGGER.error(stderr)
 
             except OSError as error:
-                # pylint: disable=raise-missing-from
                 raise InvalidCompilation(error)
 
         if not os.path.isdir(os.path.join(self._target, build_directory)):
@@ -135,7 +134,6 @@ class Brownie(AbstractPlatform):
         return ["brownie test"]
 
 
-# pylint: disable=too-many-locals
 def _iterate_over_files(
     crytic_compile: "CryticCompile", target: Path, filenames: list[Path]
 ) -> None:

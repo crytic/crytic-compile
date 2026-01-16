@@ -61,7 +61,6 @@ def get_library_candidate(filename: Filename, contract_name: str) -> list[str]:
     return ret
 
 
-# pylint: disable=too-many-instance-attributes,too-many-public-methods
 class SourceUnit:
     """SourceUnit class"""
 

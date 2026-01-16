@@ -29,7 +29,7 @@ class Type(IntEnum):
     STANDARD = 100
     ARCHIVE = 101
 
-    def __str__(self) -> str:  # pylint: disable=too-many-branches
+    def __str__(self) -> str:
         """Return a string representation
 
         Raises:
