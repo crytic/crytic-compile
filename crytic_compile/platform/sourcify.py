@@ -296,11 +296,11 @@ class Sourcify(AbstractPlatform):
         # Match sourcify-<chainId>:0x<address> where chainId is decimal or 0x hex
         return bool(re.match(r"^sourcify-(0x[a-fA-F0-9]+|\d+):0x[a-fA-F0-9]{40}$", target))
 
-    def is_dependency(self, _path: str) -> bool:
+    def is_dependency(self, path: str) -> bool:
         """Check if the path is a dependency.
 
         Args:
-            _path: Path to the target
+            path: Path to the target
 
         Returns:
             bool: Always False for Sourcify

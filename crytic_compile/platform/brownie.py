@@ -115,11 +115,11 @@ class Brownie(AbstractPlatform):
             or os.path.isfile(os.path.join(target, "brownie-config.yml"))
         )
 
-    def is_dependency(self, _path: str) -> bool:
+    def is_dependency(self, path: str) -> bool:
         """Check if the path is a dependency (not supported for brownie)
 
         Args:
-            _path (str): path to the target
+            path (str): path to the target
 
         Returns:
             bool: True if the target is a dependency

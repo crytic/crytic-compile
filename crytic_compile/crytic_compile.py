@@ -209,7 +209,7 @@ class CryticCompile:
 
         self.libraries: dict[str, int] | None = _extract_libraries(
             kwargs.get("compile_libraries", None)
-        )  # type: ignore
+        )
 
         self._compile(**kwargs)
 

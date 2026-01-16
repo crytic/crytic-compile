@@ -7,6 +7,7 @@ import json
 import logging
 import os
 import sys
+from collections.abc import Sequence
 from importlib.metadata import version
 from typing import TYPE_CHECKING, Any
 
@@ -156,17 +157,17 @@ class ShowPlatforms(argparse.Action):  # pylint: disable=too-few-public-methods
     def __call__(
         self,
         parser: argparse.ArgumentParser,
-        args: Any,
-        values: Any,
+        namespace: argparse.Namespace,
+        values: str | Sequence[Any] | None,
         option_string: str | None = None,
     ) -> None:
         """Action performed
 
         Args:
             parser (argparse.ArgumentParser): argument parser
-            args (Any):  not used
-            values (Any): not used
-            option_string (Optional[str], optional): not used. Defaults to None.
+            namespace (argparse.Namespace): not used
+            values (str | Sequence[Any] | None): not used
+            option_string (str | None): not used. Defaults to None.
         """
         platforms = get_platforms()
         LOGGER.info("\n" + "\n".join([f"- {x.NAME}: {x.PROJECT_URL}" for x in platforms]))

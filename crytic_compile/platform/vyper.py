@@ -125,7 +125,7 @@ class VyperStandardJson(AbstractPlatform):
 
         for file_path in file_paths:
             with open(file_path, encoding="utf8") as f:
-                self.standard_json_input["sources"][file_path] = {  # type: ignore
+                self.standard_json_input["sources"][file_path] = {  # ty: ignore[invalid-assignment]
                     "content": f.read(),
                 }
 
@@ -137,11 +137,11 @@ class VyperStandardJson(AbstractPlatform):
         """
         return
 
-    def is_dependency(self, _path: str) -> bool:
+    def is_dependency(self, path: str) -> bool:
         """Check if the path is a dependency (not supported for vyper)
 
         Args:
-            _path (str): path to the target
+            path (str): path to the target
 
         Returns:
             bool: True if the target is a dependency

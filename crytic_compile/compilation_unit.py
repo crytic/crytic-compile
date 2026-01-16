@@ -58,7 +58,7 @@ class CompilationUnit:
         if unique_id == ".":
             unique_id = str(uuid.uuid4())
 
-        crytic_compile.compilation_units[unique_id] = self  # type: ignore
+        crytic_compile.compilation_units[unique_id] = self
 
         self._unique_id = unique_id
 
@@ -131,7 +131,7 @@ class CompilationUnit:
             SourceUnit: the source unit
         """
         if filename not in self._source_units:
-            source_unit = SourceUnit(self, filename)  # type: ignore
+            source_unit = SourceUnit(self, filename)
             self._source_units[filename] = source_unit
             if filename not in self.filenames:
                 self.filenames.append(filename)

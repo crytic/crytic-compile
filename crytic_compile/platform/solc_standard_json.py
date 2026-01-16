@@ -160,7 +160,7 @@ def run_solc_standard_json(
     """
     working_dir_resolved = Path(working_dir if working_dir else ".").resolve()
     cmd = [compiler_version.compiler, "--standard-json", "--allow-paths", str(working_dir_resolved)]
-    additional_kwargs: dict = {"cwd": working_dir} if working_dir else {}
+    cwd: str | None = working_dir if working_dir else None
 
     env = dict(os.environ)
     if compiler_version.version:
@@ -177,9 +177,9 @@ def run_solc_standard_json(
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
+            cwd=cwd,
             env=env,
             executable=shutil.which(cmd[0]),
-            **additional_kwargs,
         ) as process:
             stdout_b, stderr_b = process.communicate(json.dumps(solc_input).encode("utf-8"))
             stdout, stderr = (

@@ -42,7 +42,7 @@ class CompilerVersion:
         Returns:
 
         """
-        if self.version not in installed_versions():
+        if self.version is not None and self.version not in installed_versions():
             # TODO: check that the solc version was installed.
             # Blocked by https://github.com/crytic/solc-select/issues/143
             install_artifacts([self.version])

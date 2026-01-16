@@ -526,11 +526,11 @@ class Etherscan(AbstractPlatform):
             target = target[target.find(":") + 1 :]
         return bool(re.match(r"^\s*0x[a-zA-Z0-9]{40}\s*$", target))
 
-    def is_dependency(self, _path: str) -> bool:
+    def is_dependency(self, path: str) -> bool:
         """Check if the path is a dependency
 
         Args:
-            _path (str): path to the target
+            path (str): path to the target
 
         Returns:
             bool: True if the target is a dependency

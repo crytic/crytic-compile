@@ -199,11 +199,11 @@ class Solc(AbstractPlatform):
         """
         return os.path.isfile(target) and target.endswith(".sol")
 
-    def is_dependency(self, _path: str) -> bool:
+    def is_dependency(self, path: str) -> bool:
         """Check if the path is a dependency (always false for direct solc)
 
         Args:
-            _path (str): path to the target
+            path (str): path to the target
 
         Returns:
             bool: True if the target is a dependency
@@ -518,7 +518,7 @@ def _run_solc(
         solc_args = [item.strip() for sublist in solc_args_ for item in sublist if item]
         cmd += solc_args
 
-    additional_kwargs: dict = {"cwd": working_dir} if working_dir else {}
+    cwd: Path | str | None = working_dir if working_dir else None
     if compiler_version.version not in [f"0.4.{x}" for x in range(0, 11)]:
         # Add --allow-paths argument, if it isn't already specified
         # We allow the CWD as well as the directory that contains the file
@@ -553,17 +553,17 @@ def _run_solc(
                 cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
+                cwd=cwd,
                 executable=shutil.which(cmd[0]),
                 env=env,
-                **additional_kwargs,
             )
         else:
             process = subprocess.Popen(
                 cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
+                cwd=cwd,
                 executable=shutil.which(cmd[0]),
-                **additional_kwargs,
             )
     except OSError as error:
         # pylint: disable=raise-missing-from

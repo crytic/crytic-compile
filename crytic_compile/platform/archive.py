@@ -119,11 +119,11 @@ class Archive(AbstractPlatform):
             return False
         return Path(target).parts[-1].endswith("_export_archive.json")
 
-    def is_dependency(self, _path: str) -> bool:
-        """Check if the _path is a dependency. Always false
+    def is_dependency(self, path: str) -> bool:
+        """Check if the path is a dependency. Always false
 
         Args:
-            _path (str): path to the target
+            path (str): path to the target
 
         Returns:
             bool: Always false - the archive checks are handled by crytic_compile_dependencies
