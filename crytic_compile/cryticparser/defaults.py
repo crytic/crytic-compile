@@ -46,6 +46,7 @@ DEFAULTS_FLAG_IN_CONFIG = {
     "foundry_out_directory": None,
     "foundry_build_info_directory": None,
     "foundry_compile_all": False,
+    "foundry_deny": "never",
     "export_dir": "crytic-export",
     "compile_libraries": None,
 }
