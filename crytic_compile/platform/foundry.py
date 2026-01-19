@@ -53,7 +53,7 @@ class Foundry(AbstractPlatform):
             "ignore_compile", False
         )
 
-        foundry_config = None
+        foundry_config = self.config(self._project_root)
 
         if ignore_compile:
             LOGGER.info(
@@ -74,8 +74,6 @@ class Foundry(AbstractPlatform):
 
             compile_all = kwargs.get("foundry_compile_all", False)
 
-            foundry_config = self.config(self._project_root)
-
             if not targeted_build and not compile_all and foundry_config:
                 compilation_command += [
                     "--skip",
@@ -93,11 +91,11 @@ class Foundry(AbstractPlatform):
         out_directory_config = kwargs.get("foundry_out_directory", None)
         out_directory = out_directory_config if out_directory_config else out_directory_detected
 
-        build_directory = Path(
-            self._project_root,
-            out_directory,
-            "build-info",
-        )
+        # Use build_info_path from config if set, otherwise fall back to {out}/build-info
+        if foundry_config and foundry_config.build_info_path:
+            build_directory = Path(self._project_root, foundry_config.build_info_path)
+        else:
+            build_directory = Path(self._project_root, out_directory, "build-info")
 
         hardhat_like_parsing(
             crytic_compile, str(self._target), build_directory, str(self._project_root)
@@ -200,6 +198,7 @@ class Foundry(AbstractPlatform):
         result.libs_path = json_config.get("libs")
         result.scripts_path = json_config.get("script")
         result.out_path = json_config.get("out")
+        result.build_info_path = json_config.get("build_info_path")
 
         return result
 

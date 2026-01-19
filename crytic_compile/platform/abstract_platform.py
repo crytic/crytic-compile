@@ -43,6 +43,7 @@ class PlatformConfig:
     libs_path: List[str] = field(default_factory=lambda: ["lib"])
     scripts_path: str = "script"
     out_path: str = "out"
+    build_info_path: Optional[str] = None
 
 
 class AbstractPlatform(metaclass=abc.ABCMeta):
