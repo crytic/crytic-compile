@@ -1,10 +1,11 @@
 """
 Test auto library linking functionality
 """
+
 import json
 import os
-from pathlib import Path
 import shutil
+from pathlib import Path
 
 from crytic_compile.crytic_compile import CryticCompile
 from crytic_compile.utils.libraries import get_deployment_order
@@ -40,12 +41,12 @@ def test_deployment_order():
     deployment_order, libraries_needed = get_deployment_order(dependencies, target_contracts)
 
     # Check that deployment order only contains libraries, not target contracts
-    assert (
-        "TestComplexDependencies" not in deployment_order
-    ), "Target contracts should not be in deployment order"
-    assert (
-        "SimpleMathContract" not in deployment_order
-    ), "Target contracts should not be in deployment order"
+    assert "TestComplexDependencies" not in deployment_order, (
+        "Target contracts should not be in deployment order"
+    )
+    assert "SimpleMathContract" not in deployment_order, (
+        "Target contracts should not be in deployment order"
+    )
 
     # MathLib should come first (no dependencies)
     assert deployment_order.index("MathLib") < deployment_order.index("AdvancedMath")
@@ -80,9 +81,9 @@ def test_no_autolink_without_flag():
     cc = CryticCompile(Path(TEST_DIR / "library_dependency_test.sol").as_posix())
 
     # Check that autolink did not generate library addresses
-    assert (
-        cc.libraries is None or len(cc.libraries) == 0
-    ), "Autolink should not generate library addresses without flag"
+    assert cc.libraries is None or len(cc.libraries) == 0, (
+        "Autolink should not generate library addresses without flag"
+    )
 
     # Export and check that no autolink file is created
     export_files = cc.export(export_format="solc", export_dir="test_no_autolink_output")
@@ -128,15 +129,15 @@ def test_autolink_functionality():
 
     assert autolink_file is not None, "Autolink file should be created"
 
-    with open(autolink_file, "r", encoding="utf8") as f:
+    with open(autolink_file, encoding="utf8") as f:
         autolink_data = json.load(f)
 
     # Check autolink file structure
     assert "deployment_order" in autolink_data, "Autolink file should contain deployment_order"
     assert "library_addresses" in autolink_data, "Autolink file should contain library_addresses"
-    assert (
-        len(autolink_data["library_addresses"]) > 0
-    ), "Should have library addresses in autolink file"
+    assert len(autolink_data["library_addresses"]) > 0, (
+        "Should have library addresses in autolink file"
+    )
 
     # Check deployment order contains expected contracts
     deployment_order = autolink_data["deployment_order"]
