@@ -383,6 +383,11 @@ class Etherscan(AbstractPlatform):
                 raise InvalidCompilation("Contract has no public source code: " + etherscan_url)
 
             result = info["result"][0]
+
+            if "ABI" in result and "Contract source code not verified" in result["ABI"]:
+                LOGGER.error("Contract has no public source code")
+                raise InvalidCompilation("Contract has no public source code: " + etherscan_url)
+
             # Assert to help mypy
             assert isinstance(result["SourceCode"], str)
             assert isinstance(result["ContractName"], str)
