@@ -468,7 +468,7 @@ def _init_foundry(parser: ArgumentParser) -> None:
 
     group_foundry.add_argument(
         "--foundry-deny",
-        help="Forge diagnostic level to deny (never, warn, all). Default: never",
+        help="Forge diagnostic level to deny (never, warn, all). Auto-detected for Foundry 1.4+",
         action="store",
         dest="foundry_deny",
         default=DEFAULTS_FLAG_IN_CONFIG["foundry_deny"],
