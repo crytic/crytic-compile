@@ -176,7 +176,12 @@ def _fetch_sourcify_data(chain_id: str, addr: str) -> dict[str, Any]:
             raise InvalidCompilation(
                 f"Contract not verified on Sourcify: chain={chain_id} address={addr}"
             ) from e
-        raise InvalidCompilation(f"Sourcify API error: {e}") from e
+        try:
+            error = json.loads(e.readline().decode("utf-8"))
+            err_str = f"{error['customCode']}. {error['message']}; via {e}"
+        except Exception:
+            err_str = str(e)
+        raise InvalidCompilation(f"Sourcify API error: {err_str}") from e
     except URLError as e:
         raise InvalidCompilation(f"Failed to fetch from Sourcify: {e}") from e
 
