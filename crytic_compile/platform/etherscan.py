@@ -471,7 +471,7 @@ class Etherscan(AbstractPlatform):
             implementation = str(result["Implementation"])
             if target.startswith(tuple(SUPPORTED_NETWORK)):
                 implementation = f"{target[: target.find(':')]}:{implementation}"
-            compilation_unit.implementation_address = implementation
+            compilation_unit.implementation_addresses.add(implementation)
 
         solc_standard_json.standalone_compile(
             filenames,

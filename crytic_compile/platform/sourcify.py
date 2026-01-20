@@ -14,6 +14,8 @@ from pathlib import Path, PurePosixPath
 from typing import TYPE_CHECKING, Any
 from urllib.error import HTTPError, URLError
 
+from Crypto.Hash import keccak
+
 from crytic_compile.compilation_unit import CompilationUnit
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform import solc_standard_json
@@ -55,6 +57,32 @@ def _parse_chain_id(chain_id_str: str) -> str:
     if chain_id_str.lower().startswith("0x"):
         return str(int(chain_id_str, 16))
     return chain_id_str
+
+
+def _to_checksum_address(addr: str) -> str:
+    """Convert address to EIP-55 checksummed format.
+
+    Args:
+        addr: Hex address (with or without correct checksum)
+
+    Returns:
+        str: Properly checksummed address per EIP-55
+    """
+    addr_lower = addr.lower().removeprefix("0x")
+    hash_obj = keccak.new(digest_bits=256)
+    hash_obj.update(addr_lower.encode("utf-8"))
+    addr_hash = hash_obj.hexdigest()
+
+    checksummed = []
+    for i, char in enumerate(addr_lower):
+        if char in "0123456789":
+            checksummed.append(char)
+        elif int(addr_hash[i], 16) >= 8:
+            checksummed.append(char.upper())
+        else:
+            checksummed.append(char.lower())
+
+    return "0x" + "".join(checksummed)
 
 
 def _write_source_files(
@@ -132,6 +160,7 @@ def _fetch_sourcify_data(chain_id: str, addr: str) -> dict[str, Any]:
             "compilation.compilerVersion",
             "compilation.compilerSettings",
             "compilation.name",
+            "proxyResolution",
         ]
     )
     url = f"{SOURCIFY_API_BASE}/{chain_id}/{addr}?fields={fields}"
@@ -264,6 +293,17 @@ class Sourcify(AbstractPlatform):
             optimize_runs=optimizer.get("runs") if optimization_used else None,
         )
         compilation_unit.compiler_version.look_for_installed_version()
+
+        # Handle proxy resolution if available
+        proxy_resolution = data.get("proxyResolution")
+        if proxy_resolution and proxy_resolution.get("isProxy"):
+            implementations = proxy_resolution.get("implementations", [])
+            for impl in implementations:
+                impl_addr = impl.get("address")
+                if impl_addr:
+                    # Format as sourcify-{chainId}:{address} for direct use as crytic-compile target
+                    formatted_addr = f"sourcify-{chain_id}:{_to_checksum_address(impl_addr)}"
+                    compilation_unit.implementation_addresses.add(formatted_addr)
 
         solc_standard_json.standalone_compile(
             filenames,
