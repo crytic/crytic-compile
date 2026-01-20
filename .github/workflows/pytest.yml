@@ -3,11 +3,9 @@ name: Pytest
 
 on:
   push:
-    branches:
-      - master
-      - dev
+    branches: [master]
   pull_request:
-    branches: [master, dev]
+    branches: [master]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

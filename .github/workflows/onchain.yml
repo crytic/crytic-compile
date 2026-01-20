@@ -3,11 +3,9 @@ name: Onchain
 
 on:
   push:
-    branches:
-      - master
-      - dev
+    branches: [master]
   pull_request:
-    branches: [master, dev]
+    branches: [master]
   schedule:
     # run CI every day even if no PRs/merges occur
     - cron: '0 12 * * *'

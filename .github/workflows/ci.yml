@@ -3,9 +3,7 @@ name: CI scripts
 
 on:
   push:
-    branches:
-      - master
-      - dev
+    branches: [master]
   pull_request:
 
 concurrency:
