@@ -65,8 +65,8 @@ jobs:
       - name: Set up shell
         if: runner.os == 'Windows'
         run: |
-          echo 'C:\msys64\mingw64\bin' >> "$GITHUB_PATH"
-          echo 'C:\msys64\usr\bin' >> "$GITHUB_PATH"
+          printf 'C:\\msys64\\mingw64\\bin\n' >> "$GITHUB_PATH"
+          printf 'C:\\msys64\\usr\\bin\n' >> "$GITHUB_PATH"
       - name: Set up Node
         uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238  # v6.2.0
         with:

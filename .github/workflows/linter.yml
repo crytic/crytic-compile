@@ -62,3 +62,19 @@ jobs:
           persist-credentials: false
       - uses: astral-sh/setup-uv@f06b870e0a91d23284a3013acc55e6f88ab4b904  # v7
       - run: uv tool run yamllint -c .yamllint .github/workflows/
+
+  actionlint:
+    name: Actionlint
+    runs-on: ubuntu-slim
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Install actionlint
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/rhysd/actionlint/v1.7.10/scripts/download-actionlint.bash \
+            -o download-actionlint.bash
+          bash download-actionlint.bash 1.7.10
+      - name: Run actionlint
+        run: |
+          ./actionlint -color

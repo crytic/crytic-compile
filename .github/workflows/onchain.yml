@@ -30,11 +30,6 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
           persist-credentials: false
-      - name: Set up shell
-        if: runner.os == 'Windows'
-        run: |
-          echo 'C:\msys64\mingw64\bin' >> "$GITHUB_PATH"
-          echo 'C:\msys64\usr\bin' >> "$GITHUB_PATH"
       - name: Set up Python 3.10
         uses: astral-sh/setup-uv@f06b870e0a91d23284a3013acc55e6f88ab4b904  # v7
         with:
