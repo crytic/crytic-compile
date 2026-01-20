@@ -24,6 +24,7 @@ class Type(IntEnum):
     BUILDER = 11
     HARDHAT = 11
     FOUNDRY = 12
+    SOURCIFY = 13
 
     STANDARD = 100
     ARCHIVE = 101
@@ -65,6 +66,8 @@ class Type(IntEnum):
             return "Browner"
         if self == Type.FOUNDRY:
             return "Foundry"
+        if self == Type.SOURCIFY:
+            return "Sourcify"
         raise ValueError
 
     def priority(self) -> int:

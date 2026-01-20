@@ -17,3 +17,4 @@ from .truffle import Truffle
 from .vyper import VyperStandardJson
 from .waffle import Waffle
 from .foundry import Foundry
+from .sourcify import Sourcify
