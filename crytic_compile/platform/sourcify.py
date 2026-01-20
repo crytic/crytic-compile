@@ -253,7 +253,7 @@ class Sourcify(AbstractPlatform):
             raise InvalidCompilation(f"Invalid Sourcify target format: {self._target}")
 
         chain_id = _parse_chain_id(match.group(1))
-        addr = match.group(2)
+        addr = _to_checksum_address(match.group(2))
 
         # Prepare export directory
         export_dir = os.path.join(kwargs.get("export_dir", "crytic-export"), "sourcify-contracts")
