@@ -32,7 +32,7 @@ EOF
 
 cp -r tests/solc-multi-file "$DIR"
 cd "$DIR/solc-multi-file" || exit 255
-crytic-compile --compile-remove-metadata --export-formats solc,truffle A.sol
+crytic-compile --compile-remove-metadata --export-format solc A.sol
 
 cd - || exit 255
 node tests/process_combined_solc.js "$DIR/solc-multi-file/crytic-export/combined_solc.json" "$DIR"
