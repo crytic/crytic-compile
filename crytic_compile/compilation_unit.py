@@ -49,8 +49,8 @@ class CompilationUnit:
         )
 
         # if the compilation unit comes from etherscan-like service and is a proxy,
-        # store the implementation address
-        self._implementation_address: str | None = None
+        # store the implementation addresses (e.g., diamond proxies can have multiple)
+        self._implementation_addresses: set[str] = set()
 
         self._crytic_compile: CryticCompile = crytic_compile
 
@@ -137,22 +137,24 @@ class CompilationUnit:
         return self._source_units[filename]
 
     @property
-    def implementation_address(self) -> str | None:
-        """Return the implementation address if the compilation unit is a proxy
+    def implementation_addresses(self) -> set[str]:
+        """Return the implementation addresses if the compilation unit is a proxy.
+
+        Diamond proxies can have multiple implementation addresses.
 
         Returns:
-            Optional[str]: Implementation address
+            set[str]: Set of implementation addresses (empty if not a proxy)
         """
-        return self._implementation_address
+        return self._implementation_addresses
 
-    @implementation_address.setter
-    def implementation_address(self, implementation: str) -> None:
-        """Set the implementation address
+    @implementation_addresses.setter
+    def implementation_addresses(self, implementations: set[str]) -> None:
+        """Set the implementation addresses.
 
         Args:
-            implementation (str): Implementation address
+            implementations: Set of implementation addresses
         """
-        self._implementation_address = implementation
+        self._implementation_addresses = implementations
 
     # endregion
     ###################################################################################
