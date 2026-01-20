@@ -22,10 +22,10 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
           persist-credentials: false
-      - uses: astral-sh/ruff-action@0448d28b97107c864cdac36fccec40207dd11e35  # v2
+      - uses: astral-sh/ruff-action@f2e32211077f40bfeab40e16285216924ebea4cb  # v2
         with:
           args: "check"
-      - uses: astral-sh/ruff-action@0448d28b97107c864cdac36fccec40207dd11e35  # v2
+      - uses: astral-sh/ruff-action@f2e32211077f40bfeab40e16285216924ebea4cb  # v2
         with:
           args: "format --check"
 
@@ -36,7 +36,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
           persist-credentials: false
-      - uses: astral-sh/setup-uv@f06b870e0a91d23284a3013acc55e6f88ab4b904  # v7
+      - uses: astral-sh/setup-uv@61cb8a9741eeb8a550a1b8544337180c0fc8476b  # v7
         with:
           python-version: "3.10"
       - run: uv sync --extra lint
@@ -59,7 +59,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
           persist-credentials: false
-      - uses: astral-sh/setup-uv@f06b870e0a91d23284a3013acc55e6f88ab4b904  # v7
+      - uses: astral-sh/setup-uv@61cb8a9741eeb8a550a1b8544337180c0fc8476b  # v7
       - run: uv tool run yamllint -c .yamllint .github/workflows/
 
   actionlint:
