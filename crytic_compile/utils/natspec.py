@@ -47,12 +47,14 @@ class DevMethod:
         """Init the object
 
         Args:
-            method (Dict): Method infos (author, details, params, return)
+            method (Dict): Method infos (author, details, params, return, custom:*)
         """
         self._author: str | None = method.get("author", None)
         self._details: str | None = method.get("details", None)
         self._params: dict[str, str] = method.get("params", {})
         self._return: str | None = method.get("return", None)
+        # Extract custom fields (keys starting with "custom:")
+        self._custom: dict[str, str] = {k: v for k, v in method.items() if k.startswith("custom:")}
 
     @property
     def author(self) -> str | None:
@@ -90,18 +92,30 @@ class DevMethod:
         """
         return self._params
 
+    @property
+    def custom(self) -> dict[str, str]:
+        """Return the method custom fields
+
+        Returns:
+            Dict[str, str]: custom field name => value (e.g. "custom:security" => "value")
+        """
+        return self._custom
+
     def export(self) -> dict:
         """Export to a python dict
 
         Returns:
             Dict: Exported dev method
         """
-        return {
+        result = {
             "author": self.author,
             "details": self.details,
             "params": self.params,
             "return": self.method_return,
         }
+        # Include custom fields if present
+        result.update(self.custom)
+        return result
 
 
 class UserDoc:
@@ -159,7 +173,7 @@ class DevDoc:
         """Init the object
 
         Args:
-            devdoc (Dict): dev doc (author, details, methods, title)
+            devdoc (Dict): dev doc (author, details, methods, title, custom:*)
         """
         self._author: str | None = devdoc.get("author", None)
         self._details: str | None = devdoc.get("details", None)
@@ -167,6 +181,8 @@ class DevDoc:
             k: DevMethod(item) for k, item in devdoc.get("methods", {}).items()
         }
         self._title: str | None = devdoc.get("title", None)
+        # Extract contract-level custom fields (keys starting with "custom:")
+        self._custom: dict[str, str] = {k: v for k, v in devdoc.items() if k.startswith("custom:")}
 
     @property
     def author(self) -> str | None:
@@ -204,18 +220,30 @@ class DevDoc:
         """
         return self._title
 
+    @property
+    def custom(self) -> dict[str, str]:
+        """Return the contract-level custom fields
+
+        Returns:
+            Dict[str, str]: custom field name => value (e.g. "custom:security" => "value")
+        """
+        return self._custom
+
     def export(self) -> dict:
         """Export to a python dict
 
         Returns:
             Dict: Exported dev doc
         """
-        return {
+        result = {
             "methods": {k: items.export() for k, items in self.methods.items()},
             "author": self.author,
             "details": self.details,
             "title": self.title,
         }
+        # Include custom fields if present
+        result.update(self.custom)
+        return result
 
 
 class Natspec:
