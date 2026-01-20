@@ -44,7 +44,8 @@ class Foundry(AbstractPlatform):
 
         Args:
             crytic_compile (CryticCompile): CryticCompile object to populate
-            **kwargs: optional arguments. Used: "foundry_ignore_compile", "foundry_out_directory"
+            **kwargs: optional arguments. Used: "foundry_ignore_compile", "foundry_out_directory",
+                "foundry_build_info_directory"
 
         """
 
@@ -52,7 +53,7 @@ class Foundry(AbstractPlatform):
             "ignore_compile", False
         )
 
-        foundry_config = self.config(self._project_root)
+        foundry_config = None
 
         if ignore_compile:
             LOGGER.info(
@@ -73,6 +74,8 @@ class Foundry(AbstractPlatform):
 
             compile_all = kwargs.get("foundry_compile_all", False)
 
+            foundry_config = self.config(self._project_root)
+
             if not targeted_build and not compile_all and foundry_config:
                 compilation_command += [
                     "--skip",
@@ -90,8 +93,11 @@ class Foundry(AbstractPlatform):
         out_directory_config = kwargs.get("foundry_out_directory", None)
         out_directory = out_directory_config if out_directory_config else out_directory_detected
 
-        # Use build_info_path from config if set, otherwise fall back to {out}/build-info
-        if foundry_config and foundry_config.build_info_path:
+        # Determine build-info directory: CLI override > forge config > default
+        build_info_override = kwargs.get("foundry_build_info_directory", None)
+        if build_info_override:
+            build_directory = Path(self._project_root, build_info_override)
+        elif foundry_config and foundry_config.build_info_path:
             build_directory = Path(self._project_root, foundry_config.build_info_path)
         else:
             build_directory = Path(self._project_root, out_directory, "build-info")
