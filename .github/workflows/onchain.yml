@@ -1,0 +1,47 @@
+---
+name: Onchain
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  schedule:
+    # run CI every day even if no PRs/merges occur
+    - cron: '0 12 * * *'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: ["ubuntu-latest", "windows-2025"]
+        type: ["etherscan", "sourcify"]
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Set up Python 3.10
+        uses: astral-sh/setup-uv@61cb8a9741eeb8a550a1b8544337180c0fc8476b  # v7
+        with:
+          python-version: "3.10"
+          activate-environment: true
+      - name: Install dependencies
+        run: |
+          uv pip install "solc-select>=v1.0.0b1"
+          solc-select use 0.5.7 --always-install
+          uv pip install .
+      - name: Run Tests
+        env:
+          TEST_TYPE: ${{ matrix.type }}
+          ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
+        shell: bash
+        run: |
+          bash "scripts/ci_test_${TEST_TYPE}.sh"

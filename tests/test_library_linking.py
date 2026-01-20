@@ -1,9 +1,12 @@
 """
 Test library linking
 """
+
 import re
 from pathlib import Path
+
 import pytest
+
 from crytic_compile.crytic_compile import CryticCompile
 
 TEST_DIR = Path(__file__).resolve().parent

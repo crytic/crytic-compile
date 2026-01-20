@@ -2,7 +2,6 @@
 Default value for options
 """
 
-
 # Those are the flags shared by the command line and the config file
 DEFAULTS_FLAG_IN_CONFIG = {
     "compile_force_framework": None,

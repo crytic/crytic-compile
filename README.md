@@ -12,6 +12,7 @@ Library to help smart contract compilation. It includes support for:
 - [Dapp](https://dapp.tools/dapp/)
 - [Embark](https://embark.status.im/)
 - [Etherlime](https://github.com/LimeChain/etherlime)
+- [Sourcify](https://sourcify.dev/)
 - [Etherscan](https://etherscan.io/) (including several alt-chain explorers and testnets)
 - [Truffle](https://truffleframework.com/)
 - [Waffle](https://github.com/EthWorks/Waffle)
@@ -34,7 +35,13 @@ The plugin is used in Trail of Bits tools, including:
 ## Installation
 
 ```shell
-pip3 install crytic-compile
+pip install crytic-compile
+```
+
+Or with [uv](https://docs.astral.sh/uv/):
+
+```shell
+uv pip install crytic-compile
 ```
 
 ## Usage

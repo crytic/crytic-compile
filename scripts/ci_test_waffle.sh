@@ -21,4 +21,3 @@ then
     echo "Waffle test failed"
     exit 255
 fi
-

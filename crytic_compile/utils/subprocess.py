@@ -1,22 +1,23 @@
 """
 Process execution helpers.
 """
+
 import logging
 import os
-from pathlib import Path
 import shutil
 import subprocess
-from typing import Any, Dict, List, Optional, Union
+from pathlib import Path
+from typing import Any
 
 LOGGER = logging.getLogger("CryticCompile")
 
 
 def run(
-    cmd: List[str],
-    cwd: Optional[Union[str, os.PathLike]] = None,
-    extra_env: Optional[Dict[str, str]] = None,
+    cmd: list[str],
+    cwd: str | os.PathLike | None = None,
+    extra_env: dict[str, str] | None = None,
     **kwargs: Any,
-) -> Optional[subprocess.CompletedProcess]:
+) -> subprocess.CompletedProcess | None:
     """
     Execute a command in a cross-platform compatible way.
 

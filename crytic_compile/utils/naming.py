@@ -5,9 +5,11 @@ Module handling the file naming operation (relative -> absolute, etc)
 import logging
 import os.path
 import platform
+import re
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Union, Callable, Optional
+from typing import TYPE_CHECKING
 
 from crytic_compile.platform.exceptions import InvalidCompilation
 
@@ -61,7 +63,7 @@ def extract_filename(name: str) -> str:
     Returns:
         str: extracted filename
     """
-    if not ":" in name:
+    if ":" not in name:
         return name
     return name[: name.rfind(":")]
 
@@ -121,12 +123,11 @@ def _verify_filename_existence(filename: Path, cwd: Path) -> Path:
     return filename
 
 
-# pylint: disable=too-many-branches
 def convert_filename(
-    used_filename: Union[str, Path],
+    used_filename: str | Path,
     relative_to_short: Callable[[Path], Path],
     crytic_compile: "CryticCompile",
-    working_dir: Optional[Union[str, Path]] = None,
+    working_dir: str | Path | None = None,
 ) -> Filename:
     """Convert a filename to CryticCompile Filename object.
     The used_filename can be absolute, relative, or missing node_modules/contracts directory
@@ -196,3 +197,27 @@ def convert_filename(
         short=short.as_posix(),
         used=Path(used_filename).as_posix(),
     )
+
+
+def process_hardhat_v3_filename(filename: str) -> str:
+    """Process hardhat v3 filename format
+    If the filename is in v3 format, it will be converted to v2 format.
+
+    Args:
+        filename (str): filename to convert
+
+    Returns:
+        str: converted filename
+    """
+    # CASE 1 — npm/... → ...
+    hh3_npm_path = re.match(r"npm/(.+?)@[^/]+/(.+)", filename)
+    if hh3_npm_path:
+        package = hh3_npm_path.group(1)
+        rest = hh3_npm_path.group(2)
+        filename = f"{package}/{rest}"
+
+    # CASE 2 — project/contracts/... → contracts/...
+    hh3_contracts_path = re.match(r"project/contracts/(.+)", filename)
+    if hh3_contracts_path:
+        filename = f"contracts/{hh3_contracts_path.group(1)}"
+    return filename

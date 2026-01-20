@@ -1,6 +1,7 @@
 """
 Brownie platform. https://github.com/iamdefinitelyahuman/brownie
 """
+
 import json
 import logging
 import os
@@ -8,7 +9,7 @@ import re
 import shutil
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Optional
+from typing import TYPE_CHECKING
 
 from crytic_compile.compilation_unit import CompilationUnit
 from crytic_compile.compiler.compiler import CompilerVersion
@@ -78,7 +79,6 @@ class Brownie(AbstractPlatform):
                         LOGGER.error(stderr)
 
             except OSError as error:
-                # pylint: disable=raise-missing-from
                 raise InvalidCompilation(error)
 
         if not os.path.isdir(os.path.join(self._target, build_directory)):
@@ -114,18 +114,18 @@ class Brownie(AbstractPlatform):
             or os.path.isfile(os.path.join(target, "brownie-config.yml"))
         )
 
-    def is_dependency(self, _path: str) -> bool:
+    def is_dependency(self, path: str) -> bool:
         """Check if the path is a dependency (not supported for brownie)
 
         Args:
-            _path (str): path to the target
+            path (str): path to the target
 
         Returns:
             bool: True if the target is a dependency
         """
         return False
 
-    def _guessed_tests(self) -> List[str]:
+    def _guessed_tests(self) -> list[str]:
         """Guess the potential unit tests commands
 
         Returns:
@@ -134,9 +134,8 @@ class Brownie(AbstractPlatform):
         return ["brownie test"]
 
 
-# pylint: disable=too-many-locals
 def _iterate_over_files(
-    crytic_compile: "CryticCompile", target: Path, filenames: List[Path]
+    crytic_compile: "CryticCompile", target: Path, filenames: list[Path]
 ) -> None:
     """Iterates over the files and populates the information into the CryticCompile object
 
@@ -153,7 +152,7 @@ def _iterate_over_files(
 
     for original_filename in filenames:
         with open(original_filename, encoding="utf8") as f_file:
-            target_loaded: Dict = json.load(f_file)
+            target_loaded: dict = json.load(f_file)
 
             if "ast" not in target_loaded:
                 continue
@@ -161,7 +160,7 @@ def _iterate_over_files(
             if optimized is None:
                 # Old brownie
                 if compiler in target_loaded:
-                    compiler_d: Dict = target_loaded["compiler"]
+                    compiler_d: dict = target_loaded["compiler"]
                     optimized = compiler_d.get("optimize", False)
                     version = _get_version(compiler_d)
                 if "compiler" in target_loaded:
@@ -206,14 +205,14 @@ def _iterate_over_files(
     )
 
 
-def _get_build_dir_from_config(target: str) -> Optional[str]:
+def _get_build_dir_from_config(target: str) -> str | None:
     config = Path(target, "brownie-config.yml")
     if not config.exists():
         config = Path(target, "brownie-config.yaml")
     if not config.exists():
         return None
 
-    with open(config, "r", encoding="utf8") as config_f:
+    with open(config, encoding="utf8") as config_f:
         config_buffer = config_f.readlines()
     # config is a yaml file
     # use regex because we don't have a yaml parser
@@ -224,7 +223,7 @@ def _get_build_dir_from_config(target: str) -> Optional[str]:
     return None
 
 
-def _get_version(compiler: Dict) -> str:
+def _get_version(compiler: dict) -> str:
     """Parse the compiler version
 
     Args:
