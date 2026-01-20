@@ -202,7 +202,7 @@ class CryticCompile:
 
         self._bytecode_only = False
 
-        self._autolink: bool = kwargs.get("compile_autolink", False)  # type: ignore
+        self._autolink: bool = kwargs.get("compile_autolink", False)
 
         self._autolink_deployment_order: list[str] | None = None
 

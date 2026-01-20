@@ -107,7 +107,7 @@ def export_to_solc_from_compilation_unit(
         export_dir (str): Export directory
 
     Returns:
-        Optional[List[str]]: path to the files generated
+        list[str] | None: paths to the files generated
     """
     contracts = _build_contract_data(compilation_unit)
 
