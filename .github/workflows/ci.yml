@@ -76,7 +76,6 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
           activate-environment: true
-          enable-cache: true
       - name: Install dependencies
         run: |
           uv pip install .

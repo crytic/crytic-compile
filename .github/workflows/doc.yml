@@ -37,7 +37,6 @@ jobs:
         with:
           python-version: "3.10"
           activate-environment: true
-          enable-cache: true
       - run: uv pip install -e ".[doc]"
       - run: pdoc -o html/ crytic_compile
       - name: Upload artifact
