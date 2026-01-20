@@ -32,9 +32,7 @@ def metadata_checks(crytic_compile_instance: CryticCompile) -> None:
     assert source_unit.bytecode_init("Dai") == DAI_BYTECODE
 
 
-@pytest.mark.skipif(
-    not os.getenv("ETHERSCAN_API_KEY"), reason="Etherscan requires an API key"
-)
+@pytest.mark.skipif(not os.getenv("ETHERSCAN_API_KEY"), reason="Etherscan requires an API key")
 def test_metadata() -> None:
     """Test the metadata."""
     crytic_compile_instance = CryticCompile(
@@ -43,9 +41,7 @@ def test_metadata() -> None:
     metadata_checks(crytic_compile_instance)
 
 
-@pytest.mark.skipif(
-    not os.getenv("ETHERSCAN_API_KEY"), reason="Etherscan requires an API key"
-)
+@pytest.mark.skipif(not os.getenv("ETHERSCAN_API_KEY"), reason="Etherscan requires an API key")
 def test_metadata_deferred() -> None:
     """Test the metadata with deferred compilation."""
     crytic_compile_instance = CryticCompile(
