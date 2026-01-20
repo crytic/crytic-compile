@@ -113,6 +113,7 @@ class CryticCompile:
     Main class.
     """
 
+    # pylint: disable=too-many-branches
     def __init__(self, target: str | AbstractPlatform, **kwargs: str) -> None:
         """See https://github.com/crytic/crytic-compile/wiki/Configuration
         Target is usually a file or a project directory. It can be an AbstractPlatform
@@ -205,7 +206,10 @@ class CryticCompile:
             kwargs.get("compile_libraries", None)
         )
 
-        self._compile(**kwargs)
+        self._compilation_kwargs = kwargs
+
+        if kwargs.get("crytic_defer_compilation") != "true":
+            self._compile(**kwargs)
 
     @property
     def target(self) -> str:
@@ -633,6 +637,12 @@ class CryticCompile:
             for compilation_unit in self._compilation_units.values():
                 for source_unit in compilation_unit.source_units.values():
                     source_unit.remove_metadata()
+
+    def compile(self) -> None:
+        """Compile the project. The kwargs provided during object initialization will be used.
+        This function is useful when paired with the `crytic_defer_compilation` kwargs option.
+        """
+        self._compile(**self._compilation_kwargs)
 
     @staticmethod
     def _run_custom_build(custom_build: str) -> None:
