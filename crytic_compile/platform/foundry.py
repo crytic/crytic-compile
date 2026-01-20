@@ -5,6 +5,7 @@ Foundry platform
 import json
 import logging
 import re
+import shutil
 import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING, TypeVar
@@ -118,8 +119,6 @@ class Foundry(AbstractPlatform):
                 out_dir = foundry_config.out_path if foundry_config else "out"
                 build_info_dir = Path(self._project_root, out_dir, "build-info")
                 if build_info_dir.exists():
-                    import shutil
-
                     shutil.rmtree(build_info_dir)
                     LOGGER.info("Cleaned %s for fresh build-info generation", build_info_dir)
 
@@ -157,14 +156,16 @@ class Foundry(AbstractPlatform):
         """Clean compilation artifacts
 
         Args:
-            **kwargs: optional arguments.
+            **kwargs: optional arguments. Used: "foundry_ignore_compile", "ignore_compile",
+                "foundry_no_force"
         """
-
         ignore_compile = kwargs.get("foundry_ignore_compile", False) or kwargs.get(
             "ignore_compile", False
         )
+        no_force = kwargs.get("foundry_no_force", False)
 
-        if ignore_compile:
+        # Skip cleaning when using incremental compilation mode
+        if ignore_compile or no_force:
             return
 
         run(["forge", "clean"], cwd=self._project_root)

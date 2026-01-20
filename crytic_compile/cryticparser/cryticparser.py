@@ -476,7 +476,7 @@ def _init_foundry(parser: ArgumentParser) -> None:
 
     group_foundry.add_argument(
         "--foundry-no-force",
-        help="Do not use --force flag for incremental compilation",
+        help="Enable incremental compilation (skips forge clean and --force flag)",
         action="store_true",
         dest="foundry_no_force",
         default=DEFAULTS_FLAG_IN_CONFIG["foundry_no_force"],
