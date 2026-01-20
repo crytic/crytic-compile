@@ -4,6 +4,7 @@ Foundry platform
 
 import json
 import logging
+import re
 import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING, TypeVar
@@ -20,6 +21,28 @@ if TYPE_CHECKING:
 T = TypeVar("T")
 
 LOGGER = logging.getLogger("CryticCompile")
+
+
+def _get_forge_version() -> tuple[int, int, int] | None:
+    """Get forge version as tuple, or None if unable to parse.
+
+    Returns:
+        Version tuple (major, minor, patch) or None if detection fails.
+    """
+    try:
+        result = subprocess.run(
+            ["forge", "--version"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        versions = re.findall(r"\d+\.\d+\.\d+", result.stdout)
+        if versions:
+            parts = versions[0].split(".")
+            return (int(parts[0]), int(parts[1]), int(parts[2]))
+    except Exception:  # noqa: BLE001
+        pass
+    return None
 
 
 class Foundry(AbstractPlatform):
@@ -45,7 +68,7 @@ class Foundry(AbstractPlatform):
         Args:
             crytic_compile (CryticCompile): CryticCompile object to populate
             **kwargs: optional arguments. Used: "foundry_ignore_compile", "foundry_out_directory",
-                "foundry_build_info_directory"
+                "foundry_build_info_directory", "foundry_deny"
 
         """
 
@@ -60,11 +83,20 @@ class Foundry(AbstractPlatform):
                 "--ignore-compile used, if something goes wrong, consider removing the ignore compile flag"
             )
         else:
+            deny_level = kwargs.get("foundry_deny")
+            if deny_level is None:
+                forge_version = _get_forge_version()
+                if forge_version and forge_version >= (1, 4, 0):
+                    deny_level = "never"
+
             compilation_command = [
                 "forge",
                 "build",
                 "--build-info",
             ]
+
+            if deny_level:
+                compilation_command.extend(["--deny", deny_level])
 
             targeted_build = not self._project_root.samefile(self._target)
             if targeted_build:
