@@ -208,7 +208,7 @@ class CryticCompile:
 
         self.compilation_kwargs = kwargs
 
-        if not kwargs.get("crytic_defer_compilation") == "true":
+        if kwargs.get("crytic_defer_compilation") != "true":
             self._compile(**kwargs)
 
     @property
@@ -642,7 +642,7 @@ class CryticCompile:
         """Compile the project. The kwargs provided during object initialization will be used.
         This function is useful when paired with the `crytic_defer_compilation` kwargs option.
         """
-        return self._compile(**self.compilation_kwargs)
+        self._compile(**self.compilation_kwargs)
 
     @staticmethod
     def _run_custom_build(custom_build: str) -> None:
