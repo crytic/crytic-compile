@@ -451,6 +451,14 @@ def _init_foundry(parser: ArgumentParser) -> None:
     )
 
     group_foundry.add_argument(
+        "--foundry-build-info-directory",
+        help="Use an alternative build-info directory (useful with --ignore-compile)",
+        action="store",
+        dest="foundry_build_info_directory",
+        default=DEFAULTS_FLAG_IN_CONFIG["foundry_build_info_directory"],
+    )
+
+    group_foundry.add_argument(
         "--foundry-compile-all",
         help="Don't skip compiling test and script",
         action="store_true",
