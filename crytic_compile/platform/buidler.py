@@ -1,13 +1,14 @@
 """
 Builder platform
 """
+
 import json
 import logging
 import os
 import shutil
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Tuple
+from typing import TYPE_CHECKING
 
 from crytic_compile.compilation_unit import CompilationUnit
 from crytic_compile.compiler.compiler import CompilerVersion
@@ -35,7 +36,6 @@ class Buidler(AbstractPlatform):
     PROJECT_URL = "https://github.com/nomiclabs/buidler"
     TYPE = Type.BUILDER
 
-    # pylint: disable=too-many-locals,too-many-statements,too-many-branches
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str) -> None:
         """Run the compilation
 
@@ -77,7 +77,6 @@ class Buidler(AbstractPlatform):
                 cwd=self._target,
                 executable=shutil.which(cmd[0]),
             ) as process:
-
                 stdout_bytes, stderr_bytes = process.communicate()
                 stdout, stderr = (
                     stdout_bytes.decode(errors="backslashreplace"),
@@ -113,7 +112,6 @@ class Buidler(AbstractPlatform):
 
             if "sources" in targets_json:
                 for path, info in targets_json["sources"].items():
-
                     if path.startswith("ontracts/") and not skip_directory_name_fix:
                         path = "c" + path
 
@@ -208,7 +206,7 @@ class Buidler(AbstractPlatform):
         self._cached_dependencies[path] = ret
         return ret
 
-    def _guessed_tests(self) -> List[str]:
+    def _guessed_tests(self) -> list[str]:
         """Guess the potential unit tests commands
 
         Returns:
@@ -217,7 +215,7 @@ class Buidler(AbstractPlatform):
         return ["buidler test"]
 
 
-def _get_version_from_config(builder_directory: Path) -> Tuple[str, str, bool]:
+def _get_version_from_config(builder_directory: Path) -> tuple[str, str, bool]:
     """Parse the compiler version
 
     Args:
@@ -237,10 +235,10 @@ def _get_version_from_config(builder_directory: Path) -> Tuple[str, str, bool]:
         path_config = Path(builder_directory, "last-vyper-config.json")
         if not path_config.exists():
             raise InvalidCompilation(f"{path_config} not found")
-        with open(path_config, "r", encoding="utf8") as config_f:
+        with open(path_config, encoding="utf8") as config_f:
             version = config_f.read()
             return "vyper", version, False
-    with open(path_config, "r", encoding="utf8") as config_f:
+    with open(path_config, encoding="utf8") as config_f:
         config = json.load(config_f)
 
     version = config["solc"]["version"]

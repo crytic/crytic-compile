@@ -1,12 +1,12 @@
 """
 Module handling unit-tests features
 """
+
 import json
 from pathlib import Path
-from typing import List
 
 
-def guess_tests(target: str) -> List[str]:
+def guess_tests(target: str) -> list[str]:
     """Try to guess the unit tests commands
 
     Args:
@@ -15,7 +15,7 @@ def guess_tests(target: str) -> List[str]:
     Returns:
         List[str]: List of guessed unit tests commands
     """
-    targets: List[str] = []
+    targets: list[str] = []
 
     readme_path = Path(target, "README.md")
     if readme_path.is_file():

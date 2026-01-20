@@ -20,4 +20,3 @@ then
     echo "Embark test failed"
     exit 255
 fi
-

@@ -10,10 +10,8 @@ crytic-compile contract.sol --compile-remove-metadata --export-format truffle
 cd - || exit 255
 DIFF=$(diff "$DIR/crytic-export/C.json" tests/expected/solc-demo.json)
 if [ "$?" != "0" ] || [ "$DIFF" != "" ]
-then  
+then
     echo "solc test failed"
     echo "$DIFF"
     exit 255
 fi
-
-

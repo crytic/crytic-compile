@@ -4,7 +4,7 @@ set -euo pipefail
 ### Test dapp integration
 
 # work around having two python versions loading libraries from each other in CI
-OLD_LD_LIBRARY_PATH="$LD_LIBRARY_PATH"
+OLD_LD_LIBRARY_PATH="${LD_LIBRARY_PATH:-}"
 alias crytic-compile='LD_LIBRARY_PATH=$OLD_LD_LIBRARY_PATH crytic-compile'
 unset LD_LIBRARY_PATH
 
@@ -14,6 +14,8 @@ cd "$DIR" || exit 255
 # The dapp init process makes a temporary local git repo and needs certain values to be set
 git config --global user.email "ci@trailofbits.com"
 git config --global user.name "CI User"
+# Rewrite git:// URLs to https:// (GitHub blocked git:// protocol in 2022)
+git config --global url."https://github.com/".insteadOf git://github.com/
 
 which nix-env || exit 255
 

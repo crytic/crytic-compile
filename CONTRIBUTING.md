@@ -14,7 +14,7 @@ crytic-compile uses the pull request contribution model. Please make an account 
 
 Some pull request guidelines:
 
-- Work from the [`dev`](https://github.com/crytic/crytic-compile/tree/dev) branch. We perform extensive tests prior to merging anything to `master`, working from `dev` will allow us to merge your work faster.
+- Work from the [`master`](https://github.com/crytic/crytic-compile/tree/master) branch.
 - Minimize irrelevant changes (formatting, whitespace, etc) to code that would otherwise not be touched by this patch. Save formatting or style corrections for a separate pull request that does not make any semantic changes.
 - When possible, large changes should be split up into smaller focused pull requests.
 - Fill out the pull request description with a summary of what your patch does, key changes that have been made, and any further points of discussion, if applicable.
@@ -29,13 +29,30 @@ Several linters and security checkers are run on the PRs.
 
 To run them locally:
 
-- `pylint crytic_compile --rcfile pyproject.toml`
-- `black crytic_compile --config pyproject.toml`
-- `mypy crytic_compile --config mypy.ini`
-- `darglint crytic_compile`
+- `ruff check crytic_compile/`
+- `ruff format --check .`
+- `ty check crytic_compile/`
 
+Tool versions are managed in `pyproject.toml`.
 
-We use pylint `2.13.4`, black `22.3.0`, mypy `0.942` and darglint `1.8.0`.
+### Pre-commit Hooks
+
+We use [prek](https://github.com/j178/prek), a fast Rust-based pre-commit runner:
+
+```bash
+prek install               # One-time setup (done by make dev)
+prek run --all-files       # Run manually on all files
+prek auto-update --cooldown-days 7  # Update hook versions
+```
 
 ## Development Environment
-Instructions for installing a development version of crytic-compile can be found in our [wiki](https://github.com/crytic/crytic-compile/wiki/Developer-installation).
+
+```bash
+# Install uv if you haven't already
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Setup development environment
+make dev  # Installs dependencies and pre-commit hooks
+```
+
+For alternative installation methods, see our [wiki](https://github.com/crytic/crytic-compile/wiki/Developer-installation).

@@ -1,7 +1,9 @@
 """
 Test loading from a zip archive
 """
+
 from pathlib import Path
+
 from crytic_compile.utils.zip import load_from_zip
 
 TEST_DIR = Path(__file__).resolve().parent

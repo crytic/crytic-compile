@@ -1,6 +1,7 @@
 """
 Solc platform
 """
+
 import json
 import logging
 import os
@@ -8,7 +9,7 @@ import re
 import shutil
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Optional, Union, Any
+from typing import TYPE_CHECKING, Any
 
 from crytic_compile.compilation_unit import CompilationUnit
 from crytic_compile.compiler.compiler import CompilerVersion
@@ -31,7 +32,7 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger("CryticCompile")
 
 
-def _build_contract_data(compilation_unit: "CompilationUnit") -> Dict:
+def _build_contract_data(compilation_unit: "CompilationUnit") -> dict:
     contracts = {}
 
     libraries_to_update = compilation_unit.crytic_compile.libraries
@@ -59,7 +60,7 @@ def _build_contract_data(compilation_unit: "CompilationUnit") -> Dict:
 
 def export_to_solc_from_compilation_unit(
     compilation_unit: "CompilationUnit", key: str, export_dir: str
-) -> Optional[str]:
+) -> str | None:
     """Export the compilation unit to the standard solc output format.
     The exported file will be $key.json
 
@@ -92,7 +93,7 @@ def export_to_solc_from_compilation_unit(
     return None
 
 
-def export_to_solc(crytic_compile: "CryticCompile", **kwargs: str) -> List[str]:
+def export_to_solc(crytic_compile: "CryticCompile", **kwargs: str) -> list[str]:
     """Export all the compilation units to the standard solc output format.
     The files generated will be either
     - combined_solc.json, if there is one compilation unit (echidna legacy)
@@ -198,18 +199,18 @@ class Solc(AbstractPlatform):
         """
         return os.path.isfile(target) and target.endswith(".sol")
 
-    def is_dependency(self, _path: str) -> bool:
+    def is_dependency(self, path: str) -> bool:
         """Check if the path is a dependency (always false for direct solc)
 
         Args:
-            _path (str): path to the target
+            path (str): path to the target
 
         Returns:
             bool: True if the target is a dependency
         """
         return False
 
-    def _guessed_tests(self) -> List[str]:
+    def _guessed_tests(self) -> list[str]:
         """Guess the potential unit tests commands (always empty for direct solc)
 
         Returns:
@@ -218,7 +219,7 @@ class Solc(AbstractPlatform):
         return []
 
 
-def _get_targets_json(compilation_unit: "CompilationUnit", target: str, **kwargs: Any) -> Dict:
+def _get_targets_json(compilation_unit: "CompilationUnit", target: str, **kwargs: Any) -> dict:
     """Run the compilation, population the compilation info, and returns the json compilation artifacts
 
     Args:
@@ -233,13 +234,13 @@ def _get_targets_json(compilation_unit: "CompilationUnit", target: str, **kwargs
     solc: str = kwargs.get("solc", "solc")
     solc_disable_warnings: bool = kwargs.get("solc_disable_warnings", False)
     solc_arguments: str = kwargs.get("solc_args", "")
-    solc_remaps: Optional[Union[str, List[str]]] = kwargs.get("solc_remaps", None)
+    solc_remaps: str | list[str] | None = kwargs.get("solc_remaps", None)
     # From config file, solcs is a dict (version -> path)
     # From command line, solc is a list
     # The guessing of version only works from config file
     # This is to prevent too complex command line
-    solcs_path_: Optional[Union[str, Dict, List[str]]] = kwargs.get("solc_solcs_bin")
-    solcs_path: Optional[Union[Dict, List[str]]] = None
+    solcs_path_: str | dict | list[str] | None = kwargs.get("solc_solcs_bin")
+    solcs_path: dict | list[str] | None = None
     if solcs_path_:
         if isinstance(solcs_path_, str):
             solcs_path = solcs_path_.split(",")
@@ -289,11 +290,11 @@ def _get_targets_json(compilation_unit: "CompilationUnit", target: str, **kwargs
 
 
 def solc_handle_contracts(
-    targets_json: Dict,
+    targets_json: dict,
     skip_filename: bool,
     compilation_unit: "CompilationUnit",
     target: str,
-    solc_working_dir: Optional[str],
+    solc_working_dir: str | None,
 ) -> None:
     """Populate the compilation unit from the compilation json artifacts
 
@@ -307,7 +308,6 @@ def solc_handle_contracts(
     is_above_0_8 = _is_at_or_above_minor_version(compilation_unit, 8)
 
     if "contracts" in targets_json:
-
         for original_contract_name, info in targets_json["contracts"].items():
             contract_name = extract_name(original_contract_name)
             # for solc < 0.4.10 we cant retrieve the filename from the ast
@@ -357,7 +357,7 @@ def _is_at_or_above_minor_version(compilation_unit: "CompilationUnit", version: 
     return int(compilation_unit.compiler_version.version.split(".")[1]) >= version
 
 
-def get_version(solc: str, env: Optional[Dict[str, str]]) -> str:
+def get_version(solc: str, env: dict[str, str] | None) -> str:
     """Obtains the version of the solc executable specified.
 
     Args:
@@ -396,11 +396,10 @@ def get_version(solc: str, env: Optional[Dict[str, str]]) -> str:
                 )
             return version[0]
     except OSError as error:
-        # pylint: disable=raise-missing-from
         raise InvalidCompilation(error)
 
 
-def is_optimized(solc_arguments: Optional[str]) -> bool:
+def is_optimized(solc_arguments: str | None) -> bool:
     """Check if optimization are used
 
     Args:
@@ -445,18 +444,17 @@ def _build_options(compiler_version: CompilerVersion, force_legacy_json: bool) -
     return "abi,ast,bin,bin-runtime,srcmap,srcmap-runtime,userdoc,devdoc,hashes"
 
 
-# pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
 def _run_solc(
     compilation_unit: "CompilationUnit",
     filename: str,
     solc: str,
     solc_disable_warnings: bool,
-    solc_arguments: Optional[str],
-    solc_remaps: Optional[Union[str, List[str]]] = None,
-    env: Optional[Dict] = None,
-    working_dir: Optional[Union[Path, str]] = None,
+    solc_arguments: str | None,
+    solc_remaps: str | list[str] | None = None,
+    env: dict | None = None,
+    working_dir: Path | str | None = None,
     force_legacy_json: bool = False,
-) -> Dict:
+) -> dict:
     """Run solc.
     Ensure that crytic_compile.compiler_version is set prior calling _run_solc
 
@@ -518,8 +516,8 @@ def _run_solc(
         solc_args = [item.strip() for sublist in solc_args_ for item in sublist if item]
         cmd += solc_args
 
-    additional_kwargs: Dict = {"cwd": working_dir} if working_dir else {}
-    if not compiler_version.version in [f"0.4.{x}" for x in range(0, 11)]:
+    cwd: Path | str | None = working_dir if working_dir else None
+    if compiler_version.version not in [f"0.4.{x}" for x in range(0, 11)]:
         # Add --allow-paths argument, if it isn't already specified
         # We allow the CWD as well as the directory that contains the file
         if "--allow-paths" not in cmd:
@@ -547,26 +545,25 @@ def _run_solc(
             "'%s' running",
             " ".join(cmd),
         )
-        # pylint: disable=consider-using-with
+
         if env:
             process = subprocess.Popen(
                 cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
+                cwd=cwd,
                 executable=shutil.which(cmd[0]),
                 env=env,
-                **additional_kwargs,
             )
         else:
             process = subprocess.Popen(
                 cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
+                cwd=cwd,
                 executable=shutil.which(cmd[0]),
-                **additional_kwargs,
             )
     except OSError as error:
-        # pylint: disable=raise-missing-from
         raise InvalidCompilation(error)
     stdout_, stderr_ = process.communicate()
     stdout, stderr = (
@@ -578,25 +575,23 @@ def _run_solc(
         LOGGER.info("Compilation warnings/errors on %s:\n%s", filename, stderr)
 
     try:
-        ret: Dict = json.loads(stdout)
+        ret: dict = json.loads(stdout)
         return ret
     except json.decoder.JSONDecodeError:
-        # pylint: disable=raise-missing-from
         raise InvalidCompilation(f"Invalid solc compilation {stderr}")
 
 
-# pylint: disable=too-many-arguments
 def _run_solcs_path(
     compilation_unit: "CompilationUnit",
     filename: str,
-    solcs_path: Optional[Union[Dict, List[str]]],
+    solcs_path: dict | list[str] | None,
     solc_disable_warnings: bool,
     solc_arguments: str,
-    solc_remaps: Optional[Union[str, List[str]]] = None,
-    env: Optional[Dict] = None,
-    working_dir: Optional[str] = None,
+    solc_remaps: str | list[str] | None = None,
+    env: dict | None = None,
+    working_dir: str | None = None,
     force_legacy_json: bool = False,
-) -> Dict:
+) -> dict:
     """[summary]
 
     Args:
@@ -621,7 +616,7 @@ def _run_solcs_path(
         guessed_solcs = _guess_solc(filename, working_dir)
         compilation_errors = []
         for guessed_solc in guessed_solcs:
-            if not guessed_solc in solcs_path:
+            if guessed_solc not in solcs_path:
                 continue
             try:
                 targets_json = _run_solc(
@@ -641,7 +636,7 @@ def _run_solcs_path(
 
     if not targets_json:
         if isinstance(solcs_path, dict):
-            solc_bins: List[str] = list(solcs_path.values())
+            solc_bins: list[str] = list(solcs_path.values())
         elif solcs_path:
             solc_bins = solcs_path
         else:
@@ -673,19 +668,18 @@ def _run_solcs_path(
     return targets_json
 
 
-# pylint: disable=too-many-arguments
 def _run_solcs_env(
     compilation_unit: "CompilationUnit",
     filename: str,
     solc: str,
     solc_disable_warnings: bool,
     solc_arguments: str,
-    solc_remaps: Optional[Union[List[str], str]] = None,
-    env: Optional[Dict] = None,
-    working_dir: Optional[str] = None,
-    solcs_env: Optional[List[str]] = None,
+    solc_remaps: list[str] | str | None = None,
+    env: dict | None = None,
+    working_dir: str | None = None,
+    solcs_env: list[str] | None = None,
     force_legacy_json: bool = False,
-) -> Dict:
+) -> dict:
     """Run different solc based on environment variable
     This is mostly a legacy function for old solc-select usages
 
@@ -712,7 +706,7 @@ def _run_solcs_env(
     guessed_solcs = _guess_solc(filename, working_dir)
     compilation_errors = []
     for guessed_solc in guessed_solcs:
-        if solcs_env and not guessed_solc in solcs_env:
+        if solcs_env and guessed_solc not in solcs_env:
             continue
         try:
             env["SOLC_VERSION"] = guessed_solc
@@ -764,7 +758,7 @@ def _run_solcs_env(
 PATTERN = re.compile(r"pragma solidity\s*(?:\^|>=|<=)?\s*(\d+\.\d+\.\d+)")
 
 
-def _guess_solc(target: str, solc_working_dir: Optional[str]) -> List[str]:
+def _guess_solc(target: str, solc_working_dir: str | None) -> list[str]:
     """Guess the Solidity version (look for "pragma solidity")
 
     Args:

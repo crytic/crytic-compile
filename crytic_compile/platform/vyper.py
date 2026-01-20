@@ -1,13 +1,14 @@
 """
 Vyper platform
 """
+
 import json
 import logging
 import os
 import shutil
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Optional
+from typing import TYPE_CHECKING
 
 from crytic_compile.compilation_unit import CompilationUnit
 from crytic_compile.compiler.compiler import CompilerVersion
@@ -34,7 +35,7 @@ class VyperStandardJson(AbstractPlatform):
     PROJECT_URL = "https://github.com/vyperlang/vyper"
     TYPE = Type.VYPER
 
-    def __init__(self, target: Optional[Path] = None, **_kwargs: str):
+    def __init__(self, target: Path | None = None, **_kwargs: str):
         super().__init__(str(target), **_kwargs)
         self.standard_json_input = {
             "language": "Vyper",
@@ -111,7 +112,7 @@ class VyperStandardJson(AbstractPlatform):
             source_unit = compilation_unit.create_source_unit(filename)
             source_unit.ast = ast
 
-    def add_source_files(self, file_paths: List[str]) -> None:
+    def add_source_files(self, file_paths: list[str]) -> None:
         """
         Append files
 
@@ -123,8 +124,8 @@ class VyperStandardJson(AbstractPlatform):
         """
 
         for file_path in file_paths:
-            with open(file_path, "r", encoding="utf8") as f:
-                self.standard_json_input["sources"][file_path] = {  # type: ignore
+            with open(file_path, encoding="utf8") as f:
+                self.standard_json_input["sources"][file_path] = {  # ty: ignore[invalid-assignment]
                     "content": f.read(),
                 }
 
@@ -136,11 +137,11 @@ class VyperStandardJson(AbstractPlatform):
         """
         return
 
-    def is_dependency(self, _path: str) -> bool:
+    def is_dependency(self, path: str) -> bool:
         """Check if the path is a dependency (not supported for vyper)
 
         Args:
-            _path (str): path to the target
+            path (str): path to the target
 
         Returns:
             bool: True if the target is a dependency
@@ -163,7 +164,7 @@ class VyperStandardJson(AbstractPlatform):
             return False
         return os.path.isfile(target) and target.endswith(".vy")
 
-    def _guessed_tests(self) -> List[str]:
+    def _guessed_tests(self) -> list[str]:
         """Guess the potential unit tests commands
 
         Returns:
@@ -173,8 +174,8 @@ class VyperStandardJson(AbstractPlatform):
 
 
 def _run_vyper_standard_json(
-    standard_json_input: Dict, vyper: str, env: Optional[Dict] = None
-) -> Dict:
+    standard_json_input: dict, vyper: str, env: dict | None = None
+) -> dict:
     """Run vyper and write compilation output to a file
 
     Args:
@@ -198,7 +199,6 @@ def _run_vyper_standard_json(
         env=env,
         executable=shutil.which(cmd[0]),
     ) as process:
-
         stdout_b, stderr_b = process.communicate(json.dumps(standard_json_input).encode("utf-8"))
         stdout, _stderr = (
             stdout_b.decode(),
@@ -208,10 +208,8 @@ def _run_vyper_standard_json(
         vyper_standard_output = json.loads(stdout)
 
         if "errors" in vyper_standard_output:
-
             has_errors = False
             for diagnostic in vyper_standard_output["errors"]:
-
                 if diagnostic["severity"] == "warning":
                     continue
 

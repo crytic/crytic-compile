@@ -1,7 +1,6 @@
 """
 Natspec module https://solidity.readthedocs.io/en/latest/natspec-format.html
 """
-from typing import Dict, Optional, Union
 
 
 class UserMethod:
@@ -9,7 +8,7 @@ class UserMethod:
     Model the user method
     """
 
-    def __init__(self, method: Union[Dict, str]) -> None:
+    def __init__(self, method: dict | str) -> None:
         """Init the object
 
         Args:
@@ -17,12 +16,12 @@ class UserMethod:
         """
         # Constructors dont have "notice: '..'"
         if isinstance(method, str):
-            self._notice: Optional[str] = method
+            self._notice: str | None = method
         else:
             self._notice = method.get("notice", None)
 
     @property
-    def notice(self) -> Optional[str]:
+    def notice(self) -> str | None:
         """Return the method notice
 
         Returns:
@@ -30,7 +29,7 @@ class UserMethod:
         """
         return self._notice
 
-    def export(self) -> Dict:
+    def export(self) -> dict:
         """Export to a python dict
 
         Returns:
@@ -44,19 +43,19 @@ class DevMethod:
     Model the dev method
     """
 
-    def __init__(self, method: Dict) -> None:
+    def __init__(self, method: dict) -> None:
         """Init the object
 
         Args:
             method (Dict): Method infos (author, details, params, return)
         """
-        self._author: Optional[str] = method.get("author", None)
-        self._details: Optional[str] = method.get("details", None)
-        self._params: Dict[str, str] = method.get("params", {})
-        self._return: Optional[str] = method.get("return", None)
+        self._author: str | None = method.get("author", None)
+        self._details: str | None = method.get("details", None)
+        self._params: dict[str, str] = method.get("params", {})
+        self._return: str | None = method.get("return", None)
 
     @property
-    def author(self) -> Optional[str]:
+    def author(self) -> str | None:
         """Return the method author
 
         Returns:
@@ -65,7 +64,7 @@ class DevMethod:
         return self._author
 
     @property
-    def details(self) -> Optional[str]:
+    def details(self) -> str | None:
         """Return the method details
 
         Returns:
@@ -74,7 +73,7 @@ class DevMethod:
         return self._details
 
     @property
-    def method_return(self) -> Optional[str]:
+    def method_return(self) -> str | None:
         """Return the method return
 
         Returns:
@@ -83,7 +82,7 @@ class DevMethod:
         return self._return
 
     @property
-    def params(self) -> Dict[str, str]:
+    def params(self) -> dict[str, str]:
         """Return the method params
 
         Returns:
@@ -91,7 +90,7 @@ class DevMethod:
         """
         return self._params
 
-    def export(self) -> Dict:
+    def export(self) -> dict:
         """Export to a python dict
 
         Returns:
@@ -116,13 +115,13 @@ class UserDoc:
         Args:
             userdoc (dict): User doc (notice, methods)
         """
-        self._notice: Optional[str] = userdoc.get("notice", None)
-        self._methods: Dict[str, UserMethod] = {
+        self._notice: str | None = userdoc.get("notice", None)
+        self._methods: dict[str, UserMethod] = {
             k: UserMethod(item) for k, item in userdoc.get("methods", {}).items()
         }
 
     @property
-    def notice(self) -> Optional[str]:
+    def notice(self) -> str | None:
         """Return the user notice
 
         Returns:
@@ -131,7 +130,7 @@ class UserDoc:
         return self._notice
 
     @property
-    def methods(self) -> Dict[str, UserMethod]:
+    def methods(self) -> dict[str, UserMethod]:
         """Return the user methods
 
         Returns:
@@ -139,7 +138,7 @@ class UserDoc:
         """
         return self._methods
 
-    def export(self) -> Dict:
+    def export(self) -> dict:
         """Export to a python dict
 
         Returns:
@@ -156,21 +155,21 @@ class DevDoc:
     Model the dev doc
     """
 
-    def __init__(self, devdoc: Dict):
+    def __init__(self, devdoc: dict):
         """Init the object
 
         Args:
             devdoc (Dict): dev doc (author, details, methods, title)
         """
-        self._author: Optional[str] = devdoc.get("author", None)
-        self._details: Optional[str] = devdoc.get("details", None)
-        self._methods: Dict[str, DevMethod] = {
+        self._author: str | None = devdoc.get("author", None)
+        self._details: str | None = devdoc.get("details", None)
+        self._methods: dict[str, DevMethod] = {
             k: DevMethod(item) for k, item in devdoc.get("methods", {}).items()
         }
-        self._title: Optional[str] = devdoc.get("title", None)
+        self._title: str | None = devdoc.get("title", None)
 
     @property
-    def author(self) -> Optional[str]:
+    def author(self) -> str | None:
         """Return the dev author
 
         Returns:
@@ -179,7 +178,7 @@ class DevDoc:
         return self._author
 
     @property
-    def details(self) -> Optional[str]:
+    def details(self) -> str | None:
         """Return the dev details
 
         Returns:
@@ -188,7 +187,7 @@ class DevDoc:
         return self._details
 
     @property
-    def methods(self) -> Dict[str, DevMethod]:
+    def methods(self) -> dict[str, DevMethod]:
         """Return the dev methods
 
         Returns:
@@ -197,7 +196,7 @@ class DevDoc:
         return self._methods
 
     @property
-    def title(self) -> Optional[str]:
+    def title(self) -> str | None:
         """Return the dev title
 
         Returns:
@@ -205,7 +204,7 @@ class DevDoc:
         """
         return self._title
 
-    def export(self) -> Dict:
+    def export(self) -> dict:
         """Export to a python dict
 
         Returns:
@@ -224,7 +223,7 @@ class Natspec:
     Model natspec
     """
 
-    def __init__(self, userdoc: Dict, devdoc: Dict):
+    def __init__(self, userdoc: dict, devdoc: dict):
         """Init the object
 
         Args:

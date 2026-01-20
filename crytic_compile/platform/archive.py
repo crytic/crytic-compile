@@ -4,10 +4,11 @@ It is similar to the standard platform, except that the file generated
 contains a "source_content" field
 Which is a map: filename -> sourcecode
 """
+
 import json
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Tuple, Type, Any
+from typing import TYPE_CHECKING, Any
 
 from crytic_compile.platform import Type as TypePlatform
 from crytic_compile.platform import standard
@@ -19,7 +20,7 @@ if TYPE_CHECKING:
     from crytic_compile import CryticCompile
 
 
-def export_to_archive(crytic_compile: "CryticCompile", **kwargs: Any) -> List[str]:
+def export_to_archive(crytic_compile: "CryticCompile", **kwargs: Any) -> list[str]:
     """Export the archive
 
     Args:
@@ -64,8 +65,8 @@ class Archive(AbstractPlatform):
             **kwargs: optional arguments.
         """
         super().__init__(target, **kwargs)
-        self._underlying_platform: Type[AbstractPlatform] = Archive
-        self._unit_tests: List[str] = []
+        self._underlying_platform: type[AbstractPlatform] = Archive
+        self._unit_tests: list[str] = []
 
     def compile(self, crytic_compile: "CryticCompile", **_kwargs: str) -> None:
         """Run the compilation
@@ -74,7 +75,7 @@ class Archive(AbstractPlatform):
             crytic_compile (CryticCompile): associated CryticCompile object
             **_kwargs: unused
         """
-        # pylint: disable=import-outside-toplevel
+
         from crytic_compile.crytic_compile import get_platforms
 
         try:
@@ -89,7 +90,7 @@ class Archive(AbstractPlatform):
 
         (underlying_type, unit_tests) = standard.load_from_compile(crytic_compile, loaded_json)
         underlying_type = TypePlatform(underlying_type)
-        platforms: List[Type[AbstractPlatform]] = get_platforms()
+        platforms: list[type[AbstractPlatform]] = get_platforms()
         platform = next((p for p in platforms if p.TYPE == underlying_type), Archive)
         self._underlying_platform = platform
         self._unit_tests = unit_tests
@@ -118,11 +119,11 @@ class Archive(AbstractPlatform):
             return False
         return Path(target).parts[-1].endswith("_export_archive.json")
 
-    def is_dependency(self, _path: str) -> bool:
-        """Check if the _path is a dependency. Always false
+    def is_dependency(self, path: str) -> bool:
+        """Check if the path is a dependency. Always false
 
         Args:
-            _path (str): path to the target
+            path (str): path to the target
 
         Returns:
             bool: Always false - the archive checks are handled by crytic_compile_dependencies
@@ -130,7 +131,7 @@ class Archive(AbstractPlatform):
         # TODO: check if its correctly handled by crytic_compile_dependencies
         return False
 
-    def _guessed_tests(self) -> List[str]:
+    def _guessed_tests(self) -> list[str]:
         """Return the list of guessed unit tests commands
 
         Returns:
@@ -139,7 +140,7 @@ class Archive(AbstractPlatform):
         return self._unit_tests
 
 
-def generate_archive_export(crytic_compile: "CryticCompile") -> Tuple[Dict, str]:
+def generate_archive_export(crytic_compile: "CryticCompile") -> tuple[dict, str]:
     """Generate the archive export
 
     Args:

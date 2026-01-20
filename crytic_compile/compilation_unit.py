@@ -5,9 +5,11 @@ Each compilation unit has one or more source units associated with it
 At least one compilation unit exists for each version of solc used
     Maybe more dependending on the framework used (hardhat/foundry/etc)
 """
+
+import re
 import uuid
 from collections import defaultdict
-from typing import TYPE_CHECKING, Dict, List, Set, Optional
+from typing import TYPE_CHECKING
 
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.source_unit import SourceUnit
@@ -17,7 +19,7 @@ from crytic_compile.utils.naming import Filename
 if TYPE_CHECKING:
     from crytic_compile import CryticCompile
 
-# pylint: disable=too-many-instance-attributes
+
 class CompilationUnit:
     """CompilationUnit class"""
 
@@ -30,16 +32,16 @@ class CompilationUnit:
         """
 
         # mapping from filename to contract name
-        self._filename_to_contracts: Dict[Filename, Set[str]] = defaultdict(set)
+        self._filename_to_contracts: dict[Filename, set[str]] = defaultdict(set)
 
         # mapping from filename to source unit
-        self._source_units: Dict[Filename, SourceUnit] = {}
+        self._source_units: dict[Filename, SourceUnit] = {}
 
         # set containing all the filenames of this compilation unit
-        self._filenames: List[Filename] = []
+        self._filenames: list[Filename] = []
 
         # mapping from absolute/relative/used to filename
-        self._filenames_lookup: Optional[Dict[str, Filename]] = None
+        self._filenames_lookup: dict[str, Filename] | None = None
 
         # compiler.compiler
         self._compiler_version: CompilerVersion = CompilerVersion(
@@ -48,14 +50,14 @@ class CompilationUnit:
 
         # if the compilation unit comes from etherscan-like service and is a proxy,
         # store the implementation address
-        self._implementation_address: Optional[str] = None
+        self._implementation_address: str | None = None
 
-        self._crytic_compile: "CryticCompile" = crytic_compile
+        self._crytic_compile: CryticCompile = crytic_compile
 
         if unique_id == ".":
             unique_id = str(uuid.uuid4())
 
-        crytic_compile.compilation_units[unique_id] = self  # type: ignore
+        crytic_compile.compilation_units[unique_id] = self
 
         self._unique_id = unique_id
 
@@ -78,7 +80,7 @@ class CompilationUnit:
         return self._crytic_compile
 
     @property
-    def source_units(self) -> Dict[Filename, SourceUnit]:
+    def source_units(self) -> dict[Filename, SourceUnit]:
         """
         Return the dict of the source units
 
@@ -101,7 +103,7 @@ class CompilationUnit:
         return self._source_units[filename]
 
     @property
-    def asts(self) -> Dict[str, Dict]:
+    def asts(self) -> dict[str, dict]:
         """
         Return all the asts from the compilation unit
 
@@ -127,15 +129,15 @@ class CompilationUnit:
         Returns:
             SourceUnit: the source unit
         """
-        if not filename in self._source_units:
-            source_unit = SourceUnit(self, filename)  # type: ignore
+        if filename not in self._source_units:
+            source_unit = SourceUnit(self, filename)
             self._source_units[filename] = source_unit
             if filename not in self.filenames:
                 self.filenames.append(filename)
         return self._source_units[filename]
 
     @property
-    def implementation_address(self) -> Optional[str]:
+    def implementation_address(self) -> str | None:
         """Return the implementation address if the compilation unit is a proxy
 
         Returns:
@@ -160,7 +162,7 @@ class CompilationUnit:
     ###################################################################################
 
     @property
-    def filenames(self) -> List[Filename]:
+    def filenames(self) -> list[Filename]:
         """Return the filenames used by the compilation unit
 
         Returns:
@@ -169,7 +171,7 @@ class CompilationUnit:
         return self._filenames
 
     @filenames.setter
-    def filenames(self, all_filenames: List[Filename]) -> None:
+    def filenames(self, all_filenames: list[Filename]) -> None:
         """Set the filenames
 
         Args:
@@ -178,7 +180,7 @@ class CompilationUnit:
         self._filenames = all_filenames
 
     @property
-    def filename_to_contracts(self) -> Dict[Filename, Set[str]]:
+    def filename_to_contracts(self) -> dict[Filename, set[str]]:
         """Return a dict mapping the filename to a list of contract declared
 
         Returns:
@@ -236,11 +238,24 @@ class CompilationUnit:
         Returns:
             Filename: Associated Filename object
         """
-        # pylint: disable=import-outside-toplevel
+        from crytic_compile.platform.hardhat import Hardhat
         from crytic_compile.platform.truffle import Truffle
 
         if isinstance(self.crytic_compile.platform, Truffle) and filename.startswith("project:/"):
             filename = filename[len("project:/") :]
+
+        if isinstance(self.crytic_compile.platform, Hardhat):
+            # CASE 1 — npm/... → ...
+            hh3_npm_path = re.match(r"npm/(.+?)@[^/]+/(.+)", filename)
+            if hh3_npm_path:
+                package = hh3_npm_path.group(1)
+                rest = hh3_npm_path.group(2)
+                filename = f"{package}/{rest}"
+
+            # project/contracts/... → contracts/...
+            hh3_contracts_path = re.match(r"project/contracts/(.+)", filename)
+            if hh3_contracts_path:
+                filename = f"contracts/{hh3_contracts_path.group(1)}"
 
         if self._filenames_lookup is None:
             self._filenames_lookup = {}
