@@ -612,9 +612,9 @@ class CryticCompile:
             if len(matching_platforms) > 1:
                 names = [p.NAME for p in matching_platforms]
                 LOGGER.warning(
-                    "Multiple frameworks detected: %s. Using %s. "
+                    "Multiple frameworks detected: %s. Using %s (highest priority). "
                     "Use --compile-force-framework to override.",
-                    names,
+                    ", ".join(names),
                     matching_platforms[0].NAME,
                 )
             platform = matching_platforms[0](target) if matching_platforms else None
