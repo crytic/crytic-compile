@@ -95,6 +95,15 @@ cd ../../../
 
 echo "::endgroup::"
 
+# Same as Etherscan #9 - test with no verified code - should fail
+echo "::group::Sourcify #9"
+if crytic-compile "sourcify-1:0xc3898ea7e322b3cdc92d65cfe5a34808b7338236"
+then
+    echo "Sourcify #9 test failed"
+    exit 255
+fi
+echo "::endgroup::"
+
 # Test hex chain ID format (Sourcify-specific feature)
 echo "::group::Sourcify hex chain ID"
 if ! crytic-compile "sourcify-0x1:0x7F37f78cBD74481E593F9C737776F7113d76B315" --compile-remove-metadata

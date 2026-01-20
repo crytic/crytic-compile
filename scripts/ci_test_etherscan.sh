@@ -101,3 +101,12 @@ fi
 cd ../../../
 
 echo "::endgroup::"
+
+# test with no verified code - should fail
+echo "::group::Etherscan #9"
+if crytic-compile 0xc3898ea7e322b3cdc92d65cfe5a34808b7338236 --compile-remove-metadata --etherscan-apikey "$ETHERSCAN_API_KEY"
+then
+    echo "Etherscan #9 test failed"
+    exit 255
+fi
+echo "::endgroup::"
