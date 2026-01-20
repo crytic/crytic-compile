@@ -4,6 +4,7 @@ Foundry platform
 
 import json
 import logging
+import re
 import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING, TypeVar
@@ -20,6 +21,28 @@ if TYPE_CHECKING:
 T = TypeVar("T")
 
 LOGGER = logging.getLogger("CryticCompile")
+
+
+def _get_forge_version() -> tuple[int, int, int] | None:
+    """Get forge version as tuple, or None if unable to parse.
+
+    Returns:
+        Version tuple (major, minor, patch) or None if detection fails.
+    """
+    try:
+        result = subprocess.run(
+            ["forge", "--version"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        versions = re.findall(r"\d+\.\d+\.\d+", result.stdout)
+        if versions:
+            parts = versions[0].split(".")
+            return (int(parts[0]), int(parts[1]), int(parts[2]))
+    except Exception:  # noqa: BLE001
+        pass
+    return None
 
 
 class Foundry(AbstractPlatform):
@@ -44,7 +67,8 @@ class Foundry(AbstractPlatform):
 
         Args:
             crytic_compile (CryticCompile): CryticCompile object to populate
-            **kwargs: optional arguments. Used: "foundry_ignore_compile", "foundry_out_directory"
+            **kwargs: optional arguments. Used: "foundry_ignore_compile", "foundry_out_directory",
+                "foundry_build_info_directory", "foundry_deny"
 
         """
 
@@ -59,11 +83,20 @@ class Foundry(AbstractPlatform):
                 "--ignore-compile used, if something goes wrong, consider removing the ignore compile flag"
             )
         else:
+            deny_level = kwargs.get("foundry_deny")
+            if deny_level is None:
+                forge_version = _get_forge_version()
+                if forge_version and forge_version >= (1, 4, 0):
+                    deny_level = "never"
+
             compilation_command = [
                 "forge",
                 "build",
                 "--build-info",
             ]
+
+            if deny_level:
+                compilation_command.extend(["--deny", deny_level])
 
             targeted_build = not self._project_root.samefile(self._target)
             if targeted_build:
@@ -92,11 +125,14 @@ class Foundry(AbstractPlatform):
         out_directory_config = kwargs.get("foundry_out_directory", None)
         out_directory = out_directory_config if out_directory_config else out_directory_detected
 
-        build_directory = Path(
-            self._project_root,
-            out_directory,
-            "build-info",
-        )
+        # Determine build-info directory: CLI override > forge config > default
+        build_info_override = kwargs.get("foundry_build_info_directory", None)
+        if build_info_override:
+            build_directory = Path(self._project_root, build_info_override)
+        elif foundry_config and foundry_config.build_info_path:
+            build_directory = Path(self._project_root, foundry_config.build_info_path)
+        else:
+            build_directory = Path(self._project_root, out_directory, "build-info")
 
         hardhat_like_parsing(
             crytic_compile, str(self._target), build_directory, str(self._project_root)
@@ -199,6 +235,7 @@ class Foundry(AbstractPlatform):
         result.libs_path = json_config.get("libs")
         result.scripts_path = json_config.get("script")
         result.out_path = json_config.get("out")
+        result.build_info_path = json_config.get("build_info_path")
 
         return result
 
