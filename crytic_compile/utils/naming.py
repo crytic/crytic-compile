@@ -2,14 +2,14 @@
 Module handling the file naming operation (relative -> absolute, etc)
 """
 
-import re
-
 import logging
 import os.path
 import platform
+import re
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Union, Callable, Optional
+from typing import TYPE_CHECKING
 
 from crytic_compile.platform.exceptions import InvalidCompilation
 
@@ -63,7 +63,7 @@ def extract_filename(name: str) -> str:
     Returns:
         str: extracted filename
     """
-    if not ":" in name:
+    if ":" not in name:
         return name
     return name[: name.rfind(":")]
 
@@ -123,12 +123,11 @@ def _verify_filename_existence(filename: Path, cwd: Path) -> Path:
     return filename
 
 
-# pylint: disable=too-many-branches
 def convert_filename(
-    used_filename: Union[str, Path],
+    used_filename: str | Path,
     relative_to_short: Callable[[Path], Path],
     crytic_compile: "CryticCompile",
-    working_dir: Optional[Union[str, Path]] = None,
+    working_dir: str | Path | None = None,
 ) -> Filename:
     """Convert a filename to CryticCompile Filename object.
     The used_filename can be absolute, relative, or missing node_modules/contracts directory

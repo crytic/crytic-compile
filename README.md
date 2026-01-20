@@ -35,7 +35,13 @@ The plugin is used in Trail of Bits tools, including:
 ## Installation
 
 ```shell
-pip3 install crytic-compile
+pip install crytic-compile
+```
+
+Or with [uv](https://docs.astral.sh/uv/):
+
+```shell
+uv pip install crytic-compile
 ```
 
 ## Usage

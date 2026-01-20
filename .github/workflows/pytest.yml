@@ -1,47 +1,44 @@
 ---
 name: Pytest
 
-defaults:
-  run:
-    # To load bashrc
-    shell: bash -ieo pipefail {0}
-
 on:
   push:
     branches:
-      - main
+      - master
       - dev
   pull_request:
-    branches: [main, dev]
-  schedule:
-    # run CI every day even if no PRs/merges occur
-    - cron: '0 12 * * *'
+    branches: [master, dev]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.10", "3.14"]
 
     steps:
-      - uses: actions/checkout@v6
-      - name: Set up Python 3.8
-        uses: actions/setup-python@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
-          python-version: 3.8
-          cache: "pip"
-          cache-dependency-path: setup.py
-
+          persist-credentials: false
+      - name: Set up Python ${{ matrix.python }}
+        uses: astral-sh/setup-uv@f06b870e0a91d23284a3013acc55e6f88ab4b904  # v7
+        with:
+          python-version: ${{ matrix.python }}
 
       - name: Install dependencies
         run: |
-            pip install ".[test]"
-            solc-select use latest --always-install
+          uv sync --extra test
+          uv run solc-select use latest --always-install
 
       - name: Run Tests
         env:
           ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
-        run: |
-          pytest tests
+        run: uv run pytest tests

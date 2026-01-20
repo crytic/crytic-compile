@@ -1,13 +1,15 @@
 """
 This is the Slither cli script
 """
+
 import argparse
-from importlib.metadata import version
 import json
 import logging
 import os
 import sys
-from typing import TYPE_CHECKING, Any, Optional
+from collections.abc import Sequence
+from importlib.metadata import version
+from typing import TYPE_CHECKING, Any
 
 from crytic_compile.crytic_compile import compile_all, get_platforms
 from crytic_compile.cryticparser import DEFAULTS_FLAG_IN_CONFIG, cryticparser
@@ -146,7 +148,7 @@ see https://github.com/crytic/crytic-compile/wiki""",
     return args
 
 
-class ShowPlatforms(argparse.Action):  # pylint: disable=too-few-public-methods
+class ShowPlatforms(argparse.Action):
     """
     This class is used to print the different platforms supported to the log
     See --supported-platforms
@@ -155,17 +157,17 @@ class ShowPlatforms(argparse.Action):  # pylint: disable=too-few-public-methods
     def __call__(
         self,
         parser: argparse.ArgumentParser,
-        args: Any,
-        values: Any,
-        option_string: Optional[str] = None,
+        namespace: argparse.Namespace,
+        values: str | Sequence[Any] | None,
+        option_string: str | None = None,
     ) -> None:
         """Action performed
 
         Args:
             parser (argparse.ArgumentParser): argument parser
-            args (Any):  not used
-            values (Any): not used
-            option_string (Optional[str], optional): not used. Defaults to None.
+            namespace (argparse.Namespace): not used
+            values (str | Sequence[Any] | None): not used
+            option_string (str | None): not used. Defaults to None.
         """
         platforms = get_platforms()
         LOGGER.info("\n" + "\n".join([f"- {x.NAME}: {x.PROJECT_URL}" for x in platforms]))

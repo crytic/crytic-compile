@@ -10,7 +10,7 @@ import shutil
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Optional
+from typing import TYPE_CHECKING
 
 from crytic_compile.compilation_unit import CompilationUnit
 from crytic_compile.compiler.compiler import CompilerVersion
@@ -37,7 +37,6 @@ class Waffle(AbstractPlatform):
     PROJECT_URL = "https://github.com/EthWorks/Waffle"
     TYPE = Type.WAFFLE
 
-    # pylint: disable=too-many-locals,too-many-branches,too-many-statements
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str) -> None:
         """Compile the project and populate the CryticCompile object
 
@@ -62,7 +61,7 @@ class Waffle(AbstractPlatform):
         # Default behaviour (without any config_file)
         build_directory = os.path.join("build")
         compiler = "native"
-        config: Dict = {}
+        config: dict = {}
 
         config_file = kwargs.get("waffle_config_file", "waffle.json")
 
@@ -113,8 +112,8 @@ class Waffle(AbstractPlatform):
 
         # Set the config as it should be
         if "compilerOptions" in config:
-            curr_config: Dict = config["compilerOptions"]
-            curr_needed_config: Dict = needed_config["compilerOptions"]
+            curr_config: dict = config["compilerOptions"]
+            curr_needed_config: dict = needed_config["compilerOptions"]
             if "outputSelection" in curr_config:
                 curr_config = curr_config["outputSelection"]
                 curr_needed_config = curr_needed_config["outputSelection"]
@@ -164,7 +163,6 @@ class Waffle(AbstractPlatform):
                         if stderr:
                             LOGGER.error(stderr.decode(errors="backslashreplace"))
                 except OSError as error:
-                    # pylint: disable=raise-missing-from
                     raise InvalidCompilation(error)
 
         if not os.path.isdir(os.path.join(target, build_directory)):
@@ -261,7 +259,7 @@ class Waffle(AbstractPlatform):
         return False
 
     @staticmethod
-    def config(working_dir: str) -> Optional[PlatformConfig]:
+    def config(working_dir: str) -> PlatformConfig | None:
         """Return configuration data that should be passed to solc, such as remappings.
 
         Args:
@@ -287,7 +285,7 @@ class Waffle(AbstractPlatform):
         self._cached_dependencies[path] = ret
         return ret
 
-    def _guessed_tests(self) -> List[str]:
+    def _guessed_tests(self) -> list[str]:
         """Guess the potential unit tests commands
 
         Returns:
@@ -296,7 +294,7 @@ class Waffle(AbstractPlatform):
         return ["npx mocha"]
 
 
-def _load_config(config_file: str) -> Dict:
+def _load_config(config_file: str) -> dict:
     """Load the config file
 
     Args:
@@ -310,7 +308,6 @@ def _load_config(config_file: str) -> Dict:
     """
     with open(
         config_file,
-        "r",
         encoding="utf8",
     ) as file_desc:
         content = file_desc.read()
@@ -320,7 +317,7 @@ def _load_config(config_file: str) -> Dict:
     return json.loads(content)
 
 
-def _get_version(compiler: str, cwd: str, config: Optional[Dict] = None) -> str:
+def _get_version(compiler: str, cwd: str, config: dict | None = None) -> str:
     """Return the solidity version used
 
     Args:
@@ -358,7 +355,6 @@ def _get_version(compiler: str, cwd: str, config: Optional[Dict] = None) -> str:
                     if "Version" in line:
                         version = re.findall(r"\d+\.\d+\.\d+", line)[0]
         except OSError as error:
-            # pylint: disable=raise-missing-from
             raise InvalidCompilation(error)
 
     elif compiler in ["solc-js"]:
@@ -375,7 +371,6 @@ def _get_version(compiler: str, cwd: str, config: Optional[Dict] = None) -> str:
                 stdout_txt = stdout_bytes.decode()  # convert bytestrings to unicode strings
                 version = re.findall(r"\d+\.\d+\.\d+", stdout_txt)[0]
         except OSError as error:
-            # pylint: disable=raise-missing-from
             raise InvalidCompilation(error)
 
     else:

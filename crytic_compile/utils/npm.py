@@ -1,20 +1,21 @@
 """
 Module handling NPM related features
 """
+
 import json
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, Union, Dict
+from typing import TYPE_CHECKING
 
 # Cycle dependency
 if TYPE_CHECKING:
     from crytic_compile.platform.solc_standard_json import SolcStandardJson
 
 
-def get_package_name(target_txt: Union[str, "SolcStandardJson"]) -> Optional[str]:
+def get_package_name(target_txt: "str | SolcStandardJson") -> str | None:
     """Return the npm package's name
 
     Args:
-        target_txt (Union[str,SolcStandardJson): path to the target
+        target_txt (str | SolcStandardJson): path to the target
 
     Returns:
         Optional[str]: npm package name
@@ -30,9 +31,9 @@ def get_package_name(target_txt: Union[str, "SolcStandardJson"]) -> Optional[str
         if target.is_dir():
             package = Path(target, "package.json")
             if package.exists():
-                with open(package, "r", encoding="utf8") as file_desc:
+                with open(package, encoding="utf8") as file_desc:
                     try:
-                        package_dict: Dict[str, str] = json.load(file_desc)
+                        package_dict: dict[str, str] = json.load(file_desc)
                         return package_dict.get("name", None)
                     except json.JSONDecodeError:
                         return None

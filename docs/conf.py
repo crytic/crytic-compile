@@ -13,6 +13,7 @@ Config file for docstring
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
+import importlib.util
 import os
 import sys
 
@@ -36,13 +37,8 @@ release = "0.2.0"
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = ["sphinx.ext.autodoc", "sphinx.ext.coverage", "sphinx.ext.napoleon"]
-try:
-    # pylint: disable=unused-import
-    import sphinxcontrib.spelling
-
+if importlib.util.find_spec("sphinxcontrib.spelling"):
     extensions += ["sphinxcontrib.spelling"]
-except ImportError:
-    pass
 
 
 # Add any paths that contain templates here, relative to this directory.

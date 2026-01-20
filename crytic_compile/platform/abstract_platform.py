@@ -3,9 +3,10 @@ Abstract Platform
 
 This gives the skeleton for any platform supported by crytic-compile
 """
+
 import abc
-from typing import TYPE_CHECKING, List, Dict, Optional
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 from crytic_compile.platform import Type
 from crytic_compile.utils.unit_tests import guess_tests
@@ -19,11 +20,9 @@ class IncorrectPlatformInitialization(Exception):
     Exception raises if a platform was not properly defined
     """
 
-    # pylint: disable=unnecessary-pass
     pass
 
 
-# pylint: disable=too-many-instance-attributes
 @dataclass
 class PlatformConfig:
     """
@@ -31,16 +30,16 @@ class PlatformConfig:
     """
 
     offline: bool = False
-    remappings: Optional[str] = None
-    solc_version: Optional[str] = None
+    remappings: str | None = None
+    solc_version: str | None = None
     optimizer: bool = False
-    optimizer_runs: Optional[int] = None
+    optimizer_runs: int | None = None
     via_ir: bool = False
-    allow_paths: Optional[str] = None
-    evm_version: Optional[str] = None
+    allow_paths: str | None = None
+    evm_version: str | None = None
     src_path: str = "src"
     tests_path: str = "test"
-    libs_path: List[str] = field(default_factory=lambda: ["lib"])
+    libs_path: list[str] = field(default_factory=lambda: ["lib"])
     scripts_path: str = "script"
     out_path: str = "out"
 
@@ -82,7 +81,7 @@ class AbstractPlatform(metaclass=abc.ABCMeta):
             )
 
         self._target: str = target
-        self._cached_dependencies: Dict[str, bool] = {}
+        self._cached_dependencies: dict[str, bool] = {}
 
     # region Properties.
     ###################################################################################
@@ -178,7 +177,7 @@ class AbstractPlatform(metaclass=abc.ABCMeta):
         return False
 
     @staticmethod
-    def config(working_dir: str) -> Optional[PlatformConfig]:  # pylint: disable=unused-argument
+    def config(working_dir: str) -> PlatformConfig | None:
         """Return configuration data that should be passed to solc, such as version, remappings ecc.
 
         Args:
@@ -193,7 +192,7 @@ class AbstractPlatform(metaclass=abc.ABCMeta):
     # guessed_tests will call the generic guess_tests and appends to the list
     # platforms-dependent tests
     @abc.abstractmethod
-    def _guessed_tests(self) -> List[str]:
+    def _guessed_tests(self) -> list[str]:
         """Guess the potential unit tests commands
 
         Returns:
@@ -201,7 +200,7 @@ class AbstractPlatform(metaclass=abc.ABCMeta):
         """
         return []
 
-    def guessed_tests(self) -> List[str]:
+    def guessed_tests(self) -> list[str]:
         """Guess the potential unit tests commands
 
         Returns:

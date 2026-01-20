@@ -10,7 +10,7 @@ import re
 import shutil
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional, Any
+from typing import TYPE_CHECKING, Any
 
 from crytic_compile.compilation_unit import CompilationUnit
 from crytic_compile.compiler.compiler import CompilerVersion
@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger("CryticCompile")
 
 
-def _run_etherlime(target: str, npx_disable: bool, compile_arguments: Optional[str]) -> None:
+def _run_etherlime(target: str, npx_disable: bool, compile_arguments: str | None) -> None:
     """Run etherlime
 
     Args:
@@ -66,7 +66,6 @@ def _run_etherlime(target: str, npx_disable: bool, compile_arguments: Optional[s
             if stderr:
                 LOGGER.error(stderr)
     except OSError as error:
-        # pylint: disable=raise-missing-from
         raise InvalidCompilation(error)
 
 
@@ -79,7 +78,6 @@ class Etherlime(AbstractPlatform):
     PROJECT_URL = "https://github.com/LimeChain/etherlime"
     TYPE = Type.ETHERLIME
 
-    # pylint: disable=too-many-locals
     def compile(self, crytic_compile: "CryticCompile", **kwargs: Any) -> None:
         """Run the compilation
 
@@ -96,7 +94,7 @@ class Etherlime(AbstractPlatform):
         )
 
         build_directory = "build"
-        compile_arguments: Optional[str] = kwargs.get("etherlime_compile_arguments", None)
+        compile_arguments: str | None = kwargs.get("etherlime_compile_arguments", None)
         npx_disable: bool = kwargs.get("npx_disable", False)
 
         if not etherlime_ignore_compile:
@@ -207,7 +205,7 @@ class Etherlime(AbstractPlatform):
         self._cached_dependencies[path] = ret
         return ret
 
-    def _guessed_tests(self) -> List[str]:
+    def _guessed_tests(self) -> list[str]:
         """Guess the potential unit tests commands
 
         Returns:
@@ -216,7 +214,7 @@ class Etherlime(AbstractPlatform):
         return ["etherlime test"]
 
 
-def _is_optimized(compile_arguments: Optional[str]) -> bool:
+def _is_optimized(compile_arguments: str | None) -> bool:
     """Check if the optimization is enabled
 
     Args:

@@ -1,34 +1,53 @@
-[tool.black]
-target-version = ["py38"]
+[build-system]
+requires = ["uv_build>=0.6,<0.7"]
+build-backend = "uv_build"
+
+[project]
+name = "crytic-compile"
+version = "0.3.11"
+description = "Util to facilitate smart contracts compilation."
+readme = "README.md"
+license = "AGPL-3.0"
+requires-python = ">=3.10,!=3.12.0"
+authors = [{ name = "Trail of Bits" }]
+classifiers = [
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+]
+dependencies = [
+    "pycryptodome>=3.4.6",
+    "cbor2",
+    "solc-select>=1.0.4",
+]
+
+[project.urls]
+Homepage = "https://github.com/crytic/crytic-compile"
+
+[project.optional-dependencies]
+test = ["pytest", "pytest-cov"]
+lint = ["ruff>=0.8", "ty"]
+doc = ["pdoc"]
+dev = ["crytic-compile[test,lint,doc]"]
+
+[project.scripts]
+crytic-compile = "crytic_compile.__main__:main"
+
+[tool.uv.build-backend]
+module-root = ""
+
+[tool.ruff]
 line-length = 100
-[tool.pylint.messages_control]
-disable = """
-unnecessary-lambda,
-bad-continuation,
-cyclic-import,
-line-too-long,
-invalid-name,
-fixme,
-too-many-return-statements,
-too-many-ancestors,
-logging-fstring-interpolation,
-logging-not-lazy,
-duplicate-code,
-import-error,
-unsubscriptable-object
-"""
-[tool.mypy]
-warn_incomplete_stub = true
-ignore_missing_imports = true
-disallow_untyped_calls = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-check_untyped_defs = true
-disallow_untyped_decorators = true
-warn_redundant_casts = true
-warn_no_return = true
-warn_unreachable = true
+target-version = "py310"
 
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP"]
+ignore = ["E501"]
 
+[tool.ruff.format]
+quote-style = "double"
 
-
+[tool.ty.environment]
+python-version = "3.10"

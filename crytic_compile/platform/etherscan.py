@@ -9,7 +9,7 @@ import re
 import urllib.request
 from json.decoder import JSONDecodeError
 from pathlib import Path, PurePosixPath
-from typing import TYPE_CHECKING, Dict, List, Union, Tuple, Optional
+from typing import TYPE_CHECKING
 
 from crytic_compile.compilation_unit import CompilationUnit
 from crytic_compile.compiler.compiler import CompilerVersion
@@ -39,12 +39,12 @@ ETHERSCAN_BASE_V2 = (
 ETHERSCAN_BASE_BYTECODE = "https://%s/address/%s#code"
 
 # v1 style scanners
-SUPPORTED_NETWORK_V1: Dict[str, Tuple[str, str]] = {
+SUPPORTED_NETWORK_V1: dict[str, tuple[str, str]] = {
     # None at this time. External tracer instances not operated by Etherscan would be here
 }
 
 # v2 style scanners
-SUPPORTED_NETWORK_V2: Dict[str, Tuple[str, str]] = {
+SUPPORTED_NETWORK_V2: dict[str, tuple[str, str]] = {
     # Key, (chainid, perfix_bytecode)
     "mainnet": ("1", "etherscan.io"),
     "sepolia": ("11155111", "sepolia.etherscan.io"),
@@ -181,7 +181,7 @@ def _handle_bytecode(crytic_compile: "CryticCompile", target: str, result_b: byt
 
 
 def _handle_single_file(
-    source_code: str, addr: str, prefix: Optional[str], contract_name: str, export_dir: str
+    source_code: str, addr: str, prefix: str | None, contract_name: str, export_dir: str
 ) -> str:
     """Handle a result with a single file
 
@@ -207,8 +207,8 @@ def _handle_single_file(
 
 
 def _handle_multiple_files(
-    dict_source_code: Dict, addr: str, prefix: Optional[str], contract_name: str, export_dir: str
-) -> Tuple[List[str], str, Optional[List[str]]]:
+    dict_source_code: dict, addr: str, prefix: str | None, contract_name: str, export_dir: str
+) -> tuple[list[str], str, list[str] | None]:
     """Handle a result with a multiple files. Generate multiple Solidity files
 
     Args:
@@ -236,7 +236,7 @@ def _handle_multiple_files(
         # or etherscan might return an object with contract names as keys
         source_codes = dict_source_code
 
-    filtered_paths: List[str] = []
+    filtered_paths: list[str] = []
     for filename, source_code in source_codes.items():
         path_filename = PurePosixPath(filename)
         # Only keep solidity files
@@ -262,7 +262,7 @@ def _handle_multiple_files(
 
         allowed_path = os.path.abspath(directory)
         if os.path.commonpath((allowed_path, os.path.abspath(path_filename_disk))) != allowed_path:
-            raise IOError(
+            raise OSError(
                 f"Path '{path_filename_disk}' is outside of the allowed directory: {allowed_path}"
             )
         if not os.path.exists(path_filename_disk.parent):
@@ -284,7 +284,6 @@ class Etherscan(AbstractPlatform):
     PROJECT_URL = "https://etherscan.io/"
     TYPE = Type.ETHERSCAN
 
-    # pylint: disable=too-many-locals,too-many-branches,too-many-statements
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str) -> None:
         """Run the compilation
 
@@ -342,7 +341,7 @@ class Etherscan(AbstractPlatform):
         #    etherscan_bytecode_url += f"&apikey={avax_api_key}"
 
         source_code: str = ""
-        result: Dict[str, Union[bool, str, int]] = {}
+        result: dict[str, bool | str | int] = {}
         contract_name: str = ""
 
         if not only_bytecode:
@@ -417,7 +416,7 @@ class Etherscan(AbstractPlatform):
         )[0]
 
         # etherscan can report "default" which is not a valid EVM version
-        evm_version: Optional[str] = None
+        evm_version: str | None = None
         if "EVMVersion" in result:
             assert isinstance(result["EVMVersion"], str)
             evm_version = result["EVMVersion"] if result["EVMVersion"] != "Default" else None
@@ -428,10 +427,10 @@ class Etherscan(AbstractPlatform):
         if optimization_used:
             optimize_runs = int(result["Runs"])
 
-        working_dir: Optional[str] = None
-        remappings: Optional[List[str]] = None
+        working_dir: str | None = None
+        remappings: list[str] | None = None
 
-        dict_source_code: Optional[Dict] = None
+        dict_source_code: dict | None = None
         try:
             # etherscan might return an object with two curly braces, {{ content }}
             dict_source_code = json.loads(source_code[1:-1])
@@ -453,7 +452,7 @@ class Etherscan(AbstractPlatform):
                 ]
 
         # viaIR is not exposed on the top level JSON offered by etherscan, so we need to inspect the settings
-        via_ir_enabled: Optional[bool] = None
+        via_ir_enabled: bool | None = None
         if isinstance(dict_source_code, dict):
             via_ir_enabled = dict_source_code.get("settings", {}).get("viaIR", None)
 
@@ -471,7 +470,7 @@ class Etherscan(AbstractPlatform):
             assert "Implementation" in result
             implementation = str(result["Implementation"])
             if target.startswith(tuple(SUPPORTED_NETWORK)):
-                implementation = f"{target[:target.find(':')]}:{implementation}"
+                implementation = f"{target[: target.find(':')]}:{implementation}"
             compilation_unit.implementation_address = implementation
 
         solc_standard_json.standalone_compile(
@@ -526,18 +525,18 @@ class Etherscan(AbstractPlatform):
             target = target[target.find(":") + 1 :]
         return bool(re.match(r"^\s*0x[a-zA-Z0-9]{40}\s*$", target))
 
-    def is_dependency(self, _path: str) -> bool:
+    def is_dependency(self, path: str) -> bool:
         """Check if the path is a dependency
 
         Args:
-            _path (str): path to the target
+            path (str): path to the target
 
         Returns:
             bool: True if the target is a dependency
         """
         return False
 
-    def _guessed_tests(self) -> List[str]:
+    def _guessed_tests(self) -> list[str]:
         """Guess the potential unit tests commands
 
         Returns:
@@ -560,9 +559,7 @@ def _convert_version(version: str) -> str:
     return version[1:]
 
 
-def _sanitize_remappings(
-    remappings: Optional[List[str]], allowed_directory: str
-) -> Optional[List[str]]:
+def _sanitize_remappings(remappings: list[str] | None, allowed_directory: str) -> list[str] | None:
     """Sanitize a list of remappings
 
     Args:
@@ -578,7 +575,7 @@ def _sanitize_remappings(
 
     allowed_path = os.path.abspath(allowed_directory)
 
-    remappings_clean: List[str] = []
+    remappings_clean: list[str] = []
     for r in remappings:
         split = r.split("=", 2)
         if len(split) != 2:
