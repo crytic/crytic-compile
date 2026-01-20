@@ -608,9 +608,16 @@ class CryticCompile:
             )
 
         if not platform:
-            platform = next(
-                (p(target) for p in platforms if p.is_supported(target, **kwargs)), None
-            )
+            matching_platforms = [p for p in platforms if p.is_supported(target, **kwargs)]
+            if len(matching_platforms) > 1:
+                names = [p.NAME for p in matching_platforms]
+                LOGGER.warning(
+                    "Multiple frameworks detected: %s. Using %s. "
+                    "Use --compile-force-framework to override.",
+                    names,
+                    matching_platforms[0].NAME,
+                )
+            platform = matching_platforms[0](target) if matching_platforms else None
 
         if not platform:
             platform = Solc(target)
