@@ -3,6 +3,70 @@ Natspec module https://solidity.readthedocs.io/en/latest/natspec-format.html
 """
 
 
+class DevStateVariable:
+    """
+    Model the dev state variable
+    """
+
+    def __init__(self, variable: dict) -> None:
+        """Init the object
+
+        Args:
+            method (Dict): Method infos (details, params, returns, custom:*)
+        """
+        self._details: str | None = variable.get("details", None)
+        if "returns" in variable:
+            self._returns: dict[str, str] = variable["returns"]
+        elif "return" in variable:
+            self._returns: dict[str, str] = {"_0": variable["return"]}
+        else:
+            self._returns: dict[str, str] = {}
+        # Extract custom fields (keys starting with "custom:")
+        self._custom: dict[str, str] = {
+            k: v for k, v in variable.items() if k.startswith("custom:")
+        }
+
+    @property
+    def details(self) -> str | None:
+        """Return the state variable details
+
+        Returns:
+            Optional[str]: state variable details
+        """
+        return self._details
+
+    @property
+    def variable_returns(self) -> dict[str, str]:
+        """Return the state variable returns
+
+        Returns:
+            dict[str, str]: state variable returns
+        """
+        return self._returns
+
+    @property
+    def custom(self) -> dict[str, str]:
+        """Return the state variable custom fields
+
+        Returns:
+            Dict[str, str]: custom field name => value (e.g. "custom:security" => "value")
+        """
+        return self._custom
+
+    def export(self) -> dict:
+        """Export to a python dict
+
+        Returns:
+            Dict: Exported dev state variable
+        """
+        result = {
+            "details": self.details,
+            "returns": self.variable_returns,
+            "custom": self.custom,
+        }
+        return result
+
+
 class UserMethod:
     """
     Model the user method
@@ -47,12 +111,17 @@ class DevMethod:
         """Init the object
 
         Args:
-            method (Dict): Method infos (author, details, params, return, custom:*)
+            method (Dict): Method infos (author, details, params, returns, custom:*)
         """
         self._author: str | None = method.get("author", None)
         self._details: str | None = method.get("details", None)
         self._params: dict[str, str] = method.get("params", {})
-        self._return: str | None = method.get("return", None)
+        if "returns" in method:
+            self._returns: dict[str, str] = method["returns"]
+        elif "return" in method:
+            self._returns: dict[str, str] = {"_0": method["return"]}
+        else:
+            self._returns: dict[str, str] = {}
         # Extract custom fields (keys starting with "custom:")
         self._custom: dict[str, str] = {k: v for k, v in method.items() if k.startswith("custom:")}
 
@@ -75,13 +144,13 @@ class DevMethod:
         return self._details
 
     @property
-    def method_return(self) -> str | None:
-        """Return the method return
+    def method_returns(self) -> dict[str, str]:
+        """Return the method returns
 
         Returns:
-            Optional[str]: method return
+            dict[str, str]: method returns
         """
-        return self._return
+        return self._returns
 
     @property
     def params(self) -> dict[str, str]:
@@ -111,7 +180,7 @@ class DevMethod:
             "author": self.author,
             "details": self.details,
             "params": self.params,
-            "return": self.method_return,
+            "returns": self.method_returns,
         }
         # Include custom fields if present
         result.update(self.custom)
@@ -180,6 +249,9 @@ class DevDoc:
         self._methods: dict[str, DevMethod] = {
             k: DevMethod(item) for k, item in devdoc.get("methods", {}).items()
         }
+        self._state_variables: dict[str, DevStateVariable] = {
+            k: DevStateVariable(item) for k, item in devdoc.get("stateVariables", {}).items()
+        }
         self._title: str | None = devdoc.get("title", None)
         # Extract contract-level custom fields (keys starting with "custom:")
         self._custom: dict[str, str] = {k: v for k, v in devdoc.items() if k.startswith("custom:")}
@@ -212,6 +284,15 @@ class DevDoc:
         return self._methods
 
     @property
+    def state_variables(self) -> dict[str, DevStateVariable]:
+        """Return the dev state variables
+
+        Returns:
+            Dict[str, DevStateVariable]: state_variable_name => DevStateVariable
+        """
+        return self._state_variables
+
+    @property
     def title(self) -> str | None:
         """Return the dev title
 
@@ -240,6 +321,7 @@ class DevDoc:
             "author": self.author,
             "details": self.details,
             "title": self.title,
+            "state_variables": self.state_variables,
         }
         # Include custom fields if present
         result.update(self.custom)
