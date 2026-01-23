@@ -6,7 +6,7 @@ DIR=$(mktemp -d)
 cp -r tests/hardhat-multi-file "$DIR"
 cd "$DIR/hardhat-multi-file" || exit 255
 npm install
-crytic-compile --compile-remove-metadata --export-formats solc,truffle .
+crytic-compile --compile-remove-metadata --export-format solc .
 
 cd - || exit 255
 node tests/process_combined_solc.js "$DIR/hardhat-multi-file/crytic-export/combined_solc.json" "$DIR"
