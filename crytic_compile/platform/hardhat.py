@@ -97,8 +97,7 @@ def hardhat_like_parsing(
             if "sources" in targets_json:
                 # Sort sources by ID to ensure correct processing order
                 sources_with_ids = [
-                    (path, info, info.get("id"))
-                    for path, info in targets_json["sources"].items()
+                    (path, info, info.get("id")) for path, info in targets_json["sources"].items()
                 ]
                 sources_with_ids.sort(key=lambda x: x[2] if x[2] is not None else float("inf"))
 
