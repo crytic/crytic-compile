@@ -61,6 +61,13 @@ class Foundry(AbstractPlatform):
         # if we are initializing this, it is indeed a foundry project and thus has a root path
         assert project_root is not None
         self._project_root: Path = project_root
+        self._config: PlatformConfig | None = None
+
+    def _get_config(self) -> PlatformConfig | None:
+        """Get cached platform config, loading it if needed."""
+        if self._config is None:
+            self._config = self.config(self._project_root)
+        return self._config
 
     def compile(self, crytic_compile: "CryticCompile", **kwargs: str) -> None:
         """Compile
@@ -106,7 +113,7 @@ class Foundry(AbstractPlatform):
 
             compile_all = kwargs.get("foundry_compile_all", False)
 
-            foundry_config = self.config(self._project_root)
+            foundry_config = self._get_config()
 
             if not targeted_build and not compile_all and foundry_config:
                 compilation_command += [
@@ -251,7 +258,8 @@ class Foundry(AbstractPlatform):
         if path in self._cached_dependencies:
             return self._cached_dependencies[path]
         path_parts = Path(path).parts
-        libs_path = self.config(self._project_root).libs_path or []
+        config = self._get_config()
+        libs_path = (config.libs_path if config else None) or []
         ret = (
             "lib" in path_parts
             or "node_modules" in path_parts
