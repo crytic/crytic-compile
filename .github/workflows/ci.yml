@@ -83,12 +83,12 @@ jobs:
         uses: cachix/install-nix-action@4e002c8ec80594ecd40e759629461e26c8abed15  # v31
       - name: Set up cachix
         if: matrix.type == 'dapp'
-        uses: cachix/cachix-action@0fc020193b5a1fa3ac4575aa3a7d3aa6a35435ad  # v16
+        uses: cachix/cachix-action@3ba601ff5bbb07c7220846facfa2cd81eeee15a1  # v16
         with:
           name: dapp
       - name: Install Foundry
         if: matrix.type == 'foundry'
-        uses: foundry-rs/foundry-toolchain@8b0419c685ef46cb79ec93fbdc131174afceb730  # v1
+        uses: foundry-rs/foundry-toolchain@8789b3e21e6c11b2697f5eb56eddae542f746c10  # v1
       - name: Run Tests
         env:
           TEST_TYPE: ${{ matrix.type }}
