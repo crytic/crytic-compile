@@ -76,7 +76,8 @@ def export_to_solc_from_compilation_unit(
 
     # Create additional informational objects.
     sources = {filename: {"AST": ast} for (filename, ast) in compilation_unit.asts.items()}
-    source_list = [x.absolute for x in compilation_unit.filenames]
+    # Use filenames_for_export to ensure correct source map index ordering
+    source_list = [x.absolute for x in compilation_unit.filenames_for_export]
 
     # Create our root object to contain the contracts and other information.
     output = {"sources": sources, "sourceList": source_list, "contracts": contracts}
