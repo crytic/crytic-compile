@@ -82,9 +82,7 @@ def _normalize_abi_parameter(parameter: dict[str, Any]) -> dict[str, Any]:
     components = normalized_parameter.get("components")
     if isinstance(components, list):
         normalized_parameter["components"] = [
-            _normalize_abi_parameter(component)
-            if isinstance(component, dict)
-            else component
+            _normalize_abi_parameter(component) if isinstance(component, dict) else component
             for component in components
         ]
 
