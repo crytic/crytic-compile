@@ -32,6 +32,105 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger("CryticCompile")
 
 
+def _split_abi_array_suffixes(abi_type: str) -> tuple[str, str]:
+    """Split an ABI type into its base type and array suffixes."""
+    if "[" not in abi_type:
+        return abi_type, ""
+
+    # ABI array suffixes are always trailing segments like [] or [3].
+    start = abi_type.find("[")
+    if start == -1:
+        return abi_type, ""
+    return abi_type[:start], abi_type[start:]
+
+
+def _normalize_abi_type(abi_type: str, internal_type: str | None) -> str:
+    """Normalize non-canonical ABI types to canonical Solidity ABI types.
+
+    Solc build-info may emit user-defined names in `type` for some library
+    signatures (e.g., enum and interface/contract types). Downstream ABI
+    parsers expect canonical ABI types (`uint8`, `address`, etc.).
+    """
+    if not internal_type:
+        return abi_type
+
+    base_type, array_suffix = _split_abi_array_suffixes(abi_type)
+    stripped_internal_type = internal_type.strip()
+
+    if stripped_internal_type.startswith("contract ") or stripped_internal_type.startswith(
+        "interface "
+    ):
+        return f"address{array_suffix}"
+
+    if stripped_internal_type.startswith("enum "):
+        return f"uint8{array_suffix}"
+
+    return f"{base_type}{array_suffix}"
+
+
+def _normalize_abi_parameter(parameter: dict[str, Any]) -> dict[str, Any]:
+    """Recursively normalize an ABI parameter and any nested tuple components."""
+    normalized_parameter = dict(parameter)
+
+    abi_type = normalized_parameter.get("type")
+    internal_type = normalized_parameter.get("internalType")
+    if isinstance(abi_type, str):
+        normalized_parameter["type"] = _normalize_abi_type(
+            abi_type, internal_type if isinstance(internal_type, str) else None
+        )
+
+    components = normalized_parameter.get("components")
+    if isinstance(components, list):
+        normalized_parameter["components"] = [
+            _normalize_abi_parameter(component)
+            if isinstance(component, dict)
+            else component
+            for component in components
+        ]
+
+    return normalized_parameter
+
+
+def _normalize_abi(abi: Any) -> Any:
+    """Normalize ABI entries while preserving non-standard structures."""
+    if isinstance(abi, str):
+        try:
+            abi = json.loads(abi)
+        except json.JSONDecodeError:
+            return abi
+
+    if not isinstance(abi, list):
+        return abi
+
+    normalized_abi = []
+    for entry in abi:
+        if not isinstance(entry, dict):
+            normalized_abi.append(entry)
+            continue
+
+        normalized_entry = dict(entry)
+        for key in ("inputs", "outputs"):
+            io = normalized_entry.get(key)
+            if isinstance(io, list):
+                normalized_entry[key] = [
+                    _normalize_abi_parameter(parameter)
+                    if isinstance(parameter, dict)
+                    else parameter
+                    for parameter in io
+                ]
+        normalized_abi.append(normalized_entry)
+
+    return normalized_abi
+
+
+def _serialize_abi_for_export(abi: Any) -> str:
+    """Serialize ABI payload in JSON form expected by solc export consumers."""
+    normalized_abi = _normalize_abi(abi)
+    if isinstance(normalized_abi, str):
+        return normalized_abi
+    return json.dumps(normalized_abi)
+
+
 def _build_contract_data(compilation_unit: "CompilationUnit") -> dict:
     contracts = {}
 
@@ -40,10 +139,7 @@ def _build_contract_data(compilation_unit: "CompilationUnit") -> dict:
     for filename, source_unit in compilation_unit.source_units.items():
         for contract_name in source_unit.contracts_names:
             libraries = source_unit.libraries_names_and_patterns(contract_name)
-            abi = str(source_unit.abi(contract_name))
-            abi = abi.replace("'", '"')
-            abi = abi.replace("True", "true")
-            abi = abi.replace("False", "false")
+            abi = _serialize_abi_for_export(source_unit.abi(contract_name))
             exported_name = combine_filename_name(filename.absolute, contract_name)
             contracts[exported_name] = {
                 "srcmap": ";".join(source_unit.srcmap_init(contract_name)),
