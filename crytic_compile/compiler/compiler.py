@@ -18,20 +18,23 @@ class CompilerVersion:
         version: str | None,
         optimized: bool | None,
         optimize_runs: int | None = None,
+        via_ir: bool | None = None,
     ) -> None:
         """
-        Initialize a compier version object
+        Initialize a compiler version object
 
         Args:
             compiler (str): compiler (in most of the case use "solc")
             version (str): compiler version
             optimized (Optional[bool]): true if optimization are enabled
             optimize_runs (Optional[int]): optimize runs number
+            via_ir: (Optional[bool]): true if --via-ir is used
         """
         self.compiler: str = compiler
         self.version: str | None = version
         self.optimized: bool | None = optimized
         self.optimize_runs: int | None = optimize_runs
+        self.via_ir: bool | None = via_ir
 
     def look_for_installed_version(self) -> None:
         """

@@ -45,7 +45,7 @@ class CompilationUnit:
 
         # compiler.compiler
         self._compiler_version: CompilerVersion = CompilerVersion(
-            compiler="N/A", version="N/A", optimized=False
+            compiler="N/A", version="N/A", optimized=False, via_ir=False
         )
 
         # if the compilation unit comes from etherscan-like service and is a proxy,

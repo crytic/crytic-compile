@@ -413,6 +413,20 @@ def is_optimized(solc_arguments: str | None) -> bool:
     return False
 
 
+def is_via_ir(solc_arguments: str | None) -> bool:
+    """Check if --via-ir is used
+
+    Args:
+        solc_arguments (Optional[str]): Solc arguments to check
+
+    Returns:
+        bool: True if --via-ir is used
+    """
+    if solc_arguments:
+        return "--via-ir" in solc_arguments or "--experimental-via-ir" in solc_arguments
+    return False
+
+
 def _build_options(compiler_version: CompilerVersion, force_legacy_json: bool) -> str:
     """
     Build the solc command line options
@@ -491,7 +505,10 @@ def _run_solc(
         raise InvalidCompilation(f"{filename} is not the expected format '.sol'")
 
     compilation_unit.compiler_version = CompilerVersion(
-        compiler="solc", version=get_version(solc, env), optimized=is_optimized(solc_arguments)
+        compiler="solc",
+        version=get_version(solc, env),
+        optimized=is_optimized(solc_arguments),
+        via_ir=is_via_ir(solc_arguments),
     )
 
     compiler_version = compilation_unit.compiler_version

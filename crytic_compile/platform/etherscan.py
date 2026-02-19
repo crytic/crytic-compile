@@ -468,6 +468,7 @@ class Etherscan(AbstractPlatform):
             version=compiler_version,
             optimized=optimization_used,
             optimize_runs=optimize_runs,
+            via_ir=via_ir_enabled if via_ir_enabled else False,
         )
         compilation_unit.compiler_version.look_for_installed_version()
 
