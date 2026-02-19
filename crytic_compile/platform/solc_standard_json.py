@@ -474,7 +474,8 @@ class SolcStandardJson(Solc):
             optimized=is_optimized(solc_arguments)
             or self.to_dict().get("settings", {}).get("optimizer", {}).get("enabled", False),
             optimize_runs=self.to_dict().get("settings", {}).get("optimizer", {}).get("runs", None),
-            via_ir=is_via_ir(solc_arguments),
+            via_ir=is_via_ir(solc_arguments)
+            or self.to_dict().get("settings", {}).get("viaIR", False),
         )
 
         add_optimization(
