@@ -22,6 +22,7 @@ from crytic_compile.platform.explorer_utils import (
     handle_multiple_files,
     handle_single_file,
 )
+from crytic_compile.platform.sourcify import try_compile_from_sourcify
 from crytic_compile.platform.types import Type
 
 if TYPE_CHECKING:
@@ -32,13 +33,13 @@ LOGGER = logging.getLogger("CryticCompile")
 # Blockscout API endpoint — host is the full hostname (no api. subdomain)
 BLOCKSCOUT_BASE = "https://%s/api?module=contract&action=getsourcecode&address=%s"
 
-# Key -> (api_host, bytecode_host)
-SUPPORTED_NETWORK_BLOCKSCOUT: dict[str, tuple[str, str]] = {
-    "flow": ("evm.flowscan.io", "evm.flowscan.io"),
-    "ink": ("explorer.inkonchain.com", "explorer.inkonchain.com"),
-    "metis": ("andromeda-explorer.metis.io", "andromeda-explorer.metis.io"),
-    "plume": ("explorer.plume.org", "explorer.plume.org"),
-    "story": ("www.storyscan.xyz", "www.storyscan.xyz"),
+# Key -> (api_host, bytecode_host, chain_id)
+SUPPORTED_NETWORK_BLOCKSCOUT: dict[str, tuple[str, str, str]] = {
+    "flow": ("evm.flowscan.io", "evm.flowscan.io", "747"),
+    "ink": ("explorer.inkonchain.com", "explorer.inkonchain.com", "57073"),
+    "metis": ("andromeda-explorer.metis.io", "andromeda-explorer.metis.io", "1088"),
+    "plume": ("explorer.plume.org", "explorer.plume.org", "98866"),
+    "story": ("www.storyscan.xyz", "www.storyscan.xyz", "1514"),
 }
 
 
@@ -108,26 +109,34 @@ class Blockscout(AbstractPlatform):
 
         Args:
             crytic_compile: Associated CryticCompile object.
-            **kwargs: optional arguments. Used "solc", "etherscan_only_source_code",
-                "etherscan_only_bytecode", "export_dir".
+            **kwargs: optional arguments. Used "solc", "explorer_only_source_code",
+                "explorer_only_bytecode", "export_dir".
 
         Raises:
             InvalidCompilation: if the explorer returned an error or results could not be parsed.
         """
         target = self._target
         prefix, addr = target.split(":", 1)
-        api_host, bytecode_host = SUPPORTED_NETWORK_BLOCKSCOUT[prefix]
+        api_host, bytecode_host, chain_id = SUPPORTED_NETWORK_BLOCKSCOUT[prefix]
 
         source_url = BLOCKSCOUT_BASE % (api_host, addr)
         bytecode_url = EXPLORER_BASE_BYTECODE % (bytecode_host, addr)
 
-        only_source = kwargs.get("etherscan_only_source_code", False)
-        only_bytecode = kwargs.get("etherscan_only_bytecode", False)
+        only_source = kwargs.get("explorer_only_source_code", False)
+        only_bytecode = kwargs.get("explorer_only_bytecode", False)
 
         export_dir = kwargs.get("export_dir", "crytic-export")
         export_dir = os.path.join(
-            export_dir, kwargs.get("etherscan_export_dir", "etherscan-contracts")
+            export_dir, kwargs.get("explorer_export_dir") or "blockscout-contracts"
         )
+
+        # Try Sourcify first — it carries richer metadata and is preferred when available.
+        if not only_bytecode:
+            base_export = kwargs.get("export_dir", "crytic-export")
+            sourcify_kwargs = {k: v for k, v in kwargs.items() if k != "export_dir"}
+            if try_compile_from_sourcify(crytic_compile, chain_id, addr, base_export, **sourcify_kwargs):
+                LOGGER.info("Compiled %s via Sourcify (chain %s)", addr, chain_id)
+                return
 
         source_code: str = ""
         result: dict[str, Any] = {}
@@ -285,14 +294,12 @@ class Blockscout(AbstractPlatform):
 
         Args:
             target: path/target string.
-            **kwargs: optional arguments. Used "etherscan_ignore".
+            **kwargs: optional arguments. Used "explorer_ignore".
 
         Returns:
             bool: True if the target uses a known Blockscout network prefix.
         """
-        # Blockscout respects the same ignore flag as Etherscan so that a single
-        # flag suppresses all block explorer platforms.
-        if kwargs.get("etherscan_ignore", False):
+        if kwargs.get("explorer_ignore", False):
             return False
         if not target.startswith(tuple(SUPPORTED_NETWORK_BLOCKSCOUT)):
             return False

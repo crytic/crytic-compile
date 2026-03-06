@@ -72,7 +72,7 @@ def init(parser: ArgumentParser) -> None:
     _init_brownie(parser)
     _init_dapp(parser)
     _init_etherlime(parser)
-    _init_etherscan(parser)
+    _init_explorer(parser)
     _init_waffle(parser)
     _init_npx(parser)
     _init_buidler(parser)
@@ -299,30 +299,46 @@ def _init_etherlime(parser: ArgumentParser) -> None:
     )
 
 
-def _init_etherscan(parser: ArgumentParser) -> None:
-    """Init etherscan arguments
+def _init_explorer(parser: ArgumentParser) -> None:
+    """Init block explorer arguments (Etherscan, Blockscout, Sourcify, etc.)
 
     Args:
         parser (ArgumentParser): argparser where the cli flags are added
     """
-    group_etherscan = parser.add_argument_group("Etherscan options")
-    group_etherscan.add_argument(
-        "--etherscan-only-source-code",
+    group = parser.add_argument_group("Block explorer options")
+    group.add_argument(
+        "--explorer-only-source-code",
         help="Only compile if the source code is available.",
         action="store_true",
-        dest="etherscan_only_source_code",
-        default=DEFAULTS_FLAG_IN_CONFIG["etherscan_only_source_code"],
+        dest="explorer_only_source_code",
+        default=DEFAULTS_FLAG_IN_CONFIG["explorer_only_source_code"],
     )
 
-    group_etherscan.add_argument(
-        "--etherscan-only-bytecode",
+    group.add_argument(
+        "--explorer-only-bytecode",
         help="Only looks for bytecode.",
         action="store_true",
-        dest="etherscan_only_bytecode",
-        default=DEFAULTS_FLAG_IN_CONFIG["etherscan_only_bytecode"],
+        dest="explorer_only_bytecode",
+        default=DEFAULTS_FLAG_IN_CONFIG["explorer_only_bytecode"],
     )
 
-    group_etherscan.add_argument(
+    group.add_argument(
+        "--explorer-ignore",
+        help="Ignore block explorer platforms (Etherscan, Blockscout, etc.).",
+        action="store_true",
+        dest="explorer_ignore",
+        default=DEFAULTS_FLAG_IN_CONFIG["explorer_ignore"],
+    )
+
+    group.add_argument(
+        "--explorer-export-directory",
+        help="Directory in which to save contracts fetched from block explorers.",
+        action="store",
+        dest="explorer_export_dir",
+        default=DEFAULTS_FLAG_IN_CONFIG["explorer_export_directory"],
+    )
+
+    group.add_argument(
         "--etherscan-apikey",
         help="Etherscan API key.",
         action="store",
@@ -330,20 +346,12 @@ def _init_etherscan(parser: ArgumentParser) -> None:
         default=DEFAULTS_FLAG_IN_CONFIG["etherscan_api_key"],
     )
 
-    group_etherscan.add_argument(
+    group.add_argument(
         "--avax-apikey",
-        help="Etherscan API key.",
+        help="Avalanche (Snowtrace) API key.",
         action="store",
         dest="avax_api_key",
         default=DEFAULTS_FLAG_IN_CONFIG["etherscan_api_key"],
-    )
-
-    group_etherscan.add_argument(
-        "--etherscan-export-directory",
-        help="Directory in which to save the analyzed contracts.",
-        action="store",
-        dest="etherscan_export_dir",
-        default=DEFAULTS_FLAG_IN_CONFIG["etherscan_export_directory"],
     )
 
 

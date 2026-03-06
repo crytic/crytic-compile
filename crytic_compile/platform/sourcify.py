@@ -233,6 +233,83 @@ def _write_config_file(working_dir: str, compiler_version: str, settings: dict[s
         json.dump(metadata_config, f)
 
 
+def try_compile_from_sourcify(
+    crytic_compile: "CryticCompile", chain_id: str, addr: str, export_dir: str, **kwargs: str
+) -> bool:
+    """Try to compile a contract via Sourcify, returning False if it is not verified there.
+
+    Args:
+        crytic_compile: Associated CryticCompile object.
+        chain_id: Chain ID (decimal string).
+        addr: Contract address.
+        export_dir: Base export directory.
+        **kwargs: Passed through to CompilerVersion (e.g. "solc").
+
+    Returns:
+        bool: True if the contract was found and compiled via Sourcify, False if not verified.
+
+    Raises:
+        InvalidCompilation: If Sourcify returned an unexpected error (not a 404).
+    """
+    try:
+        data = _fetch_sourcify_data(chain_id, addr)
+    except InvalidCompilation:
+        # Contract not on Sourcify, or chain not indexed — fall back to the caller's explorer.
+        return False
+
+    sources = data.get("sources", {})
+    if not sources:
+        return False
+
+    sourcify_export = os.path.join(export_dir, "sourcify-contracts")
+    if not os.path.exists(sourcify_export):
+        os.makedirs(sourcify_export)
+
+    working_dir, filenames = _write_source_files(sources, addr, chain_id, sourcify_export)
+
+    compilation = data.get("compilation", {})
+    compiler_version_str = compilation.get("compilerVersion", "")
+    version_match = re.search(r"(\d+\.\d+\.\d+)", compiler_version_str)
+    if not version_match:
+        raise InvalidCompilation(f"Could not parse compiler version from: {compiler_version_str}")
+    compiler_version = version_match.group(1)
+
+    settings = compilation.get("compilerSettings", {})
+    optimizer = settings.get("optimizer", {})
+    optimization_used = optimizer.get("enabled", False)
+    remappings = sanitize_remappings(settings.get("remappings", []), working_dir) or None
+
+    compilation_unit = CompilationUnit(crytic_compile, compilation.get("name", "Contract"))
+    compilation_unit.compiler_version = CompilerVersion(
+        compiler=kwargs.get("solc", "solc"),
+        version=compiler_version,
+        optimized=optimization_used,
+        optimize_runs=optimizer.get("runs") if optimization_used else None,
+    )
+    compilation_unit.compiler_version.look_for_installed_version()
+
+    proxy_resolution = data.get("proxyResolution")
+    if proxy_resolution and proxy_resolution.get("isProxy"):
+        for impl in proxy_resolution.get("implementations", []):
+            impl_addr = impl.get("address")
+            if impl_addr:
+                compilation_unit.implementation_addresses.add(
+                    f"sourcify-{chain_id}:{_to_checksum_address(impl_addr)}"
+                )
+
+    solc_standard_json.standalone_compile(
+        filenames,
+        compilation_unit,
+        working_dir=working_dir,
+        remappings=remappings,
+        evm_version=settings.get("evmVersion"),
+        via_ir=settings.get("viaIR"),
+    )
+
+    _write_config_file(working_dir, compiler_version, settings)
+    return True
+
+
 class Sourcify(AbstractPlatform):
     """
     Sourcify platform - fetches verified contracts from sourcify.dev

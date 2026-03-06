@@ -154,7 +154,7 @@ class Etherscan(AbstractPlatform):
 
         Args:
             crytic_compile (CryticCompile): Associated CryticCompile object
-            **kwargs: optional arguments. Used "solc", "etherscan_only_source_code", "etherscan_only_bytecode",
+            **kwargs: optional arguments. Used "solc", "explorer_only_source_code", "explorer_only_bytecode",
                 "etherscan_api_key", "export_dir"
 
         Raises:
@@ -185,8 +185,8 @@ class Etherscan(AbstractPlatform):
             addr = target
             prefix = None
 
-        only_source = kwargs.get("etherscan_only_source_code", False)
-        only_bytecode = kwargs.get("etherscan_only_bytecode", False)
+        only_source = kwargs.get("explorer_only_source_code", False)
+        only_bytecode = kwargs.get("explorer_only_bytecode", False)
 
         etherscan_api_key = kwargs.get("etherscan_api_key", None)
         if etherscan_api_key is None:
@@ -194,7 +194,7 @@ class Etherscan(AbstractPlatform):
 
         export_dir = kwargs.get("export_dir", "crytic-export")
         export_dir = os.path.join(
-            export_dir, kwargs.get("etherscan_export_dir", "etherscan-contracts")
+            export_dir, kwargs.get("explorer_export_dir") or "etherscan-contracts"
         )
 
         if api_key_required == 2 and etherscan_api_key:
@@ -383,13 +383,12 @@ class Etherscan(AbstractPlatform):
 
         Args:
             target (str): path to the target
-            **kwargs: optional arguments. Used "etherscan_ignore"
+            **kwargs: optional arguments. Used "explorer_ignore"
 
         Returns:
             bool: True if the target is a etherscan project
         """
-        etherscan_ignore = kwargs.get("etherscan_ignore", False)
-        if etherscan_ignore:
+        if kwargs.get("explorer_ignore", False):
             return False
         if target.startswith(tuple(SUPPORTED_NETWORK)):
             target = target[target.find(":") + 1 :]
