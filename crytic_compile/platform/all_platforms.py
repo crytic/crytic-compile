@@ -6,6 +6,7 @@ Module containing all the platforms
 # crytic_compile.py uses dir(all_platforms) to find these classes
 __all__ = [
     "Archive",
+    "Blockscout",
     "Brownie",
     "Buidler",
     "Dapp",
@@ -24,6 +25,7 @@ __all__ = [
 ]
 
 from .archive import Archive
+from .blockscout import Blockscout
 from .brownie import Brownie
 from .buidler import Buidler
 from .dapp import Dapp

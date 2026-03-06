@@ -20,8 +20,8 @@ from crytic_compile.compilation_unit import CompilationUnit
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.platform import solc_standard_json
 from crytic_compile.platform.abstract_platform import AbstractPlatform
-from crytic_compile.platform.etherscan import _sanitize_remappings
 from crytic_compile.platform.exceptions import InvalidCompilation
+from crytic_compile.platform.explorer_utils import sanitize_remappings
 from crytic_compile.platform.types import Type
 
 if TYPE_CHECKING:
@@ -223,7 +223,7 @@ def _write_config_file(working_dir: str, compiler_version: str, settings: dict[s
         solc_args.append(f"--evm-version {evm_version}")
 
     metadata_config: dict[str, Any] = {
-        "solc_remaps": _sanitize_remappings(remappings, working_dir) if remappings else {},
+        "solc_remaps": sanitize_remappings(remappings, working_dir) if remappings else {},
         "solc_solcs_select": compiler_version,
         "solc_args": " ".join(solc_args),
     }
@@ -287,7 +287,7 @@ class Sourcify(AbstractPlatform):
         settings = compilation.get("compilerSettings", {})
         optimizer = settings.get("optimizer", {})
         optimization_used = optimizer.get("enabled", False)
-        remappings = _sanitize_remappings(settings.get("remappings", []), working_dir) or None
+        remappings = sanitize_remappings(settings.get("remappings", []), working_dir) or None
 
         # Create and configure compilation unit
         compilation_unit = CompilationUnit(crytic_compile, compilation.get("name", "Contract"))
