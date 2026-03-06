@@ -38,9 +38,6 @@ ETHERSCAN_BASE_V2 = (
     "https://api.etherscan.io/v2/api?chainid=%s&module=contract&action=getsourcecode&address=%s"
 )
 
-# Alias kept for backwards compatibility with importers
-ETHERSCAN_BASE_BYTECODE = EXPLORER_BASE_BYTECODE
-
 # v1 style scanners
 SUPPORTED_NETWORK_V1: dict[str, tuple[str, str]] = {
     # None at this time. External tracer instances not operated by Etherscan would be here
@@ -173,18 +170,18 @@ class Etherscan(AbstractPlatform):
             prefix, addr = target.split(":", 2)
             chainid, prefix_bytecode = SUPPORTED_NETWORK_V2[prefix]
             etherscan_url = ETHERSCAN_BASE_V2 % (chainid, addr)
-            etherscan_bytecode_url = ETHERSCAN_BASE_BYTECODE % (prefix_bytecode, addr)
+            etherscan_bytecode_url = EXPLORER_BASE_BYTECODE % (prefix_bytecode, addr)
         elif target.startswith(tuple(SUPPORTED_NETWORK_V1)):
             api_key_required = 1
             prefix = SUPPORTED_NETWORK_V1[target[: target.find(":") + 1]][0]
             prefix_bytecode = SUPPORTED_NETWORK_V1[target[: target.find(":") + 1]][1]
             addr = target[target.find(":") + 1 :]
             etherscan_url = ETHERSCAN_BASE_V1 % (prefix, addr)
-            etherscan_bytecode_url = ETHERSCAN_BASE_BYTECODE % (prefix_bytecode, addr)
+            etherscan_bytecode_url = EXPLORER_BASE_BYTECODE % (prefix_bytecode, addr)
         else:
             api_key_required = 2
             etherscan_url = ETHERSCAN_BASE_V2 % ("1", target)
-            etherscan_bytecode_url = ETHERSCAN_BASE_BYTECODE % ("etherscan.io", target)
+            etherscan_bytecode_url = EXPLORER_BASE_BYTECODE % ("etherscan.io", target)
             addr = target
             prefix = None
 
