@@ -85,9 +85,10 @@ def hardhat_like_parsing(
                 if "optimizer" in input_json["settings"]
                 else False
             )
+            via_ir = input_json["settings"]["viaIR"] if "viaIR" in input_json["settings"] else False
 
             compilation_unit.compiler_version = CompilerVersion(
-                compiler=compiler, version=version_from_config, optimized=optimized
+                compiler=compiler, version=version_from_config, optimized=optimized, via_ir=via_ir
             )
 
             skip_filename = compilation_unit.compiler_version.version in [
