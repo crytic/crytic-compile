@@ -24,7 +24,7 @@ def metadata_checks(crytic_compile_instance: CryticCompile) -> None:
 
     with_metadata = source_unit.bytecode_init("Dai")
     assert source_unit.metadata_of("Dai") == {
-        "bzzr1": "abe44494f2727bdaa34d571c1e0d03d8ecf0dc321c56d76334ab56e39e41ef17",
+        "bzzr1": "92df983266c28b6fb4c7c776b695725fd63d55b8cd5d5618b69fb544ce801d85",
         "solc": "0.5.12",
     }
     source_unit.remove_metadata()
