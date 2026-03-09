@@ -2,14 +2,14 @@
 set -euo pipefail
 
 ### Test Blockscout integration (no API key required)
-# Add new entries here when a chain is added to SUPPORTED_NETWORK_BLOCKSCOUT in blockscout.py
+# Target format: blockscout-<chainid>:0x<address>
 
 TARGETS=(
-    "flow:0xd3bF53DAC106A0290B0483EcBC89d40FcC961f3e"
-    "ink:0x4200000000000000000000000000000000000006"
-    "metis:0xDeadDeAddeAddEAddeadDEaDDEAdDeaDDeAD0000"
-    "plume:0x4052ACe931bbc647193D23e3442f8688A5845A18"
-    "story:0x1514000000000000000000000000000000000000"
+    "blockscout-747:0xd3bF53DAC106A0290B0483EcBC89d40FcC961f3e"
+    "blockscout-57073:0x4200000000000000000000000000000000000006"
+    "blockscout-1088:0xDeadDeAddeAddEAddeadDEaDDEAdDeaDDeAD0000"
+    "blockscout-98866:0x4052ACe931bbc647193D23e3442f8688A5845A18"
+    "blockscout-1514:0x1514000000000000000000000000000000000000"
 )
 
 for target in "${TARGETS[@]}"; do

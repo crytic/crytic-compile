@@ -6,6 +6,8 @@ import json
 import logging
 import os
 import re
+import urllib.error
+import urllib.parse
 import urllib.request
 from json.decoder import JSONDecodeError
 from typing import TYPE_CHECKING, Any
@@ -30,17 +32,62 @@ if TYPE_CHECKING:
 
 LOGGER = logging.getLogger("CryticCompile")
 
-# Blockscout API endpoint — host is the full hostname (no api. subdomain)
-BLOCKSCOUT_BASE = "https://%s/api?module=contract&action=getsourcecode&address=%s"
+# Blockscout API endpoint — explorer_url is the full base URL
+BLOCKSCOUT_BASE = "%s/api?module=contract&action=getsourcecode&address=%s"
 
-# Key -> (api_host, bytecode_host, chain_id)
-SUPPORTED_NETWORK_BLOCKSCOUT: dict[str, tuple[str, str, str]] = {
-    "flow": ("evm.flowscan.io", "evm.flowscan.io", "747"),
-    "ink": ("explorer.inkonchain.com", "explorer.inkonchain.com", "57073"),
-    "metis": ("andromeda-explorer.metis.io", "andromeda-explorer.metis.io", "1088"),
-    "plume": ("explorer.plume.org", "explorer.plume.org", "98866"),
-    "story": ("www.storyscan.xyz", "www.storyscan.xyz", "1514"),
+# Blockscout chain directory API
+BLOCKSCOUT_CHAINS_URL = "https://chains.blockscout.com/api/chains"
+
+# Chains with Blockscout-compatible explorers not listed in the directory.
+# Checked first so they cannot be shadowed by directory conflicts.
+BLOCKSCOUT_EXTRA_CHAINS: dict[str, str] = {
+    "747": "https://evm.flowscan.io",  # Flow
+    "98866": "https://explorer.plume.org",  # Plume
 }
+
+# Module-level cache: chain_id (str) -> explorer_url (str)
+_blockscout_chains: dict[str, str] | None = None
+
+
+def _fetch_blockscout_chains() -> dict[str, str]:
+    """Fetch the Blockscout chain directory and return a
+    chain_id -> explorer_url mapping.
+
+    Results are cached after the first successful call.
+
+    Returns:
+        Mapping of chain ID strings to explorer base URLs.
+    """
+    global _blockscout_chains  # noqa: PLW0603
+    if _blockscout_chains is not None:
+        return _blockscout_chains
+
+    try:
+        req = urllib.request.Request(
+            BLOCKSCOUT_CHAINS_URL,
+            headers={"User-Agent": "crytic-compile/0"},
+        )
+        with urllib.request.urlopen(req, timeout=10) as response:
+            data = json.loads(response.read())
+    except (urllib.error.URLError, json.JSONDecodeError, OSError) as e:
+        LOGGER.warning("Failed to fetch Blockscout chain list: %s", e)
+        _blockscout_chains = {}
+        return _blockscout_chains
+
+    chains: dict[str, str] = {}
+    for chain_id, info in data.items():
+        explorers = info.get("explorers", [])
+        if explorers:
+            url = explorers[0].get("url", "").rstrip("/")
+            if url:
+                chains[chain_id] = url
+
+    # Extra chains take priority over the directory (avoids conflicts
+    # like chain 747 mapping to Alvey instead of Flow).
+    chains.update(BLOCKSCOUT_EXTRA_CHAINS)
+
+    _blockscout_chains = chains
+    return _blockscout_chains
 
 
 def _normalize_blockscout_result(result: dict[str, Any]) -> dict[str, Any]:
@@ -116,11 +163,32 @@ class Blockscout(AbstractPlatform):
             InvalidCompilation: if the explorer returned an error or results could not be parsed.
         """
         target = self._target
-        prefix, addr = target.split(":", 1)
-        api_host, bytecode_host, chain_id = SUPPORTED_NETWORK_BLOCKSCOUT[prefix]
+        match = re.match(r"^blockscout-(\d+):(0x[a-fA-F0-9]{40})$", target)
+        if not match:
+            raise InvalidCompilation(f"Invalid Blockscout target: {target}")
 
-        source_url = BLOCKSCOUT_BASE % (api_host, addr)
-        bytecode_url = EXPLORER_BASE_BYTECODE % (bytecode_host, addr)
+        chain_id = match.group(1)
+        addr = match.group(2)
+        prefix = f"blockscout-{chain_id}"
+
+        custom_url = kwargs.get("blockscout_url")
+        if custom_url:
+            explorer_url = custom_url.rstrip("/")
+        else:
+            chains = _fetch_blockscout_chains()
+            if chain_id not in chains:
+                raise InvalidCompilation(
+                    f"Chain {chain_id} not found in Blockscout "
+                    f"chain list. Use --blockscout-url to "
+                    f"specify a custom explorer URL, or see "
+                    f"https://chains.blockscout.com/ for "
+                    f"supported chains."
+                )
+            explorer_url = chains[chain_id]
+        explorer_host = urllib.parse.urlparse(explorer_url).netloc
+
+        source_url = BLOCKSCOUT_BASE % (explorer_url, addr)
+        bytecode_url = EXPLORER_BASE_BYTECODE % (explorer_host, addr)
 
         only_source = kwargs.get("explorer_only_source_code", False)
         only_bytecode = kwargs.get("explorer_only_bytecode", False)
@@ -134,7 +202,9 @@ class Blockscout(AbstractPlatform):
         if not only_bytecode:
             base_export = kwargs.get("export_dir", "crytic-export")
             sourcify_kwargs = {k: v for k, v in kwargs.items() if k != "export_dir"}
-            if try_compile_from_sourcify(crytic_compile, chain_id, addr, base_export, **sourcify_kwargs):
+            if try_compile_from_sourcify(
+                crytic_compile, chain_id, addr, base_export, **sourcify_kwargs
+            ):
                 LOGGER.info("Compiled %s via Sourcify (chain %s)", addr, chain_id)
                 return
 
@@ -297,14 +367,11 @@ class Blockscout(AbstractPlatform):
             **kwargs: optional arguments. Used "explorer_ignore".
 
         Returns:
-            bool: True if the target uses a known Blockscout network prefix.
+            bool: True if the target matches blockscout-<chainid>:0x<address>.
         """
         if kwargs.get("explorer_ignore", False):
             return False
-        if not target.startswith(tuple(SUPPORTED_NETWORK_BLOCKSCOUT)):
-            return False
-        addr = target[target.find(":") + 1 :]
-        return bool(re.match(r"^\s*0x[a-zA-Z0-9]{40}\s*$", addr))
+        return bool(re.match(r"^blockscout-\d+:0x[a-fA-F0-9]{40}$", target))
 
     def is_dependency(self, path: str) -> bool:
         return False

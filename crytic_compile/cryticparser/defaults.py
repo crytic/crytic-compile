@@ -32,6 +32,7 @@ DEFAULTS_FLAG_IN_CONFIG = {
     "explorer_ignore": False,
     "explorer_export_directory": None,
     "etherscan_api_key": None,
+    "blockscout_url": None,
     "waffle_ignore_compile": False,
     "waffle_config_file": None,
     "npx_disable": False,

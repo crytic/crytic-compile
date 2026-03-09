@@ -347,6 +347,14 @@ def _init_explorer(parser: ArgumentParser) -> None:
     )
 
     group.add_argument(
+        "--blockscout-url",
+        help="Custom Blockscout explorer URL for chains not in the directory.",
+        action="store",
+        dest="blockscout_url",
+        default=DEFAULTS_FLAG_IN_CONFIG["blockscout_url"],
+    )
+
+    group.add_argument(
         "--avax-apikey",
         help="Avalanche (Snowtrace) API key.",
         action="store",
