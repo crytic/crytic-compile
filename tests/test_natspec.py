@@ -2,7 +2,14 @@
 Test NatSpec parsing, including custom fields (@custom:*)
 """
 
-from crytic_compile.utils.natspec import DevDoc, DevMethod, Natspec, UserDoc, UserMethod
+from crytic_compile.utils.natspec import (
+    DevDoc,
+    DevMethod,
+    DevStateVariable,
+    Natspec,
+    UserDoc,
+    UserMethod,
+)
 
 
 class TestUserMethod:
@@ -40,7 +47,7 @@ class TestDevMethod:
         assert method.author == "Test Author"
         assert method.details == "Method details"
         assert method.params == {"a": "first param", "b": "second param"}
-        assert method.method_return == "return value description"
+        assert method.method_returns == {"_0": "return value description"}
 
     def test_devmethod_custom_fields_parsing(self) -> None:
         """Test DevMethod extracts custom fields"""
@@ -80,7 +87,7 @@ class TestDevMethod:
         assert exported["author"] == "Test Author"
         assert exported["details"] == "Details"
         assert exported["params"] == {"x": "param x"}
-        assert exported["return"] == "returns something"
+        assert exported["returns"] == {"_0": "returns something"}
         assert exported["custom:security"] == "critical"
         assert exported["custom:audit"] == "passed"
 
@@ -90,8 +97,91 @@ class TestDevMethod:
         assert method.author is None
         assert method.details is None
         assert method.params == {}
-        assert method.method_return is None
+        assert method.method_returns == {}
         assert method.custom == {}
+
+    def test_devmethod_returns_dict(self) -> None:
+        """Test DevMethod with 'returns' dict field (multiple return values)"""
+        method_data = {
+            "details": "Method with multiple returns",
+            "returns": {"_0": "first value", "_1": "second value"},
+        }
+        method = DevMethod(method_data)
+        assert method.method_returns == {"_0": "first value", "_1": "second value"}
+
+    def test_devmethod_returns_takes_precedence(self) -> None:
+        """Test DevMethod prefers 'returns' over 'return' when both present"""
+        method_data = {
+            "returns": {"_0": "from returns"},
+            "return": "from return",
+        }
+        method = DevMethod(method_data)
+        assert method.method_returns == {"_0": "from returns"}
+
+
+class TestDevStateVariable:
+    """Tests for DevStateVariable class"""
+
+    def test_state_variable_with_returns_dict(self) -> None:
+        """Test DevStateVariable with 'returns' dict field"""
+        var_data = {
+            "details": "A state variable",
+            "returns": {"_0": "the stored value"},
+        }
+        var = DevStateVariable(var_data)
+        assert var.details == "A state variable"
+        assert var.variable_returns == {"_0": "the stored value"}
+
+    def test_state_variable_with_return_string(self) -> None:
+        """Test DevStateVariable falls back to 'return' string field"""
+        var_data = {
+            "details": "A state variable",
+            "return": "the stored value",
+        }
+        var = DevStateVariable(var_data)
+        assert var.variable_returns == {"_0": "the stored value"}
+
+    def test_state_variable_returns_takes_precedence(self) -> None:
+        """Test DevStateVariable prefers 'returns' over 'return' when both present"""
+        var_data = {
+            "returns": {"_0": "from returns"},
+            "return": "from return",
+        }
+        var = DevStateVariable(var_data)
+        assert var.variable_returns == {"_0": "from returns"}
+
+    def test_state_variable_empty(self) -> None:
+        """Test DevStateVariable with empty dict"""
+        var = DevStateVariable({})
+        assert var.details is None
+        assert var.variable_returns == {}
+        assert var.custom == {}
+
+    def test_state_variable_custom_fields(self) -> None:
+        """Test DevStateVariable extracts custom fields"""
+        var_data = {
+            "details": "A variable",
+            "custom:security": "sensitive",
+            "custom:deprecated": "true",
+        }
+        var = DevStateVariable(var_data)
+        assert var.custom == {
+            "custom:security": "sensitive",
+            "custom:deprecated": "true",
+        }
+
+    def test_state_variable_export(self) -> None:
+        """Test DevStateVariable export"""
+        var_data = {
+            "details": "A state variable",
+            "returns": {"_0": "the value"},
+            "custom:audit": "verified",
+        }
+        var = DevStateVariable(var_data)
+        exported = var.export()
+        assert exported["details"] == "A state variable"
+        assert exported["returns"] == {"_0": "the value"}
+        assert exported["custom"] == {"custom:audit": "verified"}
 
 
 class TestUserDoc:
