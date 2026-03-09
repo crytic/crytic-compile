@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # https://github.com/eth-brownie/brownie/pull/1873#issuecomment-2927669459
-pip install -U setuptools
+pip install -U 'setuptools<81'
 
 pip install eth-brownie
 brownie bake token
