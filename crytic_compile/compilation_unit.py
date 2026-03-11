@@ -40,6 +40,10 @@ class CompilationUnit:
         # set containing all the filenames of this compilation unit
         self._filenames: list[Filename] = []
 
+        # mapping from source ID to filename (for Foundry/Hardhat source map compatibility)
+        # When set, this takes precedence over _filenames for export ordering
+        self._source_id_to_filename: dict[int, Filename] = {}
+
         # mapping from absolute/relative/used to filename
         self._filenames_lookup: dict[str, Filename] | None = None
 
@@ -180,6 +184,53 @@ class CompilationUnit:
             all_filenames (List[Filename]): new filenames
         """
         self._filenames = all_filenames
+
+    @property
+    def filenames_for_export(self) -> list[Filename]:
+        """Return filenames in the correct order for export (matching source map indices).
+
+        If source ID mapping is available (from Foundry/Hardhat build-info), returns
+        filenames ordered by source ID. Otherwise, returns filenames in append order.
+
+        Returns:
+            list[Filename]: Filenames ordered for export
+        """
+        if not self._source_id_to_filename:
+            return self._filenames
+
+        # Build list indexed by source ID
+        max_id = max(self._source_id_to_filename.keys())
+        result: list[Filename | None] = [None] * (max_id + 1)
+
+        for source_id, filename in self._source_id_to_filename.items():
+            result[source_id] = filename
+
+        # Fill gaps with filenames from _filenames that aren't in the mapping
+        mapped_filenames = set(self._source_id_to_filename.values())
+        unmapped = [f for f in self._filenames if f not in mapped_filenames]
+        unmapped_iter = iter(unmapped)
+
+        for i, entry in enumerate(result):
+            if entry is None:
+                try:
+                    result[i] = next(unmapped_iter)
+                except StopIteration:
+                    # No more unmapped filenames, leave as None (will be filtered)
+                    pass
+
+        # Filter out None entries and return
+        return [f for f in result if f is not None]
+
+    def set_source_id(self, source_id: int, filename: Filename) -> None:
+        """Set the source ID for a filename.
+
+        This is used by Foundry/Hardhat parsers to maintain correct source map indices.
+
+        Args:
+            source_id (int): The source ID from the build-info
+            filename (Filename): The filename associated with this ID
+        """
+        self._source_id_to_filename[source_id] = filename
 
     @property
     def filename_to_contracts(self) -> dict[Filename, set[str]]:
