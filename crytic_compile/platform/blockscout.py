@@ -24,7 +24,6 @@ from crytic_compile.platform.explorer_utils import (
     handle_multiple_files,
     handle_single_file,
 )
-from crytic_compile.platform.sourcify import try_compile_from_sourcify
 from crytic_compile.platform.types import Type
 
 if TYPE_CHECKING:
@@ -197,16 +196,6 @@ class Blockscout(AbstractPlatform):
         export_dir = os.path.join(
             export_dir, kwargs.get("explorer_export_dir") or "blockscout-contracts"
         )
-
-        # Try Sourcify first — it carries richer metadata and is preferred when available.
-        if not only_bytecode:
-            base_export = kwargs.get("export_dir", "crytic-export")
-            sourcify_kwargs = {k: v for k, v in kwargs.items() if k != "export_dir"}
-            if try_compile_from_sourcify(
-                crytic_compile, chain_id, addr, base_export, **sourcify_kwargs
-            ):
-                LOGGER.info("Compiled %s via Sourcify (chain %s)", addr, chain_id)
-                return
 
         source_code: str = ""
         result: dict[str, Any] = {}
