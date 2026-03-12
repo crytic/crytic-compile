@@ -12,3 +12,5 @@ package-lock.json
 result
 env/
 .coverage*
+.env
+crytic-export/

@@ -25,6 +25,7 @@ class Type(IntEnum):
     HARDHAT = 11
     FOUNDRY = 12
     SOURCIFY = 13
+    BLOCKSCOUT = 14
 
     STANDARD = 100
     ARCHIVE = 101
@@ -68,6 +69,8 @@ class Type(IntEnum):
             return "Foundry"
         if self == Type.SOURCIFY:
             return "Sourcify"
+        if self == Type.BLOCKSCOUT:
+            return "Blockscout"
         raise ValueError
 
     def priority(self) -> int:
@@ -89,4 +92,7 @@ class Type(IntEnum):
         if self in [Type.TRUFFLE, Type.WAFFLE]:
             return 300
 
+        # All explorer-based platforms (ETHERSCAN, SOURCIFY, BLOCKSCOUT) and others
+        # default to 1000. Detection order among them is determined by is_supported()
+        # prefix matching, so they don't conflict.
         return 1000
