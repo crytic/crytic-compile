@@ -80,7 +80,7 @@ jobs:
           solc-select use 0.5.7 --always-install
       - name: Set up nix
         if: matrix.type == 'dapp'
-        uses: cachix/install-nix-action@2126ae7fc54c9df00dd18f7f18754393182c73cd  # v31.9.1
+        uses: cachix/install-nix-action@1ca7d21a94afc7c957383a2d217460d980de4934  # v31.10.1
       - name: Set up cachix
         if: matrix.type == 'dapp'
         uses: cachix/cachix-action@3ba601ff5bbb07c7220846facfa2cd81eeee15a1  # v16
