@@ -198,9 +198,10 @@ class CompilationUnit:
         if not self._source_id_to_filename:
             return self._filenames
 
-        # Build list indexed by source ID
+        # Build list indexed by source ID; +1 because IDs are zero-indexed
         max_id = max(self._source_id_to_filename.keys())
-        result: list[Filename | None] = [None] * (max_id + 1)
+        size = max(max_id + 1, len(self._filenames))
+        result: list[Filename | None] = [None] * size
 
         for source_id, filename in self._source_id_to_filename.items():
             result[source_id] = filename
@@ -215,11 +216,18 @@ class CompilationUnit:
                 try:
                     result[i] = next(unmapped_iter)
                 except StopIteration:
-                    # No more unmapped filenames, leave as None (will be filtered)
-                    pass
+                    break
 
-        # Filter out None entries and return
-        return [f for f in result if f is not None]
+        # Gaps in the source ID sequence mean the build-info is incomplete;
+        # exporting with shifted indices would silently produce wrong source maps
+        gaps = [i for i, f in enumerate(result) if f is None]
+        if gaps:
+            raise ValueError(
+                f"Source ID gaps at indices {gaps} — cannot produce correct sourceList. "
+                f"This likely indicates missing sources in build-info."
+            )
+
+        return result
 
     def set_source_id(self, source_id: int, filename: Filename) -> None:
         """Set the source ID for a filename.
