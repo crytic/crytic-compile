@@ -9,7 +9,7 @@ At least one compilation unit exists for each version of solc used
 import re
 import uuid
 from collections import defaultdict
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from crytic_compile.compiler.compiler import CompilerVersion
 from crytic_compile.source_unit import SourceUnit
@@ -227,7 +227,7 @@ class CompilationUnit:
                 f"This likely indicates missing sources in build-info."
             )
 
-        return result
+        return cast(list[Filename], result)
 
     def set_source_id(self, source_id: int, filename: Filename) -> None:
         """Set the source ID for a filename.
