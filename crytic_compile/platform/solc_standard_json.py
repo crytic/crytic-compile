@@ -17,6 +17,7 @@ from crytic_compile.platform.solc import (
     Solc,
     get_version,
     is_optimized,
+    is_via_ir,
     relative_to_short,
 )
 from crytic_compile.platform.types import Type
@@ -473,6 +474,8 @@ class SolcStandardJson(Solc):
             optimized=is_optimized(solc_arguments)
             or self.to_dict().get("settings", {}).get("optimizer", {}).get("enabled", False),
             optimize_runs=self.to_dict().get("settings", {}).get("optimizer", {}).get("runs", None),
+            via_ir=is_via_ir(solc_arguments)
+            or self.to_dict().get("settings", {}).get("viaIR", False),
         )
 
         add_optimization(

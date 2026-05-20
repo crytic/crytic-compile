@@ -288,6 +288,7 @@ class Sourcify(AbstractPlatform):
         optimizer = settings.get("optimizer", {})
         optimization_used = optimizer.get("enabled", False)
         remappings = _sanitize_remappings(settings.get("remappings", []), working_dir) or None
+        via_ir = settings.get("viaIR")
 
         # Create and configure compilation unit
         compilation_unit = CompilationUnit(crytic_compile, compilation.get("name", "Contract"))
@@ -296,6 +297,7 @@ class Sourcify(AbstractPlatform):
             version=compiler_version,
             optimized=optimization_used,
             optimize_runs=optimizer.get("runs") if optimization_used else None,
+            via_ir=via_ir,
         )
         compilation_unit.compiler_version.look_for_installed_version()
 
