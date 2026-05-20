@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "crytic-compile"
-version = "0.4.0"
+version = "0.4.1"
 description = "Util to facilitate smart contracts compilation."
 readme = "README.md"
 license = "AGPL-3.0-only"
