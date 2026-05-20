@@ -118,9 +118,63 @@ def _verify_filename_existence(filename: Path, cwd: Path) -> Path:
                 break
 
     if not filename.exists():
-        raise InvalidCompilation(f"Unknown file: {filename}")
+        raise InvalidCompilation(_unknown_file_message(filename, cwd))
 
     return filename
+
+
+def _unknown_file_message(filename: Path, cwd: Path) -> str:
+    """Build an actionable error message for a path that could not be resolved.
+
+    Includes hints to verify the path exists and, when the import resembles an
+    npm/yarn dependency (e.g. ``@openzeppelin/...``), to install project
+    dependencies.
+
+    Args:
+        filename (Path): the unresolved filename
+        cwd (Path): the working directory used during resolution
+
+    Returns:
+        str: a multi-line error message
+    """
+    lines = [
+        f"Unknown file: {filename}",
+        f"  - Verify the path exists (e.g. `ls {filename}`).",
+    ]
+    if _looks_like_npm_import(filename):
+        lines.append(
+            f"  - If this is an npm/yarn dependency, install project "
+            f"dependencies first (e.g. `npm install` or `yarn install` in `{cwd}`)."
+        )
+    return "\n".join(lines)
+
+
+def _looks_like_npm_import(filename: Path) -> bool:
+    """Heuristic: is ``filename`` likely an npm/yarn dependency import?
+
+    Treats scoped (``@org/pkg/...``) and bare-name (``pkg/...``) paths with
+    multiple segments as package imports. Excludes absolute paths, paths that
+    start with ``.`` or ``..``, and the common Solidity project source roots
+    (``contracts``, ``src``, ``lib``, ``test``, ``script``).
+
+    Args:
+        filename (Path): filename to classify
+
+    Returns:
+        bool: True if the path resembles a package import
+    """
+    if filename.is_absolute():
+        return False
+    parts = filename.parts
+    if len(parts) < 2:
+        return False
+    first = parts[0]
+    if first.startswith("."):
+        return False
+    if first in {"contracts", "src", "lib", "test", "tests", "script"}:
+        return False
+    # @scope/package or bare package name (no extension/dot in first segment)
+    return first.startswith("@") or "." not in first
 
 
 def convert_filename(
