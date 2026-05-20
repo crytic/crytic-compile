@@ -141,6 +141,8 @@ def run_solc_standard_json(
     compiler_version: CompilerVersion,
     solc_disable_warnings: bool = False,
     working_dir: str | None = None,
+    solc: str | None = None,
+    solc_env: dict | None = None,
 ) -> dict:
     """Run the solc standard json compilation.
     Ensure that crytic_compile.compiler_version is set prior calling _run_solc
@@ -150,6 +152,10 @@ def run_solc_standard_json(
         compiler_version (CompilerVersion): info regarding the compiler
         solc_disable_warnings (bool): True to not print the solc warnings. Defaults to False.
         working_dir (Optional[str], optional): Working directory to run solc. Defaults to None.
+        solc (Optional[str], optional): Path or name of the solc binary to invoke. Defaults to
+            ``compiler_version.compiler`` for backward compatibility.
+        solc_env (Optional[Dict], optional): Extra environment variables to set when running solc.
+            Defaults to None.
 
     Raises:
         InvalidCompilation: If the compilation failed
@@ -158,12 +164,15 @@ def run_solc_standard_json(
         Dict: Solc json output
     """
     working_dir_resolved = Path(working_dir if working_dir else ".").resolve()
-    cmd = [compiler_version.compiler, "--standard-json", "--allow-paths", str(working_dir_resolved)]
+    solc_binary = solc if solc else compiler_version.compiler
+    cmd = [solc_binary, "--standard-json", "--allow-paths", str(working_dir_resolved)]
     cwd: str | None = working_dir if working_dir else None
 
     env = dict(os.environ)
     if compiler_version.version:
         env["SOLC_VERSION"] = compiler_version.version
+    if solc_env:
+        env.update(solc_env)
 
     stderr = ""
     LOGGER.info(
@@ -497,6 +506,8 @@ class SolcStandardJson(Solc):
             compilation_unit.compiler_version,
             solc_disable_warnings=solc_disable_warnings,
             working_dir=solc_working_dir,
+            solc=solc,
+            solc_env=solc_env,
         )
 
         parse_standard_json_output(
