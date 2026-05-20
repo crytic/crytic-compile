@@ -143,6 +143,35 @@ def _configure_solc(solc_requested: str, offline: bool) -> str:
     return solc_path.absolute().as_posix()
 
 
+def _locate_framework_root(
+    working_dir: Path, target: str, **kwargs: str
+) -> tuple[AbstractPlatform | None, Path | None]:
+    """Walk up from ``working_dir`` looking for a non-Solc compilation framework.
+
+    Args:
+        working_dir (Path): starting directory for the upward search
+        target (str): original target passed to CryticCompile (used to instantiate the platform)
+        **kwargs: optional arguments forwarded to ``is_supported``
+
+    Returns:
+        Tuple[Optional[AbstractPlatform], Optional[Path]]: the detected platform and
+        the directory where it was detected, or ``(None, None)`` if no framework was found.
+    """
+    platforms = get_platforms()
+    config_root = working_dir.resolve()
+    while True:
+        platform_wd = next(
+            (p(target) for p in platforms if p.is_supported(str(config_root), **kwargs)),
+            None,
+        )
+        if platform_wd and not isinstance(platform_wd, Solc):
+            return platform_wd, config_root
+        parent = config_root.parent
+        if parent == config_root:
+            return None, None
+        config_root = parent
+
+
 class CryticCompile:
     """
     Main class.
@@ -189,18 +218,17 @@ class CryticCompile:
             # we try to see if we are in a known compilation framework to retrieve
             # information like remappings and solc version
             if isinstance(platform, Solc):
-                # Try to get the platform of the current working directory
-                platform_wd = next(
-                    (
-                        p(target)
-                        for p in get_platforms()
-                        if p.is_supported(str(self._working_dir), **kwargs)
-                    ),
-                    None,
+                # Walk up from the working directory looking for a known
+                # compilation framework (Foundry, Hardhat, ...). This lets
+                # users invoke crytic-compile on a specific file from a
+                # subdirectory of a project and still pick up remappings
+                # and the expected solc version from the project config.
+                platform_wd, config_root = _locate_framework_root(
+                    self._working_dir, target, **kwargs
                 )
                 # If no platform has been found or if it's the Solc platform, we can't automatically compile.
-                if platform_wd and not isinstance(platform_wd, Solc):
-                    platform_config = platform_wd.config(str(self._working_dir))
+                if platform_wd and config_root and not isinstance(platform_wd, Solc):
+                    platform_config = platform_wd.config(str(config_root))
                     if platform_config:
                         kwargs["solc_args"] = ""
                         kwargs["solc_remaps"] = ""
