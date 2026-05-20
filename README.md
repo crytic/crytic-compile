@@ -14,6 +14,7 @@ Library to help smart contract compilation. It includes support for:
 - [Etherlime](https://github.com/LimeChain/etherlime)
 - [Sourcify](https://sourcify.dev/)
 - [Etherscan](https://etherscan.io/) (including several alt-chain explorers and testnets)
+- [Blockscout](https://www.blockscout.com/) ([750+ chains](https://chains.blockscout.com/))
 - [Truffle](https://truffleframework.com/)
 - [Waffle](https://github.com/EthWorks/Waffle)
 
