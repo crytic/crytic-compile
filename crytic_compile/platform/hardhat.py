@@ -85,9 +85,10 @@ def hardhat_like_parsing(
                 if "optimizer" in input_json["settings"]
                 else False
             )
+            via_ir = input_json["settings"]["viaIR"] if "viaIR" in input_json["settings"] else False
 
             compilation_unit.compiler_version = CompilerVersion(
-                compiler=compiler, version=version_from_config, optimized=optimized
+                compiler=compiler, version=version_from_config, optimized=optimized, via_ir=via_ir
             )
 
             skip_filename = compilation_unit.compiler_version.version in [
@@ -95,7 +96,13 @@ def hardhat_like_parsing(
             ]
 
             if "sources" in targets_json:
-                for path, info in targets_json["sources"].items():
+                # Sort sources by ID to ensure correct processing order
+                sources_with_ids = [
+                    (path, info, info.get("id")) for path, info in targets_json["sources"].items()
+                ]
+                sources_with_ids.sort(key=lambda x: x[2] if x[2] is not None else float("inf"))
+
+                for original_path, info, source_id in sources_with_ids:
                     if skip_filename:
                         path = convert_filename(
                             target,
@@ -104,7 +111,7 @@ def hardhat_like_parsing(
                             working_dir=working_dir,
                         )
                     else:
-                        path = process_hardhat_v3_filename(path)
+                        path = process_hardhat_v3_filename(original_path)
 
                         path = convert_filename(
                             path,
@@ -119,6 +126,10 @@ def hardhat_like_parsing(
                         raise InvalidCompilation(
                             f"AST not found for {path} in {build_info} directory"
                         )
+
+                    # Store source ID mapping for correct export ordering
+                    if source_id is not None:
+                        compilation_unit.set_source_id(source_id, path)
 
             if "contracts" in targets_json:
                 for original_filename, contracts_info in targets_json["contracts"].items():

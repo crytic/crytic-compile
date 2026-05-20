@@ -66,11 +66,11 @@ jobs:
           printf 'C:\\msys64\\mingw64\\bin\n' >> "$GITHUB_PATH"
           printf 'C:\\msys64\\usr\\bin\n' >> "$GITHUB_PATH"
       - name: Set up Node
-        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238  # v6.2.0
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6.4.0
         with:
           node-version: ${{ matrix.node-version || '20' }}
       - name: Set up Python ${{ matrix.python }}
-        uses: astral-sh/setup-uv@61cb8a9741eeb8a550a1b8544337180c0fc8476b  # v7
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b  # v8.1.0
         with:
           python-version: ${{ matrix.python }}
           activate-environment: true
@@ -80,15 +80,15 @@ jobs:
           solc-select use 0.5.7 --always-install
       - name: Set up nix
         if: matrix.type == 'dapp'
-        uses: cachix/install-nix-action@4e002c8ec80594ecd40e759629461e26c8abed15  # v31
+        uses: cachix/install-nix-action@8aa03977d8d733052d78f4e008a241fd1dbf36b3  # v31.10.6
       - name: Set up cachix
         if: matrix.type == 'dapp'
-        uses: cachix/cachix-action@0fc020193b5a1fa3ac4575aa3a7d3aa6a35435ad  # v16
+        uses: cachix/cachix-action@5f2d7c5294214f71b873db4b969586b980625e71  # v17
         with:
           name: dapp
       - name: Install Foundry
         if: matrix.type == 'foundry'
-        uses: foundry-rs/foundry-toolchain@8b0419c685ef46cb79ec93fbdc131174afceb730  # v1
+        uses: foundry-rs/foundry-toolchain@c7450ba673e133f5ee30098b3b54f444d3a2ca2d  # v1
       - name: Run Tests
         env:
           TEST_TYPE: ${{ matrix.type }}

@@ -383,6 +383,11 @@ class Etherscan(AbstractPlatform):
                 raise InvalidCompilation("Contract has no public source code: " + etherscan_url)
 
             result = info["result"][0]
+
+            if "ABI" in result and "Contract source code not verified" in result["ABI"]:
+                LOGGER.error("Contract has no public source code")
+                raise InvalidCompilation("Contract has no public source code: " + etherscan_url)
+
             # Assert to help mypy
             assert isinstance(result["SourceCode"], str)
             assert isinstance(result["ContractName"], str)
@@ -463,6 +468,7 @@ class Etherscan(AbstractPlatform):
             version=compiler_version,
             optimized=optimization_used,
             optimize_runs=optimize_runs,
+            via_ir=via_ir_enabled if via_ir_enabled else False,
         )
         compilation_unit.compiler_version.look_for_installed_version()
 
@@ -471,7 +477,7 @@ class Etherscan(AbstractPlatform):
             implementation = str(result["Implementation"])
             if target.startswith(tuple(SUPPORTED_NETWORK)):
                 implementation = f"{target[: target.find(':')]}:{implementation}"
-            compilation_unit.implementation_address = implementation
+            compilation_unit.implementation_addresses.add(implementation)
 
         solc_standard_json.standalone_compile(
             filenames,

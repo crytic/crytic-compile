@@ -114,6 +114,7 @@ class CryticCompile:
     Main class.
     """
 
+    # pylint: disable=too-many-branches
     def __init__(self, target: str | AbstractPlatform, **kwargs: str) -> None:
         """See https://github.com/crytic/crytic-compile/wiki/Configuration
         Target is usually a file or a project directory. It can be an AbstractPlatform
@@ -210,7 +211,10 @@ class CryticCompile:
             kwargs.get("compile_libraries", None)
         )
 
-        self._compile(**kwargs)
+        self._compilation_kwargs = kwargs
+
+        if kwargs.get("crytic_defer_compilation") != "true":
+            self._compile(**kwargs)
 
     @property
     def target(self) -> str:
@@ -607,11 +611,22 @@ class CryticCompile:
                 (p(target) for p in platforms if p.NAME.lower() == compile_force_framework.lower()),
                 None,
             )
+            if not platform:
+                raise ValueError(
+                    f"The framework specified {compile_force_framework} does not exist"
+                )
 
         if not platform:
-            platform = next(
-                (p(target) for p in platforms if p.is_supported(target, **kwargs)), None
-            )
+            matching_platforms = [p for p in platforms if p.is_supported(target, **kwargs)]
+            if len(matching_platforms) > 1:
+                names = [p.NAME for p in matching_platforms]
+                LOGGER.warning(
+                    "Multiple frameworks detected: %s. Using %s (highest priority). "
+                    "Use --compile-force-framework to override.",
+                    ", ".join(names),
+                    matching_platforms[0].NAME,
+                )
+            platform = matching_platforms[0](target) if matching_platforms else None
 
         if not platform:
             platform = Solc(target)
@@ -642,6 +657,12 @@ class CryticCompile:
             for compilation_unit in self._compilation_units.values():
                 for source_unit in compilation_unit.source_units.values():
                     source_unit.remove_metadata()
+
+    def compile(self) -> None:
+        """Compile the project. The kwargs provided during object initialization will be used.
+        This function is useful when paired with the `crytic_defer_compilation` kwargs option.
+        """
+        self._compile(**self._compilation_kwargs)
 
     def _apply_autolink(self) -> None:
         """Apply automatic library linking with sequential addresses"""

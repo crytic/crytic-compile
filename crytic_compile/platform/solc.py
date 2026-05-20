@@ -40,10 +40,7 @@ def _build_contract_data(compilation_unit: "CompilationUnit") -> dict:
     for filename, source_unit in compilation_unit.source_units.items():
         for contract_name in source_unit.contracts_names:
             libraries = source_unit.libraries_names_and_patterns(contract_name)
-            abi = str(source_unit.abi(contract_name))
-            abi = abi.replace("'", '"')
-            abi = abi.replace("True", "true")
-            abi = abi.replace("False", "false")
+            abi = json.dumps(source_unit.abi(contract_name))
             exported_name = combine_filename_name(filename.absolute, contract_name)
             contracts[exported_name] = {
                 "srcmap": ";".join(source_unit.srcmap_init(contract_name)),
@@ -113,7 +110,8 @@ def export_to_solc_from_compilation_unit(
 
     # Create additional informational objects.
     sources = {filename: {"AST": ast} for (filename, ast) in compilation_unit.asts.items()}
-    source_list = [x.absolute for x in compilation_unit.filenames]
+    # Use filenames_for_export to ensure correct source map index ordering
+    source_list = [x.absolute for x in compilation_unit.filenames_for_export]
 
     # Create our root object to contain the contracts and other information.
     output = {"sources": sources, "sourceList": source_list, "contracts": contracts}
@@ -459,6 +457,20 @@ def is_optimized(solc_arguments: str | None) -> bool:
     return False
 
 
+def is_via_ir(solc_arguments: str | None) -> bool:
+    """Check if --via-ir is used
+
+    Args:
+        solc_arguments (Optional[str]): Solc arguments to check
+
+    Returns:
+        bool: True if --via-ir is used
+    """
+    if solc_arguments:
+        return "--via-ir" in solc_arguments or "--experimental-via-ir" in solc_arguments
+    return False
+
+
 def _build_options(compiler_version: CompilerVersion, force_legacy_json: bool) -> str:
     """
     Build the solc command line options
@@ -537,7 +549,10 @@ def _run_solc(
         raise InvalidCompilation(f"{filename} is not the expected format '.sol'")
 
     compilation_unit.compiler_version = CompilerVersion(
-        compiler="solc", version=get_version(solc, env), optimized=is_optimized(solc_arguments)
+        compiler="solc",
+        version=get_version(solc, env),
+        optimized=is_optimized(solc_arguments),
+        via_ir=is_via_ir(solc_arguments),
     )
 
     compiler_version = compilation_unit.compiler_version

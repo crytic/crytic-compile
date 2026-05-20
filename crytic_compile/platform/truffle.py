@@ -30,57 +30,6 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger("CryticCompile")
 
 
-def export_to_truffle(crytic_compile: "CryticCompile", **kwargs: str) -> list[str]:
-    """Export to the truffle format
-
-    Args:
-        crytic_compile (CryticCompile): CryticCompile object to export
-        **kwargs: optional arguments. Used: "export_dir"
-
-    Raises:
-        InvalidCompilation: If there are more than 1 compilation unit
-
-    Returns:
-        List[str]: Singleton with the generated directory
-    """
-    # Get our export directory, if it's set, we create the path.
-    export_dir = kwargs.get("export_dir", "crytic-export")
-    if export_dir and not os.path.exists(export_dir):
-        os.makedirs(export_dir)
-
-    compilation_units = list(crytic_compile.compilation_units.values())
-    if len(compilation_units) != 1:
-        raise InvalidCompilation("Truffle export require 1 compilation unit")
-    compilation_unit = compilation_units[0]
-
-    # Loop for each contract filename.
-
-    libraries = compilation_unit.crytic_compile.libraries
-
-    results: list[dict] = []
-    for source_unit in compilation_unit.source_units.values():
-        for contract_name in source_unit.contracts_names:
-            # Create the informational object to output for this contract
-            output = {
-                "contractName": contract_name,
-                "abi": source_unit.abi(contract_name),
-                "bytecode": "0x" + source_unit.bytecode_init(contract_name, libraries),
-                "deployedBytecode": "0x" + source_unit.bytecode_runtime(contract_name, libraries),
-                "ast": source_unit.ast,
-                "userdoc": source_unit.natspec[contract_name].userdoc.export(),
-                "devdoc": source_unit.natspec[contract_name].devdoc.export(),
-            }
-            results.append(output)
-
-            # If we have an export directory, export it.
-
-            path = os.path.join(export_dir, contract_name + ".json")
-            with open(path, "w", encoding="utf8") as file_desc:
-                json.dump(output, file_desc)
-
-    return [export_dir]
-
-
 class Truffle(AbstractPlatform):
     """
     Truffle platform
