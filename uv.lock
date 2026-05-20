@@ -259,7 +259,7 @@ toml = [
 
 [[package]]
 name = "crytic-compile"
-version = "0.3.11"
+version = "0.4.0"
 source = { editable = "." }
 dependencies = [
     { name = "cbor2" },
