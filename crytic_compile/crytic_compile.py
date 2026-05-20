@@ -25,6 +25,7 @@ from crytic_compile.compilation_unit import CompilationUnit
 from crytic_compile.platform import all_platforms
 from crytic_compile.platform.abstract_platform import AbstractPlatform
 from crytic_compile.platform.all_export import PLATFORMS_EXPORT
+from crytic_compile.platform.exceptions import InvalidCompilation
 from crytic_compile.platform.solc import Solc
 from crytic_compile.platform.solc_standard_json import SolcStandardJson
 from crytic_compile.platform.standard import export_to_standard
@@ -40,6 +41,39 @@ if TYPE_CHECKING:
 
 LOGGER = logging.getLogger("CryticCompile")
 logging.basicConfig()
+
+
+_PLATFORM_CLEAN_HINTS: dict[str, str] = {
+    "Brownie": "brownie compile --all",
+    "Buidler": "npx buidler clean",
+    "Dapp": "dapp clean",
+    "Embark": "embark reset",
+    "Etherlime": "etherlime compile --runs 200 --solcVersion 0.5.16 --buildDirectory ./build",
+    "Foundry": "forge clean",
+    "Hardhat": "npx hardhat clean",
+    "Truffle": "npx truffle compile --all",
+    "Waffle": "rm -rf build",
+}
+
+
+def _stale_cache_hint(file: "Filename", platform: AbstractPlatform | None) -> str:
+    """Build a `clean and rebuild` hint for stale build artifacts.
+
+    Args:
+        file (Filename): source file with a mismatched cache.
+        platform (Optional[AbstractPlatform]): underlying build platform, if any.
+
+    Returns:
+        str: human-readable suggestion mentioning the platform-specific command.
+    """
+    base = (
+        f"Source map for '{file.absolute}' falls outside the cached source. "
+        "Build artifacts are likely stale relative to the source on disk."
+    )
+    command = _PLATFORM_CLEAN_HINTS.get(platform.NAME) if platform is not None else None
+    if command:
+        return f"{base} Try `{command}` and recompile."
+    return f"{base} Try removing the build directory and recompiling."
 
 
 def get_platforms() -> list[type[AbstractPlatform]]:
@@ -366,6 +400,10 @@ class CryticCompile:
 
         Returns:
             Tuple[int, int]: (line, line offset)
+
+        Raises:
+            InvalidCompilation: if the offset is outside the cached source range,
+                which usually means the build artifacts are stale.
         """
         if isinstance(filename, str):
             file = self.filename_lookup(filename)
@@ -375,7 +413,10 @@ class CryticCompile:
             self._get_cached_offset_to_line(file)
 
         lines_delimiters = self._cached_offset_to_line[file]
-        return lines_delimiters[offset]
+        try:
+            return lines_delimiters[offset]
+        except KeyError as exc:
+            raise InvalidCompilation(_stale_cache_hint(file, self._platform)) from exc
 
     def get_global_offset_from_line(self, filename: Filename | str, line: int) -> int:
         """Return the global offset from a given line
@@ -386,6 +427,10 @@ class CryticCompile:
 
         Returns:
             int: global offset
+
+        Raises:
+            InvalidCompilation: if the line is outside the cached source range,
+                which usually means the build artifacts are stale.
         """
         if isinstance(filename, str):
             file = self.filename_lookup(filename)
@@ -394,7 +439,10 @@ class CryticCompile:
         if file not in self._cached_line_to_offset:
             self._get_cached_offset_to_line(file)
 
-        return self._cached_line_to_offset[file][line]
+        try:
+            return self._cached_line_to_offset[file][line]
+        except KeyError as exc:
+            raise InvalidCompilation(_stale_cache_hint(file, self._platform)) from exc
 
     def _get_cached_line_to_code(self, file: Filename) -> None:
         """Compute the cached lines
