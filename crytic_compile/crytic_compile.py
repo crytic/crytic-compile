@@ -606,6 +606,10 @@ class CryticCompile:
                 (p(target) for p in platforms if p.NAME.lower() == compile_force_framework.lower()),
                 None,
             )
+            if not platform:
+                raise ValueError(
+                    f"The framework specified {compile_force_framework} does not exist"
+                )
 
         if not platform:
             matching_platforms = [p for p in platforms if p.is_supported(target, **kwargs)]

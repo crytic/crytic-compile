@@ -40,10 +40,7 @@ def _build_contract_data(compilation_unit: "CompilationUnit") -> dict:
     for filename, source_unit in compilation_unit.source_units.items():
         for contract_name in source_unit.contracts_names:
             libraries = source_unit.libraries_names_and_patterns(contract_name)
-            abi = str(source_unit.abi(contract_name))
-            abi = abi.replace("'", '"')
-            abi = abi.replace("True", "true")
-            abi = abi.replace("False", "false")
+            abi = json.dumps(source_unit.abi(contract_name))
             exported_name = combine_filename_name(filename.absolute, contract_name)
             contracts[exported_name] = {
                 "srcmap": ";".join(source_unit.srcmap_init(contract_name)),
@@ -76,7 +73,8 @@ def export_to_solc_from_compilation_unit(
 
     # Create additional informational objects.
     sources = {filename: {"AST": ast} for (filename, ast) in compilation_unit.asts.items()}
-    source_list = [x.absolute for x in compilation_unit.filenames]
+    # Use filenames_for_export to ensure correct source map index ordering
+    source_list = [x.absolute for x in compilation_unit.filenames_for_export]
 
     # Create our root object to contain the contracts and other information.
     output = {"sources": sources, "sourceList": source_list, "contracts": contracts}
