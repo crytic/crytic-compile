@@ -1,6 +1,7 @@
 """Tests for filename resolution error messages."""
 
 from pathlib import Path
+from unittest import mock
 
 import pytest
 
@@ -9,6 +10,7 @@ from crytic_compile.utils.naming import (
     _looks_like_npm_import,
     _unknown_file_message,
     _verify_filename_existence,
+    convert_filename,
 )
 
 
@@ -52,6 +54,33 @@ def test_unknown_file_error_relative_no_hint(tmp_path: Path) -> None:
     """Explicit relative paths (`./Foo.sol`) do not surface npm hint."""
     msg = _unknown_file_message(Path("./Foo.sol"), tmp_path)
     assert "npm install" not in msg
+
+
+def test_convert_filename_skips_verification_for_virtual_path() -> None:
+    """`skip_filename_verification=True` returns a Filename for a path that is absent on disk."""
+    crytic_compile = mock.MagicMock()
+    crytic_compile.package_name = None
+
+    result = convert_filename(
+        "main.sol",
+        lambda path: path,
+        crytic_compile,
+        skip_filename_verification=True,
+    )
+    assert result.used == "main.sol"
+
+
+def test_convert_filename_verifies_by_default() -> None:
+    """Without the flag, a missing file still raises InvalidCompilation (default behavior)."""
+    crytic_compile = mock.MagicMock()
+    crytic_compile.package_name = None
+
+    with pytest.raises(InvalidCompilation):
+        convert_filename(
+            "does/not/exist/main.sol",
+            lambda path: path,
+            crytic_compile,
+        )
 
 
 @pytest.mark.parametrize(

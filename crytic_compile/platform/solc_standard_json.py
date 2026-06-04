@@ -322,24 +322,20 @@ def parse_standard_json_output(
 
     """
 
-    skip_filename = compilation_unit.compiler_version.version in [f"0.4.{x}" for x in range(0, 10)]
-
+    # Source paths in standard json input/output are virtual: they are the keys used in the
+    # input `sources` map and may not correspond to files that exist on disk (the sources can be
+    # provided inline via `content`). Skip the on-disk filename verification for this platform so
+    # that compiling a standard json with inline sources does not raise InvalidCompilation. See
+    # https://github.com/crytic/crytic-compile/issues/495.
     if "sources" in targets_json:
         for path, info in targets_json["sources"].items():
-            if skip_filename:
-                path = convert_filename(
-                    path,
-                    relative_to_short,
-                    compilation_unit.crytic_compile,
-                    working_dir=solc_working_dir,
-                )
-            else:
-                path = convert_filename(
-                    path,
-                    relative_to_short,
-                    compilation_unit.crytic_compile,
-                    working_dir=solc_working_dir,
-                )
+            path = convert_filename(
+                path,
+                relative_to_short,
+                compilation_unit.crytic_compile,
+                working_dir=solc_working_dir,
+                skip_filename_verification=True,
+            )
             source_unit = compilation_unit.create_source_unit(path)
 
             source_unit.ast = info.get("ast")
@@ -347,21 +343,13 @@ def parse_standard_json_output(
     if "contracts" in targets_json:
         for file_path, file_contracts in targets_json["contracts"].items():
             for contract_name, info in file_contracts.items():
-                # for solc < 0.4.10 we cant retrieve the filename from the ast
-                if skip_filename:
-                    filename = convert_filename(
-                        file_path,
-                        relative_to_short,
-                        compilation_unit.crytic_compile,
-                        working_dir=solc_working_dir,
-                    )
-                else:
-                    filename = convert_filename(
-                        file_path,
-                        relative_to_short,
-                        compilation_unit.crytic_compile,
-                        working_dir=solc_working_dir,
-                    )
+                filename = convert_filename(
+                    file_path,
+                    relative_to_short,
+                    compilation_unit.crytic_compile,
+                    working_dir=solc_working_dir,
+                    skip_filename_verification=True,
+                )
 
                 source_unit = compilation_unit.create_source_unit(filename)
 
