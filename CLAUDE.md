@@ -147,8 +147,7 @@ Config in `pyproject.toml`:
            """Run build and populate compilation units"""
            ...
 
-       def clean(self, **kwargs: str) -> None:
-           ...
+       def clean(self, **kwargs: str) -> None: ...
 
        def is_dependency(self, path: str) -> bool:
            return "node_modules" in Path(path).parts
