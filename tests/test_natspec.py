@@ -2,6 +2,8 @@
 Test NatSpec parsing, including custom fields (@custom:*)
 """
 
+import json
+
 from crytic_compile.utils.natspec import (
     DevDoc,
     DevMethod,
@@ -319,6 +321,59 @@ class TestDevDoc:
 
         assert exported["methods"]["foo()"]["custom:audit"] == "verified"
         assert exported["methods"]["foo()"]["details"] == "foo details"
+
+    def test_devdoc_state_variables_parsing(self) -> None:
+        """Test DevDoc parses stateVariables into DevStateVariable objects"""
+        devdoc_data = {
+            "title": "Test Contract",
+            "methods": {},
+            "stateVariables": {
+                "CONSOLE": {"details": "the console address"},
+            },
+        }
+        devdoc = DevDoc(devdoc_data)
+        assert "CONSOLE" in devdoc.state_variables
+        assert isinstance(devdoc.state_variables["CONSOLE"], DevStateVariable)
+        assert devdoc.state_variables["CONSOLE"].details == "the console address"
+
+    def test_devdoc_export_state_variables_are_plain_dicts(self) -> None:
+        """Test DevDoc export flattens state variables into plain dicts"""
+        devdoc_data = {
+            "title": "Test Contract",
+            "methods": {},
+            "stateVariables": {
+                "CONSOLE": {
+                    "details": "the console address",
+                    "custom:audit": "verified",
+                },
+            },
+        }
+        devdoc = DevDoc(devdoc_data)
+        exported = devdoc.export()
+
+        console = exported["state_variables"]["CONSOLE"]
+        assert isinstance(console, dict)
+        assert console["details"] == "the console address"
+        assert console["custom"] == {"custom:audit": "verified"}
+
+    def test_devdoc_export_is_json_serializable(self) -> None:
+        """Test DevDoc export with state variables can be JSON serialized
+
+        Regression test: forge-std CommonBase declares a documented CONSOLE
+        state variable, which made solc emit ``stateVariables`` in the devdoc.
+        The export used to leak DevStateVariable objects, breaking json.dump.
+        """
+        devdoc_data = {
+            "title": "CommonBase",
+            "methods": {},
+            "stateVariables": {
+                "CONSOLE": {"details": "the console address"},
+            },
+        }
+        devdoc = DevDoc(devdoc_data)
+        # Must not raise TypeError: Object of type DevStateVariable is not JSON serializable
+        dumped = json.dumps(devdoc.export())
+        assert "CONSOLE" in dumped
 
 
 class TestNatspec:
