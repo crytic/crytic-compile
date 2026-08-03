@@ -321,7 +321,7 @@ class DevDoc:
             "author": self.author,
             "details": self.details,
             "title": self.title,
-            "state_variables": self.state_variables,
+            "state_variables": {k: items.export() for k, items in self.state_variables.items()},
         }
         # Include custom fields if present
         result.update(self.custom)

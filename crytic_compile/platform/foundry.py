@@ -126,6 +126,7 @@ class Foundry(AbstractPlatform):
             run(
                 compilation_command,
                 cwd=self._project_root,
+                extra_env={"FOUNDRY_DYNAMIC_TEST_LINKING": "false"},
             )
 
         out_directory_detected = foundry_config.out_path if foundry_config else "out"
