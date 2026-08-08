@@ -718,11 +718,12 @@ class CryticCompile:
         custom_build: None | str = kwargs.get("compile_custom_build", None)
         if custom_build:
             self._run_custom_build(custom_build)
-
-        else:
-            if not kwargs.get("skip_clean", False) and not kwargs.get("ignore_compile", False):
-                self._platform.clean(**kwargs)
-            self._platform.compile(self, **kwargs)
+            # The custom command already produced the artifacts: let the platform
+            # parse them instead of building again.
+            kwargs = {**kwargs, "ignore_compile": "true"}
+        elif not kwargs.get("skip_clean", False) and not kwargs.get("ignore_compile", False):
+            self._platform.clean(**kwargs)
+        self._platform.compile(self, **kwargs)
 
         # Handle autolink after compilation
         if self._autolink:
