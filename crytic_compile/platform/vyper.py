@@ -97,9 +97,11 @@ class VyperStandardJson(AbstractPlatform):
                 ].replace("0x", "")
                 # Vyper does not provide the source mapping for the init bytecode
                 source_unit.srcmaps_init[contract_name] = []
-                source_unit.srcmaps_runtime[contract_name] = contract_metadata["evm"][
-                    "deployedBytecode"
-                ]["sourceMap"].split(";")
+                srcmap_runtime = contract_metadata["evm"]["deployedBytecode"]["sourceMap"]
+                # vyper >= 0.4 returns an object; the solc-style string is `pc_pos_map_compressed`
+                if isinstance(srcmap_runtime, dict):
+                    srcmap_runtime = srcmap_runtime["pc_pos_map_compressed"]
+                source_unit.srcmaps_runtime[contract_name] = srcmap_runtime.split(";")
                 source_unit.bytecodes_runtime[contract_name] = contract_metadata["evm"][
                     "deployedBytecode"
                 ]["object"].replace("0x", "")
