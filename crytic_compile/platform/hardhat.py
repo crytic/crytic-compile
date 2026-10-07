@@ -5,6 +5,7 @@ Hardhat platform
 import json
 import logging
 import os
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -18,7 +19,12 @@ from crytic_compile.platform.exceptions import InvalidCompilation
 # Handle cycle
 from crytic_compile.platform.solc import relative_to_short
 from crytic_compile.platform.types import Type
-from crytic_compile.utils.naming import convert_filename, extract_name, process_hardhat_v3_filename
+from crytic_compile.utils.naming import (
+    Filename,
+    convert_filename,
+    extract_name,
+    process_hardhat_v3_filename,
+)
 from crytic_compile.utils.natspec import Natspec
 from crytic_compile.utils.subprocess import run
 
@@ -26,6 +32,153 @@ if TYPE_CHECKING:
     from crytic_compile import CryticCompile
 
 LOGGER = logging.getLogger("CryticCompile")
+
+HARDHAT_V3_BUILD_INFO_FORMAT = "hh3-sol-build-info-1"
+
+# Package root in a Hardhat 3 source name: npm/<package>@<version>/
+HARDHAT_V3_NPM_PACKAGE = re.compile(r"npm/((?:@[^/]+/)?[^/@]+)@([^/]+)/")
+
+
+def _node_modules_lookup(directory_name: str, start: Path, name: str, version: str) -> Path | None:
+    """Find an installed package as Node.js finds it.
+
+    The search starts in the node_modules folder of the start directory and continues up
+    through the parent directories. A directory matches only if its package.json has the
+    name and the version.
+
+    Args:
+        directory_name: directory name in node_modules, e.g. @openzeppelin/contracts
+        start: directory to start from
+        name: package name in package.json
+        version: package version in package.json
+
+    Returns:
+        Optional[Path]: the package directory, if found
+    """
+    for parent in (start, *start.parents):
+        candidate = parent / "node_modules" / directory_name
+        try:
+            package_json = json.loads((candidate / "package.json").read_text(encoding="utf8"))
+        except (OSError, ValueError):
+            continue
+        if package_json.get("name") == name and package_json.get("version") == version:
+            return candidate
+    return None
+
+
+def _hardhat_v3_package_dirs(remappings: list[str], root: Path) -> dict[str, Path]:
+    """Find the install directory of each npm package in a Hardhat 3 build-info.
+
+    Hardhat 3 names an npm source npm/<package>@<version>/<path>, with the name and the
+    version from package.json. This name does not give the install directory:
+    - An aliased dependency ("oz-v5": "npm:@openzeppelin/contracts@5.2.0") is in
+      node_modules/oz-v5.
+    - A transitive dependency can be in the node_modules folder of the package that
+      imports it.
+
+    The build-info has a remapping <context>:<prefix>=npm/<package>@<version>/<subpath>
+    for each import. Hardhat makes the prefix from the install directory, but a user
+    remapping can have any prefix. This function looks for the prefix, then for the
+    package name, from the context directory. It accepts only a directory whose
+    package.json has the same name and version.
+
+    Args:
+        remappings: solc remappings of the build-info input
+        root: Hardhat project root
+
+    Returns:
+        dict[str, Path]: npm/<package>@<version>/ -> install directory
+    """
+    imports: list[tuple[re.Match[str], str, list[str]]] = []
+    for remapping in remappings:
+        context_and_prefix, _, target = remapping.partition("=")
+        context, _, prefix = context_and_prefix.rpartition(":")
+        package = HARDHAT_V3_NPM_PACKAGE.match(target)
+        if package:
+            imports.append((package, context, [prefix.rstrip("/"), package.group(1)]))
+
+    package_dirs: dict[str, Path] = {}
+    # A context can also be an npm package. Repeat until a pass finds no new package.
+    found = True
+    while found:
+        found = False
+        for package, context, directory_names in imports:
+            package_root, name, version = package.group(0, 1, 2)
+            if package_root in package_dirs:
+                continue
+            if HARDHAT_V3_NPM_PACKAGE.fullmatch(context):
+                if context not in package_dirs:
+                    continue
+                start = package_dirs[context]
+            else:
+                start = root
+            for directory_name in directory_names:
+                package_dir = _node_modules_lookup(directory_name, start, name, version)
+                if package_dir is not None:
+                    package_dirs[package_root] = package_dir
+                    found = True
+                    break
+    return package_dirs
+
+
+def _hardhat_v3_source_path(source_name: str, root: Path, package_dirs: dict[str, Path]) -> str:
+    """Convert a Hardhat 3 source name to the path of the source file
+
+    Args:
+        source_name: source name, e.g. project/contracts/A.sol or npm/<package>@<version>/A.sol
+        root: Hardhat project root
+        package_dirs: install directories of npm packages from _hardhat_v3_package_dirs
+
+    Returns:
+        str: path of the source file. If the package directory is not known, the name
+            without the npm/ prefix and the version.
+    """
+    if source_name.startswith("project/"):
+        return str(root / source_name[len("project/") :])
+
+    package = HARDHAT_V3_NPM_PACKAGE.match(source_name)
+    if package and package.group(0) in package_dirs:
+        return str(package_dirs[package.group(0)] / source_name[package.end() :])
+
+    return process_hardhat_v3_filename(source_name)
+
+
+def _source_filename(
+    source_name: str,
+    crytic_compile: "CryticCompile",
+    working_dir: str,
+    package_dirs: dict[str, Path] | None,
+) -> Filename:
+    """Convert a build-info source name to a Filename
+
+    Args:
+        source_name: source name used by the compiler
+        crytic_compile: CryticCompile object
+        working_dir: working directory
+        package_dirs: install directories of npm packages for a Hardhat 3 build-info, or
+            None for other build-info formats
+
+    Returns:
+        Filename: the converted filename
+    """
+    if package_dirs is None:
+        return convert_filename(
+            process_hardhat_v3_filename(source_name),
+            relative_to_short,
+            crytic_compile,
+            working_dir=working_dir,
+        )
+
+    filename = convert_filename(
+        _hardhat_v3_source_path(source_name, Path(working_dir), package_dirs),
+        relative_to_short,
+        crytic_compile,
+        working_dir=working_dir,
+    )
+    # Keep the compiler source name. It is unique for each package version, and the AST
+    # uses it.
+    filename.used = source_name
+    return filename
 
 
 def hardhat_like_parsing(
@@ -95,6 +248,12 @@ def hardhat_like_parsing(
                 f"0.4.{x}" for x in range(0, 10)
             ]
 
+            package_dirs = None
+            if loaded_json.get("_format") == HARDHAT_V3_BUILD_INFO_FORMAT:
+                package_dirs = _hardhat_v3_package_dirs(
+                    input_json["settings"].get("remappings", []), Path(working_dir)
+                )
+
             if "sources" in targets_json:
                 # Sort sources by ID to ensure correct processing order
                 sources_with_ids = [
@@ -111,13 +270,8 @@ def hardhat_like_parsing(
                             working_dir=working_dir,
                         )
                     else:
-                        path = process_hardhat_v3_filename(original_path)
-
-                        path = convert_filename(
-                            path,
-                            relative_to_short,
-                            crytic_compile,
-                            working_dir=working_dir,
+                        path = _source_filename(
+                            original_path, crytic_compile, working_dir, package_dirs
                         )
 
                     source_unit = compilation_unit.create_source_unit(path)
@@ -133,13 +287,8 @@ def hardhat_like_parsing(
 
             if "contracts" in targets_json:
                 for original_filename, contracts_info in targets_json["contracts"].items():
-                    original_filename = process_hardhat_v3_filename(original_filename)
-
-                    filename = convert_filename(
-                        original_filename,
-                        relative_to_short,
-                        crytic_compile,
-                        working_dir=working_dir,
+                    filename = _source_filename(
+                        original_filename, crytic_compile, working_dir, package_dirs
                     )
 
                     source_unit = compilation_unit.create_source_unit(filename)
