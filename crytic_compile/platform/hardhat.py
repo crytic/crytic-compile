@@ -36,25 +36,32 @@ LOGGER = logging.getLogger("CryticCompile")
 HARDHAT_V3_BUILD_INFO_FORMAT = "hh3-sol-build-info-1"
 
 # Package root in a Hardhat 3 source name: npm/<package>@<version>/
-HARDHAT_V3_NPM_PACKAGE = re.compile(r"npm/(?:@[^/]+/)?[^/@]+@[^/]+/")
+HARDHAT_V3_NPM_PACKAGE = re.compile(r"npm/((?:@[^/]+/)?[^/@]+)@([^/]+)/")
 
 
-def _node_modules_lookup(package: str, directory: Path) -> Path | None:
-    """Find a package as Node.js finds it.
+def _node_modules_lookup(directory_name: str, start: Path, name: str, version: str) -> Path | None:
+    """Find an installed package as Node.js finds it.
 
-    The search starts in the node_modules folder of the directory and continues up
-    through the parent directories.
+    The search starts in the node_modules folder of the start directory and continues up
+    through the parent directories. A directory matches only if its package.json has the
+    name and the version.
 
     Args:
-        package: package directory name, e.g. @openzeppelin/contracts
-        directory: directory to start from
+        directory_name: directory name in node_modules, e.g. @openzeppelin/contracts
+        start: directory to start from
+        name: package name in package.json
+        version: package version in package.json
 
     Returns:
         Optional[Path]: the package directory, if found
     """
-    for parent in (directory, *directory.parents):
-        candidate = parent / "node_modules" / package
-        if candidate.is_dir():
+    for parent in (start, *start.parents):
+        candidate = parent / "node_modules" / directory_name
+        try:
+            package_json = json.loads((candidate / "package.json").read_text(encoding="utf8"))
+        except (OSError, ValueError):
+            continue
+        if package_json.get("name") == name and package_json.get("version") == version:
             return candidate
     return None
 
@@ -62,16 +69,18 @@ def _node_modules_lookup(package: str, directory: Path) -> Path | None:
 def _hardhat_v3_package_dirs(remappings: list[str], root: Path) -> dict[str, Path]:
     """Find the install directory of each npm package in a Hardhat 3 build-info.
 
-    Hardhat 3 names an npm source npm/<package>@<version>/<path>. This name does not give
-    the install directory:
+    Hardhat 3 names an npm source npm/<package>@<version>/<path>, with the name and the
+    version from package.json. This name does not give the install directory:
     - An aliased dependency ("oz-v5": "npm:@openzeppelin/contracts@5.2.0") is in
       node_modules/oz-v5.
     - A transitive dependency can be in the node_modules folder of the package that
       imports it.
 
-    Hardhat writes each import that it resolved as a remapping
-    <context>:<prefix>=npm/<package>@<version>/. This function finds the prefix from the
-    context directory, as Hardhat did.
+    The build-info has a remapping <context>:<prefix>=npm/<package>@<version>/<subpath>
+    for each import. Hardhat makes the prefix from the install directory, but a user
+    remapping can have any prefix. This function looks for the prefix, then for the
+    package name, from the context directory. It accepts only a directory whose
+    package.json has the same name and version.
 
     Args:
         remappings: solc remappings of the build-info input
@@ -80,31 +89,35 @@ def _hardhat_v3_package_dirs(remappings: list[str], root: Path) -> dict[str, Pat
     Returns:
         dict[str, Path]: npm/<package>@<version>/ -> install directory
     """
-    imports: list[tuple[str, str, str]] = []
+    imports: list[tuple[re.Match[str], str, list[str]]] = []
     for remapping in remappings:
         context_and_prefix, _, target = remapping.partition("=")
         context, _, prefix = context_and_prefix.rpartition(":")
-        if HARDHAT_V3_NPM_PACKAGE.fullmatch(target):
-            imports.append((target, context, prefix.rstrip("/")))
+        package = HARDHAT_V3_NPM_PACKAGE.match(target)
+        if package:
+            imports.append((package, context, [prefix.rstrip("/"), package.group(1)]))
 
     package_dirs: dict[str, Path] = {}
     # A context can also be an npm package. Repeat until a pass finds no new package.
     found = True
     while found:
         found = False
-        for target, context, prefix in imports:
-            if target in package_dirs:
+        for package, context, directory_names in imports:
+            package_root, name, version = package.group(0, 1, 2)
+            if package_root in package_dirs:
                 continue
             if HARDHAT_V3_NPM_PACKAGE.fullmatch(context):
                 if context not in package_dirs:
                     continue
-                base = package_dirs[context]
+                start = package_dirs[context]
             else:
-                base = root
-            package_dir = _node_modules_lookup(prefix, base)
-            if package_dir is not None:
-                package_dirs[target] = package_dir
-                found = True
+                start = root
+            for directory_name in directory_names:
+                package_dir = _node_modules_lookup(directory_name, start, name, version)
+                if package_dir is not None:
+                    package_dirs[package_root] = package_dir
+                    found = True
+                    break
     return package_dirs
 
 
