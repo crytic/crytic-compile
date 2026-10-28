@@ -258,7 +258,15 @@ class Foundry(AbstractPlatform):
         """
         if path in self._cached_dependencies:
             return self._cached_dependencies[path]
-        path_parts = Path(path).parts
+        # Classify the path RELATIVE to the project root, so a file is only a dependency
+        # because of a `lib`/`node_modules`/configured-libs directory *within* the project —
+        # not because the project itself is checked out under a parent directory of that name
+        # (e.g. a git submodule at `<repo>/lib/<project>`, where every absolute source path
+        # would otherwise contain a "lib" component and be wrongly flagged).
+        try:
+            path_parts = Path(path).resolve().relative_to(self._project_root.resolve()).parts
+        except ValueError:
+            path_parts = Path(path).parts  # outside the project tree — classify as-is
         config = self._get_config()
         libs_path = (config.libs_path if config else None) or []
         ret = (
