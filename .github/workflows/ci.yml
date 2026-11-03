@@ -70,7 +70,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version || '20' }}
       - name: Set up Python ${{ matrix.python }}
-        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884  # v10.3.0
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e  # v10.3.2
         with:
           python-version: ${{ matrix.python }}
           activate-environment: true
@@ -80,7 +80,7 @@ jobs:
           solc-select use 0.5.7 --always-install
       - name: Set up nix
         if: matrix.type == 'dapp'
-        uses: cachix/install-nix-action@448cde739abec1eaf0646249e3d25bb8d9bc7702  # v31.11.2
+        uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b  # v31.11.3
       - name: Set up cachix
         if: matrix.type == 'dapp'
         uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866  # v17
@@ -88,7 +88,7 @@ jobs:
           name: dapp
       - name: Install Foundry
         if: matrix.type == 'foundry'
-        uses: foundry-rs/foundry-toolchain@908c540300062bd5a7e473851cdb4282204cee09  # v1.9.1
+        uses: foundry-rs/foundry-toolchain@dba66c27052e63476d886f22216e119ba7e615bf  # v1.9.2
       - name: Run Tests
         env:
           TEST_TYPE: ${{ matrix.type }}
