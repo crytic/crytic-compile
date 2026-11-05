@@ -182,6 +182,7 @@ def convert_filename(
     relative_to_short: Callable[[Path], Path],
     crytic_compile: "CryticCompile",
     working_dir: str | Path | None = None,
+    skip_filename_verification: bool = False,
 ) -> Filename:
     """Convert a filename to CryticCompile Filename object.
     The used_filename can be absolute, relative, or missing node_modules/contracts directory
@@ -191,6 +192,9 @@ def convert_filename(
         relative_to_short (Callable[[Path], Path]): Callback to translate the relative to short
         crytic_compile (CryticCompile): Associated CryticCompile object
         working_dir (Optional[Union[str, Path]], optional): Working directory. Defaults to None.
+        skip_filename_verification (bool, optional): If True, do not check that the file exists on
+            disk. Used for inputs whose source paths are virtual (e.g. solc standard json), where
+            the sources are provided inline and may not map to real files. Defaults to False.
 
     Returns:
         Filename: Filename converted
@@ -221,7 +225,8 @@ def convert_filename(
         except ValueError:
             pass
 
-    filename = _verify_filename_existence(filename, cwd)
+    if not skip_filename_verification:
+        filename = _verify_filename_existence(filename, cwd)
 
     absolute = Path(os.path.abspath(filename))
 
