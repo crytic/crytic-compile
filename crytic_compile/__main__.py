@@ -242,7 +242,7 @@ def main() -> None:
 
     except InvalidCompilation as exception:
         LOGGER.error(exception)
-        sys.exit(-1)
+        sys.exit(1)
 
 
 if __name__ == "__main__":
